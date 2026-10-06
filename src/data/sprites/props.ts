@@ -330,7 +330,7 @@ const PHONE_FLAT = `
   kkkkk
   kaaak
   kaAak
-  kddDk
+  kddGk
   kkkkk
 `;
 

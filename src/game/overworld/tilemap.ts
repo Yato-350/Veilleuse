@@ -1,7 +1,7 @@
 import { TILE } from '../../engine/constants';
 import { hash2 } from '../../engine/math';
 import { parseRows, makeCanvas, ctx2d, drawSprite } from '../../engine/sprite';
-import { hasSpr, spr } from '../assets';
+import { hasSpr, spr, VARIANT_TRANSFORMS } from '../assets';
 import { TILES } from '../../data/tiles';
 import type { MapDef, TileDef } from './types';
 
@@ -91,6 +91,9 @@ export class Tilemap {
   /** Draws jagged overhangs from tiles with an `edge` onto different neighbours. */
   private renderEdges(g: CanvasRenderingContext2D): void {
     const groupOf = (d: TileDef | null | undefined) => (d?.edge ? (d.edge.group ?? d.art.toString()) : null);
+    // Edge colors follow the world variant (e.g. ink-corrupted grass borders in chapter 3).
+    const tf = VARIANT_TRANSFORMS[this.variant];
+    const tint = (c: string) => (tf ? tf(c) : c);
     for (let y = 0; y < this.h; y++) {
       for (let x = 0; x < this.w; x++) {
         const d = this.defs[y]![x];
@@ -113,7 +116,7 @@ export class Tilemap {
             const depth = h < 0.35 ? 1 : h < 0.8 ? 2 : 3;
             for (let k = 0; k < depth; k++) {
               const tip = k === depth - 1;
-              g.fillStyle = tip && d.edge.dark ? d.edge.dark : d.edge.color;
+              g.fillStyle = tint(tip && d.edge.dark ? d.edge.dark : d.edge.color);
               let px: number;
               let py: number;
               if (dy === -1) {

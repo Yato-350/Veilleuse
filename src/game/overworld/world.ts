@@ -22,6 +22,7 @@ export interface WorldHooks {
 }
 
 const PLAYER_SPEED = 1.15;
+const STEP_PITCH: Record<string, number> = { grass: 0.7, wood: 1.25, stone: 1.6, carpet: 0.55, paper: 2.2, water: 0.9 };
 const RUN_SPEED = 1.9;
 
 /** The exploration scene. */
@@ -337,7 +338,9 @@ export class WorldScene implements Scene {
           this.stepT += running ? 1.6 : 1;
           if (this.stepT > 16) {
             this.stepT = 0;
-            audio.sfx('step', { pitch: 0.8 + rng.next() * 0.4, vol: 0.6 });
+            const surf = this.tilemap.tileAt(Math.floor(p.x / TILE), Math.floor((p.y - 2) / TILE))?.surface;
+            const base = surf ? STEP_PITCH[surf] : 1;
+            audio.sfx('step', { pitch: base * (0.85 + rng.next() * 0.3), vol: surf === 'carpet' || surf === 'grass' ? 0.45 : 0.7 });
           }
         }
       } else {
