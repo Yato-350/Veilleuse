@@ -50,7 +50,11 @@ export class Input {
   typed: string[] = [];
   /** Relative pointer drag accumulated during the frame (used to move the soul by dragging). */
   drag = { dx: 0, dy: 0, active: false };
+  /** True for one frame after a short tap on the game screen (touch / mouse). */
+  tap = false;
+  private tapNext = false;
   private dragLast: { x: number; y: number; id: number } | null = null;
+  private dragStart: { x: number; y: number; t: number } | null = null;
   onDeviceChange: ((d: Device) => void) | null = null;
   /** Called on every user gesture (used to unlock audio). */
   onGesture: (() => void) | null = null;
@@ -88,6 +92,7 @@ export class Input {
     this.scaleFn = cssPixelsPerGamePixel;
     el.addEventListener('pointerdown', (e) => {
       this.dragLast = { x: e.clientX, y: e.clientY, id: e.pointerId };
+      this.dragStart = { x: e.clientX, y: e.clientY, t: performance.now() };
       this.drag.active = true;
       if (e.pointerType === 'touch') this.setDevice('touch');
       this.onGesture?.();
@@ -103,6 +108,11 @@ export class Input {
       if (this.dragLast && e.pointerId === this.dragLast.id) {
         this.dragLast = null;
         this.drag.active = false;
+        const st = this.dragStart;
+        if (e.type === 'pointerup' && st && performance.now() - st.t < 350 && Math.hypot(e.clientX - st.x, e.clientY - st.y) < 14) {
+          this.tapNext = true;
+        }
+        this.dragStart = null;
       }
     };
     el.addEventListener('pointerup', end);
@@ -152,6 +162,8 @@ export class Input {
 
   /** Call once at the start of each fixed update. */
   update(): void {
+    this.tap = this.tapNext;
+    this.tapNext = false;
     this.pollGamepad();
     this.prev = this.cur;
     this.cur = new Set<Button>([...this.keys, ...this.touch, ...this.pad, ...this.tapped]);
@@ -204,6 +216,7 @@ export class Input {
   consume(): void {
     this.prev = new Set(this.cur);
     this.tapped.clear();
+    this.tap = false;
   }
 
   releaseAll(): void {

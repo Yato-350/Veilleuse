@@ -197,7 +197,7 @@ export class Dialogue {
           }
         }
       }
-      if (!skipFrame && !this.opts.noSkip && (input.pressed('a') || input.pressed('b'))) {
+      if (!skipFrame && !this.opts.noSkip && (input.pressed('a') || input.pressed('b') || input.tap)) {
         this.shown = p.total;
         this.wait = 0;
       }
@@ -216,7 +216,7 @@ export class Dialogue {
       if (this.autoT >= this.opts.auto) this.advance();
       return;
     }
-    if (!skipFrame && input.pressed('a')) this.advance();
+    if (!skipFrame && (input.pressed('a') || input.tap)) this.advance();
   }
 
   private advance(): void {

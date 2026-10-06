@@ -192,7 +192,6 @@ export class AudioEngine {
   private tracks = new Map<string, Track>();
   private playing: PlayingTrack | null = null;
   private fading: PlayingTrack[] = [];
-  private timer: number | null = null;
   private ambience: { kind: Ambience; nodes: AudioNode[]; gain: GainNode; extra?: number } | null = null;
   musicVolume = 0.7;
   sfxVolume = 0.8;
@@ -263,7 +262,7 @@ export class AudioEngine {
     this.waves.organ = ctx.createPeriodicWave(new Float32Array([0, 1, 0.5, 0.3, 0.2, 0.1, 0.05]), new Float32Array(7));
     this.waves.musicbox = ctx.createPeriodicWave(new Float32Array([0, 1, 0, 0.25, 0, 0.08, 0, 0.04]), new Float32Array(8));
 
-    this.timer = window.setInterval(() => this.schedule(), 25);
+    window.setInterval(() => this.schedule(), 25);
   }
 
   private pulseWave(duty: number): PeriodicWave {
@@ -401,7 +400,6 @@ export class AudioEngine {
   }
 
   private playNote(ch: ParsedChannel, ev: NoteEvent, when: number, dur: number, out: GainNode): void {
-    const ctx = this.ctx!;
     const vol = (ch.vol ?? 0.5) * 0.35;
     if (ev.hit || ch.inst === 'kick' || ch.inst === 'snare' || ch.inst === 'hat') {
       this.drum(ch.inst, when, vol * (ev.midis[0] === 1 ? 1.4 : 1), out);

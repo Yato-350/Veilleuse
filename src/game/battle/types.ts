@@ -46,6 +46,8 @@ export interface BattleHooks {
 export interface EnemyDef {
   id: string;
   name: string;
+  /** Grammatical gender (French agreement: apaisé / apaisée). */
+  fem?: boolean;
   /** Battle sprite key (animated with `<key>_2` if it exists). */
   sprite: string;
   hp: number;
@@ -80,6 +82,8 @@ export interface EnemyDef {
   dy?: number;
   /** Emotion inflicted on the soul at the start of the battle. */
   inflict?: Emotion;
+  /** Sprite scale (1 = native). */
+  scale?: number;
 }
 
 export type BattleOutcome = 'win' | 'spare' | 'flee' | 'lose' | 'scripted';
@@ -101,4 +105,6 @@ export interface BattleOptions {
   hooks?: Partial<BattleHooks>;
   /** Intro text override. */
   intro?: string;
+  /** Can't flee and no game over retry prompt customization. */
+  boss?: boolean;
 }

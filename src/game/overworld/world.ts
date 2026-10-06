@@ -2,7 +2,7 @@ import { audio } from '../../engine/audio';
 import { H, TILE, W } from '../../engine/constants';
 import { drawOutlined, drawText } from '../../engine/font';
 import { fx } from '../../engine/fx';
-import { game, type Scene } from '../../engine/game';
+import { type Scene } from '../../engine/game';
 import { input } from '../../engine/input';
 import { clamp, DIR_VEC, rectsOverlap, rng, type Dir, type Rect, pointInRect, hash2 } from '../../engine/math';
 import { ctx2d, makeCanvas } from '../../engine/sprite';
@@ -39,8 +39,14 @@ export class WorldScene implements Scene {
   busy = 0;
   hooks!: WorldHooks;
   private history: Array<{ x: number; y: number; dir: Dir }> = [];
-  private darkCanvas = makeCanvas(W, H);
-  private darkG = ctx2d(this.darkCanvas);
+  private _dark: HTMLCanvasElement | null = null;
+  private _darkG: CanvasRenderingContext2D | null = null;
+  private get darkCanvas(): HTMLCanvasElement {
+    return (this._dark ??= makeCanvas(W, H));
+  }
+  private get darkG(): CanvasRenderingContext2D {
+    return (this._darkG ??= ctx2d(this.darkCanvas));
+  }
   private bannerT = 0;
   private stepT = 0;
   /** Frames during which enemies can't start a battle (after fleeing / loading). */

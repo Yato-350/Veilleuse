@@ -40,9 +40,19 @@ export class Fx {
   bars = 0;
   private barsTarget = 0;
 
-  private scratch = makeCanvas(W, H);
-  private sg = ctx2d(this.scratch);
-  private chan = [makeCanvas(W, H), makeCanvas(W, H), makeCanvas(W, H)];
+  // Offscreen buffers are created lazily so this module can be imported without a DOM (tests).
+  private _scratch: HTMLCanvasElement | null = null;
+  private _sg: CanvasRenderingContext2D | null = null;
+  private _chan: HTMLCanvasElement[] | null = null;
+  private get scratch(): HTMLCanvasElement {
+    return (this._scratch ??= makeCanvas(W, H));
+  }
+  private get sg(): CanvasRenderingContext2D {
+    return (this._sg ??= ctx2d(this.scratch));
+  }
+  private get chan(): HTMLCanvasElement[] {
+    return (this._chan ??= [makeCanvas(W, H), makeCanvas(W, H), makeCanvas(W, H)]);
+  }
   private vignetteCanvas: HTMLCanvasElement | null = null;
   private grainFrames: HTMLCanvasElement[] = [];
   private frame = 0;

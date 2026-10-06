@@ -1,4 +1,9 @@
 import { buildSprite, type BuildOptions, type Sprite } from '../engine/sprite';
+import * as characterArt from '../data/sprites/characters';
+import * as tileArt from '../data/sprites/tiles';
+import * as propArt from '../data/sprites/props';
+import * as enemyArt from '../data/sprites/enemies';
+import * as devArt from '../data/sprites/dev';
 import { realify, corrupt } from '../engine/palette';
 import type { Dir } from '../engine/math';
 
@@ -86,4 +91,32 @@ export function walkFrame(set: CharFrames, dir: Dir, animT: number, moving: bool
 
 export function charSet(id: string, variant?: string): CharFrames | undefined {
   return (variant && CHARS[`${id}@${variant}`]) || CHARS[id];
+}
+
+/** Walking character definition: [stand, step1, step2] frames per direction. */
+export interface CharDef {
+  down: string[];
+  up: string[];
+  left: string[];
+  right?: string[];
+  opts?: BuildOptions;
+  variants?: string[];
+}
+
+export interface SpriteModule {
+  ART: Record<string, SpriteDef>;
+  VARIANTS?: string[];
+  CHARS?: Record<string, CharDef>;
+}
+
+export const SPRITE_MODULES: SpriteModule[] = [devArt, characterArt, tileArt, propArt, enemyArt];
+
+/** Builds every sprite of the game (call once at boot). */
+export function buildAll(): void {
+  for (const mod of SPRITE_MODULES) {
+    register(mod.ART, mod.VARIANTS ?? []);
+    for (const [id, def] of Object.entries(mod.CHARS ?? {})) {
+      registerChar(id, def, def.opts ?? {}, def.variants ?? []);
+    }
+  }
 }
