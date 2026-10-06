@@ -53,7 +53,7 @@ est un peu plus sombre, et la porte de la chambre de Mina reste fermée à clé.
 1. Mina était malade. Les derniers mois, elle dessinait à l'hôpital un carnet : *Le Pays de Coton — pour Noa*.
 2. Noa a arrêté de venir la voir. Trop peur. Le dernier soir, Mina a demandé qu'on lui apporte sa veilleuse. Noa ne l'a pas fait.
 3. Mina est morte cette nuit-là. Le carnet est resté dans sa chambre, que Noa a fermée à clé.
-4. Le Pays de Coton est l'esprit de Noa qui rejoue le carnet qu'il n'a jamais ouvert. Le Mina du rêve est un souvenir.
+4. Le Pays de Coton est l'esprit de Noa qui rejoue le carnet qu'il n'a jamais ouvert. La Mina du rêve est un souvenir.
 5. **Dodo** est la partie de Noa qui veut dormir pour toujours pour rester avec elle. Il sait que tant que *toi*, joueur·se,
    continues à jouer, le rêve continue d'exister.
 

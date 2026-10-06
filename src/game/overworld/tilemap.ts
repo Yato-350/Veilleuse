@@ -13,6 +13,8 @@ export class Tilemap {
   defs: (TileDef | null)[][];
   ground: HTMLCanvasElement | null = null;
   over: HTMLCanvasElement | null = null;
+  /** Organic edges, drawn after animated tiles so they also overlap water. */
+  edges: HTMLCanvasElement | null = null;
   animated: Array<{ x: number; y: number; def: TileDef }> = [];
   private variant: string;
 
@@ -80,6 +82,57 @@ export class Tilemap {
           continue;
         }
         drawSprite(target, spr(this.key(this.artFor(def, x, y))), x * TILE + 8, y * TILE + TILE);
+      }
+    }
+    this.edges = makeCanvas(this.pxW, this.pxH);
+    this.renderEdges(ctx2d(this.edges));
+  }
+
+  /** Draws jagged overhangs from tiles with an `edge` onto different neighbours. */
+  private renderEdges(g: CanvasRenderingContext2D): void {
+    const groupOf = (d: TileDef | null | undefined) => (d?.edge ? (d.edge.group ?? d.art.toString()) : null);
+    for (let y = 0; y < this.h; y++) {
+      for (let x = 0; x < this.w; x++) {
+        const d = this.defs[y]![x];
+        if (!d?.edge || d.over) continue;
+        const grp = groupOf(d);
+        const dirs: Array<[number, number]> = [
+          [0, -1],
+          [0, 1],
+          [-1, 0],
+          [1, 0],
+        ];
+        for (const [dx, dy] of dirs) {
+          const nx = x + dx;
+          const ny = y + dy;
+          const n = this.tileAt(nx, ny);
+          if (!n || n.over || groupOf(n) === grp) continue;
+          if (n.edge && !n.solid && (n.edge.group ?? '') > (grp ?? '')) continue; // only one side spills
+          for (let i = 0; i < TILE; i++) {
+            const h = hash2(x * 31 + i, y * 17 + dx * 7 + dy * 3, 11);
+            const depth = h < 0.35 ? 1 : h < 0.8 ? 2 : 3;
+            for (let k = 0; k < depth; k++) {
+              const tip = k === depth - 1;
+              g.fillStyle = tip && d.edge.dark ? d.edge.dark : d.edge.color;
+              let px: number;
+              let py: number;
+              if (dy === -1) {
+                px = nx * TILE + i;
+                py = ny * TILE + TILE - 1 - k;
+              } else if (dy === 1) {
+                px = nx * TILE + i;
+                py = ny * TILE + k;
+              } else if (dx === -1) {
+                px = nx * TILE + TILE - 1 - k;
+                py = ny * TILE + i;
+              } else {
+                px = nx * TILE + k;
+                py = ny * TILE + i;
+              }
+              g.fillRect(px, py, 1, 1);
+            }
+          }
+        }
       }
     }
   }

@@ -512,6 +512,7 @@ export class WorldScene implements Scene {
     g.fillRect(0, 0, W, H);
     if (this.tilemap.ground) g.drawImage(this.tilemap.ground, -cx, -cy);
     this.tilemap.drawAnimated(g, cx, cy, this.frame, W, H);
+    if (this.tilemap.edges) g.drawImage(this.tilemap.edges, -cx, -cy);
 
     const sorted = [...this.entities].sort((a, b) => a.layer - b.layer || a.sortY - b.sortY || a.uid - b.uid);
     for (const e of sorted) {

@@ -20,6 +20,12 @@ export interface TileDef {
   animSpeed?: number;
   /** Footstep pitch / surface type. */
   surface?: 'grass' | 'wood' | 'stone' | 'carpet' | 'paper' | 'water';
+  /**
+   * Organic border: this tile "spills" 1–2 jagged pixels onto neighbouring tiles of another kind
+   * (e.g. grass overhanging a path). `color` is the fill, `dark` the tip/shadow pixel.
+   * Tiles sharing the same `group` don't spill onto each other.
+   */
+  edge?: { color: string; dark?: string; group?: string };
 }
 
 export interface PropDef {
