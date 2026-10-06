@@ -1,0 +1,30 @@
+name: 🐛 Bug
+description: Quelque chose ne fonctionne pas comme prévu
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: Que s'est-il passé ?
+      description: Décris le problème et ce que tu attendais.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Étapes pour reproduire
+      placeholder: "1. Lancer une nouvelle partie\n2. Aller au village\n3. …"
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Plateforme
+      options:
+        - Navigateur ordinateur
+        - Navigateur mobile
+        - Application installée (PWA) Android
+        - Application installée (PWA) iOS
+  - type: input
+    id: where
+    attributes:
+      label: Où dans le jeu ?
+      placeholder: "Chapitre 2, Forêt de Crayons"

@@ -51,6 +51,7 @@ export class Screen {
     const root = document.documentElement.style;
     root.setProperty('--touch-opacity', String(opacity));
     root.setProperty('--touch-scale', String(size));
+    this.resize();
   }
 
   setCrt(on: boolean): void {
@@ -67,7 +68,14 @@ export class Screen {
     const portrait = vh > vw;
     const controlsH = this.touchVisible && portrait ? Math.min(Math.max(vh * 0.42, 230), vh - (vw * H) / W - 10) : 0;
     document.documentElement.style.setProperty('--controls-h', `${Math.max(0, controlsH)}px`);
-    const availW = vw;
+    // Landscape + touch: keep the controls beside the screen when that still leaves a comfortable scale,
+    // otherwise overlay them (small phones).
+    let availW = vw;
+    if (this.touchVisible && !portrait) {
+      const side = 150 * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--touch-scale')) || 1);
+      const withSides = Math.min((vw - side * 2) / W, vh / H);
+      if (withSides >= 1.6) availW = vw - side * 2;
+    }
     const availH = vh - Math.max(0, controlsH);
     const dpr = window.devicePixelRatio || 1;
     // Largest integer scale in device pixels that fits.

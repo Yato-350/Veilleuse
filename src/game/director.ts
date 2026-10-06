@@ -17,6 +17,10 @@ import { GameOverScene } from './scenes/gameover';
 import { ChapterCard } from './scenes/chapter';
 import { ImageScene } from './scenes/image';
 import { openMenu } from './scenes/menu';
+import { PaperScene } from './scenes/paper';
+import { CrashScene } from './scenes/crash';
+import { PoemScene } from './scenes/poem';
+import type { WordDef } from './battle/types';
 import { ScriptAbort } from './flow';
 
 /** Scripting API used by cutscenes, NPCs and events. */
@@ -346,6 +350,21 @@ export class Director {
 
   menu(): void {
     openMenu();
+  }
+
+  /** Shows handwritten lines on a notebook page. */
+  paper(lines: string[], title = ''): Promise<void> {
+    return PaperScene.show(lines, title);
+  }
+
+  /** Fake crash / error screen. */
+  crash(lines: string[], minFrames = 180, style: 'black' | 'blue' = 'black'): Promise<void> {
+    return CrashScene.show(lines, minFrames, style);
+  }
+
+  /** DDLC-style poem: the player picks words. */
+  poem(title: string): Promise<WordDef[]> {
+    return PoemScene.write(title);
   }
 
   /** Runs another script inline. */

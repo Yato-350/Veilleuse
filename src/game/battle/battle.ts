@@ -167,6 +167,8 @@ export class Battle implements Scene {
       const flavor = spareable.length && pickFrom.def.flavorCalm && pickFrom.spareable ? pickFrom.def.flavorCalm : rng.pick(pickFrom.def.flavor);
       this.setText(flavor, false);
       const choice = await this.mainMenu();
+      if (await this.hooks.onMenu?.(this, choice)) return 'acted';
+      if (this.ended) return 'acted';
       if (choice === 0) {
         const target = await this.chooseTarget();
         if (!target) continue;
@@ -585,6 +587,7 @@ export class Battle implements Scene {
 
   update(): void {
     this.t++;
+    if (this.hooks.menuLabels) this.menuLabels = this.hooks.menuLabels(this);
     // Box animation
     const k = 0.25;
     this.box.x = lerp(this.box.x, this.boxTarget.x, k);

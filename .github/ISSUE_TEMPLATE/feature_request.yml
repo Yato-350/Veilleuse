@@ -1,0 +1,14 @@
+name: ✨ Idée
+description: Proposer une amélioration ou une nouvelle fonctionnalité
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Ton idée
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Pourquoi ce serait mieux ?

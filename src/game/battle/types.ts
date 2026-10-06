@@ -31,8 +31,10 @@ export interface BattleHooks {
   onItem(b: Battle, item: string): Promise<boolean>;
   /** Override pattern choice. */
   pattern(b: Battle, turn: number): string | null;
-  /** Override the 4 menu labels. */
+  /** Override the 4 menu labels (evaluated every frame). */
   menuLabels(b: Battle): string[];
+  /** A main-menu button was chosen. Return true if handled (the turn is consumed). */
+  onMenu(b: Battle, index: number): Promise<boolean>;
   /** Override the word pool. */
   words(b: Battle): WordDef[] | null;
   /** Enemy line before attacking (overrides random talk). */

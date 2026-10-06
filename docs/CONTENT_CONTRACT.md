@@ -470,6 +470,8 @@ hachures, couleurs vives sur papier), style pixel sombre pour les souvenirs rée
 
 ## 8. Cartes et scénario (équipes RÉEL, CH1, CH2, CH3)
 
+**Le déroulé scène par scène de toute l'histoire est dans `docs/SCENARIO.md` : c'est la référence narrative.**
+
 ### 8.1 Propriété
 
 | Équipe | Cartes (`src/data/maps/…`) | Scénario (`src/game/story/…`) |
@@ -554,13 +556,17 @@ await d.give('lait'); d.take('ballon'); d.heal(); d.souvenir('fenetre'); d.save(
 const r = await d.battle(['placard'], { hooks, music: 'boss', bg: 'closet', intro: '* …' }); // r.outcome: 'win'|'spare'|'flee'|'lose'|'scripted'
 await d.chapter('Chapitre 2', 'La Forêt de Crayons', '…'); await d.image('souvenir_dessin', ['légende…']);
 await shop(['bonbon', 'lait', 'biscuit']);           // depuis common.ts
+await d.paper(['ligne 1', 'ligne 2'], 'Titre');      // page de carnet manuscrite plein écran
+await d.crash(['ERREUR : souvenir_mina introuvable', '…'], 180); // faux plantage (4ᵉ mur)
+const mots = await d.poem('Pour Mina');              // poème à la DDLC → WordDef[] ; puis composePoem(mots) (scenes/poem.ts)
 ```
 
 Effets visuels directs : `import { fx } from '../../engine/fx'` (`fx.glitch = 0.3`, `fx.gray`, `fx.tint`,
 `fx.vignette`), `import { setPageTitle } from '../meta'` (titre d'onglet inquiétant), `G.state` / `G.meta` pour la
 mémoire (`G.meta.newGames`, `G.meta.deaths`, `G.meta.endings`), `isLateNight()` de `src/game/meta.ts`.
 
-**Combats de boss** : passer des `hooks` (`BattleHooks` de `src/game/battle/types.ts`) — `beforeTurn` (dialogues
+**Combats de boss** : passer des `hooks` (`BattleHooks` de `src/game/battle/types.ts`) — `onMenu(b, i)` (intercepter
+un bouton du menu principal, ex. « DORMIR »), `beforeTurn` (dialogues
 entre les tours, `await b.bubble([{ e: b.enemies[0], text }])`, `await b.say('* …')`), `onItem` (ex. la Veilleuse
 de poche pour le Placard), `onWord`, `words` (remplacer le carnet), `menuLabels` / `b.menuLabels` / `b.menuDisabled`,
 `pattern`, `onDeath`, `onPlayerDeath`, `b.setEmotion`, `b.heal`, `b.end('scripted')`, `b.overlay`.
