@@ -1,0 +1,41 @@
+{
+  "name": "veilleuse",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Veilleuse — un RPG narratif en pixel art inspiré d'Undertale, OMORI et Doki Doki Literature Club. Jouable dans le navigateur et installable sur mobile.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Yato-350",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Yato-350/Jeuclaude.git"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "icons": "node tools/gen-icons.mjs",
+    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "1.56.1",
+    "eslint": "^10.12.0",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.9",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.71.1",
+    "vite": "^8.3.2",
+    "vitest": "^5.0.3"
+  }
+}

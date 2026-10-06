@@ -1,0 +1,98 @@
+import { TILE } from '../../engine/constants';
+import { hash2 } from '../../engine/math';
+import { parseRows, makeCanvas, ctx2d, drawSprite } from '../../engine/sprite';
+import { hasSpr, spr } from '../assets';
+import { TILES } from '../../data/tiles';
+import type { MapDef, TileDef } from './types';
+
+/** Parsed tile grid with collision and pre-rendered layers. */
+export class Tilemap {
+  w: number;
+  h: number;
+  ids: string[][];
+  defs: (TileDef | null)[][];
+  ground: HTMLCanvasElement | null = null;
+  over: HTMLCanvasElement | null = null;
+  animated: Array<{ x: number; y: number; def: TileDef }> = [];
+  private variant: string;
+
+  constructor(map: MapDef) {
+    const rows = parseRows(map.tiles);
+    this.h = rows.length;
+    this.w = rows[0]?.length ?? 0;
+    this.variant = map.world;
+    this.ids = rows.map((row) => [...row].map((ch) => map.legend[ch] ?? ''));
+    this.defs = this.ids.map((row) => row.map((id) => (id ? (TILES[id] ?? null) : null)));
+  }
+
+  get pxW(): number {
+    return this.w * TILE;
+  }
+
+  get pxH(): number {
+    return this.h * TILE;
+  }
+
+  tileAt(tx: number, ty: number): TileDef | null {
+    if (tx < 0 || ty < 0 || tx >= this.w || ty >= this.h) return null;
+    return this.defs[ty]![tx]!;
+  }
+
+  solidAt(px: number, py: number): boolean {
+    const tx = Math.floor(px / TILE);
+    const ty = Math.floor(py / TILE);
+    if (tx < 0 || ty < 0 || tx >= this.w || ty >= this.h) return true;
+    const d = this.defs[ty]![tx];
+    return !d || !!d.solid;
+  }
+
+  private key(k: string): string {
+    const v = `${k}@${this.variant}`;
+    return hasSpr(v) ? v : k;
+  }
+
+  private artFor(def: TileDef, x: number, y: number): string {
+    if (Array.isArray(def.art)) {
+      const i = Math.floor(hash2(x, y, 7) * def.art.length);
+      return def.art[i]!;
+    }
+    return def.art;
+  }
+
+  /** Pre-renders static layers (call after sprites are built). */
+  render(): void {
+    this.ground = makeCanvas(this.pxW, this.pxH);
+    this.over = makeCanvas(this.pxW, this.pxH);
+    const gg = ctx2d(this.ground);
+    const go = ctx2d(this.over);
+    this.animated = [];
+    for (let y = 0; y < this.h; y++) {
+      for (let x = 0; x < this.w; x++) {
+        const def = this.defs[y]![x];
+        if (!def) continue;
+        const target = def.over ? go : gg;
+        if (def.under) {
+          const u = TILES[def.under];
+          if (u) drawSprite(gg, spr(this.key(this.artFor(u, x, y))), x * TILE + 8, y * TILE + TILE);
+        }
+        if (def.anim) {
+          this.animated.push({ x, y, def });
+          continue;
+        }
+        drawSprite(target, spr(this.key(this.artFor(def, x, y))), x * TILE + 8, y * TILE + TILE);
+      }
+    }
+  }
+
+  drawAnimated(g: CanvasRenderingContext2D, camX: number, camY: number, frame: number, viewW: number, viewH: number): void {
+    for (const a of this.animated) {
+      const px = a.x * TILE - camX;
+      const py = a.y * TILE - camY;
+      if (px < -TILE || py < -TILE || px > viewW || py > viewH) continue;
+      const frames = a.def.anim!;
+      const speed = a.def.animSpeed ?? 20;
+      const i = (Math.floor(frame / speed) + Math.floor(hash2(a.x, a.y, 3) * frames.length)) % frames.length;
+      drawSprite(g, spr(this.key(frames[i]!)), px + 8, py + TILE);
+    }
+  }
+}
