@@ -66,10 +66,11 @@ const BAZAR: MapDef = {
   onEnter: E.bazarEnter,
   props: [
     // The table has no text of its own, so examining it always picks the nightlight in front of Noa.
-    P('prop_display_table', 4, 5, { w: 5 }),
+    P('prop_display_table', 4, 5, { w: 5, light: { r: 90, color: '#f4f0ff', dy: -12 } }),
     ...onSale(),
     // Top wall
-    P('prop_vitrine', 2, 2, { w: 2, solid: false, oy: -2, text: ['La vitrine. Dehors, la rue se réveille.', 'Un monsieur promène son chien. La boulangerie remonte son rideau. Il ne pleut plus.'] }),
+    // Morning sun through the shop window
+    P('prop_vitrine', 2, 2, { w: 2, solid: false, oy: -2, light: { r: 140, color: '#ffe9c4', dy: 30 }, text: ['La vitrine. Dehors, la rue se réveille.', 'Un monsieur promène son chien. La boulangerie remonte son rideau. Il ne pleut plus.'] }),
     P('prop_clock', 8, 2, { solid: false, oy: -10, text: ['L\'horloge de la boutique indique 9h12.', 'Elle est à l\'heure. Ça te fait bizarre.'] }),
     // Left
     P('prop_cartes', 1, 3, { text: ['Un présentoir de cartes postales. « Bons baisers de la mer ».', 'Il y a la plage où vous étiez allés, tous les trois. Quarante-deux coquillages.'] }),

@@ -50,7 +50,7 @@ interface ReplyDef extends PhoneReply {
   /** Maman's answer, message by message ([] = she starts typing, then gives up). */
   answer?: string[];
   /** Narration once the phone is put down. */
-  after?: string[];
+  after?: string[] | (() => string[]);
   /** Only offered when this returns true. */
   when?: () => boolean;
 }
@@ -69,7 +69,7 @@ const REPLIES: ReplyDef[][] = [
   ],
   // Interlude 1: « Tu as mangé ? »
   [
-    { id: 'oui', text: 'Oui.', emotion: 'neutre', answer: ['Bravo. ♥'], after: [] },
+    { id: 'oui', text: 'Oui.', emotion: 'neutre', answer: ['Bravo. ♥'], after: () => (flag('i1_ate') ? [] : ['Ce n\'est pas vrai.', 'Pas encore.']) },
     { id: 'sale', text: 'C\'était trop salé.', emotion: 'joie', answer: ['Pardon !!', 'J\'avais la tête ailleurs.', 'Mais tu as mangé. Merci.'], after: ['Tu souris.', 'Ça fait bizarre, sur ton visage.'], when: () => flag('i1_ate') },
     { id: 'essayer', text: 'Je vais essayer.', emotion: 'joie', answer: ['Merci, mon grand.', 'C\'est déjà beaucoup.'], after: ['Les pâtes sont dans la cuisine. Tu le sais.'], when: () => !flag('i1_ate') },
     { id: 'faim', text: 'Pas faim.', emotion: 'tristesse', answer: ['Même un yaourt.', 'Pour me faire plaisir ?'], after: [] },
@@ -179,7 +179,8 @@ async function answerMaman(d: Director, n: 0 | 1 | 2): Promise<void> {
     await ph.waitKey();
     await ph.close();
   }
-  if (pick.after?.length) await d.say(pick.after);
+  const after = typeof pick.after === 'function' ? pick.after() : pick.after;
+  if (after?.length) await d.say(after);
 }
 
 // ---------------------------------------------------------------------------

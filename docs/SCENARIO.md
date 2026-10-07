@@ -30,6 +30,8 @@ il ne l'a pas apportée) n'est **dit clairement qu'au chapitre 3**. Avant, seule
    - **photo retournée** : « Tu ne la retournes pas. »
    - **calendrier** : arrêté sur un mois de l'an dernier.
    - **bureau / téléphone** : 14 messages non lus de « Maman ». Le dernier : « Je rentre tard. Il y a des pâtes. »
+     Le fil s'ouvre en plein écran (`PhoneScene`, `src/game/scenes/phone.ts`) et Noa **peut répondre** (voir
+     « Répondre à Maman » plus bas) → `p_reply`.
    - **fenêtre** : la pluie, la lune derrière les nuages.
    - **armoire** : « Tu n'aimes pas la laisser ouverte la nuit. »
    - **porte** : « Tu n'as pas envie de sortir. » (bloquée pendant le prologue)
@@ -84,7 +86,10 @@ Ton : merveilleux, drôle, tendre. Le malaise est minime (une ou deux notes faus
 
 Jour gris, pluie, lumière blafarde. Musique `interlude`.
 
-1. Noa se réveille. Dodo est une peluche immobile. Le téléphone vibre : un message de Maman (« Tu as mangé ? »).
+1. Noa se réveille. Dodo est une peluche immobile. Le téléphone vibre : un message de Maman (« Tu as mangé ? »),
+   précédé d'un mot qui répond à `p_reply` (« Merci pour ton « ok », hier. », « J'ai relu ton message dix fois. »…).
+   Réponse possible → `i1_reply` (« Oui. » est un mensonge tant que Noa n'a pas mangé : « Ce n'est pas vrai. Pas
+   encore. »).
 2. L'appartement s'ouvre (`appartement`) : couloir, salon (télé éteinte, canapé, photo), cuisine (frigo avec mot
    aimanté : « Noa, mange quelque chose s'il te plaît. Je t'aime. — Maman », et des dessins de Mina), salle de bain
    (miroir : « Tu évites ton reflet. »), chambre de Maman (fermée : « Elle n'est pas rentrée. »), **porte de Mina**
@@ -125,7 +130,9 @@ Ton : mélancolique, mystérieux. Mina commence à oublier.
 Nuit plus noire que jamais. Musique quasi absente, `hum`. Glitches discrets.
 
 1. L'horloge affiche **3:33**. Le téléphone : un **message vocal** de Maman : « Noa… ça fait un an demain. Je… je
-   rentre ce soir. On ira la voir ensemble, d'accord ? »
+   rentre ce soir. On ira la voir ensemble, d'accord ? » Son début change selon les réponses précédentes (silence :
+   « je sais que tu ne décroches pas » ; colère : « je sais que tu m'en veux » ; sinon : « tes petits messages, je
+   les garde tous »). Puis Noa peut répondre au message → `i2_reply` (à 3h33, personne ne répond : « Distribué »).
 2. `appartement_nuit` : même plan mais plus sombre (lumière limitée autour de Noa), la **télé s'allume seule** :
    vidéo de famille (`d.image('tv_mina')`, voix de Mina : « Noa ! Regarde ce que j'ai dessiné ! »), puis neige.
 3. Le **couloir s'allonge** (téléportation silencieuse vers une version plus longue, ou portes qui se répètent).
@@ -180,8 +187,55 @@ Ton : inquiétant puis bouleversant. Monde `ink` (tuiles et sprites corrompus).
 3. **Le carnet** : `d.image('carnet_couverture')`, puis `carnet_page1..4` (la dernière : « Si tu as peur du noir,
    regarde la lune. Moi je serai ta veilleuse. — Mina »).
 4. **Poème** (style DDLC) : `PoemScene.write('Pour Mina')` puis afficher `composePoem(mots)` sur papier.
+   Le poème est gardé : `fin_poem` (pour l'épilogue) et `G.meta.poems` (galerie de l'écran titre).
 5. Bruit de clés : **Maman** rentre. Elle trouve Noa dans la chambre de Mina. Elle ne dit rien d'abord. Puis :
-   « Tu es réveillé. » — `pose_hug`. « On ira la voir ensemble ? » — « …Oui. » (si `i1_ate` : « Tu as mangé les
-   pâtes ? » petit sourire). Le soleil se lève (`fin_aube`).
-6. Dernières lignes : Dodo, simple peluche, sur l'appui de fenêtre : « Je veillerai sur lui. Pour de vrai, cette
-   fois. Merci, {player}. » → `finishGame(d, 'aube')`.
+   « Tu es réveillé. » — `pose_hug`. Elle répond à ce que Noa a écrit (ou à son silence) : un mot sur les messages
+   (« Je t'écris tous les soirs, tu sais. Même quand tu ne réponds pas. » / le « moi aussi » lu au vestiaire / « tu
+   as le droit d'être en colère »…), le « oui » mensonger des pâtes, puis l'invitation qui reprend `i2_reply`
+   (« Tu m'as répondu « d'accord », cette nuit. » / « Si tu veux faire demi-tour, on fera demi-tour. »…). « On lui
+   apportera une veilleuse. Une neuve. » — « …Oui. » Le soleil se lève (`fin_aube`).
+6. **Épilogue — « Une veilleuse neuve »** (voir plus bas), puis `finishGame(d, 'aube')`.
+
+### Répondre à Maman (prologue, interludes I et II)
+
+Un seul mot par moment, choisi dans un petit carnet à côté du téléphone ; chaque réponse a une émotion (couleur,
+forme si l'option d'accessibilité est active), plus « Ne rien répondre » (on peut changer d'avis en revenant au
+téléphone). Le fil garde tout l'historique (le téléphone du final montre toute la conversation).
+
+| Moment | Réponses (`id`) | Maman |
+|---|---|---|
+| Prologue `p_reply` | « ok » (`ok`), « Moi aussi. » (`aime`), « J'arrive pas à dormir. » (`dormir`), « Laisse-moi. » (`laisse`) | répond tout de suite (« Merci de répondre. », « Laisse la veilleuse allumée. Je rentre vite. ») ; à « Laisse-moi » elle commence à écrire, plusieurs fois, puis plus rien |
+| Interlude I `i1_reply` | « Oui. » (`oui`), « C'était trop salé. » (`sale`, si `i1_ate`) / « Je vais essayer. » (`essayer`), « Pas faim. » (`faim`), « Arrête de demander. » (`arrete`) | « Même un yaourt. Pour me faire plaisir ? », « Pardon. Je m'inquiète, c'est tout. »… |
+| Interlude II `i2_reply` | « D'accord. » (`accord`), « Je peux pas. » (`peux`), « Pardon. » (`pardon`), « Pourquoi faire ? » (`pourquoi`) | pas de réponse (3h33) ; elle y répond au final |
+
+`rien` = « Ne rien répondre » ; un drapeau absent = téléphone jamais ouvert (compté comme un silence).
+
+## Épilogue — « Une veilleuse neuve » (fil RÉEL, route de l'aube, `bazar` → `jardin`)
+
+Le matin, un an jour pour jour. Monde réel de jour, musique `room_quiet`, aucun combat, 5–8 minutes. Tout est piloté
+par des scripts de carte et des drapeaux `ep_*`, pour qu'une sauvegarde de suspension reprenne proprement.
+
+1. Noir : « Plus tard, ce matin-là. », carte de titre « Épilogue — Une veilleuse neuve ». « Tu as mis Dodo dans ton
+   sac. Tu ne sais pas trop pourquoi. »
+2. **Le Petit Bazar** (`bazar`) : la vendeuse, Maman devant la vitrine (« Choisis, toi. C'est toi qui sais. »).
+   Objets à examiner (cartes postales de la plage aux quarante-deux coquillages, parapluie jaune à canards, tasses à
+   prénoms sans « Mina », boule à neige au mouton…). Sur la grande table, cinq veilleuses : **lune** (la même que
+   celle de Mina), **étoile**, **mouton**, **nuage**, **couronne** → `ep_vl`, réaction de Maman.
+3. **Le comptoir** : « C'est pour offrir ? » — Noa peut dire « C'est pour ma sœur. » (il ne le dit plus depuis un an)
+   ou se taire. La vendeuse se souvient de « la petite rousse qui voulait le parapluie à canards » ; elle comprend
+   sans qu'on le dise. Papier de soie, ruban jaune, deux bonbons à la fraise : « Un pour toi. Un pour elle. » →
+   `ep_paid`, la sortie s'ouvre.
+4. **Le jardin** (`jardin`) : Maman suit Noa (« C'est tout au fond. Sous le grand arbre. »). Tombes à lire, moineaux,
+   robinet et arrosoir (optionnel : `ep_water`, arroser les fleurs de Mina → `ep_watered`). Au coin du grand arbre,
+   Maman s'arrête : « Vas-y, toi. Je reste là. » (`ep_maman_wait`).
+5. **La pierre de Mina** (petite, blanche, une étoile gravée, sa couronne en papier) : « … Salut, Mina. » Noa pose la
+   veilleuse (`ep_placed` ; « En plein jour, on la voit à peine. Mais elle brille. »), puis **lit à voix haute** le
+   poème de la nuit (`fin_poem`, mot à mot) → `ep_poem`.
+6. **Dodo** : Noa l'assoit sur la pierre. Il ne dit rien ; ses yeux-boutons attrapent la lumière (♥). Le laisser à
+   Mina (« Veille sur elle, maintenant. ») ou le garder → `ep_dodo` = `laisse` | `garde`.
+7. Maman s'approche : « Elle l'aurait accroché sur le frigo. Avec l'aimant en forme de fraise. » Puis, quand le
+   joueur le décide (parler à Maman, ou le portail) : « On rentre ? Ce soir, je fais des pâtes. » (si `i1_reply` =
+   `sale` : « … Pas trop salées. ») Maman tend la main. Illustration `fin_jardin`.
+8. Dernières lignes, voix de Dodo : « Je veillerai sur lui. Pour de vrai, cette fois. » (ou, s'il est resté :
+   « Je veillerai sur elle. Lui, il n'a plus peur du noir. Plus autant. ») « Merci, {player}. Bonne nuit. Et
+   bonjour. » → `finishGame(d, 'aube')`.
