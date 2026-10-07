@@ -44,7 +44,14 @@ export interface SheepRound {
 
 export const SHEEP_ROUNDS: SheepRound[] = [
   { title: 'Doucement', interval: 66, window: 18, tolerance: 2, blind: false, seqs: [['S', 'S', 'S', 'H', 'S', 'S']] },
-  { title: 'Le mouton noir', interval: 54, window: 16, tolerance: 2, blind: false, seqs: [['S', 'S', 'B', 'S', 'P', 'B', 'H', 'S', 'S']] },
+  {
+    title: 'Le mouton noir',
+    interval: 54,
+    window: 16,
+    tolerance: 2,
+    blind: false,
+    seqs: [['S', 'S', 'B', 'S', 'P', 'B', 'H', 'S', 'S']],
+  },
   {
     title: 'Les yeux fermés',
     interval: 48,
@@ -74,7 +81,24 @@ export interface SheepResult {
   taps: number;
 }
 
-const NUMBERS = ['zéro', 'Un', 'Deux', 'Trois', 'Quatre', 'Cinq', 'Six', 'Sept', 'Huit', 'Neuf', 'Dix', 'Onze', 'Douze', 'Treize', 'Quatorze', 'Quinze'];
+const NUMBERS = [
+  'zéro',
+  'Un',
+  'Deux',
+  'Trois',
+  'Quatre',
+  'Cinq',
+  'Six',
+  'Sept',
+  'Huit',
+  'Neuf',
+  'Dix',
+  'Onze',
+  'Douze',
+  'Treize',
+  'Quatorze',
+  'Quinze',
+];
 
 // Stage geometry (the sheep's jump is the same as in the battle box).
 const STAGE = { x: 20, y: 24, w: 280, h: 80 };
@@ -371,7 +395,7 @@ export class SheepCountScene implements Scene {
     const waiting = this.sheep.find((s) => (s.state === 'stop' || s.state === 'sleep') && !s.penalized);
     if (waiting) {
       waiting.penalized = true;
-      this.mistake('Il n\'a pas sauté !');
+      this.mistake("Il n'a pas sauté !");
       return;
     }
     // A press with no sheep around: harmless.
@@ -464,7 +488,10 @@ export class SheepCountScene implements Scene {
     // Timing aid: the fence glows while a sheep is above it.
     const r = this.round;
     const glow =
-      this.playing && !!r && !r.blind && this.sheep.some((s) => s.crossT !== null && !s.judged && Math.abs(this.roundT - s.crossT) <= r.window);
+      this.playing &&
+      !!r &&
+      !r.blind &&
+      this.sheep.some((s) => s.crossT !== null && !s.judged && Math.abs(this.roundT - s.crossT) <= r.window);
     this.drawFence(g, glow);
     // Sheep.
     for (const s of this.sheep) this.drawSheep(g, s);
@@ -473,7 +500,12 @@ export class SheepCountScene implements Scene {
       const a = f.t < 36 ? 1 : 1 - (f.t - 36) / 14;
       const fy = f.y - Math.min(10, f.t / 3);
       const fx = Math.max(x + measure(f.text) / 2 + 2, Math.min(x + w - measure(f.text) / 2 - 2, f.x));
-      drawText(g, f.text, Math.round(fx), Math.round(fy), { align: 'center', color: f.color, shadow: '#1c1424', alpha: a });
+      drawText(g, f.text, Math.round(fx), Math.round(fy), {
+        align: 'center',
+        color: f.color,
+        shadow: '#1c1424',
+        alpha: a,
+      });
     }
     g.restore();
   }
@@ -524,7 +556,8 @@ export class SheepCountScene implements Scene {
     g.globalAlpha = 1;
     if (s.state === 'sleep') {
       drawSprite(g, base, sx, sy, { alpha: s.alpha, scaleY: 0.7 });
-      if ((this.roundT - s.stateT) % 30 < 20) drawText(g, 'z', sx + 6, sy - 14 - ((this.roundT - s.stateT) % 30) / 4, { color: '#fffaf2', alpha: s.alpha });
+      if ((this.roundT - s.stateT) % 30 < 20)
+        drawText(g, 'z', sx + 6, sy - 14 - ((this.roundT - s.stateT) % 30) / 4, { color: '#fffaf2', alpha: s.alpha });
       return;
     }
     drawSprite(g, base, sx, sy, { alpha: s.alpha });
@@ -537,7 +570,11 @@ export class SheepCountScene implements Scene {
     }
     if (s.state === 'stop') {
       const k = this.roundT - s.stateT;
-      drawText(g, k < s.pause / 2 ? '?' : '…', sx, sy - base.h - 10 - (k % 20 < 10 ? 1 : 0), { align: 'center', color: '#fffaf2', shadow: '#1c1424' });
+      drawText(g, k < s.pause / 2 ? '?' : '…', sx, sy - base.h - 10 - (k % 20 < 10 ? 1 : 0), {
+        align: 'center',
+        color: '#fffaf2',
+        shadow: '#1c1424',
+      });
     }
   }
 
@@ -608,7 +645,7 @@ export class SheepCountScene implements Scene {
       const hint = this.round.blind
         ? 'Les moutons qui sautent pour de vrai… et pas le noir.'
         : touch
-          ? 'Touche l\'écran quand un mouton passe la barrière.'
+          ? "Touche l'écran quand un mouton passe la barrière."
           : input.lastDevice === 'gamepad'
             ? 'Appuie sur A quand un mouton passe la barrière.'
             : 'Espace ou Entrée quand un mouton passe la barrière.';

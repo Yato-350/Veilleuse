@@ -60,6 +60,10 @@ Ton : merveilleux, drôle, tendre. Le malaise est minime (une ou deux notes faus
    Noa ! » Noa (portrait surpris) : « …Mina ? » — « Ben oui ! Qui d'autre ? Je suis la Princesse-Chevalière du
    Pays de Coton, je te signale. » Elle rejoint l'équipe (`d.follower('mina')`).
    Quête : une **étoile filante** est tombée sur la Colline aux Couvertures — « Si on la trouve, on fait un vœu ! »
+   Dans la prairie, en option : Mina réagit au lit (« Il grince pas »), au rocher au smiley (« Il te ressemble. …
+   Avant. Quand tu souriais. »), au buisson aux traces de bottes ; **secret** : le trésor de Mina caché en bas à
+   gauche (boîte « PAS TOUCHE. (sauf Noa) » : billes, bouton doré, une plume « qui écrit toute seule quand on est
+   triste », un biscuit étoile) → `c1_tresor`.
 5. **Village des Moutons** (`village`) : PNJ moutons drôles (un qui compte les autres pour s'endormir, un poète,
    un qui a peur de son ombre, un agneau qui a perdu son **ballon rouge** — quête annexe : le ballon est coincé dans
    un arbre de la prairie, récompense `crayon de cire` = arme `cire`), **Madame Lune** (endormie, parle en bâillant,
@@ -69,11 +73,39 @@ Ton : merveilleux, drôle, tendre. Le malaise est minime (une ou deux notes faus
    faire une sieste (soin) ; on peut y trouver le `plaid` ? (non : garder `plaid` pour le ch. 2).
    Mina commente beaucoup de choses (tableau d'affichage avec **ses** dessins : « C'est moi qui les ai faits ! …
    Enfin je crois. »).
+   **1.1 — plus de matière (optionnel)** : les PNJ ont une 2ᵉ / 3ᵉ réplique et changent selon la progression
+   (`c1_ballon_rendu`, `c1_sheep_done`) : le mouton qui se compte lui-même parle de son **grand frère le
+   Moutonnier** « là-haut sur la colline » ; le poète trouve sa rime (« …toute la semaine ») ; le peureux et son
+   ombre (Mina : « Une ombre, c'est de la lumière avec un trou dedans. C'est Maman qui dit ça. ») ; le banc
+   « M + N » (Mina ne se souvient pas de l'avoir gravé) ; frapper chez le Mouton Noir (« …Bonne nuit quand
+   même. ») ; le puits (« Garde ton vœu pour l'étoile ») ; le tableau affiche le ballon rendu et un « MERCI AU
+   GRAND COMPTEUR DE MOUTONS » ; Madame Lune, après les moutons : « À force de compter, certains s'endorment pour
+   de bon. »
 6. **Chaussette Perdue** (ennemi visible, route du village) : mot spécial « paire ». Si épargnée → elle retrouve la
    marchande ; flag `c1_chaussette_paire` ; Chaussette offre une réduction / un cadeau.
-7. **Colline aux Couvertures** (`colline`) : sol en courtepointe, oreillers géants, petite énigme (pousser /
-   contourner des oreillers ou trouver un chemin dans un labyrinthe de couvertures), ennemis. Avant le sommet,
+7. **Colline aux Couvertures** (`colline`) : sol en courtepointe, murs d'oreillers, ennemis. Avant le sommet,
    point de sauvegarde. Mina : « Les monstres sous le lit, ceux dans le placard… j'avais peur d'eux. Avant. »
+   - **Énigme : compter les moutons** (1.1, `src/game/scenes/sheepcount.ts`). Deux oreillers géants bouchent le
+     chemin du sommet : « Le soir, les oreillers ne se poussent que quand tous les moutons sont comptés et
+     couchés. » Le **Moutonnier** (grand frère du mouton du village) garde un enclos (deux moutons, un mouton noir
+     boudeur) mais s'endort toujours avant la fin. Jeu de rythme : les moutons trottent et sautent la barrière ;
+     on appuie sur A (ou on touche l'écran) quand un mouton passe **au-dessus**. Manche 1 « Doucement » (un mouton
+     hésite : on attend qu'il saute), manche 2 « Le mouton noir » (on ne le compte **jamais**, des moutons sautent
+     à deux), manche 3 « Les yeux fermés » (le Moutonnier dort : on compte dans sa tête, puis on donne le total
+     parmi trois nombres ; un mouton peut s'endormir sans sauter). Fenêtres larges, barrière qui s'illumine, deux
+     erreurs permises, nouvel essai libre (la séquence de la manche 3 change), « Plus tard » pour revenir, et après
+     deux échecs **« Je n'y arrive pas »** : « Moi non plus, je n'y arrive jamais… ils sont tous couchés quand
+     même. » (`c1_sheep_helped`). Réussite → les oreillers s'écartent, lait chaud, `c1_sheep_done` (progression :
+     `c1_sheep_round`, `c1_sheep_fails`). On peut recompter pour le plaisir.
+     *Présage* : même saut, même rythme, mêmes moutons (`b_sheep`, `b_sheep_big` un sur quatre), même « bêê » qui
+     monte que le motif `sheep_count` de Dodo au combat final, sur la berceuse de `mina`. Et le Moutonnier :
+     « C'est un grand mouton tout doux qui m'a appris à compter. Il dit qu'à force de compter, on oublie tout le
+     reste. C'est reposant, d'oublier… » — Mina : « Moi, je veux rien oublier. »
+   - **Scène optionnelle : l'oreiller géant** (près du sommet, avec Mina) : assis tous les deux, le coton qui tombe
+     sur le Pays de Coton. Mina se souvient du « bonhomme de neige tout petit, sur le rebord de la fenêtre, parce
+     qu'on avait pas le droit de sortir » — « Pourquoi, déjà ? » (Noa : « Il faisait trop froid. » → « Ce n'était
+     pas le froid. ») ; elle mange le coton ; « Si un jour j'oublie des trucs… tu me les raconteras ? » (« Promis. »
+     → `c1_promesse`). Soin complet. Prépare le chapitre 2 (Mina oublie) sans rien révéler.
 8. **Boss : le Monstre du Placard** (armoire seule au sommet). Il a peur du noir lui aussi. Hooks : au tour 2 ou 3
    Mina s'écrie : « Noa ! Il a peur du noir, lui aussi ! » ; utiliser la **Veilleuse de poche** (OBJET) le rend
    apaisable d'un coup (ou compte comme 2 mots), sinon 4 mots de JOIE. Épargné → il devient `npc_placard` gentil
