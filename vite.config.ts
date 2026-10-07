@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import { fileURLToPath, URL } from 'node:url';
-import { serviceWorkerPlugin } from './tools/vite-sw-plugin';
+import { serviceWorkerPlugin } from './tools/vite-sw-plugin.ts';
 
 // Relative base so the build works on GitHub Pages (/<repo>/), on any static host,
 // and inside a Capacitor WebView.

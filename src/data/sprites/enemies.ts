@@ -238,8 +238,8 @@ class Pix {
     rows(art).forEach((l, y) =>
       [...l].forEach((c, x) => {
         if (c === '.' || c === ' ') return;
-        if (c === '~') this.g[oy + y] && this.g[oy + y]![ox + x] !== undefined && (this.g[oy + y]![ox + x] = '.');
-        else this.set(ox + x, oy + y, c);
+        if (c !== '~') this.set(ox + x, oy + y, c);
+        else if (this.g[oy + y]?.[ox + x] !== undefined) this.g[oy + y]![ox + x] = '.';
       }),
     );
     return this;
@@ -303,7 +303,7 @@ class Pix {
   /** Moves a rectangular block by (dx, dy) (what it leaves behind becomes transparent). */
   move(x0: number, y0: number, w: number, h: number, dx: number, dy: number): this {
     const src = this.clone();
-    for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) this.g[y] && this.g[y]![x] !== undefined && (this.g[y]![x] = '.');
+    for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) if (this.g[y]?.[x] !== undefined) this.g[y]![x] = '.';
     for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) if (src.solid(x, y)) this.set(x + dx, y + dy, src.get(x, y));
     return this;
   }

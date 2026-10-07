@@ -98,7 +98,15 @@ function boot(): void {
   document.getElementById('boot')?.classList.add('done');
   window.setTimeout(() => document.getElementById('boot')?.remove(), 800);
   // Expose a tiny API for automated tests.
-  (window as unknown as { __veilleuse: unknown }).__veilleuse = { game, world, G, MAPS, dialogue, fx };
+  // Class names are minified in production builds: `scene()` gives tests a stable name for the top scene.
+  const scene = (): string => {
+    const t = game.top;
+    if (t instanceof TitleScene) return 'TitleScene';
+    if (t instanceof WarningScene) return 'WarningScene';
+    if (t === world) return 'WorldScene';
+    return t?.constructor.name ?? 'none';
+  };
+  (window as unknown as { __veilleuse: unknown }).__veilleuse = { game, world, G, MAPS, dialogue, fx, scene };
 }
 
 let fpsT = performance.now();

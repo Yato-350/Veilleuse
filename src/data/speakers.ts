@@ -25,5 +25,9 @@ export const SPEAKERS: Record<string, Speaker> = {
   placard: { name: 'Monstre du Placard', voice: 'monster', color: '#9a7bd0' },
   tv: { name: 'Télé', voice: 'tv', color: '#8a8fb0' },
   inconnu: { name: '???', voice: 'default', color: '#8a7f96' },
+  // Chapter 3: voices without a face (Mina's whisper, voices of the real hospital).
+  minavoix: { name: 'Mina', voice: 'mina', color: '#ffe991' },
+  infirmiere: { name: 'Infirmière', voice: 'narrator', color: '#a7c7f0' },
+  mamantel: { name: 'Maman (téléphone)', voice: 'maman', color: '#f8b6cf' },
   system: { name: '', voice: 'none' },
 };

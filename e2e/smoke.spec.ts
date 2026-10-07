@@ -25,8 +25,8 @@ test('boots to the content warning then the title screen', async ({ page }) => {
   await press(page, 'Enter');
   await page.waitForTimeout(1500);
   const top = await page.evaluate(() => {
-    const v = (window as unknown as { __veilleuse: { game: { top: { constructor: { name: string } } } } }).__veilleuse;
-    return v.game.top?.constructor.name;
+    const v = (window as unknown as { __veilleuse: { scene: () => string } }).__veilleuse;
+    return v.scene();
   });
   expect(top).toBe('TitleScene');
   expect(errors).toEqual([]);
@@ -48,8 +48,8 @@ test('starts a new game, enters a name and reaches the prologue', async ({ page 
   await press(page, 'Enter'); // confirm "Oui"
   await page.waitForTimeout(3000);
   const state = await page.evaluate(() => {
-    const v = (window as unknown as { __veilleuse: { G: { state: { playerName: string } }; game: { top: { constructor: { name: string } } } } }).__veilleuse;
-    return { name: v.G.state.playerName, top: v.game.top?.constructor.name };
+    const v = (window as unknown as { __veilleuse: { G: { state: { playerName: string } }; scene: () => string } }).__veilleuse;
+    return { name: v.G.state.playerName, top: v.scene() };
   });
   expect(state.name).toBe('Camille');
   expect(state.top).toBe('WorldScene');

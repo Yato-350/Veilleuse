@@ -3,11 +3,14 @@ name: Android APK
 # Builds an installable Android app (Capacitor shell around the web build).
 # - Manual run (Actions → Android APK → Run workflow): the APK is available as a build artifact.
 # - Tag push (v1.0.0, …): the APK is also attached to the GitHub Release.
+# - Pull requests touching this file: build check only.
 
 on:
   workflow_dispatch:
   push:
     tags: ['v*']
+  pull_request:
+    paths: ['.github/workflows/android.yml', 'capacitor.config.json']
 
 permissions:
   contents: write
@@ -17,9 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
