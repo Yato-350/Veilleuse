@@ -144,7 +144,7 @@ describe('maps', () => {
       it('props, NPCs and enemies reference existing sprites and enemies', () => {
         const bad: string[] = [];
         for (const p of map.props ?? []) {
-          if (!hasSprite(p.sprite)) bad.push(`prop sprite ${p.sprite}`);
+          if (p.sprite !== '' && !hasSprite(p.sprite)) bad.push(`prop sprite ${p.sprite}`);
           for (const fr of p.frames ?? []) if (!hasSprite(fr)) bad.push(`prop frame ${fr}`);
         }
         for (const n of map.npcs ?? []) {

@@ -30,7 +30,7 @@ export interface TileDef {
 
 export interface PropDef {
   id?: string;
-  /** Sprite key. */
+  /** Sprite key ('' = invisible interactable, e.g. a door or a wall decoration that is part of the tiles). */
   sprite: string;
   /** Top-left tile of the footprint. */
   x: number;

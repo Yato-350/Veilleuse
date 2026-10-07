@@ -303,6 +303,7 @@ export class WorldScene implements Scene {
   }
 
   update(): void {
+    if (!this.map) return;
     this.frame++;
     G.state.playtime += 1 / 60;
     if (this.grace > 0) this.grace--;
@@ -437,14 +438,10 @@ export class WorldScene implements Scene {
       });
       return;
     }
-    // Door warps.
-    for (const w of this.map.warps ?? []) {
-      if (!w.door) continue;
-      if (pointInRect(pt.x, pt.y, this.warpRect(w))) {
-        this.doWarp(w);
-        return;
-      }
-    }
+    // Door warps (several conditional warps may share a tile: the first whose condition passes wins).
+    const doors = (this.map.warps ?? []).filter((w) => w.door && pointInRect(pt.x, pt.y, this.warpRect(w)));
+    const door = doors.find((w) => !w.cond || w.cond()) ?? doors[0];
+    if (door) this.doWarp(door);
   }
 
   private checkTriggers(): void {
@@ -467,15 +464,13 @@ export class WorldScene implements Scene {
   private checkWarps(): void {
     const pb = this.player.box;
     let any = false;
-    for (const w of this.map.warps ?? []) {
-      if (w.door) continue;
-      if (rectsOverlap(pb, this.warpRect(w))) {
-        any = true;
-        if (!this.warpLock) {
-          this.warpLock = true;
-          this.doWarp(w);
-          return;
-        }
+    const hits = (this.map.warps ?? []).filter((w) => !w.door && rectsOverlap(pb, this.warpRect(w)));
+    if (hits.length) {
+      any = true;
+      if (!this.warpLock) {
+        this.warpLock = true;
+        this.doWarp(hits.find((w) => !w.cond || w.cond()) ?? hits[0]!);
+        return;
       }
     }
     if (!any) this.warpLock = false;
@@ -509,6 +504,11 @@ export class WorldScene implements Scene {
   // -------------------------------------------------------------------------
 
   draw(g: CanvasRenderingContext2D): void {
+    if (!this.map) {
+      g.fillStyle = '#000';
+      g.fillRect(0, 0, W, H);
+      return;
+    }
     const cx = Math.round(this.camX);
     const cy = Math.round(this.camY);
     g.fillStyle = this.map.bg ?? (this.world === 'real' ? '#0a0b12' : '#1a1424');
