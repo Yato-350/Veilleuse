@@ -2121,3 +2121,139 @@ void sparkle;
 void minus;
 void ramp;
 void fillP;
+
+// --- Épilogue : le jardin (route de l'aube) ----------------------------------------------------------------------
+
+const JARDIN_STONE = { x: 206, y: 128 };
+const JARDIN_LIGHT = { x: 194, y: 121 };
+
+function paintJardin(g: Ctx): void {
+  // Morning sky, washed out, warmer towards the horizon
+  vgrad(g, 0, 0, SW, 70, ['#9fb6d2', '#b4c4d8', '#cfd4da', '#e8dfcf', '#f2e2c4']);
+  // Low sun behind the roofs (top left) and its haze
+  fillP(g, ell(54, 30, 34, 26), [20, 4, 90, 58], (x, y) => (bayer(x, y) < 0.5 - Math.hypot(x - 54, y - 30) / 70 ? '#fff4dc' : null));
+  fillP(g, ell(54, 30, 9, 9), [44, 20, 64, 40], '#fffaf0');
+  // Roofs of the town beyond the wall
+  field(g, 0, 34, SW, 24, (x, y) => {
+    const b = Math.floor(x / 22);
+    const top = 40 + Math.floor(hash(b, 0, 61) * 12) + (x % 22 < 3 ? 2 : 0);
+    if (y < top) return null;
+    const chimney = hash(b, 1, 61) < 0.4 && x % 22 > 14 && x % 22 < 18 && y >= top - 5;
+    return chimney || y >= top ? ramp(['#a39cae', '#8f899e'], (y - top) / 14, x, y) : null;
+  });
+  // The old garden wall, with its gate
+  field(g, 0, 54, SW, 16, (x, y) => {
+    if (x > 124 && x < 146 && y > 56) return null;
+    const brick = (Math.floor(x / 7) + Math.floor(y / 4)) % 2 === 0;
+    if (y < 57) return '#bdb2a6';
+    return brick ? '#a89a8e' : hash(x, y, 62) < 0.15 ? '#8e8274' : '#9c8f82';
+  });
+  rect(g, 120, 46, 6, 24, '#c8bdb0');
+  rect(g, 144, 46, 6, 24, '#c8bdb0');
+  rect(g, 119, 44, 8, 3, '#d8cec2');
+  rect(g, 143, 44, 8, 3, '#d8cec2');
+  // Grass: muted greens, dappled, with tiny flowers
+  field(g, 0, 66, SW, SH - 66, (x, y) => {
+    const v = (y - 66) / 114 + (noise2(x * 0.05, y * 0.08, 63) - 0.5) * 0.5;
+    return ramp(['#9cae86', '#86a074', '#728d64', '#5f7a56'], v, x, y);
+  });
+  for (let i = 0; i < 140; i++) {
+    const x = Math.floor(hash(i, 1, 64) * SW);
+    const y = 72 + Math.floor(hash(i, 2, 64) ** 0.7 * 106);
+    const c = ['#f4f0e6', '#f2dc84', '#e8b4c4', '#bcd0e8'][i % 4]!;
+    px(g, x, y, c);
+    if (y > 130) px(g, x + 1, y, c);
+  }
+  // The path, from us to the gate
+  fillP(g, poly([128, 70, 142, 70, 168, 180, 70, 180]), [68, 70, 170, 180], (x, y) => ramp(['#d8ccb0', '#cbbd9e', '#bcae90'], (y - 70) / 110 + (hash(x, y, 65) - 0.5) * 0.3, x, y));
+  // The big tree (right): trunk and a canopy that lets the light through
+  fillP(g, poly([238, 20, 252, 20, 256, 132, 262, 140, 230, 140, 236, 130]), [228, 18, 264, 142], (x, y) => ramp(['#6a5446', '#5a463c', '#4a3a32'], (x - 230) / 32, x, y));
+  const canopy = union(ell(262, 14, 70, 30), ell(218, 26, 34, 20), ell(300, 40, 36, 24), ell(250, 44, 30, 14));
+  field(g, 176, 0, SW - 176, 70, (x, y) => {
+    if (!canopy(x + 0.5, y + 0.5)) return null;
+    const lit = (x - 176) / 160 < 0.5 && y < 30;
+    const n = noise2(x * 0.15, y * 0.15, 66);
+    if (n > 0.62 && bayer(x, y) < 0.5) return lit ? '#b8c890' : '#8aa070';
+    return ramp(['#6a8a5e', '#58784e', '#486642'], n * 0.8 + y / 140, x, y);
+  });
+  // Dappled shade of the tree on the grass
+  field(g, 170, 100, 150, 70, (x, y) => (noise2(x * 0.06, y * 0.1, 67) > 0.58 && bayer(x, y) < 0.5 ? '#5a7452' : null));
+  // Mina's stone: small, white, a star carved in it, her paper crown on top
+  const sx = JARDIN_STONE.x;
+  const sy = JARDIN_STONE.y;
+  rect(g, sx - 24, sy - 2, 48, 9, '#d8d6d0');
+  rect(g, sx - 24, sy - 2, 48, 1, '#f2f0ea');
+  rect(g, sx - 24, sy + 6, 48, 1, '#9a9890');
+  const stone = union(ell(sx, sy - 26, 15, 10), poly([sx - 15, sy - 26, sx + 15, sy - 26, sx + 15, sy - 1, sx - 15, sy - 1]));
+  fillP(g, stone, [sx - 16, sy - 37, sx + 16, sy], (x) => (x < sx - 12 ? '#ffffff' : x > sx + 10 ? '#c8c6c0' : '#eeece6'));
+  kidStar(g, sx, sy - 18, 5, '#a8a6a0', 71);
+  rect(g, sx - 6, sy - 9, 12, 1, '#b8b6b0');
+  // the crown, faded by the rain
+  fillP(g, poly([sx - 9, sy - 34, sx - 9, sy - 42, sx - 5, sy - 38, sx, sy - 44, sx + 5, sy - 38, sx + 9, sy - 42, sx + 9, sy - 34]), [sx - 10, sy - 45, sx + 10, sy - 33], '#e8dca0');
+  rect(g, sx - 9, sy - 35, 18, 1, '#c8b878');
+  px(g, sx, sy - 41, '#e8a0a8');
+  // a pot of fresh flowers on the slab
+  rect(g, sx + 12, sy - 7, 7, 6, '#c87a5a');
+  px(g, sx + 13, sy - 9, '#f2dc84');
+  px(g, sx + 16, sy - 10, '#e8b4c4');
+  px(g, sx + 18, sy - 8, '#f4f0e6');
+  // the new nightlight, against the stone
+  fillP(g, ell(JARDIN_LIGHT.x, JARDIN_LIGHT.y, 4, 4), [JARDIN_LIGHT.x - 5, JARDIN_LIGHT.y - 5, JARDIN_LIGHT.x + 5, JARDIN_LIGHT.y + 5], '#fff0b0');
+  rect(g, JARDIN_LIGHT.x - 4, JARDIN_LIGHT.y + 4, 9, 2, '#b8b0a0');
+  // Pinwheels planted in the grass
+  for (const [wx, wy] of [
+    [232, 116],
+    [178, 122],
+  ] as const) {
+    rect(g, wx, wy, 1, 18, '#e8e4dc');
+    fillP(g, poly([wx, wy, wx, wy - 5, wx + 4, wy - 5]), [wx - 1, wy - 6, wx + 5, wy + 1], '#e2604c');
+    fillP(g, poly([wx, wy, wx + 5, wy, wx + 5, wy + 4]), [wx - 1, wy - 1, wx + 6, wy + 5], '#f2c84a');
+    fillP(g, poly([wx, wy, wx, wy + 5, wx - 4, wy + 5]), [wx - 5, wy - 1, wx + 1, wy + 6], '#5a8ad6');
+    fillP(g, poly([wx, wy, wx - 5, wy, wx - 5, wy - 4]), [wx - 6, wy - 5, wx + 1, wy + 1], '#8ac87a');
+    px(g, wx, wy, '#ffffff');
+  }
+  // Maman and Noa, seen from behind, walking away towards the gate, hand in hand
+  const hx = 112;
+  const hy = 132;
+  const shadow = poly([hx - 22, hy, hx + 16, hy, hx + 44, hy + 10, hx, hy + 10]);
+  fillP(g, shadow, [hx - 24, hy - 1, hx + 46, hy + 11], (x, y) => (bayer(x, y) < 0.5 ? '#9a8c72' : null));
+  // Maman (right, taller): long coat, scarf, hair in a bun
+  const mx = hx + 6;
+  fillP(g, poly([mx - 8, hy - 34, mx + 8, hy - 34, mx + 10, hy - 6, mx - 10, hy - 6]), [mx - 11, hy - 35, mx + 11, hy - 5], '#7a5a6a');
+  rect(g, mx - 6, hy - 6, 4, 6, '#3a3040');
+  rect(g, mx + 2, hy - 6, 4, 6, '#3a3040');
+  fillP(g, ell(mx, hy - 40, 6, 7), [mx - 7, hy - 48, mx + 7, hy - 32], '#4a3038');
+  fillP(g, ell(mx + 1, hy - 47, 3.5, 3), [mx - 3, hy - 51, mx + 5, hy - 43], '#4a3038');
+  rect(g, mx - 7, hy - 35, 14, 3, '#c87a8a');
+  rect(g, mx - 3, hy - 32, 3, 8, '#c87a8a');
+  // Noa (left, smaller): hoodie, backpack
+  const nx = hx - 12;
+  fillP(g, poly([nx - 7, hy - 26, nx + 7, hy - 26, nx + 8, hy - 10, nx - 8, hy - 10]), [nx - 9, hy - 27, nx + 9, hy - 9], '#3e4a78');
+  rect(g, nx - 5, hy - 10, 4, 10, '#2e3248');
+  rect(g, nx + 1, hy - 10, 4, 10, '#2e3248');
+  fillP(g, ell(nx, hy - 31, 6, 6), [nx - 7, hy - 38, nx + 7, hy - 24], '#2a2638');
+  fillP(g, poly([nx - 6, hy - 25, nx + 5, hy - 25, nx + 6, hy - 13, nx - 6, hy - 13]), [nx - 7, hy - 26, nx + 7, hy - 12], '#5a6a4a');
+  rect(g, nx - 6, hy - 25, 12, 1, '#6e805c');
+  // the hands meet between them
+  rect(g, nx + 7, hy - 18, 6, 2, '#3e4a78');
+  rect(g, mx - 11, hy - 19, 4, 2, '#7a5a6a');
+  rect(g, nx + 12, hy - 18, 3, 3, '#f0c8a8');
+  // warm rim light from the low sun (left edges)
+  const people = union(
+    poly([mx - 8, hy - 34, mx + 8, hy - 34, mx + 10, hy - 6, mx - 10, hy - 6]),
+    ell(mx, hy - 40, 6, 7),
+    ell(mx + 1, hy - 47, 3.5, 3),
+    poly([nx - 7, hy - 26, nx + 7, hy - 26, nx + 8, hy - 10, nx - 8, hy - 10]),
+    ell(nx, hy - 31, 6, 6),
+  );
+  field(g, nx - 10, hy - 52, 40, 48, (x, y) => (people(x + 0.5, y + 0.5) && !people(x - 0.5, y + 0.5) ? '#f8d8a8' : null));
+}
+
+ILLUSTRATIONS.fin_jardin = (g, t) => {
+  g.drawImage(layer('fin_jardin', paintJardin), 0, 0);
+  // The nightlight glows, barely visible in the daylight
+  const a = 0.25 + 0.12 * Math.sin(t * 0.04);
+  withAlpha(g, a, () => fillP(g, ell(JARDIN_LIGHT.x, JARDIN_LIGHT.y, 14, 11), [JARDIN_LIGHT.x - 15, JARDIN_LIGHT.y - 12, JARDIN_LIGHT.x + 15, JARDIN_LIGHT.y + 12], (x, y) => (bayer(x, y) < 0.5 ? '#fff4c0' : null)));
+  // Leaves of light drifting down from the big tree
+  motes(g, t, 16, 13, [180, 10, 320, 150], '#f4ecc8');
+};

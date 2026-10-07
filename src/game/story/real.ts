@@ -3,10 +3,12 @@ import { fx } from '../../engine/fx';
 import type { Director } from '../director';
 import type { Script } from '../overworld/types';
 import { world } from '../overworld/world';
-import { G, maxHp } from '../state';
+import { G, maxHp, writeMeta } from '../state';
 import { isLateNight, setPageTitle } from '../meta';
 import { composePoem } from '../scenes/poem';
-import { enterDream, finishGame } from './common';
+import { PhoneScene, type PhoneMessage, type PhoneReply } from '../scenes/phone';
+import { enterDream } from './common';
+import { epilogue, EPILOGUE_DEBUG } from './epilogue';
 
 /**
  * Real world thread: prologue, interlude 1 (« Le frigo »), interlude 2 (« La porte ») and the finale (« Le carnet »).
@@ -36,6 +38,148 @@ async function controlsHint(d: Director): Promise<void> {
       ? '{c:g}(Croix pour marcher · A pour examiner · B pour courir · ☰ pour le menu){/c}'
       : '{c:g}(Flèches ou ZQSD pour marcher · Entrée pour examiner · Maj pour courir · C pour le menu){/c}',
   );
+}
+
+// ---------------------------------------------------------------------------
+// Maman's messages — Noa may answer (one short reply per moment), and she remembers it.
+// Flags: p_reply (prologue), i1_reply (interlude 1), i2_reply (interlude 2) = reply id, 'rien' = chose silence.
+// ---------------------------------------------------------------------------
+
+interface ReplyDef extends PhoneReply {
+  id: string;
+  /** Maman's answer, message by message ([] = she starts typing, then gives up). */
+  answer?: string[];
+  /** Narration once the phone is put down. */
+  after?: string[];
+  /** Only offered when this returns true. */
+  when?: () => boolean;
+}
+
+const REPLY_FLAGS = ['p_reply', 'i1_reply', 'i2_reply'] as const;
+const PHONE_CLOCK = ['23:52', '14:06', '3:33', '5:52'];
+const SILENCE: ReplyDef = { id: 'rien', text: 'Ne rien répondre', after: ['Tu ne réponds pas. Tu ne sais jamais quoi répondre.'] };
+
+const REPLIES: ReplyDef[][] = [
+  // Prologue: « Je rentre tard. Il y a des pâtes dans le frigo. Je t'aime. »
+  [
+    { id: 'ok', text: 'ok', emotion: 'neutre', answer: ['Merci de répondre.', 'Dors bien, mon grand.'], after: ['Deux lettres. Elle a répondu en dix secondes.', 'Comme si elle attendait, le téléphone dans la main.'] },
+    { id: 'aime', text: 'Moi aussi.', emotion: 'joie', answer: ['♥', 'Je vais le relire toute la nuit.'], after: ['Tu poses le téléphone, écran contre le bureau.', 'Tu as chaud aux joues. C\'est idiot.'] },
+    { id: 'dormir', text: 'J\'arrive pas à dormir.', emotion: 'peur', answer: ['Moi non plus, je crois.', 'Laisse la veilleuse allumée. Je rentre vite.'], after: ['Tu regardes la veilleuse.', 'Elle grésille. Mais elle est allumée.'] },
+    { id: 'laisse', text: 'Laisse-moi.', emotion: 'colere', answer: [], after: ['Elle a commencé à écrire. Plusieurs fois.', 'Puis plus rien.'] },
+  ],
+  // Interlude 1: « Tu as mangé ? »
+  [
+    { id: 'oui', text: 'Oui.', emotion: 'neutre', answer: ['Bravo. ♥'], after: [] },
+    { id: 'sale', text: 'C\'était trop salé.', emotion: 'joie', answer: ['Pardon !!', 'J\'avais la tête ailleurs.', 'Mais tu as mangé. Merci.'], after: ['Tu souris.', 'Ça fait bizarre, sur ton visage.'], when: () => flag('i1_ate') },
+    { id: 'essayer', text: 'Je vais essayer.', emotion: 'joie', answer: ['Merci, mon grand.', 'C\'est déjà beaucoup.'], after: ['Les pâtes sont dans la cuisine. Tu le sais.'], when: () => !flag('i1_ate') },
+    { id: 'faim', text: 'Pas faim.', emotion: 'tristesse', answer: ['Même un yaourt.', 'Pour me faire plaisir ?'], after: [] },
+    { id: 'arrete', text: 'Arrête de demander.', emotion: 'colere', answer: ['Pardon.', 'Je m\'inquiète, c\'est tout.'], after: ['Tu regrettes un peu.', 'Un peu seulement.'] },
+  ],
+  // Interlude 2, after the voicemail: « On ira la voir ensemble, d'accord ? » — 3h33, nobody answers.
+  [
+    { id: 'accord', text: 'D\'accord.', emotion: 'joie', after: ['Ton cœur bat très fort.', 'Tu viens de promettre quelque chose. Tu crois.'] },
+    { id: 'peux', text: 'Je peux pas.', emotion: 'peur', after: ['C\'est la vérité.', 'C\'est la première fois que tu la lui dis.'] },
+    { id: 'pardon', text: 'Pardon.', emotion: 'tristesse', after: ['Elle ne comprendra pas.', 'Pas encore.'] },
+    { id: 'pourquoi', text: 'Pourquoi faire ?', emotion: 'colere', after: ['Tu le regrettes à la seconde où tu appuies sur « envoyer ».'] },
+  ],
+];
+
+const replyOf = (n: number): string | undefined => {
+  const v = G.state.flags[REPLY_FLAGS[n]!];
+  return typeof v === 'string' ? v : undefined;
+};
+/** True when Noa actually sent something at moment n (not silence, not unread). */
+const answered = (n: number): boolean => {
+  const r = replyOf(n);
+  return !!r && r !== 'rien';
+};
+const replyDef = (n: number, id: string | undefined): ReplyDef | undefined => REPLIES[n]?.find((r) => r.id === id);
+/** Every reply Noa sent (ids). */
+const sentReplies = (): string[] => [0, 1, 2].filter(answered).map((n) => replyOf(n)!);
+const ANGRY = ['laisse', 'arrete', 'pourquoi'];
+
+/** What Maman wrote at moment n (it depends on what Noa answered before). */
+function mamanWrote(n: number): PhoneMessage[] {
+  const them = (text: string): PhoneMessage => ({ from: 'them', text });
+  if (n === 0) return [{ from: 'info', text: '14 messages non lus' }, them('Noa ?'), them('Tu dors ?'), them('Je rentre tard. Il y a des pâtes dans le frigo. Je t\'aime.')];
+  if (n === 1) {
+    const before: Record<string, string> = {
+      ok: 'Merci pour ton « ok », hier.',
+      aime: 'J\'ai relu ton message dix fois.',
+      dormir: 'Tu as réussi à dormir un peu ?',
+      laisse: 'Je te laisse tranquille. Promis. Juste une question :',
+    };
+    const p = replyOf(0);
+    return [{ from: 'info', text: 'Aujourd\'hui' }, ...(p && before[p] ? [them(before[p])] : []), them('Tu as mangé ?')];
+  }
+  if (n === 2) return [{ from: 'info', text: '3:33' }, { from: 'info', text: 'Appel manqué' }, them('Message vocal · 0:41')];
+  return [{ from: 'info', text: '5:52' }, them('Je rentre.')];
+}
+
+/** Noa's reply at moment n and Maman's answer, as they appear in the thread afterwards. */
+function repliedAt(n: number, upTo: number): PhoneMessage[] {
+  const def = answered(n) ? replyDef(n, replyOf(n)) : undefined;
+  if (!def) return [];
+  const status = n === 2 && upTo < 3 ? 'Distribué' : 'Lu';
+  return [{ from: 'me', text: def.text, status }, ...(def.answer ?? []).map((text): PhoneMessage => ({ from: 'them', text }))];
+}
+
+function thread(upTo: number, withReply: boolean): PhoneMessage[] {
+  const out: PhoneMessage[] = [];
+  for (let n = 0; n <= upTo; n++) {
+    out.push(...mamanWrote(n));
+    if (n < upTo || withReply) out.push(...repliedAt(n, upTo));
+  }
+  return out;
+}
+
+/** Opens the phone at moment n: Noa may answer (once — or again later if he chose silence). */
+async function answerMaman(d: Director, n: 0 | 1 | 2): Promise<void> {
+  const prev = replyOf(n);
+  const done = !!prev && prev !== 'rien';
+  const ph = PhoneScene.open('Maman', PHONE_CLOCK[n]!, thread(n, done));
+  if (done) {
+    await ph.waitKey();
+    await ph.close();
+    return;
+  }
+  await d.wait(24);
+  const options = [...REPLIES[n]!.filter((r) => !r.when || r.when()), SILENCE];
+  const pick = options[await ph.choose('Répondre :', options)]!;
+  d.set(REPLY_FLAGS[n], pick.id);
+  if (pick.id === 'rien') {
+    ph.sleep();
+    await d.wait(70);
+    await ph.close();
+  } else {
+    ph.add({ from: 'me', text: pick.text, status: 'Envoi…' });
+    await d.wait(40);
+    ph.status('Distribué');
+    await d.wait(50);
+    if (n < 2) {
+      ph.status('Lu');
+      await d.wait(30);
+      const answer = pick.answer ?? [];
+      if (!answer.length) {
+        // She starts writing, stops, starts again… and gives up.
+        for (const f of [80, 50, 60]) {
+          ph.typing(true);
+          await d.wait(f);
+          ph.typing(false);
+          await d.wait(45);
+        }
+      }
+      for (const text of answer) {
+        ph.typing(true);
+        await d.wait(Math.min(110, 40 + text.length * 2));
+        ph.add({ from: 'them', text });
+        await d.wait(30);
+      }
+    }
+    await ph.waitKey();
+    await ph.close();
+  }
+  if (pick.after?.length) await d.say(pick.after);
 }
 
 // ---------------------------------------------------------------------------
@@ -187,24 +331,35 @@ export const desk: Script = async (d) => {
 export const phone: Script = async (d) => {
   const p = phase();
   if (p === 0) {
-    await d.say(['Ton téléphone. 14 messages non lus de « Maman ».', 'Le dernier : « Je rentre tard. Il y a des pâtes dans le frigo. Je t\'aime. »']);
+    if (!replyOf(0)) await d.say('Ton téléphone. 14 messages non lus de « Maman ».');
+    await answerMaman(d, 0);
   } else if (p === 1) {
-    await d.say(['Un nouveau message de « Maman » :', '« Tu as mangé ? »', 'Tu ne réponds pas. Tu ne sais jamais quoi répondre.']);
+    if (!replyOf(1)) await d.say('Un nouveau message de « Maman ».');
+    await answerMaman(d, 1);
   } else if (p === 2) {
     if (flag('i2_voicemail')) {
-      await d.say('« On ira la voir ensemble, d\'accord ? »', 'maman:sad');
+      await answerMaman(d, 2);
       return;
     }
     d.sfx('beep');
     await d.say('1 message vocal. Tu appuies.');
-    await d.say(['Noa… c\'est Maman.', 'Je… je sais que tu ne décroches pas. C\'est pas grave.'], 'maman:sad');
+    const sent = sentReplies();
+    if (!sent.length) await d.say(['Noa… c\'est Maman.', 'Je… je sais que tu ne décroches pas. C\'est pas grave.'], 'maman:sad');
+    else if (sent.every((r) => ANGRY.includes(r))) await d.say(['Noa… c\'est Maman.', 'Je sais que tu m\'en veux. Tu as le droit, tu sais.'], 'maman:sad');
+    else await d.say(['Noa… c\'est Maman.', 'Tes petits messages… je les garde tous. Tous.'], 'maman:sad');
     await d.say(['Ça fait un an demain.', 'Je rentre ce soir. Plus tôt. J\'ai demandé.'], 'maman:sad');
     await d.say(['On ira la voir ensemble, d\'accord ?', 'Je t\'aime, mon grand.'], 'maman:sad');
     await d.wait(30);
     await d.say('…', 'noa:sad');
     d.set('i2_voicemail');
+    await answerMaman(d, 2);
   } else {
-    await d.say(['Un message de « Maman », il y a cinq minutes :', '« Je rentre. »']);
+    await d.say('Un message de « Maman », il y a cinq minutes.');
+    const ph = PhoneScene.open('Maman', PHONE_CLOCK[3]!, thread(3, true));
+    await ph.waitKey();
+    await ph.close();
+    if (!sentReplies().length) await d.say(['Tu fais défiler la conversation. Des dizaines de messages.', 'Pas une seule réponse.']);
+    else await d.say(['Tu fais défiler la conversation.', 'Tes réponses sont toutes petites, à côté des siennes. Mais elles sont là.']);
   }
 };
 
@@ -546,10 +701,20 @@ export const carnet: Script = async (d) => {
   await d.wait(30);
   await d.say(['Dans sa trousse, il reste un crayon.', 'Tu tournes la page. Elle est blanche.', 'Tu écris.']);
   const words = await d.poem('Pour Mina');
-  await d.paper(composePoem(words), '');
+  const lines = composePoem(words);
+  savePoem(lines, words.map((w) => w.text));
+  await d.paper(lines, '');
   d.set('fin_carnet');
   await mamanComesHome(d);
 };
+
+/** Keeps the poem: in the run (read aloud in the epilogue) and forever in the title-screen gallery. */
+function savePoem(lines: string[], words: string[]): void {
+  const text = lines.join('\n');
+  G.state.flags.fin_poem = text;
+  G.meta.poems.push({ title: 'Pour Mina', text, words, at: Date.now() });
+  writeMeta(G.meta);
+}
 
 async function mamanComesHome(d: Director): Promise<void> {
   await d.wait(40);
@@ -583,17 +748,53 @@ async function mamanComesHome(d: Director): Promise<void> {
   await d.say(['Ce n\'est pas ta faute.', 'Tu m\'entends ? Ce n\'est la faute de personne.', 'Elle t\'aimait tellement. Elle parlait de toi tout le temps.'], 'maman:sad');
   if (flag('fin_plugged')) await d.say('Tu as rallumé sa veilleuse…', 'maman:sad');
   if (flag('i1_ate')) await d.say('Et tu as mangé les pâtes, l\'autre jour. Je l\'ai vu. … C\'est bien. C\'est bien, mon grand.', 'maman:happy');
-  await d.say(['On ira la voir, aujourd\'hui ? Tous les deux.', 'On lui apportera une veilleuse. Une neuve.'], 'maman:happy');
-  await d.wait(30);
-  await d.say('…Oui.', 'noa:neutral');
+  else if (replyOf(1) === 'oui')
+    await d.say(['Tu m\'avais écrit « oui », pour les pâtes.', 'La casserole était encore pleine.', 'C\'est pas grave. Moi aussi, je dis que ça va quand ça ne va pas.'], 'maman:sad');
+  await mamanOnMessages(d);
+  await mamanInvites(d);
   await d.fadeOut(120, '#fff3e0');
   await d.image('fin_aube', ['Le soleil se lève sur la chambre de Mina.', 'Pour la première fois depuis un an, il fait jour.']);
   d.remove('hug');
-  await d.narrate('Je veillerai sur lui.', { voice: 'dodo' });
-  await d.narrate('Pour de vrai, cette fois.', { voice: 'dodo' });
-  await d.narrate('Merci, {player}.', { voice: 'dodo' });
-  await d.narrate('{c:y}Bonne nuit. Et bonjour.{/c}', { voice: 'dodo' });
-  await finishGame(d, 'aube');
+  await epilogue(d);
+}
+
+/** Maman on the messages of the last days (what Noa answered, or his silence). */
+async function mamanOnMessages(d: Director): Promise<void> {
+  const sent = sentReplies();
+  if (!sent.length) {
+    await d.say(['Je t\'écris tous les soirs, tu sais.', 'Même quand tu ne réponds pas.', 'Surtout quand tu ne réponds pas.'], 'maman:sad');
+  } else if (replyOf(0) === 'aime') {
+    await d.say(['Ton « moi aussi », l\'autre nuit…', 'Je l\'ai lu dans le vestiaire, au travail.', 'J\'ai pleuré comme une idiote. Une idiote très heureuse.'], 'maman:happy');
+  } else if (replyOf(0) === 'dormir') {
+    await d.say(['Tu m\'avais écrit que tu n\'arrivais pas à dormir.', 'J\'aurais dû rentrer. Je vais arrêter les nuits. Je vais demander.'], 'maman:sad');
+  } else if (sent.some((r) => ANGRY.includes(r))) {
+    await d.say(['Tu as le droit d\'être en colère, tu sais.', 'Contre elle, contre moi, contre tout.', 'Moi aussi, je l\'étais. Je le suis encore, des fois.'], 'maman:sad');
+  } else {
+    await d.say(['Tes petits messages…', 'Je les relis la nuit, au travail. Quand il n\'y a personne.'], 'maman:happy');
+  }
+}
+
+/** « On ira la voir, aujourd'hui ? » — answers the message Noa sent (or not) at 3h33. */
+async function mamanInvites(d: Director): Promise<void> {
+  const r = replyOf(2);
+  let yes = '…Oui.';
+  if (r === 'accord') {
+    await d.say(['Tu m\'as répondu « d\'accord », cette nuit.', 'Alors on y va ? Aujourd\'hui. Tous les deux.'], 'maman:happy');
+  } else if (r === 'peux') {
+    await d.say(['Tu m\'as écrit que tu ne pouvais pas.', 'On ira doucement. Si tu veux faire demi-tour, on fera demi-tour.', 'Mais on essaie ? Aujourd\'hui. Tous les deux.'], 'maman:sad');
+    yes = '…D\'accord.';
+  } else if (r === 'pardon') {
+    await d.say(['Ton message, cette nuit. « Pardon. »', 'Je n\'avais pas compris. Maintenant, je comprends.', 'Et il n\'y a rien à pardonner. Rien du tout.'], 'maman:sad');
+    await d.say('On ira la voir, aujourd\'hui ? Tous les deux.', 'maman:happy');
+  } else if (r === 'pourquoi') {
+    await d.say(['Tu m\'as demandé « pourquoi faire ».', 'Je ne sais pas, mon grand. Pour lui dire bonjour.', 'Pour lui dire qu\'on est là. Qu\'on est encore là.'], 'maman:sad');
+    await d.say('On ira la voir, aujourd\'hui ? Tous les deux.', 'maman:happy');
+  } else {
+    await d.say('On ira la voir, aujourd\'hui ? Tous les deux.', 'maman:happy');
+  }
+  await d.say('On lui apportera une veilleuse. Une neuve.', 'maman:happy');
+  await d.wait(30);
+  await d.say(yes, 'noa:neutral');
 }
 
 // ---------------------------------------------------------------------------
@@ -631,4 +832,50 @@ export const DEBUG: Record<string, Script> = {
     await d.fadeIn(10);
     await carnet(d);
   },
+  // Maman's messages (add &flags=p_reply=aime,i1_ate,… to replay a given history).
+  reply_prologue: async (d) => {
+    G.state.flags.interlude = 0;
+    G.state.flags.p_dodo = true;
+    d.load('chambre', 'bed');
+    await d.fadeIn(10);
+    await phone(d);
+  },
+  interlude1_phone: async (d) => {
+    G.state.flags.interlude = 1;
+    d.load('chambre', 'bed');
+    await d.fadeIn(10);
+    await phone(d);
+  },
+  interlude2_phone: async (d) => {
+    G.state.flags.interlude = 2;
+    d.load('chambre', 'bed');
+    await d.fadeIn(10);
+    await phone(d);
+  },
+  finale_phone: async (d) => {
+    G.state.flags.interlude = 3;
+    d.load('chambre', 'bed');
+    await d.fadeIn(10);
+    await phone(d);
+  },
+  /** Maman comes home (the finale's reactions to the replies), then the epilogue. */
+  finale_maman: async (d) => {
+    G.state.flags.interlude = 3;
+    G.state.chapter = 3;
+    if (!G.state.flags.fin_poem) G.state.flags.fin_poem = composePoem(DEBUG_WORDS).join('\n');
+    G.state.flags.fin_room = true;
+    d.load('chambre_mina', 'door');
+    await d.fadeIn(10);
+    await mamanComesHome(d);
+  },
+  ...EPILOGUE_DEBUG,
 };
+
+const DEBUG_WORDS = [
+  { text: 'lune', emotion: 'joie' as const },
+  { text: 'coton', emotion: 'joie' as const },
+  { text: 'pluie', emotion: 'tristesse' as const },
+  { text: 'promesse', emotion: 'joie' as const },
+  { text: 'absente', emotion: 'tristesse' as const },
+  { text: 'lumière', emotion: 'joie' as const },
+];
