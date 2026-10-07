@@ -17,7 +17,8 @@ export function setupPwa(): void {
     w.__veilleuseInstall = null;
     toast('Veilleuse est installé. Tu peux le lancer depuis ton écran d\'accueil.');
   });
-  if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  // The native Android build (Capacitor) serves files locally: no service worker needed there.
+  if ('serviceWorker' in navigator && import.meta.env.PROD && !isNative()) {
     window.addEventListener('load', () => {
       navigator.serviceWorker
         .register('./sw.js')
@@ -62,6 +63,11 @@ export async function install(): Promise<void> {
 
 export function isIos(): boolean {
   return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+/** Running inside the native app shell (Capacitor). */
+export function isNative(): boolean {
+  return !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
 }
 
 export function isStandalone(): boolean {

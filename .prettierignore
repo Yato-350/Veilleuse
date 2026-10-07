@@ -6,3 +6,5 @@ playwright-report
 test-results
 src/data/sprites
 src/data/maps
+android
+ios
