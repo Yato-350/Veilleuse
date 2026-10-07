@@ -192,6 +192,8 @@ export const chaussetteRuines: Script = async (d) => {
   await shop(
     ['lait', 'biscuit', 'chocolat', 'pomme', 'mouchoir', 'bulles', 'pluie', 'gateau'],
     paire ? 'À deux, on tient le coup ! Prends ce qu\'il te faut, mon chou.' : 'Ce qui reste est à vendre. Tout est un peu taché, mais ça marche encore.',
+    undefined,
+    paire ? 0.5 : 0,
   );
 };
 

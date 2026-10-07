@@ -138,21 +138,23 @@ sa pluie bleue ne te touche plus. L'empathie protège, littéralement.
 
 ### 3.4 Bestiaire v1.0
 
+Le Hibou de Papier est devenu un PNJ (le gardien de la bibliothèque du chapitre 2).
+
 | Ennemi | Chapitre | Émotion | Besoin | Attaques |
 |---|---|---|---|---|
-| Gribouille | 1 | Neutre | n'importe quel mot | Boules d'encre lentes (tutoriel) |
+| Gribouille | 1 | Neutre | un mot joyeux | Boules d'encre lentes (tutoriel) |
 | Nuage Triste | 1 | Tristesse | Tristesse (empathie) — déteste la Joie | Pluie bleue |
 | Mouton Noir | 1 | Colère | Colère puis Joie | Charges de cornes rouges |
 | Pissenlit | 1 | Joie | Joie — déteste la Colère | Graines jaunes en spirale |
 | Chaussette Perdue | 1 | Tristesse | mot spécial « paire » | Pelotes rebondissantes |
 | **Monstre du Placard** | Boss 1 | Peur → Tristesse | Joie + objet *Veilleuse de poche* | Cintres, portes qui claquent |
 | Taille-Crayon | 2 | Colère | Tristesse | Copeaux rotatifs |
-| Hibou de Papier | 2 | Neutre | Joie | Plumes en éventail |
+| Avion en Papier | 2 | Neutre | Joie ×2 | Avions qui piquent en éventail |
 | Luciole Éteinte | 2 | Tristesse | Joie | Étincelles bleues/jaunes |
 | **Gomme** | Boss 2 | Colère → Tristesse | « garder », « souvenir » | Efface la boîte, efface tes mots |
 | Bip | 3 | Peur | Tristesse | Lignes d'électrocardiogramme |
-| Perfusion | 3 | Tristesse | Calme | Gouttes qui tombent en rythme |
-| **Dodo** | Final | Toutes | Le poème d'adieu | Moutons qu'on compte, berceuse, glitchs du menu |
+| Perfusion | 3 | Tristesse | Joie ×3 | Gouttes qui tombent en rythme |
+| **Dodo** | Final | Toutes | Les mots de Mina (merci, pardon, au revoir…) | Moutons qu'on compte, berceuse, menu qui se change en DORMIR |
 
 ### 3.5 Méta / quatrième mur (style DDLC / Undertale)
 

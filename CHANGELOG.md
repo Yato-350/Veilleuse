@@ -19,3 +19,8 @@ Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog]
 - Première visite : la page ne se recharge plus quand le service worker prend la main (le joueur revenait à
   l'écran titre en pleine partie).
 - Le compagnon ne réapparaît plus derrière un meuble après une cinématique.
+- Boutiques : la liste défile ; les derniers articles et « Partir » ne sont plus cachés sous la bulle.
+- La réduction promise par Chaussette (paire retrouvée) s'applique vraiment : −50 %.
+- Sauvegarde automatique quand l'application passe en arrière-plan ou se ferme (pendant l'exploration).
+- Les objets ne sont plus perdus quand les poches sont pleines ; le bilan d'un combat ne déborde plus.
+- Symboles manquants dans la police (●, ↖, ☰, effets de glitch) ; un test vérifie désormais toute la police.

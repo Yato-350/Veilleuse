@@ -2,11 +2,17 @@ name: Android APK
 
 # Builds an installable Android app (Capacitor shell around the web build).
 # - Manual run (Actions → Android APK → Run workflow): the APK is available as a build artifact.
+#   Fill in « release » (e.g. v1.0.0) to also create that tag and a GitHub Release with the APK attached.
 # - Tag push (v1.0.0, …): the APK is also attached to the GitHub Release.
 # - Pull requests touching this file: build check only.
 
 on:
   workflow_dispatch:
+    inputs:
+      release:
+        description: 'Version to publish as a GitHub Release (e.g. v1.0.0). Leave empty for a test build.'
+        required: false
+        default: ''
   push:
     tags: ['v*']
   pull_request:
@@ -87,8 +93,31 @@ jobs:
           name: veilleuse-android
           path: ${{ env.APK }}
 
-      - name: Attach to the release
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Release notes
+        if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.release != '')
+        run: |
+          cat > release-notes.md <<'NOTES'
+          **Veilleuse** — un RPG narratif en pixel art sur le deuil, les rêves et la lumière qu'on laisse allumée pour quelqu'un.
+
+          ### Jouer
+          - **Dans le navigateur** (ordinateur, téléphone, tablette) : https://yato-350.github.io/Veilleuse/
+          - **Android** : télécharger le fichier `.apk` ci-dessous, l'ouvrir, puis autoriser l'installation depuis cette source.
+          - **iPhone / iPad** : ouvrir le lien dans Safari → *Partager* → *Sur l'écran d'accueil*.
+
+          ### Contenu
+          Prologue, trois chapitres oniriques, deux interludes dans le monde réel, un final et trois fins.
+          Système de combat original *Plume & Cœur* : les mots que tu écris changent la couleur de ton cœur.
+
+          > Le jeu aborde le deuil, la maladie d'un enfant et la culpabilité. Si tu traverses un moment difficile,
+          > parles-en : en France, le **3114** répond 24h/24.
+          NOTES
+
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.release != '')
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ inputs.release || github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          name: Veilleuse ${{ inputs.release || github.ref_name }}
+          body_path: release-notes.md
           files: ${{ env.APK }}

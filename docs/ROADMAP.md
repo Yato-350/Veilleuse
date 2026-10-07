@@ -27,8 +27,9 @@ Légende : ✅ fait · 🚧 en cours · ⏳ prévu
 - ✅ Prologue + Chapitre 1 (Pays de Coton) + Interlude I
 - ✅ Chapitre 2 (Forêt de Crayons) + Interlude II
 - ✅ Chapitre 3 (Hôpital de Papier) + Final + 3 fins
-- ✅ Bot de test qui rejoue chaque scène clé, chaque combat de boss et les trois fins
-- 🚧 Équilibrage fin, relecture des dialogues par des joueurs
+- ✅ Bot de test (`tools/play.mjs`) avec lequel chaque scène clé, chaque boss et les trois fins ont été rejoués avant la sortie
+- 🚧 Équilibrage fin (le chapitre 3 est trop facile avec beaucoup d'Étoiles), relecture des dialogues par des joueurs
+- ⏳ Scénarios du bot enregistrés et rejoués automatiquement en CI
 
 ## Phase 4 — Mobile natif 🚧
 - ✅ Empaquetage Capacitor (Android APK) via GitHub Actions

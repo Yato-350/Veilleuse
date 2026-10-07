@@ -15,7 +15,7 @@ Inspiré d'*Undertale*, d'*OMORI* et de *Doki Doki Literature Club*.
 ![PWA](https://img.shields.io/badge/PWA-installable%20%C2%B7%20hors--ligne-9a7bd0)
 ![Licence](https://img.shields.io/badge/licence-MIT-ffe991)
 
-**[▶ Jouer dans le navigateur](https://yato-350.github.io/Veilleuse/)**
+**[▶ Jouer dans le navigateur](https://yato-350.github.io/Veilleuse/)** · **[📱 Télécharger l'APK Android](https://github.com/Yato-350/Veilleuse/releases/latest)**
 
 </div>
 
@@ -90,9 +90,11 @@ fonctionne **hors-ligne**.
 En portrait, l'écran prend une disposition « console portable » avec les contrôles en dessous ; en paysage, les
 contrôles se placent sur les côtés.
 
-**Application Android (APK)** : le workflow [Android APK](.github/workflows/android.yml) emballe le jeu avec
-Capacitor. Lancez-le depuis l'onglet *Actions* (ou poussez un tag `v1.0.0`) : l'APK est publié comme artefact, et
-joint à la *Release* pour les tags. Installation : autoriser les « sources inconnues » puis ouvrir le fichier.
+**Application Android (APK)** : télécharger `Veilleuse-x.y.z.apk` dans la
+[dernière version](https://github.com/Yato-350/Veilleuse/releases/latest), l'ouvrir sur le téléphone et autoriser
+l'installation depuis cette source. L'APK est construit par le workflow [Android APK](.github/workflows/android.yml)
+(Capacitor) : *Actions → Android APK → Run workflow*, avec un numéro de version (`v1.0.1`…) pour publier une
+nouvelle *Release*, ou vide pour un simple test.
 
 ## Développement
 

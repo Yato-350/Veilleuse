@@ -9,7 +9,7 @@ import { screen } from './engine/screen';
 import { TRACKS } from './data/music';
 import { MAPS } from './data/maps';
 import { buildAll } from './game/assets';
-import { runScript } from './game/director';
+import { director, runScript } from './game/director';
 import { flow } from './game/flow';
 import { world } from './game/overworld/world';
 import { setupPwa } from './game/pwa';
@@ -87,6 +87,17 @@ function boot(): void {
   setupPwa();
 
   const params = new URLSearchParams(location.search);
+
+  // Suspend save: phones kill backgrounded apps, so save when the game is hidden or closed — only while exploring
+  // freely (never mid-battle or mid-cutscene), so that « Continuer » always resumes in a consistent state.
+  const suspendSave = (): void => {
+    if (params.has('debug') || !G.meta.runInProgress || game.top !== world || !world.map || !world.controllable) return;
+    director.save();
+  };
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) suspendSave();
+  });
+  window.addEventListener('pagehide', suspendSave);
   if (params.has('debug')) {
     startDebug(params);
   } else {
