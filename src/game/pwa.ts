@@ -37,9 +37,12 @@ export function setupPwa(): void {
         .catch(() => {
           /* offline support unavailable */
         });
+      // Reload only when an update replaces a running version. On the very first visit the new worker claims the
+      // page too (clients.claim), and reloading then would throw the player back to the title screen.
+      const hadController = !!navigator.serviceWorker.controller;
       let reloading = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (reloading) return;
+        if (reloading || !hadController) return;
         reloading = true;
         window.location.reload();
       });
