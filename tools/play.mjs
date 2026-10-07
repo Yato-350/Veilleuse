@@ -14,6 +14,7 @@
  *   interact:id      run the interaction script of entity `id` (prop, NPC)
  *   go:x/y           teleport the player to tile (x, y)
  *   god[:off]        keep Noa's HP full during enemy turns
+ *   until:mode       advance text until the battle is in `mode` (dodge, menu, …)
  *   load:map/spawn   load a map;  flag:key[=value]  set a story flag
  *   Code[:ms]        press (or hold) a key; wait:ms; shot:name; log (prints state); eval:js
  * Prints a state line after each step; exits non-zero on page errors.
@@ -192,6 +193,16 @@ for (const step of steps) {
   else if (cmd === 'shot') await page.screenshot({ path: shotPath(arg) });
   else if (cmd === 'log') res = '';
   else if (cmd === 'god') god = arg !== 'off';
+  else if (cmd === 'until') {
+    // Advance text until the battle reaches the given mode (e.g. until:dodge).
+    const t0 = Date.now();
+    for (;;) {
+      const st = await state();
+      if (st.battle === arg || Date.now() - t0 > 20000) break;
+      if (st.dlg || st.battle === 'text' || st.battle === 'idle') await press('KeyZ');
+      await page.waitForTimeout(60);
+    }
+  }
   else if (cmd === 'load')
     res = await page.evaluate((ms) => {
       const [m, sp] = ms.split('/');

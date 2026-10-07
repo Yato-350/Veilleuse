@@ -19,7 +19,18 @@ Inspiré d'*Undertale*, d'*OMORI* et de *Doki Doki Literature Club*.
 
 </div>
 
-<!-- SCREENSHOTS -->
+<div align="center">
+
+<img src="docs/screenshots/01-titre.png" width="49%" alt="Écran titre : une chambre la nuit, une lune en croissant au-dessus de la ville" />
+<img src="docs/screenshots/02-pays-de-coton.png" width="49%" alt="Noa et Mina traversent un pont de bois au Pays de Coton" />
+<img src="docs/screenshots/03-combat-resonance.png" width="49%" alt="Combat : le cœur bleu de Noa traverse la pluie bleue d'un Nuage Triste" />
+<img src="docs/screenshots/04-foret-de-crayons.png" width="49%" alt="La Forêt de Crayons : arbres-crayons géants, sol de papier ligné et zones gommées" />
+<img src="docs/screenshots/05-hopital-de-papier.png" width="49%" alt="Le hall de l'Hôpital de Papier, éclairé par des néons" />
+<img src="docs/screenshots/06-combat-final.png" width="49%" alt="Combat final : Dodo, noir d'encre, se fissure de lumière" />
+
+<sub>Jouable au clavier, à la manette et au tactile — <a href="docs/screenshots/07-mobile.png">aperçu sur téléphone</a>.</sub>
+
+</div>
 
 > ⚠️ **Avertissement** — Ce jeu aborde le deuil, la maladie d'un enfant, la culpabilité et des pensées sombres. Il
 > contient des scènes et des effets visuels pouvant être perturbants. Si tu traverses un moment difficile, parles-en :
@@ -79,6 +90,10 @@ fonctionne **hors-ligne**.
 En portrait, l'écran prend une disposition « console portable » avec les contrôles en dessous ; en paysage, les
 contrôles se placent sur les côtés.
 
+**Application Android (APK)** : le workflow [Android APK](.github/workflows/android.yml) emballe le jeu avec
+Capacitor. Lancez-le depuis l'onglet *Actions* (ou poussez un tag `v1.0.0`) : l'APK est publié comme artefact, et
+joint à la *Release* pour les tags. Installation : autoriser les « sources inconnues » puis ouvrir le fichier.
+
 ## Développement
 
 ```bash
@@ -97,6 +112,16 @@ node tools/shot.mjs "debug=battle&enemies=nuage" combat.png    # capture d'un co
 node tools/shot.mjs "debug=sheet&filter=b_&scale=3" ennemis.png # planche de sprites
 node tools/gen-icons.mjs                                       # régénère les icônes PWA
 ```
+
+Le **bot de test** joue des séquences entières sans intervention et vérifie qu'aucune erreur ne survient :
+
+```bash
+# Joue le tutoriel : avance les dialogues, écrit un mot joyeux, épargne, capture l'écran
+node tools/play.mjs "debug=script&name=c1_tutorial" sortie.png --steps "auto,write:joie,auto,menu:3,choose:0,auto,shot:fin"
+```
+
+Chaque scène clé possède un script de débogage (`c1_boss`, `c2_lanterns`, `c3_final`, `finale_poem`…) listé dans
+`src/game/story/*.ts`.
 
 ### Points techniques
 

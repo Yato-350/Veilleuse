@@ -23,15 +23,17 @@ Légende : ✅ fait · 🚧 en cours · ⏳ prévu
 - ✅ Émotions, triangle, résonance des projectiles
 - ✅ Bibliothèque de motifs de projectiles, boîte animée, invincibilité, game over
 
-## Phase 3 — Contenu v1.0 🚧
+## Phase 3 — Contenu v1.0 ✅
 - ✅ Prologue + Chapitre 1 (Pays de Coton) + Interlude I
 - ✅ Chapitre 2 (Forêt de Crayons) + Interlude II
 - ✅ Chapitre 3 (Hôpital de Papier) + Final + 3 fins
-- 🚧 Équilibrage, relecture des dialogues, polish des animations
+- ✅ Bot de test qui rejoue chaque scène clé, chaque combat de boss et les trois fins
+- 🚧 Équilibrage fin, relecture des dialogues par des joueurs
 
-## Phase 4 — Mobile natif ⏳
-- ⏳ Empaquetage Capacitor (Android APK / iOS) via GitHub Actions
-- ⏳ Publication des APK dans les Releases GitHub
+## Phase 4 — Mobile natif 🚧
+- ✅ Empaquetage Capacitor (Android APK) via GitHub Actions
+- ✅ Publication des APK dans les Releases GitHub (tags `v*`)
+- ⏳ Version iOS native (nécessite macOS et un compte développeur Apple — la PWA couvre iPhone/iPad)
 - ⏳ Retour haptique avancé, plein écran natif
 
 ## Phase 5 — Après la sortie ⏳
