@@ -32,7 +32,7 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - uses: android-actions/setup-android@v3
+      # The Android SDK is preinstalled on GitHub's Ubuntu runners (ANDROID_HOME); Gradle fetches missing platforms.
 
       - name: Build the web game
         run: |
@@ -48,6 +48,7 @@ jobs:
       - name: App icons, splash screen and version
         run: |
           set -e
+          command -v convert >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick; }
           RES=android/app/src/main/res
           ICON=public/icons/icon-512.png
           MASK=public/icons/icon-maskable-512.png
@@ -62,7 +63,7 @@ jobs:
             dim=$(identify -format '%wx%h' "$f")
             w=${dim%x*}; h=${dim#*x}
             s=$(( (w < h ? w : h) / 3 ))
-            convert -size "$dim" xc:'#05030a' \( "$ICON" -resize ${s}x${s} \) -gravity center -composite "$f"
+            convert -size "$dim" xc:'#05030a' \( "$ICON" -resize ${s}x${s} \) -gravity center -composite -depth 8 "$f"
           done
           VERSION=$(node -p "require('./package.json').version")
           sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"$VERSION\"/" android/app/build.gradle
@@ -70,7 +71,10 @@ jobs:
 
       - name: Build the APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: |
+          echo "Android SDK: $ANDROID_HOME"
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
 
       - name: Rename
         run: |
