@@ -9,13 +9,13 @@
 Un RPG narratif en pixel art sur le deuil, les rêves et la lumière qu'on laisse allumée pour quelqu'un.<br/>
 Inspiré d'*Undertale*, d'*OMORI* et de *Doki Doki Literature Club*.
 
-[![CI](https://github.com/Yato-350/Jeuclaude/actions/workflows/ci.yml/badge.svg)](https://github.com/Yato-350/Jeuclaude/actions/workflows/ci.yml)
-[![Deploy](https://github.com/Yato-350/Jeuclaude/actions/workflows/deploy.yml/badge.svg)](https://github.com/Yato-350/Jeuclaude/actions/workflows/deploy.yml)
+[![CI](https://github.com/Yato-350/Veilleuse/actions/workflows/ci.yml/badge.svg)](https://github.com/Yato-350/Veilleuse/actions/workflows/ci.yml)
+[![Deploy](https://github.com/Yato-350/Veilleuse/actions/workflows/deploy.yml/badge.svg)](https://github.com/Yato-350/Veilleuse/actions/workflows/deploy.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
 ![PWA](https://img.shields.io/badge/PWA-installable%20%C2%B7%20hors--ligne-9a7bd0)
 ![Licence](https://img.shields.io/badge/licence-MIT-ffe991)
 
-**[▶ Jouer dans le navigateur](https://yato-350.github.io/Jeuclaude/)**
+**[▶ Jouer dans le navigateur](https://yato-350.github.io/Veilleuse/)**
 
 </div>
 
