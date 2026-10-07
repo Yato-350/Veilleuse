@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <title>VEILLEUSE</title>
+    <meta
+      name="description"
+      content="Veilleuse — un RPG narratif en pixel art sur le deuil et les rêves. Inspiré d'Undertale, OMORI et Doki Doki Literature Club. Jouable dans le navigateur, installable sur mobile."
+    />
+    <meta name="theme-color" content="#0d0a14" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Veilleuse" />
+    <meta property="og:title" content="VEILLEUSE" />
+    <meta property="og:description" content="Fais de beaux rêves. Un RPG narratif en pixel art." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="./icons/og-image.png" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="stage">
+        <canvas id="game" width="320" height="180" aria-label="Écran de jeu Veilleuse"></canvas>
+        <div id="crt" aria-hidden="true"></div>
+      </div>
+      <div id="touch" class="hidden" aria-hidden="true">
+        <div id="dpad">
+          <div class="dpad-arm dpad-up"></div>
+          <div class="dpad-arm dpad-down"></div>
+          <div class="dpad-arm dpad-left"></div>
+          <div class="dpad-arm dpad-right"></div>
+          <div class="dpad-center"></div>
+        </div>
+        <div id="face">
+          <button id="btn-b" class="face-btn" type="button">B</button>
+          <button id="btn-a" class="face-btn" type="button">A</button>
+        </div>
+        <button id="btn-menu" type="button" aria-label="Menu">☰</button>
+        <div id="touch-brand">VEILLEUSE</div>
+      </div>
+      <div id="boot">
+        <div class="boot-moon"></div>
+        <p class="boot-text">Chargement…</p>
+        <noscript><p class="boot-text">Ce jeu nécessite JavaScript.</p></noscript>
+      </div>
+    </div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

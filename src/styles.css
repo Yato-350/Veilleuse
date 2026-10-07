@@ -1,0 +1,339 @@
+:root {
+  --bg: #0d0a14;
+  --ink: #1c1424;
+  --cream: #fff3cf;
+  --moon: #ffe991;
+  --pink: #f8b6cf;
+  --lav: #d4b8f0;
+  --controls-h: 0px;
+  --touch-opacity: 0.55;
+  --touch-scale: 1;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--cream);
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  overscroll-behavior: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#stage {
+  position: absolute;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 0 60px rgba(120, 90, 200, 0.12);
+}
+
+#game {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  touch-action: none;
+  outline: none;
+}
+
+#crt {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  background:
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.22) 0px, rgba(0, 0, 0, 0.22) 1px, transparent 1px, transparent 3px),
+    radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.45) 100%);
+  mix-blend-mode: multiply;
+}
+
+#crt.on {
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------------ */
+/* Boot screen                                                         */
+/* ------------------------------------------------------------------ */
+
+#boot {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: var(--bg);
+  z-index: 10;
+  transition: opacity 0.6s;
+}
+
+#boot.done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.boot-moon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  box-shadow: 10px -6px 0 0 var(--moon);
+  filter: drop-shadow(0 0 12px rgba(255, 233, 145, 0.6));
+  animation: breathe 2.4s ease-in-out infinite;
+}
+
+.boot-text {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: var(--lav);
+  opacity: 0.8;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Touch controls                                                      */
+/* ------------------------------------------------------------------ */
+
+#touch {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+#touch.hidden {
+  display: none;
+}
+
+#touch > * {
+  pointer-events: auto;
+}
+
+#dpad {
+  position: absolute;
+  width: calc(132px * var(--touch-scale));
+  height: calc(132px * var(--touch-scale));
+  left: calc(18px + var(--safe-left));
+  bottom: calc(18px + var(--safe-bottom));
+  opacity: var(--touch-opacity);
+  touch-action: none;
+}
+
+.dpad-arm,
+.dpad-center {
+  position: absolute;
+  background: #2d2238;
+  border: 3px solid #fff3cf;
+  image-rendering: pixelated;
+}
+
+.dpad-up,
+.dpad-down {
+  left: 33.33%;
+  width: 33.34%;
+  height: 36%;
+}
+.dpad-up {
+  top: 0;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+}
+.dpad-down {
+  bottom: 0;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+}
+.dpad-left,
+.dpad-right {
+  top: 33.33%;
+  height: 33.34%;
+  width: 36%;
+}
+.dpad-left {
+  left: 0;
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+}
+.dpad-right {
+  right: 0;
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+}
+.dpad-center {
+  left: 33.33%;
+  top: 33.33%;
+  width: 33.34%;
+  height: 33.34%;
+  border: none;
+}
+.dpad-arm.active {
+  background: #9a7bd0;
+}
+
+#face {
+  position: absolute;
+  right: calc(18px + var(--safe-right));
+  bottom: calc(24px + var(--safe-bottom));
+  width: calc(150px * var(--touch-scale));
+  height: calc(110px * var(--touch-scale));
+  opacity: var(--touch-opacity);
+}
+
+.face-btn {
+  position: absolute;
+  width: calc(62px * var(--touch-scale));
+  height: calc(62px * var(--touch-scale));
+  border-radius: 50%;
+  border: 3px solid #fff3cf;
+  background: #2d2238;
+  color: #fff3cf;
+  font: bold calc(20px * var(--touch-scale)) ui-monospace, monospace;
+  touch-action: none;
+  padding: 0;
+}
+.face-btn.active {
+  background: #e07ba5;
+  transform: scale(0.94);
+}
+#btn-a {
+  right: 0;
+  top: 0;
+}
+#btn-b {
+  left: 0;
+  bottom: 0;
+}
+
+#btn-menu {
+  position: absolute;
+  top: calc(10px + var(--safe-top));
+  right: calc(12px + var(--safe-right));
+  width: 44px;
+  height: 36px;
+  border-radius: 8px;
+  border: 2px solid #fff3cf;
+  background: rgba(45, 34, 56, 0.85);
+  color: #fff3cf;
+  font-size: 18px;
+  opacity: var(--touch-opacity);
+  touch-action: none;
+  padding: 0;
+}
+#btn-menu.active {
+  background: #9a7bd0;
+}
+
+#touch-brand {
+  display: none;
+}
+
+/* Portrait: Game Boy layout (screen on top, controls underneath). */
+@media (orientation: portrait) {
+  #touch:not(.hidden) ~ #boot {
+    display: flex;
+  }
+  #touch {
+    --touch-opacity: 1;
+  }
+  #touch-brand {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    text-align: center;
+    bottom: calc(var(--controls-h) - 34px + var(--safe-bottom));
+    font-size: 11px;
+    letter-spacing: 6px;
+    color: #63489a;
+    pointer-events: none;
+  }
+  #dpad {
+    bottom: calc(var(--controls-h) * 0.32 + var(--safe-bottom));
+    left: calc(22px + var(--safe-left));
+  }
+  #face {
+    bottom: calc(var(--controls-h) * 0.32 + var(--safe-bottom));
+    right: calc(18px + var(--safe-right));
+  }
+  #btn-menu {
+    top: auto;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    bottom: calc(var(--controls-h) * 0.12 + var(--safe-bottom));
+    width: 64px;
+    height: 26px;
+    font-size: 14px;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Toasts (install / update)                                          */
+/* ------------------------------------------------------------------ */
+
+.toast {
+  position: absolute;
+  left: 50%;
+  top: calc(12px + var(--safe-top));
+  transform: translateX(-50%);
+  z-index: 20;
+  background: #1c1424;
+  color: #fff3cf;
+  border: 2px solid #fff3cf;
+  padding: 8px 14px;
+  font-size: 13px;
+  border-radius: 6px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  max-width: 92vw;
+}
+
+.toast button {
+  background: #e07ba5;
+  color: #1c1424;
+  border: 0;
+  padding: 4px 10px;
+  font: inherit;
+  font-weight: bold;
+  border-radius: 4px;
+  cursor: pointer;
+}

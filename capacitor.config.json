@@ -1,0 +1,9 @@
+{
+  "appId": "io.github.yato350.veilleuse",
+  "appName": "Veilleuse",
+  "webDir": "dist",
+  "backgroundColor": "#05030a",
+  "android": {
+    "backgroundColor": "#05030a"
+  }
+}

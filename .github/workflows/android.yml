@@ -1,0 +1,94 @@
+name: Android APK
+
+# Builds an installable Android app (Capacitor shell around the web build).
+# - Manual run (Actions → Android APK → Run workflow): the APK is available as a build artifact.
+# - Tag push (v1.0.0, …): the APK is also attached to the GitHub Release.
+# - Pull requests touching this file: build check only.
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+  pull_request:
+    paths: ['.github/workflows/android.yml', 'capacitor.config.json']
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      # The Android SDK is preinstalled on GitHub's Ubuntu runners (ANDROID_HOME); Gradle fetches missing platforms.
+
+      - name: Build the web game
+        run: |
+          npm ci
+          npm run build
+
+      - name: Create the Android project
+        run: |
+          npm install --no-save @capacitor/core@^7 @capacitor/cli@^7 @capacitor/android@^7
+          npx cap add android
+          npx cap sync android
+
+      - name: App icons, splash screen and version
+        run: |
+          set -e
+          command -v convert >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick; }
+          RES=android/app/src/main/res
+          ICON=public/icons/icon-512.png
+          MASK=public/icons/icon-maskable-512.png
+          for pair in mdpi:48:108 hdpi:72:162 xhdpi:96:216 xxhdpi:144:324 xxxhdpi:192:432; do
+            IFS=: read -r dpi size fg <<< "$pair"
+            convert "$ICON" -resize ${size}x${size} "$RES/mipmap-$dpi/ic_launcher.png"
+            convert "$ICON" -resize ${size}x${size} "$RES/mipmap-$dpi/ic_launcher_round.png"
+            convert "$MASK" -resize ${fg}x${fg} "$RES/mipmap-$dpi/ic_launcher_foreground.png"
+          done
+          sed -i 's/#FFFFFF/#14101E/I' "$RES/values/ic_launcher_background.xml" || true
+          for f in $(find "$RES" -name 'splash.png'); do
+            dim=$(identify -format '%wx%h' "$f")
+            w=${dim%x*}; h=${dim#*x}
+            s=$(( (w < h ? w : h) / 3 ))
+            convert -size "$dim" xc:'#05030a' \( "$ICON" -resize ${s}x${s} \) -gravity center -composite -depth 8 "$f"
+          done
+          VERSION=$(node -p "require('./package.json').version")
+          sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"$VERSION\"/" android/app/build.gradle
+          grep -n "versionCode\|versionName" android/app/build.gradle
+
+      - name: Build the APK
+        working-directory: android
+        run: |
+          echo "Android SDK: $ANDROID_HOME"
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Rename
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          cp android/app/build/outputs/apk/debug/app-debug.apk "Veilleuse-$VERSION.apk"
+          echo "APK=Veilleuse-$VERSION.apk" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: veilleuse-android
+          path: ${{ env.APK }}
+
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.APK }}
