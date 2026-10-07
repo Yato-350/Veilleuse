@@ -115,6 +115,20 @@ export interface Meta {
   runInProgress: boolean;
   resets: number;
   tabLeaves: number;
+  /** Illustration ids seen at least once, in any run (souvenirs, carnet pages, endings…): the title-screen gallery. */
+  seen: string[];
+  /** Poems written for Mina in the finale, newest last (kept after the run ends). */
+  poems: SavedPoem[];
+  /** Bonus chapter « Les rêves des autres » completed at least once. */
+  bonusDone: boolean;
+}
+
+export interface SavedPoem {
+  title: string;
+  /** The poem as displayed (lines joined with \n). */
+  text: string;
+  words: string[];
+  at: number;
 }
 
 export function newMeta(): Meta {
@@ -130,6 +144,9 @@ export function newMeta(): Meta {
     runInProgress: false,
     resets: 0,
     tabLeaves: 0,
+    seen: [],
+    poems: [],
+    bonusDone: false,
   };
 }
 
@@ -150,6 +167,10 @@ export interface Settings {
   touchSize: number;
   vibration: boolean;
   showFps: boolean;
+  /** Accessibility: draw a shape per emotion (drop, star, spikes…) on the soul and on bullets, not only a color. */
+  emotionShapes: boolean;
+  /** Text language. */
+  language: 'fr' | 'en';
 }
 
 export function defaultSettings(): Settings {
@@ -166,6 +187,8 @@ export function defaultSettings(): Settings {
     touchSize: 1,
     vibration: true,
     showFps: false,
+    emotionShapes: false,
+    language: typeof navigator !== 'undefined' && !/^fr\b/i.test(navigator.language ?? 'fr') ? 'en' : 'fr',
   };
 }
 

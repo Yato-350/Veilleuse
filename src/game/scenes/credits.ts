@@ -12,7 +12,7 @@ const LINES: Array<[string, string?]> = [
   ['Fais de beaux rêves.', '#d4b8f0'],
   [''],
   ['— Histoire, design & code —', '#8a7f96'],
-  ['Yato-350 & Claude'],
+  ['Yasin'],
   [''],
   ['— Inspirations —', '#8a7f96'],
   ['Undertale · OMORI · Doki Doki Literature Club'],

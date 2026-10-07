@@ -18,7 +18,7 @@ import { dialogue } from './game/ui/dialogue';
 import { applySettings } from './game/ui/options';
 import { TitleScene } from './game/scenes/title';
 import { WarningScene } from './game/scenes/warning';
-import { startPrologue } from './game/story';
+import { startBonus, startPrologue } from './game/story';
 import { setupMeta } from './game/meta';
 import { startDebug } from './game/debug';
 import { openMenu } from './game/scenes/menu';
@@ -69,6 +69,16 @@ function boot(): void {
     game.replace(world);
     await runScript(async (d) => {
       await startPrologue(d);
+    });
+  };
+  flow.startBonus = async () => {
+    // A separate short run: it never touches the main save's story flags (flags.bonus marks it).
+    G.state = newState(G.meta.names[G.meta.names.length - 1] ?? '');
+    G.state.flags.bonus = 1;
+    G.state.hp = maxHp(G.state);
+    game.replace(world);
+    await runScript(async (d) => {
+      await startBonus(d);
     });
   };
   flow.continueGame = async () => {

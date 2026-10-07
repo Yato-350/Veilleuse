@@ -14,6 +14,7 @@ import { OptionsPanel } from '../ui/options';
 import { CreditsScene } from './credits';
 import { install } from '../pwa';
 import { NameEntryScene } from './nameentry';
+import { GalleryScene } from './gallery';
 
 type Item = { label: string; action: () => void; color?: string };
 
@@ -57,6 +58,13 @@ export class TitleScene implements Scene {
         else this.startNew();
       },
     });
+    // After a first ending: the gallery of souvenirs and poems, and (after the dawn) the bonus chapter.
+    if (G.meta.endings.length > 0 && (G.meta.seen.length > 0 || G.meta.poems.length > 0)) {
+      this.items.push({ label: 'Carnet de souvenirs', action: () => game.push(new GalleryScene()), color: '#ffe991' });
+    }
+    if (G.meta.endings.includes('aube')) {
+      this.items.push({ label: 'Les rêves des autres', action: () => this.leave(() => flow.startBonus()), color: '#f8b6cf' });
+    }
     this.items.push({ label: 'Options', action: () => (this.options = new OptionsPanel()) });
     if (canInstall()) this.items.push({ label: 'Installer le jeu', action: () => void install(), color: '#a7c7f0' });
     this.items.push({ label: 'Crédits', action: () => game.push(new CreditsScene(false)) });

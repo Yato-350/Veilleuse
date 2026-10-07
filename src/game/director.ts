@@ -345,6 +345,11 @@ export class Director {
 
   /** Shows a full-screen illustration (souvenirs, drawings) with optional captions. */
   image(key: string, captions: string[] = [], opts: { style?: SayOptions['style'] } = {}): Promise<void> {
+    // Remembered across runs for the title-screen gallery « Carnet de souvenirs ».
+    if (!G.meta.seen.includes(key)) {
+      G.meta.seen.push(key);
+      writeMeta(G.meta);
+    }
     return ImageScene.show(key, captions, opts);
   }
 

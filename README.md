@@ -94,7 +94,14 @@ contrôles se placent sur les côtés.
 [dernière version](https://github.com/Yato-350/Veilleuse/releases/latest), l'ouvrir sur le téléphone et autoriser
 l'installation depuis cette source. L'APK est construit par le workflow [Android APK](.github/workflows/android.yml)
 (Capacitor) : *Actions → Android APK → Run workflow*, avec un numéro de version (`v1.0.1`…) pour publier une
-nouvelle *Release*, ou vide pour un simple test.
+nouvelle *Release*, ou vide pour un simple test. Chaque version publie aussi un fichier `.aab` pour le Google Play
+Store.
+
+**Clé de signature Android** : pour que chaque nouvel APK s'installe par-dessus le précédent (et pour le Play Store),
+les builds sont signés avec une clé stable stockée dans les secrets du dépôt (*Settings → Secrets and variables →
+Actions*) : `ANDROID_KEYSTORE_BASE64` (le fichier `.jks` encodé en base64), `ANDROID_KEYSTORE_PASSWORD`,
+`ANDROID_KEY_ALIAS` et `ANDROID_KEY_PASSWORD`. Sans ces secrets, une clé jetable est utilisée (l'APK s'installe, mais
+ne peut pas mettre à jour une installation existante). La clé ne doit jamais être ajoutée au dépôt.
 
 ## Développement
 
@@ -147,7 +154,7 @@ Documentation : [Conception](docs/GAME_DESIGN.md) · [Scénario](docs/SCENARIO.m
 
 ## Crédits
 
-Histoire, design et code : **Yato-350** & **Claude**. Pixel art, musique et sons générés par le code.
+Histoire, design et code : **Yasin**. Pixel art, musique et sons générés par le code.
 Merci à Toby Fox, OMOCAT et Team Salvato pour l'inspiration.
 
 Licence [MIT](LICENSE).

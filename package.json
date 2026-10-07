@@ -5,7 +5,7 @@
   "description": "Veilleuse — un RPG narratif en pixel art inspiré d'Undertale, OMORI et Doki Doki Literature Club. Jouable dans le navigateur et installable sur mobile.",
   "type": "module",
   "license": "MIT",
-  "author": "Yato-350",
+  "author": "Yasin",
   "repository": {
     "type": "git",
     "url": "https://github.com/Yato-350/Veilleuse.git"
