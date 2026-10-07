@@ -648,7 +648,7 @@ export const door304: Script = async (d) => {
   if (isSilenceRoute()) {
     await d.say(['Et toi…', 'Toi, t\'es qui, déjà ?'], 'mina:neutral');
     await d.say(['T\'as de l\'encre partout. Comme ce qui a tout recouvert.', 'Mon frère, il avait pas d\'encre sur les mains.'], 'mina:sad');
-    const c = await d.ask('', ['C\'est moi, Noa', '…']);
+    const c = await d.ask('Elle te regarde comme un inconnu.', ['C\'est moi, Noa', '…']);
     if (c === 0) await d.say('Tu ouvres la bouche. Rien ne sort.');
     await d.say('…', 'noa:sad');
     await d.say(['Je voulais juste dire à mon frère…', 'Je voulais lui dire…'], 'mina:sad');
@@ -657,7 +657,7 @@ export const door304: Script = async (d) => {
     await d.say(['Maman venait. Tous les soirs.', 'Moi, je regardais la porte. Je comptais les pas dans le couloir.'], 'mina:sad');
     await d.say(['J\'avais demandé ma veilleuse. Le dernier soir.', 'J\'avais peur du noir.'], 'mina:sad');
     await d.wait(30);
-    const c = await d.ask('', ['Pardon', 'Je…', '…']);
+    const c = await d.ask('Elle attend. Tu dois lui répondre quelque chose.', ['Pardon', 'Je…', '…']);
     if (c !== 2) await d.say('Tu ouvres la bouche. Rien ne sort.');
     await d.say('…', 'noa:sad');
     await d.wait(40);
@@ -1035,6 +1035,7 @@ function finalHooks(s: FinalState): Partial<BattleHooks> {
 
   async function offerStay(b: Battle): Promise<void> {
     await director.say(['Tu vois ? C\'est facile.', 'Il suffit de ne plus ouvrir les yeux.'], 'dodo:happy');
+    b.setText(null);
     const r = await director.ask('Rester ici, avec Dodo ?', ['Rester', '…Non'], 'dodo:creepy', { cancelIndex: 1 });
     if (r === 0) {
       s.outcome = 'beaux_reves';
@@ -1047,6 +1048,7 @@ function finalHooks(s: FinalState): Partial<BattleHooks> {
   }
 
   async function stayAction(b: Battle): Promise<void> {
+    b.setText(null);
     const r = await director.ask('Rester ici ? Pour toujours ?', ['Rester', 'Pas encore'], 'dodo:happy', { cancelIndex: 1 });
     if (r === 0) {
       s.outcome = 'beaux_reves';
@@ -1061,7 +1063,8 @@ function finalHooks(s: FinalState): Partial<BattleHooks> {
     await b.bubble([{ e, text: 'Non… attends.' }]);
     await director.say(['Si tu te réveilles, elle s\'en va. Pour de vrai, cette fois.', 'Tu vas avoir mal, Noa. Tellement mal.'], 'dododark:creepy');
     await director.say('Ici, au moins… tu n\'as jamais froid.', 'dodo:neutral');
-    const r = await director.ask('', ['Se réveiller', 'Rester']);
+    b.setText(null);
+    const r = await director.ask('Dodo te tend la patte. Derrière lui, la nuit est si douce.', ['Se réveiller', 'Rester']);
     s.outcome = r === 0 ? 'aube' : 'beaux_reves';
     if (r === 0) {
       director.set('fin_route', 'aube');
@@ -1335,15 +1338,17 @@ async function endingAube(d: Director): Promise<void> {
   await d.say(['Va.', 'Moi, je suis un mouton en peluche. Mon travail, c\'est de rester.'], 'dodo:happy');
   d.music('title', 2);
   await d.wait(30);
-  d.spawn({ id: 'mina_light', sprite: 'pose_mina_light', x: 24, y: 8, solid: false, shadow: false, light: { r: 60, color: '#fff3cf', flicker: true } });
+  // Mina appears a few steps ahead of Noa, left of where the choice window opens.
+  const mx = Math.min(22, tile(d.player.x) + 7);
+  d.spawn({ id: 'mina_light', sprite: 'pose_mina_light', x: mx, y: 8, solid: false, shadow: false, light: { r: 60, color: '#fff3cf', flicker: true } });
   d.sfx('chime', { pitch: 0.9 });
-  await d.wait(40);
+  await d.cameraTo(mx - 2, 8);
   await d.say('Noa.', 'mina:happy');
   await d.say(['Tout à l\'heure, j\'ai pas pu finir ma phrase.', 'Je voulais juste te dire…'], 'mina:neutral');
   await d.say('C\'est pas ta faute.', 'mina:sad');
   await d.say(['Et mon carnet… celui avec le Pays de Coton dedans.', 'Il est sur mon bureau. Je l\'ai fait pour toi.', 'Va le lire, d\'accord ? Et allume la lumière.'], 'mina:happy');
   await d.say('…Mina.', 'noa:sad');
-  const c = await d.ask('', ['Au revoir', 'Je t\'aime', 'Pardon']);
+  const c = await d.ask('Elle sourit. Elle attend que tu le dises.', ['Au revoir', 'Je t\'aime', 'Pardon']);
   await d.say(['Au revoir.', 'Je t\'aime.', 'Pardon.'][c]!, 'noa:sad');
   const answers = [
     ['Au revoir, Noa.', 'Fais de beaux rêves… mais pas trop longtemps, hein !'],
@@ -1360,9 +1365,10 @@ async function endingAube(d: Director): Promise<void> {
     world.particles.burst(ml.x, ml.y - 12, '#ffe991', 24, 1);
   }
   d.remove('mina_light');
+  d.cameraFollow();
   d.set('c3_dawn_ready');
   await d.wait(30);
-  await d.say(['Là où elle était, une porte de lumière est ouverte.', 'De l\'autre côté, il fait presque jour.']);
+  await d.say(['Plus loin, au bout du vide, une porte de lumière s\'est ouverte.', 'De l\'autre côté, il fait presque jour.']);
 }
 
 export const dodoPlushTalk: Script = async (d) => {

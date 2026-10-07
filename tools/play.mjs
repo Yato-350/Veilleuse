@@ -66,6 +66,7 @@ const state = () =>
     if ('mode' in (top ?? {}) && 'enemies' in top) {
       s.battle = top.mode;
       s.bhp = top.hp;
+      if (Array.isArray(top.menuLabels)) s.labels = top.menuLabels.join('|');
       s.enemies = top.enemies.map((e) => `${e.def.id}:${Math.round(e.hp)}hp:${Math.round((e.calm ?? 0) * 100)}%${e.spareable ? ':spare' : ''}`).join(' ');
       s.waitInput = !!top.text?.waitInput;
       if (top.list) s.list = top.list.items.join('|');

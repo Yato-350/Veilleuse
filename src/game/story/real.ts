@@ -474,7 +474,7 @@ async function interlude2Dodo(d: Director): Promise<void> {
   await d.say(['Mais si on ne se réveille pas…', 'si on reste bien au chaud, sous la couette…', 'alors rien ne s\'en va jamais.'], 'dodo:happy');
   setPageTitle('Ne pars pas');
   await d.say('Dors, Noa. {spd:0.5}Mina t\'attend.{/spd}', 'dodo:creepy');
-  await d.ask('', ['Dormir']);
+  await d.ask('Tes paupières sont si lourdes.', ['Dormir']);
   await enterDream(d, 3);
 }
 

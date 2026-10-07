@@ -1125,6 +1125,11 @@ export class Battle implements Scene {
       g.fillRect(x + 1, y + 1, 70, 16);
       const label = this.menuLabels[i] ?? '';
       const lw = measure(label);
+      // Long labels (« SE RÉVEILLER ») take the whole button: no icon, centered.
+      if (lw > 56) {
+        drawText(g, label, x + 1 + Math.floor((70 - lw) / 2), y + 3, { color });
+        continue;
+      }
       if (sel && this.mode === 'menu') heart(g, x + 5, y + 6, EMOTION_COLOR[this.soulEmo]);
       else drawText(g, ICONS[i]!, x + 5, y + 3, { color });
       drawText(g, label, x + 14 + Math.floor((56 - lw) / 2), y + 3, { color });
