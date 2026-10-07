@@ -130,6 +130,39 @@ sa pluie bleue ne te touche plus. L'empathie protège, littéralement.
 **Besoins des ennemis** : chaque ennemi a un ou plusieurs besoins émotionnels (parfois une séquence, parfois un mot spécial).
 Écrire un mot qui répond au besoin remplit sa jauge d'apaisement ; un mot qu'il déteste l'agite (attaques plus fortes).
 
+**Nouveautés de la 1.1**
+
+- **Mots doux-amers** (chapitres 2 et 3 : « berceuse », « photo », « goûter d'avant », « vieux dessin », « souvenir »,
+  « dessin », « son rire », « anniversaire ») : un mot porte **deux émotions**, Joie + Tristesse. L'écrire rend le cœur
+  **bicolore** (cœur fendu jaune/bleu, HUD « DOUX-AMER ») : les projectiles **des deux couleurs** le traversent ; le blanc
+  et les autres couleurs blessent toujours. Règles :
+  - le mot répond à un besoin de **l'une ou l'autre** émotion, pour +1 (pas +2) ;
+  - si l'une des moitiés répond au besoin, le mot apaise **même si l'ennemi déteste l'autre** (la douceur porte
+    l'amertume) ; sinon, une moitié détestée l'agite comme d'habitude ;
+  - un cœur bicolore se bat comme un cœur **neutre** (pas de triangle, pas de critique de la Joie, pas de régénération
+    de la Tristesse) et se déplace à la vitesse moyenne des deux : sa force, c'est la résonance, pas les dégâts.
+- **Mina alliée** (chapitres 1–2, et chapitre 3 tant qu'elle n'est pas effacée — si elle est dans l'équipe) : son portrait
+  en haut à gauche, avec trois pastilles qui se remplissent. **Tous les 3 tours**, avant l'attaque ennemie, elle agit avec
+  une réplique : **pansement** (+25 % des PV max, au moins 4) si Noa est à la moitié de ses PV ou moins ; sinon, en
+  alternance, un **bouclier de crayon** (absorbe 3 coups pendant l'esquive) ou elle **colorie le blanc** dans la couleur
+  du cœur (les projectiles blancs de cette esquive résonnent ; seulement si le cœur est coloré). Jamais pendant le
+  tutoriel, le combat final contre Dodo, ni dans le monde réel.
+- **La place vide** : au chapitre 3, après l'effacement de Mina, le HUD garde son cadre vide (« … »). Au tour où elle
+  aurait agi, une ligne note son absence (« * Tu attends le dessin de Mina. Il ne vient pas. ») — la première fois
+  toujours, ensuite dans un combat sur trois environ, une seule fois par combat.
+- **Mina aide après trois défaites** : à la 3ᵉ défaite d'affilée contre le même combat, si Mina combattait aux côtés de
+  Noa, l'écran de game over la montre chasser le murmure de Dodo : « Tu veux que je t'aide un peu ? ». Accepter active le
+  **Mode Histoire** (sauvegardé, réversible dans les Options) ; refuser est respecté (elle ne redemande pas pour cette
+  série). Une victoire ou une fuite remet le compteur à zéro.
+- **La musique suit le cœur** : la couleur du cœur façonne la piste du combat — Tristesse : étouffée et plus lente ;
+  Joie : un peu plus vive ; Colère : plus rapide ; Peur : légèrement ondulante et voilée ; cœur bicolore : la moyenne des
+  deux. Tout est remis à zéro à la fin du combat ; le combat final contre Dodo garde son propre traitement
+  (implicite pour Dodo ; `BattleOptions.fixedMusic` pour tout autre combat dont les scripts pilotent la musique).
+- **Formes des émotions** (option d'accessibilité, désactivée par défaut) : chaque émotion a une petite forme en plus de
+  sa couleur — Joie = soleil, Tristesse = goutte, Colère = pointes, Peur = spirale, Neutre = anneau. Elles s'affichent
+  au-dessus du cœur, dans les projectiles colorés (le blanc reste nu), devant les mots du carnet (deux formes pour un
+  mot doux-amer) et à côté de l'émotion dans le HUD.
+
 **Progression**
 
 - **Étoiles** (apaiser) → augmentent les PV max.

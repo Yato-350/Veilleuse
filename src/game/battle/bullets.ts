@@ -79,7 +79,10 @@ export class BulletWorld {
   shield = 0;
   /** Called when the shield absorbs a hit. */
   onShield: (() => void) | null = null;
-  /** Mina's coloring: white projectiles of this dodge take this color (the soul's), so they resonate. */
+  /**
+   * Mina's coloring: white projectiles of this dodge take this color (the soul's), so they resonate. Zones (erased
+   * areas…) keep their color: they are part of a boss's design.
+   */
   recolor: Emotion | null = null;
 
   spawn(p: Partial<Bullet>): Bullet {
@@ -186,7 +189,6 @@ export class BulletWorld {
     }
     for (const z of this.zones) {
       z.life--;
-      if (this.recolor && z.emo === 'neutre') z.emo = this.recolor;
       if (z.warn > 0) {
         z.warn--;
         continue;

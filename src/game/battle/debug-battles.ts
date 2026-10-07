@@ -4,12 +4,12 @@ import { WORD_POOLS } from '../../data/words';
 import { G } from '../state';
 import { setDefeatStreak } from './battle';
 
-/** Notebook of the bt_doux battle: the chapter 3 bittersweet words first, then one word of each other emotion. */
-const douxWords = () => {
-  const pool = WORD_POOLS[3]!;
-  const doux = pool.filter((w) => w.emotion2);
-  const other = (['joie', 'tristesse', 'colere'] as const).map((e) => pool.find((w) => w.emotion === e && !w.emotion2)!);
-  return [...doux.slice(0, 3), ...other];
+/** A notebook with the chapter's bittersweet words first (the longest last), then one word of each other emotion. */
+const douxWords = (chapter: number, n: number) => () => {
+  const pool = WORD_POOLS[chapter]!;
+  const doux = pool.filter((w) => w.emotion2).sort((a, b) => a.text.length - b.text.length).slice(-n);
+  const other = (['joie', 'tristesse', 'colere', 'neutre'] as const).map((e) => pool.find((w) => w.emotion === e && !w.emotion2)!);
+  return [...doux, ...other].slice(0, 6);
 };
 
 /**
@@ -17,7 +17,8 @@ const douxWords = () => {
  *   bt_ally       chapter 1, Mina at Noa's side (she acts every 3rd turn)
  *   bt_ally2      chapter 2 (forest), Mina at Noa's side, two enemies
  *   bt_absent     chapter 3 after Mina was erased: her empty slot and the line about her absence
- *   bt_shapes     « Formes des émotions » on (shapes on the soul, the bullets and the notebook)
+ *   bt_shapes     « Formes des émotions » on (shapes on the soul, the bullets, the HUD and the notebook, with the two
+ *                 longest bittersweet words of chapter 2)
  *   bt_doux       chapter 3 before the erasure: a notebook of bittersweet words (« souvenir », « dessin »…)
  *   bt_defeats    2 defeats already counted and 1 HP: lose once more and Mina offers to help
  *   bt_real       a battle in the real world: no ally, even with Mina in the party
@@ -49,12 +50,12 @@ export const DEBUG: Record<string, Script> = {
     G.settings.emotionShapes = true;
     setup(d, 2, 'foret', 'west', true);
     await d.fadeIn(10);
-    await d.battle(['luciole', 'taille_crayon']);
+    await d.battle(['luciole', 'taille_crayon'], { hooks: { words: douxWords(2, 2) } });
   },
   bt_doux: async (d) => {
     setup(d, 3, 'hopital', 'default', true, ['c3_intro']);
     await d.fadeIn(10);
-    await d.battle(['perfusion'], { hooks: { words: douxWords } });
+    await d.battle(['perfusion'], { hooks: { words: douxWords(3, 3) } });
   },
   bt_defeats: async (d) => {
     setup(d, 1, 'prairie', 'mina', true, ['c1_tutorial', 'c1_mina']);
