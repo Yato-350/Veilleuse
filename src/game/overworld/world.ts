@@ -60,6 +60,8 @@ export class WorldScene implements Scene {
   lightFlicker = 1;
   /** Hide HUD hints. */
   hideHud = false;
+  /** Script run when the player talks to the follower (Mina). */
+  followerTalk: Script | undefined;
   frame = 0;
 
   get world(): string {
@@ -99,6 +101,7 @@ export class WorldScene implements Scene {
       f.variant = variant;
       f.dir = p.dir;
       f.solid = false;
+      f.interact = this.followerTalk;
       this.follower = f;
       this.entities.push(f);
     }
@@ -206,6 +209,7 @@ export class WorldScene implements Scene {
     f.variant = this.variant;
     f.solid = false;
     f.dir = this.player.dir;
+    f.interact = this.followerTalk;
     this.follower = f;
     this.entities.push(f);
     this.history = [];

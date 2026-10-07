@@ -18,6 +18,8 @@ export const SPEAKERS: Record<string, Speaker> = {
   chaussette: { name: 'Chaussette', voice: 'sock', portrait: 'chaussette', color: '#a7c7f0' },
   lune: { name: 'Madame Lune', voice: 'moon', portrait: 'lune', color: '#ffe991' },
   mouton: { name: 'Moutonnier', voice: 'sheep', color: '#fffaf2' },
+  agneau: { name: 'Agneau', voice: 'sheep', color: '#fff3cf' },
+  meme: { name: 'Mémé Laine', voice: 'sheep', color: '#f8b6cf' },
   hibou: { name: 'Hibou', voice: 'owl', color: '#dcb488' },
   gomme: { name: 'Gomme', voice: 'eraser', color: '#f8b6cf' },
   placard: { name: 'Monstre du Placard', voice: 'monster', color: '#9a7bd0' },
