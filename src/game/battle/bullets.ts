@@ -2,6 +2,8 @@ import { EMOTION_COLOR, type Emotion } from '../../engine/palette';
 import { circleRect, type Rect } from '../../engine/math';
 import { drawSprite } from '../../engine/sprite';
 import { hasSpr, spr } from '../assets';
+import { G } from '../state';
+import { drawEmoToken } from './emoshape';
 import { resonates } from './rules';
 
 export type BulletShape =
@@ -54,6 +56,8 @@ export interface Soul {
   x: number;
   y: number;
   emo: Emotion;
+  /** Second color of a bicolor (bittersweet) soul. */
+  emo2: Emotion | null;
   inv: number;
   /** Half-size of the hitbox. */
   hit: number;
@@ -64,13 +68,19 @@ export class BulletWorld {
   bullets: Bullet[] = [];
   box: Rect = { x: 100, y: 86, w: 120, h: 56 };
   t = 0;
-  soul: Soul = { x: 160, y: 114, emo: 'neutre', inv: 0, hit: 2 };
+  soul: Soul = { x: 160, y: 114, emo: 'neutre', emo2: null, inv: 0, hit: 2 };
   /** Called when the soul is hit by a bullet. */
   onHit: ((b: Bullet) => void) | null = null;
   /** Called when a bullet passes harmlessly through the soul (resonance). */
   onResonate: ((b: Bullet) => void) | null = null;
   /** Extra hazards drawn/checked by patterns (erased zones etc.). */
   zones: Array<Rect & { emo: Emotion; dmg: number; warn: number; life: number }> = [];
+  /** Mina's crayon shield: number of hits it still absorbs during this dodge. */
+  shield = 0;
+  /** Called when the shield absorbs a hit. */
+  onShield: (() => void) | null = null;
+  /** Mina's coloring: white projectiles of this dodge take this color (the soul's), so they resonate. */
+  recolor: Emotion | null = null;
 
   spawn(p: Partial<Bullet>): Bullet {
     const b: Bullet = {
@@ -105,6 +115,25 @@ export class BulletWorld {
   clear(): void {
     this.bullets = [];
     this.zones = [];
+    this.shield = 0;
+    this.recolor = null;
+  }
+
+  /** Resonance with the current soul (one or two colors). */
+  passes(emo: Emotion): boolean {
+    return resonates(this.soul.emo, emo, this.soul.emo2);
+  }
+
+  /** A projectile reaches the soul: the shield absorbs it if there is one. Returns true if the soul was hurt. */
+  private strike(b: Bullet): boolean {
+    if (this.shield > 0) {
+      this.shield--;
+      this.soul.inv = 24;
+      this.onShield?.();
+      return false;
+    }
+    this.onHit?.(b);
+    return true;
   }
 
   update(): void {
@@ -112,6 +141,10 @@ export class BulletWorld {
     const box = this.box;
     for (const b of this.bullets) {
       b.life++;
+      if (this.recolor && b.emo === 'neutre') {
+        b.emo = this.recolor;
+        b.data.recolored = 1;
+      }
       if (b.warn > 0) {
         b.warn--;
         continue;
@@ -140,26 +173,27 @@ export class BulletWorld {
         if (b.life > 20) b.dead = true;
       }
       if (!b.dead && this.hits(b)) {
-        if (resonates(this.soul.emo, b.emo)) {
+        if (this.passes(b.emo)) {
           if (!b.data.resonated) {
             b.data.resonated = 1;
             this.onResonate?.(b);
           }
         } else if (this.soul.inv <= 0) {
-          this.onHit?.(b);
+          this.strike(b);
           if (b.shape !== 'rect' && b.shape !== 'ring') b.dead = true;
         }
       }
     }
     for (const z of this.zones) {
       z.life--;
+      if (this.recolor && z.emo === 'neutre') z.emo = this.recolor;
       if (z.warn > 0) {
         z.warn--;
         continue;
       }
       const s = this.soul;
-      if (s.inv <= 0 && !resonates(s.emo, z.emo) && s.x + s.hit > z.x && s.x - s.hit < z.x + z.w && s.y + s.hit > z.y && s.y - s.hit < z.y + z.h) {
-        this.onHit?.({ dmg: z.dmg, emo: z.emo } as Bullet);
+      if (s.inv <= 0 && !this.passes(z.emo) && s.x + s.hit > z.x && s.x - s.hit < z.x + z.w && s.y + s.hit > z.y && s.y - s.hit < z.y + z.h) {
+        this.strike({ dmg: z.dmg, emo: z.emo } as Bullet);
       }
     }
     this.zones = this.zones.filter((z) => z.life > 0);
@@ -180,14 +214,21 @@ export class BulletWorld {
   }
 
   draw(g: CanvasRenderingContext2D): void {
+    const shapes = G.settings.emotionShapes;
     for (const z of this.zones) {
       const warn = z.warn > 0;
-      g.globalAlpha = warn ? 0.25 + 0.2 * Math.sin(this.t * 0.5) : 0.9;
+      g.globalAlpha = warn ? 0.25 + 0.2 * Math.sin(this.t * 0.5) : this.passes(z.emo) ? 0.45 : 0.9;
       g.fillStyle = warn ? '#ff4a5a' : z.emo === 'neutre' ? '#fffaf2' : EMOTION_COLOR[z.emo];
       g.fillRect(Math.round(z.x), Math.round(z.y), Math.round(z.w), Math.round(z.h));
+      if (shapes && !warn && z.emo !== 'neutre') {
+        // Tile the shape inside colored zones.
+        for (let yy = z.y + 6; yy < z.y + z.h - 2; yy += 12) {
+          for (let xx = z.x + 6; xx < z.x + z.w - 2; xx += 12) drawEmoToken(g, z.emo, xx, yy);
+        }
+      }
     }
     g.globalAlpha = 1;
-    for (const b of this.bullets) drawBullet(g, b, this.soul.emo, this.t);
+    for (const b of this.bullets) drawBullet(g, b, this.soul.emo, this.t, this.soul.emo2, shapes);
     g.globalAlpha = 1;
   }
 }
@@ -199,9 +240,9 @@ function angleInGap(a: number, gapA: number, gapW: number): boolean {
   return Math.abs(d) < gapW / 2;
 }
 
-export function drawBullet(g: CanvasRenderingContext2D, b: Bullet, soulEmo: Emotion, t: number): void {
+export function drawBullet(g: CanvasRenderingContext2D, b: Bullet, soulEmo: Emotion, t: number, soulEmo2: Emotion | null = null, shapes = false): void {
   const color = b.emo === 'neutre' ? '#fffaf2' : EMOTION_COLOR[b.emo];
-  const harmless = resonates(soulEmo, b.emo);
+  const harmless = resonates(soulEmo, b.emo, soulEmo2);
   let alpha = b.alpha * (harmless ? 0.45 : 1);
   if (b.warn > 0) alpha = 0.25 + 0.2 * Math.sin(t * 0.6);
   g.globalAlpha = alpha;
@@ -311,5 +352,29 @@ export function drawBullet(g: CanvasRenderingContext2D, b: Bullet, soulEmo: Emot
       if (b.sprite && hasSpr(b.sprite)) drawSprite(g, spr(b.sprite), x, y + Math.floor(spr(b.sprite).h / 2));
       break;
   }
+  if (shapes && b.emo !== 'neutre' && b.warn <= 0) drawShapeTokens(g, b);
   g.globalAlpha = 1;
+}
+
+/** Accessibility shapes over a colored projectile: one token at its center, several along bars and rings. */
+function drawShapeTokens(g: CanvasRenderingContext2D, b: Bullet): void {
+  if (b.shape === 'rect') {
+    const long = Math.max(b.w, b.h);
+    const n = Math.max(1, Math.floor(long / 14));
+    for (let i = 0; i < n; i++) {
+      const k = (i + 0.5) / n;
+      if (b.w >= b.h) drawEmoToken(g, b.emo, b.x + b.w * k, b.y + b.h / 2);
+      else drawEmoToken(g, b.emo, b.x + b.w / 2, b.y + b.h * k);
+    }
+    return;
+  }
+  if (b.shape === 'ring') {
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+      if (b.data.gapA !== undefined && angleInGap(a, b.data.gapA, b.data.gapW ?? 0.8)) continue;
+      drawEmoToken(g, b.emo, b.x + Math.cos(a) * b.r, b.y + Math.sin(a) * b.r);
+    }
+    return;
+  }
+  drawEmoToken(g, b.emo, b.x, b.y);
 }

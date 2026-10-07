@@ -82,6 +82,23 @@ export const EMOTION_LABEL: Record<Emotion, string> = {
   peur: 'PEUR',
 };
 
+/** Color names, for lines such as « je colorie tout en bleu ». */
+export const EMOTION_COLOR_NAME: Record<Emotion, string> = {
+  neutre: 'blanc',
+  joie: 'jaune',
+  tristesse: 'bleu',
+  colere: 'rouge',
+  peur: 'violet',
+};
+
+/** HUD label of a soul that may hold two emotions at once (bittersweet words: joie + tristesse = « DOUX-AMER »). */
+export function soulLabel(e: Emotion, e2: Emotion | null = null): string {
+  if (!e2 || e2 === e) return EMOTION_LABEL[e];
+  const pair = [e, e2].sort().join('+');
+  if (pair === 'joie+tristesse') return 'DOUX-AMER';
+  return `${EMOTION_LABEL[e]}/${EMOTION_LABEL[e2]}`;
+}
+
 /** UI colors. */
 export const UI = {
   bg: '#0d0a14',

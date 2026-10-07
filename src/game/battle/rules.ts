@@ -6,8 +6,22 @@ export function beats(a: Emotion, b: Emotion): boolean {
   return (a === 'joie' && b === 'colere') || (a === 'colere' && b === 'tristesse') || (a === 'tristesse' && b === 'joie');
 }
 
-/** Movement speed multiplier of the soul. */
-export function soulSpeed(e: Emotion): number {
+/** The emotions carried by a word: one, or two for a bittersweet word (« mot doux-amer »). */
+export function wordEmotions(w: WordDef): Emotion[] {
+  return w.emotion2 && w.emotion2 !== w.emotion ? [w.emotion, w.emotion2] : [w.emotion];
+}
+
+/**
+ * Emotion used by the triangle and the damage multipliers. A bicolor (bittersweet) soul holds two feelings that
+ * balance each other: it fights like a neutral heart — its strength is resonance, not damage.
+ */
+export function combatEmotion(soul: Emotion, soul2: Emotion | null = null): Emotion {
+  return soul2 && soul2 !== soul ? 'neutre' : soul;
+}
+
+/** Movement speed multiplier of the soul (a bicolor soul moves at the average of its two speeds). */
+export function soulSpeed(e: Emotion, e2: Emotion | null = null): number {
+  if (e2 && e2 !== e) return (soulSpeed(e) + soulSpeed(e2)) / 2;
   switch (e) {
     case 'joie':
       return 1.25;
@@ -39,9 +53,12 @@ export function takenMultiplier(soul: Emotion, enemy: Emotion): number {
   return m;
 }
 
-/** Resonance rule: a projectile of the same color as the soul passes through it. White always hurts. */
-export function resonates(soul: Emotion, bullet: Emotion): boolean {
-  return bullet !== 'neutre' && soul === bullet;
+/**
+ * Resonance rule: a projectile of the same color as the soul passes through it. White always hurts.
+ * A bicolor (bittersweet) soul resonates with both of its colors.
+ */
+export function resonates(soul: Emotion, bullet: Emotion, soul2: Emotion | null = null): boolean {
+  return bullet !== 'neutre' && (soul === bullet || soul2 === bullet);
 }
 
 export function playerDamage(atk: number, accuracy: number, soul: Emotion, enemy: Emotion, def: number, crit: boolean): number {
@@ -76,13 +93,19 @@ export interface WordResult {
  * - a hated emotion → loses progress, the enemy gets agitated
  * - the needed emotion → +1 progress (×word power)
  * - anything else → no effect
+ * Bittersweet words (two emotions) answer a need of EITHER emotion (still +1, not +2). When one half answers the need,
+ * the word soothes even if the enemy hates the other half (the sweetness carries the bitterness); otherwise, hating
+ * either half agitates the enemy.
  */
 export function evaluateWord(word: WordDef, need: NeedStep | undefined, hates: Emotion[] = [], remaining = 1): WordResult {
   if (need?.word && need.word.toLowerCase() === word.text.toLowerCase()) {
     return { verdict: 'special', gain: Math.max(1, remaining) };
   }
-  if (hates.includes(word.emotion)) return { verdict: 'bad', gain: -1 };
-  if (need?.emotion && need.emotion === word.emotion) return { verdict: 'good', gain: word.power ?? 1 };
+  const emos = wordEmotions(word);
+  const needed = !!need?.emotion && emos.includes(need.emotion);
+  const hated = emos.some((e) => hates.includes(e));
+  if (hated && !(needed && emos.length > 1)) return { verdict: 'bad', gain: -1 };
+  if (needed) return { verdict: 'good', gain: word.power ?? 1 };
   return { verdict: 'neutral', gain: 0 };
 }
 

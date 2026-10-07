@@ -4,6 +4,7 @@ import * as tileArt from '../data/sprites/tiles';
 import * as propArt from '../data/sprites/props';
 import * as enemyArt from '../data/sprites/enemies';
 import * as devArt from '../data/sprites/dev';
+import * as epilogueArt from '../data/sprites/epilogue';
 import { realify, corrupt } from '../engine/palette';
 import type { Dir } from '../engine/math';
 
@@ -109,7 +110,7 @@ export interface SpriteModule {
   CHARS?: Record<string, CharDef>;
 }
 
-export const SPRITE_MODULES: SpriteModule[] = [devArt, characterArt, tileArt, propArt, enemyArt];
+export const SPRITE_MODULES: SpriteModule[] = [devArt, characterArt, tileArt, propArt, enemyArt, epilogueArt];
 
 /** Builds every sprite of the game (call once at boot). */
 export function buildAll(): void {
