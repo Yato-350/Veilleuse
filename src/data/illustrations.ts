@@ -188,7 +188,7 @@ const ell =
   (cx: number, cy: number, rx: number, ry: number): Pred =>
   (x, y) =>
     ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1;
-const boxP =
+export const boxP =
   (x0: number, y0: number, w: number, h: number): Pred =>
   (x, y) =>
     x >= x0 && x < x0 + w && y >= y0 && y < y0 + h;
@@ -1461,6 +1461,519 @@ function waxCrayon(g: Ctx, x: number, y: number, len: number, slope: number, c: 
 }
 
 // ---------------------------------------------------------------------------------------------------------------
+// Real memories & endings (dark pixel scenes)
+// ---------------------------------------------------------------------------------------------------------------
+
+/** Vertical dithered gradient over a rectangle. */
+function vgrad(g: Ctx, x: number, y: number, w: number, h: number, cols: readonly string[]): void {
+  field(g, x, y, w, h, (xx, yy) => ramp(cols, (yy - y) / Math.max(1, h - 1), xx, yy));
+}
+
+// --- La fenêtre -------------------------------------------------------------------------------------------------
+
+const WIN = { x: 92, y: 18, w: 136, h: 112 };
+
+function paintFenetre(g: Ctx): void {
+  // Room walls: cold teal darkness, lighter around the window.
+  field(g, 0, 0, SW, SH, (x, y) => {
+    const d = Math.hypot((x - 160) / 170, (y - 74) / 120);
+    return ramp(['#25333d', '#1b262e', '#141c22', '#0e1418', '#0a0e11'], d, x, y);
+  });
+  // Night sky outside
+  vgrad(g, WIN.x, WIN.y, WIN.w, WIN.h, ['#0c1630', '#132044', '#1b2a52', '#243660', '#2e4068']);
+  // Distant city lights (blurred bokeh)
+  for (let i = 0; i < 40; i++) {
+    const bx = WIN.x + 4 + Math.floor(hash(i, 1, 41) * (WIN.w - 8));
+    const by = WIN.y + 70 + Math.floor(hash(i, 2, 41) * 36);
+    const c = hash(i, 3, 41) < 0.6 ? '#f5c04f' : hash(i, 4, 41) < 0.5 ? '#f8b6cf' : '#a7c7f0';
+    withAlpha(g, 0.25, () => rect(g, bx - 1, by - 1, 3, 3, c));
+    withAlpha(g, 0.7, () => px(g, bx, by, c));
+  }
+  // Rooftops silhouettes
+  field(g, WIN.x, WIN.y + 88, WIN.w, 24, (x, y) => {
+    const hgt = 6 + Math.floor(noise1(x * 0.08, 7) * 6 + 6 + (hash(Math.floor(x / 9), 0, 3) * 8));
+    return y > WIN.y + WIN.h - hgt ? '#0b1020' : null;
+  });
+  // Moon behind clouds
+  fillP(g, ell(WIN.x + 100, WIN.y + 24, 9, 9), [WIN.x + 88, WIN.y + 12, WIN.x + 112, WIN.y + 36], '#e8e0b8');
+  fillP(g, ell(WIN.x + 104, WIN.y + 22, 8, 8), [WIN.x + 92, WIN.y + 12, WIN.x + 114, WIN.y + 34], '#1b2a52');
+  field(g, WIN.x, WIN.y + 18, WIN.w, 22, (x, y) => (noise2(x * 0.06, y * 0.25, 9) > 0.62 ? (bayer(x, y) < 0.5 ? '#3a4a70' : '#2e3e64') : null));
+  // Window frame + cross bars
+  const frame = '#8a9a98';
+  const frameD = '#5b6a6a';
+  rect(g, WIN.x - 5, WIN.y - 5, WIN.w + 10, 5, frame);
+  rect(g, WIN.x - 5, WIN.y + WIN.h, WIN.w + 10, 4, frameD);
+  rect(g, WIN.x - 5, WIN.y, 5, WIN.h, frame);
+  rect(g, WIN.x + WIN.w, WIN.y, 5, WIN.h, frameD);
+  rect(g, WIN.x + WIN.w / 2 - 2, WIN.y, 4, WIN.h, frame);
+  rect(g, WIN.x, WIN.y + 52, WIN.w, 3, frame);
+  rect(g, WIN.x - 5, WIN.y - 5, WIN.w + 10, 1, '#b8c6c2');
+  // Windowsill
+  rect(g, WIN.x - 12, WIN.y + WIN.h + 4, WIN.w + 24, 6, '#c8d0cc');
+  rect(g, WIN.x - 12, WIN.y + WIN.h + 10, WIN.w + 24, 2, '#6e7a78');
+  // Green curtains with folds
+  const curtain = (x0: number, w: number, side: number): void => {
+    field(g, x0, 2, w, 150, (x, y) => {
+      const fold = Math.sin((x - x0) * 0.55 + y * 0.01 * side) * 0.5 + 0.5;
+      const sway = side * (y / 150) * 4;
+      if (side < 0 && x > x0 + w - 1 - Math.max(0, (y - 100) * 0.12) + sway) return null;
+      if (side > 0 && x < x0 + Math.max(0, (y - 100) * 0.12) + sway) return null;
+      return ramp(['#1d3a2c', '#2a5240', '#3a7558', '#4f8a64'], fold * 0.8 + (1 - y / 180) * 0.2, x, y);
+    });
+    rect(g, x0, 2, w, 3, '#5a6a64');
+  };
+  curtain(56, 40, -1);
+  curtain(224, 40, 1);
+  rect(g, 50, 0, 220, 3, '#3a4446');
+  // The small hand on the glass (backlit), with a halo of fog
+  const hx = WIN.x + 38;
+  const hy = WIN.y + 78;
+  withAlpha(g, 0.35, () => fillP(g, ell(hx, hy, 15, 13), [hx - 16, hy - 14, hx + 16, hy + 14], (x, y) => (bayer(x, y) < 0.6 ? '#9fb4c8' : null)));
+  const skin = '#d9b4a0';
+  const skinD = '#a8826e';
+  fillP(g, ell(hx, hy + 3, 6, 5), [hx - 7, hy - 3, hx + 7, hy + 9], skin);
+  const fingers: Array<[number, number, number]> = [
+    [-6, -2, 6],
+    [-3, -6, 8],
+    [0, -7, 9],
+    [3, -6, 8],
+    [6, 0, 5],
+  ];
+  for (const [fx, fy, len] of fingers) {
+    rect(g, hx + fx - 1, hy + fy - len / 2, 2, len, skin);
+    px(g, hx + fx - 1, hy + fy - len / 2, skinD);
+  }
+  rect(g, hx - 2, hy + 7, 5, 6, skin);
+  // cuff of a hospital gown sleeve
+  rect(g, hx - 3, hy + 12, 7, 4, '#a7c7d8');
+  rect(g, hx - 3, hy + 12, 7, 1, '#cfe2ec');
+  // Monitor glow in the corner
+  withAlpha(g, 0.5, () => fillP(g, ell(20, 168, 40, 22), [0, 140, 64, 180], (x, y) => (bayer(x, y) < 0.35 ? '#2e5a4a' : null)));
+  rect(g, 6, 150, 22, 16, '#1a2622');
+  rect(g, 8, 152, 18, 11, '#0f2a22');
+}
+
+// --- La veilleuse -------------------------------------------------------------------------------------------------
+
+function paintVeilleuse(g: Ctx): void {
+  // Wall, with a cold rectangle of window light.
+  field(g, 0, 0, SW, 112, (x, y) => {
+    const inLight = x > 170 + (112 - y) * 0.25 && x < 270 + (112 - y) * 0.25 && y > 8 && y < 104;
+    const base = ramp(['#0e1418', '#141c22', '#18222a'], y / 112, x, y);
+    return inLight ? ramp(['#2a3a48', '#24323e', '#1e2a34'], (x - 170) / 120, x, y) : base;
+  });
+  // Window cross shadow in the light patch
+  field(g, 0, 0, SW, 112, (x, y) => {
+    const u = x - (y - 112) * -0.25;
+    return y > 8 && y < 104 && (Math.abs(u - 248) < 2 || Math.abs(y - 56) < 1) && x > 170 && x < 300 ? '#141c22' : null;
+  });
+  // Table top
+  vgrad(g, 0, 112, SW, 14, ['#6e6a64', '#5a5650', '#4a4640']);
+  rect(g, 0, 112, SW, 1, '#8e8a82');
+  // Table front
+  vgrad(g, 0, 126, SW, 54, ['#2a2622', '#1e1a18', '#141210']);
+  rect(g, 0, 126, SW, 1, '#3a3530');
+  // A sheet of paper with a crayon drawing peeking out
+  fillP(g, poly([40, 113, 112, 110, 116, 124, 44, 126]), [38, 108, 118, 128], '#d8d0bc');
+  pen(g, [52, 118, 60, 116, 70, 119, 80, 116], { c: '#c87a5a', w: 1, seed: 3 });
+  pen(g, [88, 117, 96, 115, 104, 118], { c: '#5a7ab0', w: 1, seed: 4 });
+  // Plastic cup
+  fillP(g, poly([250, 96, 266, 96, 264, 116, 252, 116]), [248, 94, 268, 118], '#b8c4c8');
+  rect(g, 250, 96, 16, 2, '#dfe8ea');
+  rect(g, 252, 106, 12, 1, '#8a9aa0');
+  // The moon nightlight (off): dull yellow crescent on a little base
+  const cx = 160;
+  const cy = 86;
+  const moon = minus(ell(cx, cy, 16, 16), ell(cx + 8, cy - 5, 13, 13));
+  fillP(g, moon, [cx - 18, cy - 18, cx + 18, cy + 18], (x, y) => ramp(['#c8bc8a', '#a89c6c', '#7e7452'], (x - cx + 16) / 32 + (y - cy) / 60, x, y));
+  outline(g, moon, [cx - 18, cy - 18, cx + 18, cy + 18], '#3e3828', { grain: 0 });
+  // closed sleepy eye + blush, faded
+  pen(g, [cx - 9, cy - 1, cx - 7, cy + 1, cx - 5, cy - 1], { c: '#5a523a', w: 1, seed: 8, wob: 0, grain: 0 });
+  px(g, cx - 8, cy + 4, '#a88a7a');
+  // Base
+  fillP(g, poly([cx - 12, 103, cx + 12, 103, cx + 14, 112, cx - 14, 112]), [cx - 15, 100, cx + 15, 113], '#d8d4cc');
+  rect(g, cx - 14, 111, 28, 1, '#8a8680');
+  rect(g, cx - 4, 106, 8, 2, '#a8a49c');
+  // Cord: from the base, over the table edge, hanging down, plug dangling
+  pen(g, [cx + 13, 109, cx + 30, 112, cx + 48, 117, cx + 60, 124, cx + 64, 132, cx + 63, 146, cx + 61, 156], { c: '#d8d4cc', w: 1, seed: 21, wob: 0.4, grain: 0 });
+  rect(g, cx + 58, 156, 6, 8, '#e8e4dc');
+  rect(g, cx + 58, 156, 6, 1, '#fffaf2');
+  rect(g, cx + 59, 164, 1, 4, '#b8b4ac');
+  rect(g, cx + 62, 164, 1, 4, '#b8b4ac');
+  // Empty wall socket on the table's back panel
+  rect(g, 226, 140, 14, 18, '#3a3632');
+  rect(g, 228, 142, 10, 14, '#4a4640');
+  rect(g, 231, 147, 1, 3, '#141210');
+  rect(g, 234, 147, 1, 3, '#141210');
+}
+
+// --- Photo de famille ----------------------------------------------------------------------------------------------
+
+function paintPhoto(g: Ctx): void {
+  // Dark shelf background
+  field(g, 0, 0, SW, SH, (x, y) => ramp(['#1e1620', '#181220', '#120e18'], noise2(x * 0.03, y * 0.03, 12) * 0.6 + y / 400, x, y));
+  rect(g, 0, 156, SW, 24, '#2a1e1a');
+  rect(g, 0, 156, SW, 1, '#4a3628');
+  // Frame
+  const fx = 84;
+  const fy = 18;
+  const fw = 152;
+  const fh = 130;
+  rect(g, fx - 2, fy + 4, fw + 6, fh + 4, '#0a0810');
+  vgrad(g, fx, fy, fw, fh, ['#a8774f', '#8f6448', '#6e4a3a']);
+  rect(g, fx, fy, fw, 1, '#dcb488');
+  rect(g, fx, fy, 1, fh, '#c99a6b');
+  const ix = fx + 10;
+  const iy = fy + 10;
+  const iw = fw - 20;
+  const ih = fh - 20;
+  rect(g, ix - 2, iy - 2, iw + 4, ih + 4, '#4a3328');
+  // The photo: a sunny park, slightly faded
+  vgrad(g, ix, iy, iw, 64, ['#9cc4e8', '#b4d4ec', '#cfe2ee']);
+  field(g, ix, iy + 64, iw, ih - 64, (x, y) => ramp(['#9cc87a', '#86b46a', '#6e9a5a'], (y - iy - 64) / (ih - 64) + (hash(x, y, 5) - 0.5) * 0.2, x, y));
+  // A tree on the left
+  fillP(g, ell(ix + 18, iy + 48, 18, 16), [ix, iy + 30, ix + 38, iy + 66], (x, y) => (hash(x, y, 2) < 0.5 ? '#7ab06a' : '#5e9a5a'));
+  rect(g, ix + 16, iy + 60, 4, 12, '#8a6448');
+  // Sun
+  fillP(g, ell(ix + iw - 18, iy + 16, 8, 8), [ix + iw - 28, iy + 6, ix + iw - 8, iy + 26], '#fff3c0');
+  // Figures — feet on the grass at y=iy+100
+  const base = iy + 100;
+  // Maman (centre, tall): brown hair, beige coat
+  const mx = ix + iw / 2;
+  fillP(g, ell(mx, base - 52, 6, 7), [mx - 8, base - 61, mx + 8, base - 44], '#f2c9ad');
+  fillP(g, union(ell(mx, base - 56, 7, 5), ell(mx + 5, base - 50, 3, 7)), [mx - 9, base - 63, mx + 10, base - 42], '#7a4e32');
+  fillP(g, poly([mx - 7, base - 44, mx + 7, base - 44, mx + 10, base - 12, mx - 10, base - 12]), [mx - 11, base - 45, mx + 11, base - 11], '#d8bf94');
+  rect(g, mx - 6, base - 12, 4, 12, '#5a4a52');
+  rect(g, mx + 2, base - 12, 4, 12, '#5a4a52');
+  px(g, mx - 2, base - 52, '#3a2a2a');
+  px(g, mx + 2, base - 52, '#3a2a2a');
+  rect(g, mx - 1, base - 48, 3, 1, '#c07060');
+  // Noa (left): indigo hair, lavender hoodie — smiling (before)
+  const nx = mx - 24;
+  fillP(g, ell(nx, base - 34, 6, 6), [nx - 8, base - 41, nx + 8, base - 27], '#f8d8c2');
+  fillP(g, union(ell(nx, base - 38, 7, 4), ell(nx - 5, base - 35, 2, 4)), [nx - 8, base - 43, nx + 8, base - 30], '#3f3d63');
+  fillP(g, poly([nx - 7, base - 28, nx + 7, base - 28, nx + 8, base - 10, nx - 8, base - 10]), [nx - 9, base - 29, nx + 9, base - 9], '#c8aee6');
+  rect(g, nx - 5, base - 10, 4, 10, '#3d4c8f');
+  rect(g, nx + 1, base - 10, 4, 10, '#3d4c8f');
+  px(g, nx - 2, base - 34, '#2b2946');
+  px(g, nx + 2, base - 34, '#2b2946');
+  pen(g, [nx - 2, base - 31, nx, base - 30, nx + 2, base - 31], { c: '#a86a5a', w: 1, seed: 2, wob: 0, grain: 0 });
+  // Mina (right): orange pigtails, paper crown, red cape, V sign
+  const kx = mx + 24;
+  fillP(g, ell(kx, base - 28, 5, 5), [kx - 7, base - 34, kx + 7, base - 22], '#f8d8c2');
+  fillP(g, ell(kx, base - 31, 6, 3), [kx - 7, base - 35, kx + 7, base - 27], '#e0834f');
+  fillP(g, ell(kx - 7, base - 27, 2, 3), [kx - 10, base - 31, kx - 4, base - 23], '#e0834f');
+  fillP(g, ell(kx + 7, base - 27, 2, 3), [kx + 4, base - 31, kx + 10, base - 23], '#e0834f');
+  fillP(g, poly([kx - 5, base - 34, kx - 3, base - 38, kx - 1, base - 35, kx + 1, base - 38, kx + 3, base - 35, kx + 5, base - 38, kx + 5, base - 33, kx - 5, base - 33]), [kx - 6, base - 39, kx + 6, base - 32], '#ffd84a');
+  fillP(g, poly([kx - 6, base - 23, kx + 6, base - 23, kx + 9, base - 6, kx - 9, base - 6]), [kx - 10, base - 24, kx + 10, base - 5], '#e8505b');
+  fillP(g, poly([kx - 4, base - 22, kx + 4, base - 22, kx + 5, base - 8, kx - 5, base - 8]), [kx - 6, base - 23, kx + 6, base - 7], '#fffaf2');
+  rect(g, kx - 4, base - 6, 3, 6, '#f8d8c2');
+  rect(g, kx + 1, base - 6, 3, 6, '#f8d8c2');
+  px(g, kx - 2, base - 28, '#3a2a2a');
+  px(g, kx + 2, base - 28, '#3a2a2a');
+  rect(g, kx - 1, base - 25, 3, 1, '#c05050');
+  // V sign
+  line(g, kx + 7, base - 20, kx + 12, base - 30, '#f8d8c2');
+  line(g, kx + 12, base - 30, kx + 11, base - 34, '#f8d8c2');
+  line(g, kx + 12, base - 30, kx + 14, base - 33, '#f8d8c2');
+  // Fade / old-photo tint: dithered warm veil + vignette inside the photo
+  field(g, ix, iy, iw, ih, (x, y) => {
+    const d = Math.max(Math.abs(x - ix - iw / 2) / (iw / 2), Math.abs(y - iy - ih / 2) / (ih / 2));
+    return d > 0.9 && bayer(x, y) < (d - 0.9) * 5 ? '#5a4636' : null;
+  });
+  // Glass reflection band (static part), kept inside the photo
+  withAlpha(g, 0.1, () => fillP(g, inter(poly([ix + 30, iy, ix + 50, iy, ix + 14, iy + ih, ix - 6, iy + ih]), boxP(ix, iy, iw, ih)), [ix, iy, ix + iw, iy + ih], '#ffffff'));
+}
+
+// --- TV : vidéo de famille ----------------------------------------------------------------------------------------
+
+const TV = { x: 70, y: 20, w: 180, h: 124 };
+const SCREEN = { x: TV.x + 14, y: TV.y + 12, w: 126, h: 96 };
+
+function paintTvBody(g: Ctx): void {
+  field(g, 0, 0, SW, SH, (x, y) => ramp(['#0c0a12', '#100d18', '#0a0810'], y / SH, x, y));
+  // TV cabinet
+  rect(g, TV.x, TV.y, TV.w, TV.h, '#2a2830');
+  rect(g, TV.x, TV.y, TV.w, 2, '#4a4652');
+  rect(g, TV.x, TV.y, 2, TV.h, '#3e3a46');
+  rect(g, TV.x + TV.w - 2, TV.y, 2, TV.h, '#1a1820');
+  rect(g, TV.x, TV.y + TV.h - 3, TV.w, 3, '#1a1820');
+  // Screen bezel
+  rect(g, SCREEN.x - 4, SCREEN.y - 4, SCREEN.w + 8, SCREEN.h + 8, '#141218');
+  // Side panel: speaker grille and knobs
+  for (let y = SCREEN.y; y < SCREEN.y + 54; y += 3) rect(g, SCREEN.x + SCREEN.w + 10, y, 22, 1, '#1a1820');
+  fillP(g, ell(SCREEN.x + SCREEN.w + 21, SCREEN.y + 68, 6, 6), [0, 0, SW, SH], '#4a4652');
+  fillP(g, ell(SCREEN.x + SCREEN.w + 21, SCREEN.y + 86, 5, 5), [0, 0, SW, SH], '#4a4652');
+  px(g, SCREEN.x + SCREEN.w + 21, SCREEN.y + 64, '#c8c4cc');
+  // Power LED
+  rect(g, SCREEN.x + SCREEN.w + 26, TV.y + TV.h - 12, 2, 2, '#e8505b');
+  // Legs / stand
+  rect(g, TV.x + 20, TV.y + TV.h, 8, 10, '#1a1820');
+  rect(g, TV.x + TV.w - 28, TV.y + TV.h, 8, 10, '#1a1820');
+  rect(g, 30, TV.y + TV.h + 10, 260, 3, '#2a1e1a');
+  // Floor
+  rect(g, 0, TV.y + TV.h + 13, SW, SH, '#0e0a10');
+}
+
+function paintTvScene(g: Ctx): void {
+  const { x, y, w, h } = SCREEN;
+  // Kitchen wall (warm), window light
+  vgrad(g, x, y, w, h, ['#e8c890', '#e0b880', '#c89a68']);
+  rect(g, x, y + 66, w, 30, '#b88a5a');
+  rect(g, x + 84, y + 8, 32, 26, '#cfe6f0');
+  rect(g, x + 99, y + 8, 2, 26, '#e8d8b8');
+  rect(g, x + 84, y + 20, 32, 2, '#e8d8b8');
+  // Mina, bust shot, holding up a drawing
+  const mx = x + 42;
+  const my = y + 96;
+  // cape + dress
+  fillP(g, poly([mx - 22, my, mx - 16, my - 26, mx + 16, my - 26, mx + 22, my]), [mx - 23, my - 27, mx + 23, my], '#e8505b');
+  fillP(g, poly([mx - 10, my, mx - 8, my - 24, mx + 8, my - 24, mx + 10, my]), [mx - 11, my - 25, mx + 11, my], '#fffaf2');
+  // head
+  fillP(g, ell(mx, my - 40, 13, 14), [mx - 14, my - 55, mx + 14, my - 25], '#f8d0b0');
+  // hair + pigtails
+  fillP(g, union(ell(mx, my - 49, 14, 7), ell(mx - 13, my - 40, 4, 8), ell(mx + 13, my - 40, 4, 8)), [mx - 18, my - 57, mx + 18, my - 31], '#e0834f');
+  fillP(g, ell(mx - 18, my - 34, 4, 7), [mx - 23, my - 42, mx - 13, my - 26], '#e0834f');
+  fillP(g, ell(mx + 18, my - 34, 4, 7), [mx + 13, my - 42, mx + 23, my - 26], '#e0834f');
+  // crown
+  fillP(g, poly([mx - 11, my - 52, mx - 8, my - 62, mx - 4, my - 55, mx, my - 64, mx + 4, my - 55, mx + 8, my - 62, mx + 11, my - 52]), [mx - 12, my - 65, mx + 12, my - 51], '#ffd84a');
+  // eyes, smile, freckles
+  rect(g, mx - 6, my - 41, 2, 3, '#3a2a2a');
+  rect(g, mx + 4, my - 41, 2, 3, '#3a2a2a');
+  pen(g, [mx - 4, my - 33, mx, my - 30, mx + 4, my - 33], { c: '#b0504a', w: 1, seed: 6, wob: 0, grain: 0 });
+  px(g, mx - 8, my - 36, '#e0907a');
+  px(g, mx + 8, my - 36, '#e0907a');
+  // the drawing she holds up (a moon and two kids)
+  const dx = x + 66;
+  const dy = y + 36;
+  rect(g, dx, dy, 40, 30, '#fbf4e2');
+  rect(g, dx, dy, 40, 1, '#ffffff');
+  fillP(g, minus(ell(dx + 12, dy + 10, 6, 6), ell(dx + 15, dy + 8, 5, 5)), [dx, dy, dx + 40, dy + 30], '#f9cf3a');
+  rect(g, dx + 24, dy + 14, 3, 8, '#3e78d6');
+  rect(g, dx + 30, dy + 16, 3, 6, '#e2404c');
+  px(g, dx + 25, dy + 12, '#3b3346');
+  px(g, dx + 31, dy + 14, '#f28a2e');
+  // hands holding the paper
+  rect(g, dx - 2, dy + 20, 4, 5, '#f8d0b0');
+  rect(g, dx + 38, dy + 20, 4, 5, '#f8d0b0');
+}
+
+function drawTv(g: Ctx, t: number): void {
+  g.drawImage(layer('tv_body', paintTvBody), 0, 0);
+  const { x, y, w, h } = SCREEN;
+  const scene = layer('tv_scene', paintTvScene);
+  // Horizontal jitter on a few lines + vertical roll
+  const roll = Math.floor(t * 0.4) % h;
+  for (let yy = 0; yy < h; yy++) {
+    const jitter = hash(yy, Math.floor(t / 3), 77) < 0.04 ? Math.round((hash(yy, t, 5) - 0.5) * 6) : 0;
+    const bob = Math.round(Math.sin(t * 0.05) * 1);
+    const sy = Math.min(h - 1, Math.max(0, yy + bob));
+    g.drawImage(scene, x, y + sy, w, 1, x + jitter, y + yy, w, 1);
+  }
+  // Scanlines + noise + rolling bar
+  for (let yy = 0; yy < h; yy += 2) withAlpha(g, 0.22, () => rect(g, x, y + yy, w, 1, '#000000'));
+  withAlpha(g, 0.12, () => rect(g, x, y + roll, w, 6, '#ffffff'));
+  for (let i = 0; i < 90; i++) {
+    const nx = x + Math.floor(hash(i, t, 9) * w);
+    const ny = y + Math.floor(hash(i, t, 10) * h);
+    px(g, nx, ny, hash(i, t, 11) < 0.5 ? '#ffffff' : '#20202a');
+  }
+  // REC timestamp (blinking dot)
+  if (Math.floor(t / 30) % 2 === 0) rect(g, x + 5, y + 6, 3, 3, '#ff4a5a');
+  drawText(g, 'REC', x + 10, y + 3, { color: '#fffaf2', shadow: '#000000' });
+  drawText(g, '12/06  18:42', x + w - 4, y + h - 13, { color: '#fffaf2', shadow: '#000000', align: 'right' });
+  // Screen glass curvature: darker corners
+  field(g, x, y, w, h, (xx, yy) => {
+    const d = Math.hypot((xx - x - w / 2) / (w / 2), (yy - y - h / 2) / (h / 2));
+    return d > 1.05 && bayer(xx, yy) < (d - 1.05) * 3 ? '#0a0a10' : null;
+  });
+  // Glow on the room
+  withAlpha(g, 0.08 + 0.03 * Math.sin(t * 0.2), () => fillP(g, ell(160, 150, 150, 30), [0, 120, SW, SH], '#e8c890'));
+}
+
+// --- Fin : l'aube -------------------------------------------------------------------------------------------------
+
+function paintAube(g: Ctx): void {
+  // Mina's room wall, warmed by dawn
+  field(g, 0, 0, SW, SH, (x, y) => ramp(['#3a2c4c', '#4e3a5a', '#6a4a62', '#8a5a66'], (x / SW) * 0.6 + (y / SH) * 0.2, x, y));
+  // Star wallpaper, faded
+  for (let i = 0; i < 26; i++) {
+    const sx = Math.floor(hash(i, 1, 33) * 180);
+    const sy = Math.floor(hash(i, 2, 33) * 120);
+    withAlpha(g, 0.35, () => sparkle(g, sx, sy, 1, '#c8a8d8'));
+  }
+  // Window (right), dawn sky
+  const wx = 188;
+  const wy = 14;
+  const ww = 110;
+  const wh = 96;
+  vgrad(g, wx, wy, ww, wh, ['#5a5a9a', '#9a7aaa', '#e09a9a', '#f8b888', '#ffe0a0']);
+  // Rising sun
+  fillP(g, ell(wx + 64, wy + wh - 6, 18, 18), [wx + 44, wy + wh - 26, wx + 84, wy + wh], (x, y) => ramp(['#fff8d8', '#ffe8a0'], Math.hypot(x - wx - 64, y - wy - wh + 6) / 18, x, y));
+  // Rooftops
+  field(g, wx, wy + wh - 18, ww, 18, (x, y) => (y > wy + wh - 6 - Math.floor(hash(Math.floor((x - wx) / 12), 0, 8) * 12) ? '#5a3a52' : null));
+  // Frame
+  rect(g, wx - 4, wy - 4, ww + 8, 4, '#e8d0c0');
+  rect(g, wx - 4, wy + wh, ww + 8, 6, '#d8b8a8');
+  rect(g, wx - 4, wy, 4, wh, '#e8d0c0');
+  rect(g, wx + ww, wy, 4, wh, '#c8a898');
+  rect(g, wx + ww / 2 - 2, wy, 4, wh, '#e8d0c0');
+  // Curtains pulled open (pink)
+  field(g, wx - 18, 6, 16, 120, (x, y) => ramp(['#c86a8a', '#e07ba5', '#f8b6cf'], Math.sin(x * 0.9) * 0.5 + 0.5, x, y));
+  field(g, wx + ww + 2, 6, 16, 120, (x, y) => ramp(['#c86a8a', '#e07ba5', '#f8b6cf'], Math.sin(x * 0.9) * 0.5 + 0.5, x, y));
+  // Dodo plush on the windowsill
+  fillP(g, ell(wx + 22, wy + wh - 1, 7, 6), [wx + 14, wy + wh - 8, wx + 30, wy + wh + 6], '#fffaf2');
+  fillP(g, ell(wx + 22, wy + wh, 4, 3), [wx + 17, wy + wh - 4, wx + 27, wy + wh + 4], '#b7aab8');
+  px(g, wx + 20, wy + wh, '#1c1424');
+  px(g, wx + 24, wy + wh, '#1c1424');
+  rect(g, wx + 25, wy + wh - 7, 3, 2, '#f8b6cf');
+  // Mina's drawings on the wall
+  const drawings: Array<[number, number, string]> = [
+    [20, 22, '#f9cf3a'],
+    [58, 16, '#7cb6f2'],
+    [96, 26, '#e2404c'],
+    [134, 18, '#4fae4f'],
+  ];
+  drawings.forEach(([dx, dy, c], i) => {
+    rect(g, dx, dy, 28, 22, '#fbf4e2');
+    rect(g, dx + 11, dy - 2, 6, 3, '#d8d0bc');
+    pen(g, [dx + 4, dy + 16, dx + 10, dy + 6, dx + 16, dy + 14, dx + 24, dy + 5], { c, w: 1, seed: 40 + i });
+    fillP(g, ell(dx + 20, dy + 7, 3, 3), [dx, dy, dx + 28, dy + 22], i % 2 ? '#f9cf3a' : '#e2404c');
+  });
+  // Floor
+  vgrad(g, 0, 140, SW, 40, ['#6a4a5a', '#5a3e4e', '#4a3442']);
+  // Light beams from the window across the room
+  field(g, 0, 0, SW, SH, (x, y) => {
+    const u = x + y * 0.9;
+    const inBeam = (u > 150 && u < 196) || (u > 210 && u < 236);
+    return inBeam && x < wx && bayer(x, y) < 0.07 ? '#ffe8b0' : null;
+  });
+  // Bed (left) and desk with the open sketchbook
+  rect(g, 6, 116, 60, 30, '#e07ba5');
+  rect(g, 6, 112, 60, 6, '#f8b6cf');
+  rect(g, 6, 108, 16, 8, '#fffaf2');
+  rect(g, 120, 118, 54, 6, '#a8774f');
+  rect(g, 124, 124, 4, 22, '#6e4a3a');
+  rect(g, 166, 124, 4, 22, '#6e4a3a');
+  rect(g, 132, 112, 30, 7, '#fbf4e2');
+  rect(g, 146, 112, 1, 7, '#c8bfa8');
+  pen(g, [135, 115, 140, 114, 144, 116], { c: '#3e78d6', w: 1, seed: 50 });
+  pen(g, [150, 114, 156, 116, 159, 114], { c: '#e2404c', w: 1, seed: 51 });
+  // Maman and Noa hugging — two distinct silhouettes, rimmed with warm light from the window
+  const hx = 96;
+  const hy = 160;
+  const maman = union(
+    ell(hx + 8, hy - 64, 7, 8),
+    ell(hx + 11, hy - 69, 5, 5),
+    poly([hx - 2, hy - 56, hx + 16, hy - 56, hx + 20, hy, hx - 4, hy]),
+  );
+  const noa = union(ell(hx - 7, hy - 47, 7, 7), ell(hx - 8, hy - 52, 7, 4), poly([hx - 16, hy - 40, hx + 1, hy - 40, hx + 2, hy, hx - 17, hy]));
+  const arm = poly([hx - 17, hy - 35, hx + 6, hy - 42, hx + 8, hy - 37, hx - 15, hy - 30]);
+  const bb: BBox = [hx - 20, hy - 80, hx + 24, hy + 1];
+  fillP(g, maman, bb, '#3a2430');
+  fillP(g, noa, bb, '#232042');
+  fillP(g, arm, bb, '#4a2e3c');
+  const all = union(maman, noa, arm);
+  field(g, bb[0], bb[1], bb[2] - bb[0], bb[3] - bb[1], (x, y) => {
+    const inside = all(x + 0.5, y + 0.5);
+    if (!inside) return null;
+    if (!all(x + 1.5, y + 0.5) || !all(x + 0.5, y - 0.5)) return '#f8b888';
+    if (!all(x + 2.5, y + 0.5) && bayer(x, y) < 0.5) return '#c87a6a';
+    return null;
+  });
+}
+
+// --- Fin : beaux rêves --------------------------------------------------------------------------------------------
+
+function paintBeauxReves(g: Ctx): void {
+  // Deep blue room, frozen
+  field(g, 0, 0, SW, SH, (x, y) => ramp(['#0e1430', '#121a3a', '#162044', '#1a244a'], noise2(x * 0.02, y * 0.02, 70) * 0.5 + y / 360, x, y));
+  // Window with stars
+  const wx = 30;
+  const wy = 16;
+  vgrad(g, wx, wy, 70, 58, ['#060a1e', '#0a1028', '#101836']);
+  for (let i = 0; i < 18; i++) px(g, wx + 2 + Math.floor(hash(i, 1, 90) * 66), wy + 2 + Math.floor(hash(i, 2, 90) * 54), '#a7b4e0');
+  fillP(g, minus(ell(wx + 50, wy + 16, 7, 7), ell(wx + 54, wy + 13, 6, 6)), [wx + 40, wy + 6, wx + 60, wy + 26], '#e8e0b8');
+  rect(g, wx - 3, wy - 3, 76, 3, '#2a3460');
+  rect(g, wx - 3, wy + 58, 76, 4, '#2a3460');
+  rect(g, wx - 3, wy, 3, 58, '#2a3460');
+  rect(g, wx + 70, wy, 3, 58, '#2a3460');
+  rect(g, wx + 34, wy, 2, 58, '#2a3460');
+  // Clock stopped at 3:33
+  fillP(g, ell(150, 34, 11, 11), [138, 22, 162, 46], '#c8cce8');
+  fillP(g, ell(150, 34, 9, 9), [140, 24, 160, 44], '#e8ecf8');
+  line(g, 150, 34, 154, 34, '#1a2040');
+  line(g, 150, 34, 148, 41, '#1a2040');
+  // Bed, Noa asleep
+  rect(g, 120, 104, 120, 40, '#3a3a7a');
+  rect(g, 120, 100, 120, 6, '#4a4a8a');
+  rect(g, 120, 140, 120, 12, '#262650');
+  rect(g, 124, 92, 26, 14, '#d8dcf0');
+  fillP(g, ell(140, 96, 8, 7), [130, 88, 150, 104], '#c8b0b0');
+  fillP(g, ell(140, 92, 9, 5), [130, 86, 150, 98], '#2b2946');
+  pen(g, [136, 98, 138, 99, 140, 98], { c: '#3a2a3a', w: 1, seed: 3, wob: 0, grain: 0 });
+  pen(g, [142, 98, 144, 99, 146, 98], { c: '#3a2a3a', w: 1, seed: 4, wob: 0, grain: 0 });
+  // blanket folds
+  for (let i = 0; i < 5; i++) line(g, 156 + i * 16, 106, 150 + i * 16, 138, '#2e2e6a');
+  // Nightstand + veilleuse glow
+  rect(g, 248, 112, 26, 32, '#2a2448');
+  rect(g, 248, 112, 26, 3, '#3a3460');
+  fillP(g, minus(ell(261, 104, 6, 6), ell(264, 102, 5, 5)), [254, 97, 268, 111], '#ffe991');
+  // Dodo, big, sitting at the bedside, watching
+  const dx = 92;
+  const dy = 132;
+  fillP(g, union(ell(dx, dy, 22, 18), ell(dx - 14, dy - 8, 10, 10), ell(dx + 14, dy - 8, 10, 10), ell(dx, dy - 16, 14, 10)), [dx - 26, dy - 28, dx + 26, dy + 20], (x, y) => (hash(x, y, 4) < 0.15 ? '#d8d4e8' : '#ece8f8'));
+  fillP(g, ell(dx, dy - 4, 11, 9), [dx - 12, dy - 14, dx + 12, dy + 6], '#9a94b0');
+  // button eyes that catch the light
+  fillP(g, ell(dx - 5, dy - 6, 2, 2), [dx - 8, dy - 9, dx - 2, dy - 3], '#0b0710');
+  fillP(g, ell(dx + 5, dy - 6, 2, 2), [dx + 2, dy - 9, dx + 8, dy - 3], '#0b0710');
+  rect(g, dx - 1, dy - 1, 3, 1, '#f8b6cf');
+  rect(g, dx + 12, dy - 22, 6, 3, '#f8b6cf');
+  // Floor
+  rect(g, 0, 152, SW, 28, '#0c1028');
+}
+
+// --- Fin : silence ------------------------------------------------------------------------------------------------
+
+function paintSilence(g: Ctx): void {
+  // Grey, colourless sky
+  vgrad(g, 0, 0, SW, 96, ['#2a2830', '#3a3842', '#4a4852', '#5a5862']);
+  // Ink sea
+  field(g, 0, 96, SW, 84, (x, y) => {
+    const n = noise2(x * 0.05, y * 0.2, 31);
+    return n > 0.82 ? '#2a2632' : n > 0.7 ? '#151218' : '#0b0710';
+  });
+  // Drowned landmarks: tree tops, a roof, sheep silhouettes
+  const tops: Array<[number, number, number]> = [
+    [40, 96, 18],
+    [84, 98, 12],
+    [250, 96, 20],
+    [292, 99, 10],
+  ];
+  for (const [x, y, r] of tops) fillP(g, minus(ell(x, y, r, r * 0.7), boxP(x - r - 1, y, r * 2 + 2, r)), [x - r - 1, y - r, x + r + 1, y + 1], '#3e3a46');
+  fillP(g, poly([150, 97, 170, 80, 190, 97]), [148, 78, 192, 98], '#4a4652');
+  rect(g, 162, 88, 4, 9, '#2a2630');
+  for (const [x, y] of [
+    [110, 104],
+    [214, 110],
+    [128, 120],
+  ] as Array<[number, number]>) {
+    fillP(g, minus(ell(x, y, 7, 5), boxP(x - 8, y + 1, 16, 6)), [x - 8, y - 6, x + 8, y + 2], '#c8c4d0');
+    px(g, x - 2, y - 2, '#0b0710');
+    px(g, x + 2, y - 2, '#0b0710');
+  }
+  // A broken paper crown floating in the foreground
+  const cx = 160;
+  const cy = 150;
+  fillP(g, poly([cx - 26, cy, cx - 22, cy - 16, cx - 14, cy - 6, cx - 6, cy - 20, cx - 2, cy - 8, cx + 2, cy - 4, cx - 2, cy + 2]), [cx - 28, cy - 22, cx + 4, cy + 3], '#c8a848');
+  fillP(g, poly([cx + 6, cy + 2, cx + 8, cy - 10, cx + 14, cy - 18, cx + 18, cy - 6, cx + 26, cy - 14, cx + 28, cy + 2]), [cx + 4, cy - 20, cx + 30, cy + 3], '#b8983e');
+  rect(g, cx - 26, cy, 24, 2, '#8a7230');
+  rect(g, cx + 6, cy + 2, 22, 2, '#8a7230');
+  // ink stains on the crown
+  for (let i = 0; i < 14; i++) px(g, cx - 24 + Math.floor(hash(i, 1, 3) * 50), cy - 14 + Math.floor(hash(i, 2, 3) * 14), '#0b0710');
+}
+
+// ---------------------------------------------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------------------------------------------
 
@@ -1508,6 +2021,60 @@ export const ILLUSTRATIONS: Record<string, Illustration> = {
     g.drawImage(layer('souvenir_dessin', paintDessin), 0, 0);
     motes(g, t, 8, 6, [40, 10, 280, 160], '#c8d4f0');
   },
+  souvenir_fenetre: (g, t) => {
+    g.drawImage(layer('souvenir_fenetre', paintFenetre), 0, 0);
+    // Rain running down the glass
+    for (let i = 0; i < 46; i++) {
+      const x = WIN.x + Math.floor(hash(i, 1, 5) * WIN.w);
+      const speed = 0.6 + hash(i, 2, 5) * 1.2;
+      const y = WIN.y + ((hash(i, 3, 5) * WIN.h + t * speed) % WIN.h);
+      withAlpha(g, 0.45, () => rect(g, x, y, 1, 3 + Math.floor(speed * 2), '#9fb4d8'));
+    }
+    // The monitor blips
+    if (t % 70 < 6) withAlpha(g, 0.8, () => rect(g, 10, 157, 14, 1, '#7ee0a0'));
+  },
+  souvenir_veilleuse: (g, t) => {
+    g.drawImage(layer('souvenir_veilleuse', paintVeilleuse), 0, 0);
+    motes(g, t, 12, 9, [170, 10, 300, 105], '#9fb4c8');
+  },
+  photo_famille: (g, t) => {
+    g.drawImage(layer('photo_famille', paintPhoto), 0, 0);
+    // A glint slides across the glass
+    const k = (t % 240) / 240;
+    const gx = 70 + k * 200;
+    withAlpha(g, 0.18 * Math.sin(k * Math.PI), () => fillP(g, poly([gx, 28, gx + 10, 28, gx - 24, 138, gx - 34, 138]), [gx - 36, 26, gx + 12, 140], '#ffffff'));
+  },
+  tv_mina: (g, t) => drawTv(g, t),
+  fin_aube: (g, t) => {
+    g.drawImage(layer('fin_aube', paintAube), 0, 0);
+    motes(g, t, 22, 12, [100, 20, 190, 150], '#ffe8b0');
+    withAlpha(g, 0.08 + 0.04 * Math.sin(t * 0.02), () => fillP(g, ell(252, 104, 40, 30), [210, 70, 296, 136], '#fff0c0'));
+  },
+  fin_beaux_reves: (g, t) => {
+    g.drawImage(layer('fin_beaux_reves', paintBeauxReves), 0, 0);
+    // Nightlight glow, perfectly steady; a single star twinkles
+    withAlpha(g, 0.22, () => fillP(g, ell(261, 104, 20, 16), [240, 86, 284, 122], (x, y) => (bayer(x, y) < 0.5 ? '#ffe991' : null)));
+    if (Math.floor(t / 40) % 3 === 0) sparkle(g, 52, 30, 1, '#ffffff');
+    // Dodo's eyes catch the light, now and then
+    if (t % 200 < 8) {
+      px(g, 86, 125, '#fffaf2');
+      px(g, 96, 125, '#fffaf2');
+    }
+  },
+  fin_silence: (g, t) => {
+    g.drawImage(layer('fin_silence', paintSilence), 0, 0);
+    // Slow ripples on the ink and drips from above
+    for (let i = 0; i < 6; i++) {
+      const y = 104 + i * 12;
+      const x = ((t * (0.2 + i * 0.05) + i * 53) % 360) - 20;
+      withAlpha(g, 0.35, () => rect(g, x, y, 14 + i * 2, 1, '#3a3442'));
+    }
+    for (let i = 0; i < 5; i++) {
+      const x = 30 + i * 62;
+      const len = (t * 0.3 + i * 17) % 40;
+      rect(g, x, 0, 1, Math.floor(len), '#0b0710');
+    }
+  },
 };
 
 export interface Souvenir {
@@ -1516,7 +2083,36 @@ export interface Souvenir {
   captions: string[];
 }
 
-export const SOUVENIRS: Record<string, Souvenir> = {};
+export const SOUVENIRS: Record<string, Souvenir> = {
+  fenetre: {
+    title: 'La fenêtre',
+    image: 'souvenir_fenetre',
+    captions: [
+      'Une fenêtre. Des rideaux verts. Il pleut.',
+      'Une petite main est posée contre la vitre, comme pour attraper les lumières de la ville.',
+      'Ça sent le désinfectant. Quelque part, une machine fait bip.',
+    ],
+  },
+  dessin: {
+    title: 'Le dessin inachevé',
+    image: 'souvenir_dessin',
+    captions: [
+      'Deux enfants sous une grande lune. Le plus grand a les cheveux bleus.',
+      'Il n\'y a de couleur que d\'un côté. L\'autre est resté blanc.',
+      'Elle l\'aurait fini. Elle avait dit qu\'elle le finirait.',
+    ],
+  },
+  veilleuse: {
+    title: 'La veilleuse',
+    image: 'souvenir_veilleuse',
+    captions: [
+      'La veilleuse de Mina, sur la table de la chambre 304. Débranchée.',
+      'Le dernier soir, elle l\'avait demandée. Elle avait peur du noir.',
+      'Tu devais l\'apporter. Tu ne l\'as pas fait.',
+      'Elle a attendu la lumière toute la nuit.',
+    ],
+  },
+};
 
 void rect;
 void line;
