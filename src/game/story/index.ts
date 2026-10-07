@@ -7,6 +7,7 @@ import * as chapter1 from './chapter1';
 import * as chapter2 from './chapter2';
 import * as chapter3 from './chapter3';
 import * as bonus from './bonus';
+import * as battleDebug from '../battle/debug-battles';
 
 /** Talking to Mina while she follows Noa: a line depending on where you are. */
 const MINA_LINES: Record<string, string[]> = { ...chapter1.MINA_LINES, ...chapter2.MINA_LINES, ...chapter3.MINA_LINES, ...bonus.MINA_LINES };
@@ -44,6 +45,7 @@ export const DEBUG_SCRIPTS: Record<string, Script> = {
   ...chapter2.DEBUG,
   ...chapter3.DEBUG,
   ...bonus.DEBUG,
+  ...battleDebug.DEBUG,
 };
 
 /** Entry point of the bonus chapter (title screen, after the dawn ending). */

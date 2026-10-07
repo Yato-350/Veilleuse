@@ -113,3 +113,88 @@ export function evaluateWord(word: WordDef, need: NeedStep | undefined, hates: E
 export function needTotal(needs: NeedStep[]): number {
   return needs.reduce((a, n) => a + (n.count ?? 1), 0);
 }
+
+// -----------------------------------------------------------------------------
+// Mina, the ally (version 1.1)
+// -----------------------------------------------------------------------------
+
+/** 'mina' = she helps every 3rd turn; 'absent' = the empty slot she left (chapter 3, after she was erased). */
+export type AllyState = 'none' | 'mina' | 'absent';
+export type AllyEffect = 'shield' | 'color' | 'heal';
+
+/** Mina acts every ALLY_EVERY turns (turns 3, 6, 9…), before the enemy's attack. */
+export const ALLY_EVERY = 3;
+
+export interface AllyContext {
+  enemyIds: string[];
+  bg?: string;
+  tutorial?: boolean;
+  noAlly?: boolean;
+  chapter: number;
+  party: string[];
+  flags: Record<string, unknown>;
+}
+
+/**
+ * Who stands at Noa's side: Mina when she is in the party during a dream chapter (1–3); her empty slot in chapter 3
+ * once she was erased. Never in the tutorial, the final Dodo battle (it has its own design) or the real world.
+ */
+export function allyState(c: AllyContext): AllyState {
+  if (c.noAlly || c.tutorial || c.enemyIds.includes('dodo')) return 'none';
+  if (c.bg === 'real' || c.flags.interlude) return 'none';
+  if (c.chapter < 1 || c.chapter > 3) return 'none';
+  if (c.party.includes('mina')) return 'mina';
+  if (c.chapter === 3 && c.flags.c3_mina_erased) return 'absent';
+  return 'none';
+}
+
+export function allyActsOn(turn: number): boolean {
+  return turn > 0 && turn % ALLY_EVERY === 0;
+}
+
+/**
+ * What Mina draws: a band-aid when Noa is at half HP or less; otherwise she alternates a crayon shield (absorbs 3 hits)
+ * and coloring the white projectiles in the soul's color (only useful for a colored soul).
+ */
+export function pickAllyEffect(hp: number, maxHp: number, soul: Emotion, acts: number): AllyEffect {
+  if (hp <= maxHp * 0.5) return 'heal';
+  const options: AllyEffect[] = soul === 'neutre' ? ['shield'] : ['shield', 'color'];
+  return options[acts % options.length]!;
+}
+
+/** HP healed by Mina's band-aid. */
+export function allyHeal(maxHp: number): number {
+  return Math.max(4, Math.round(maxHp * 0.25));
+}
+
+// -----------------------------------------------------------------------------
+// Defeats in a row (Mina offers help on the game over screen)
+// -----------------------------------------------------------------------------
+
+/** Mina offers help on this defeat in a row of the same fight. */
+export const HELP_AFTER_DEFEATS = 3;
+
+/** Consecutive defeats in the same fight (game over → retry → game over…). Any other outcome resets it. */
+export class DefeatStreak {
+  key = '';
+  count = 0;
+  /** Mina was at Noa's side in the last lost fight. */
+  mina = false;
+
+  record(key: string, lost: boolean, mina: boolean): void {
+    if (!lost) {
+      this.key = '';
+      this.count = 0;
+      this.mina = false;
+      return;
+    }
+    this.count = this.key === key ? this.count + 1 : 1;
+    this.key = key;
+    this.mina = mina;
+  }
+
+  /** Exactly on the 3rd defeat in a row (asked once: a refusal is respected), never when the Story Mode is already on. */
+  offersHelp(storyMode: boolean): boolean {
+    return this.count === HELP_AFTER_DEFEATS && this.mina && !storyMode;
+  }
+}

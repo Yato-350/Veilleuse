@@ -18,7 +18,20 @@ import { BulletWorld, type Bullet } from './bullets';
 import { drawEmoIcon, soulHeart } from './emoshape';
 import { EnemyRuntime } from './enemy';
 import { PATTERNS, type Pattern, type PatternCtx } from './patterns';
-import { combatEmotion, enemyDamage, playerDamage, soulSpeed } from './rules';
+import {
+  ALLY_EVERY,
+  allyActsOn,
+  allyHeal,
+  allyState,
+  combatEmotion,
+  DefeatStreak,
+  enemyDamage,
+  pickAllyEffect,
+  playerDamage,
+  soulSpeed,
+  type AllyEffect,
+  type AllyState,
+} from './rules';
 import type { BattleHooks, BattleOptions, BattleResult, EnemyDef, WordDef } from './types';
 
 const TEXT_BOX: Rect = { x: 12, y: 86, w: 296, h: 54 };
@@ -34,6 +47,9 @@ interface Floater {
 }
 
 type Mode = 'idle' | 'menu' | 'list' | 'notebook' | 'bar' | 'dodge' | 'text';
+
+/** Rich-text color code of each emotion ({c:y}…{/c}). */
+const RICH_CODE: Record<Emotion, string> = { neutre: 'g', joie: 'y', tristesse: 'b', colere: 'r', peur: 'v' };
 
 /** Agreement helper: "apaisé" / "apaisée". */
 export const agree = (e: EnemyRuntime, word: string): string => (e.def.fem ? `${word}e` : word);
@@ -55,7 +71,7 @@ const MOODS: Record<Emotion, { muffle: number; tempo: number; wobble: number }> 
 // Defeats in a row (Mina offers help on the game over screen)
 // -----------------------------------------------------------------------------
 
-const streak = { key: '', count: 0, mina: false };
+const streak = new DefeatStreak();
 
 /** Consecutive defeats in the same fight (game over → retry → game over…). */
 export function defeatStreak(): number {
@@ -64,7 +80,7 @@ export function defeatStreak(): number {
 
 /** Mina offers to help on the 3rd defeat in a row of the same fight — once, only if she fought at Noa's side. */
 export function minaOffersHelp(): boolean {
-  return streak.count === 3 && streak.mina && !G.settings.storyMode;
+  return streak.offersHelp(G.settings.storyMode);
 }
 
 /** Debug: pretend the fight against `ids` was just lost `n` times in a row. */
@@ -78,17 +94,12 @@ export function setDefeatStreak(ids: string[], n: number, mina = true): void {
 // Mina, the ally
 // -----------------------------------------------------------------------------
 
-/** 'mina' = she helps every 3rd turn; 'absent' = the empty slot she left (chapter 3, after she was erased). */
-export type AllyState = 'none' | 'mina' | 'absent';
-type AllyEffect = 'shield' | 'color' | 'heal';
-
-const ALLY_EVERY = 3;
 const ALLY_SLOT = { x: 4, y: 4, w: 30, h: 30 };
 const MINA_ORANGE = '#f09a4a';
 
 const ALLY_LINES: Record<AllyEffect, string[]> = {
   shield: ['Je dessine un bouclier ! Bouge pas !', 'Bouclier de chevalière ! Tadaaa !', 'Attends, je te fais une armure en crayon !'],
-  color: ['Je colorie les gribouillis blancs en {color} !', 'Hop ! Tout en {color}, comme ton cœur !'],
+  color: ['Je colorie tout le blanc en {color} !', 'Hop ! Tout en {color}, comme ton cœur !'],
   heal: ['Tiens, un pansement à paillettes !', 'Bouge pas, je fais un bisou magique !'],
 };
 
@@ -98,17 +109,6 @@ const ABSENT_LINES = [
   '* D\'habitude, à ce moment-là, quelqu\'un criait « Vas-y, chevalier ! ».',
   '* La place de Mina est vide. Tu la gardes quand même.',
 ];
-
-/** Who stands at Noa's side in this battle. Never in the tutorial, the final Dodo battle or the real world. */
-function allyFor(defs: EnemyDef[], opts: BattleOptions): AllyState {
-  if (opts.noAlly || opts.tutorial || defs.some((d) => d.id === 'dodo')) return 'none';
-  if ((opts.bg ?? defs[0]?.bg) === 'real') return 'none';
-  const ch = G.state.chapter;
-  if (ch < 1 || ch > 3) return 'none';
-  if (G.state.party.includes('mina')) return 'mina';
-  if (ch === 3 && G.state.flags.c3_mina_erased) return 'absent';
-  return 'none';
-}
 
 /** A battle. `await new Battle(...).run()` resolves with the outcome. */
 export class Battle implements Scene {
@@ -167,6 +167,8 @@ export class Battle implements Scene {
   private allyActs = 0;
   /** Frames of the « Mina acts » animation. */
   private allyT = 0;
+  /** Mina's line (or the line about her absence) is on screen. */
+  private allyTalking = false;
   private absentNoted = false;
   /** Help prepared by Mina for the next dodge. */
   private nextDodge: { shield?: number; recolor?: Emotion } | null = null;
@@ -186,7 +188,15 @@ export class Battle implements Scene {
     this.soulEmo = opts.emotion ?? defs.find((d) => d.inflict)?.inflict ?? 'neutre';
     this.bgKind = opts.bg ?? defs[0]?.bg ?? 'dream';
     this.key = defs.map((d) => d.id).join('+');
-    this.ally = allyFor(defs, opts);
+    this.ally = allyState({
+      enemyIds: defs.map((d) => d.id),
+      bg: opts.bg ?? defs[0]?.bg,
+      tutorial: opts.tutorial,
+      noAlly: opts.noAlly,
+      chapter: G.state.chapter,
+      party: G.state.party,
+      flags: G.state.flags,
+    });
     this.moodMusic = !opts.fixedMusic && !defs.some((d) => d.id === 'dodo');
     const n = this.enemies.length;
     this.enemies.forEach((e, i) => {
@@ -255,14 +265,7 @@ export class Battle implements Scene {
     G.state.hp = clamp(this.hp, 1, this.maxHp);
     this.mode = 'idle';
     this.resetMood();
-    if (this.result.outcome === 'lose') {
-      if (streak.key === this.key) streak.count++;
-      else {
-        streak.key = this.key;
-        streak.count = 1;
-      }
-      streak.mina = this.ally === 'mina';
-    } else setDefeatStreak([], 0, false);
+    streak.record(this.key, this.result.outcome === 'lose', this.ally === 'mina');
     return this.result;
   }
 
@@ -405,7 +408,7 @@ export class Battle implements Scene {
 
   /** Every 3rd turn, before the enemy attacks: Mina helps — or, after she was erased, her absence is felt. */
   private async allyTurn(): Promise<void> {
-    if (this.ally === 'none' || this.turn % ALLY_EVERY !== 0) return;
+    if (this.ally === 'none' || !allyActsOn(this.turn)) return;
     if (this.ally === 'absent') {
       // Sparingly: at most once per battle, always the first time, then one battle in three.
       if (this.absentNoted) return;
@@ -413,11 +416,13 @@ export class Battle implements Scene {
       const first = !G.state.flags.c3_mina_absence_felt;
       if (!first && !rng.chance(0.35)) return;
       G.state.flags.c3_mina_absence_felt = true;
-      this.allyT = 90;
+      this.allyT = 60;
+      this.allyTalking = true;
       await this.say(first ? ABSENT_LINES[0]! : rng.pick(ABSENT_LINES));
+      this.allyTalking = false;
       return;
     }
-    const effect = this.pickAllyEffect();
+    const effect = pickAllyEffect(this.hp, this.maxHp, this.soulEmo, this.allyActs);
     this.allyActs++;
     this.allyT = 60;
     audio.sfx('write', { pitch: 1.3 });
@@ -425,24 +430,19 @@ export class Battle implements Scene {
     let after: string;
     if (effect === 'heal') {
       const before = this.hp;
-      this.heal(Math.max(4, Math.round(this.maxHp * 0.25)));
+      this.heal(allyHeal(this.maxHp));
       after = `* Tu récupères ${this.hp - before} PV.`;
     } else if (effect === 'shield') {
       this.nextDodge = { shield: 3 };
-      after = '* Un cercle de crayon entoure ton cœur. Il arrêtera trois coups.';
+      after = '* Un rond de crayon protège ton cœur (3 coups).';
     } else {
       this.nextDodge = { recolor: this.soulEmo };
-      after = '* Les attaques blanches prendront la couleur de ton cœur.';
+      after = '* Les attaques blanches prennent ta couleur.';
     }
     line = `{c:o}Mina :{/c} ${line}\n${after}`;
+    this.allyTalking = true;
     await this.say(line, false, true, 'mina');
-  }
-
-  /** Heals when Noa is hurt; otherwise alternates shield and coloring (coloring only helps a colored soul). */
-  private pickAllyEffect(): AllyEffect {
-    if (this.hp <= this.maxHp * 0.5) return 'heal';
-    const options: AllyEffect[] = this.soulEmo === 'neutre' ? ['shield'] : ['shield', 'color'];
-    return options[this.allyActs % options.length]!;
+    this.allyTalking = false;
   }
 
   /** Runs one dodge phase. */
@@ -593,6 +593,12 @@ export class Battle implements Scene {
     else if (r.verdict === 'bad') line = `* ${e.name} se crispe. Ses attaques seront plus fortes.`;
     else line = `* ${e.name} ne semble pas comprendre.`;
     await this.say(line);
+    if (w.emotion2 && w.emotion2 !== w.emotion && !G.state.flags.b_doux_amer) {
+      // The first bittersweet word ever written: explain the two-colored heart once.
+      G.state.flags.b_doux_amer = true;
+      const tag = (x: Emotion) => `{c:${RICH_CODE[x]}}${EMOTION_COLOR_NAME[x]}{/c}`;
+      await this.say(`* Un mot doux-amer : ton cœur a deux couleurs.\n* Le ${tag(w.emotion)} et le ${tag(w.emotion2)} le traversent sans lui faire mal.`);
+    }
   }
 
   private async useItem(idx: number): Promise<void> {
@@ -1274,7 +1280,7 @@ export class Battle implements Scene {
     if (this.ally === 'none') return;
     const { x, y, w, h } = ALLY_SLOT;
     if (this.ally === 'absent') {
-      const flicker = this.allyT > 0 && Math.floor(this.allyT / 6) % 2 === 0;
+      const flicker = (this.allyT > 0 || this.allyTalking) && Math.floor(this.t / 8) % 2 === 0;
       g.fillStyle = flicker ? '#5c5468' : '#2d2238';
       g.fillRect(x, y, w, 1);
       g.fillRect(x, y + h - 1, w, 1);
@@ -1283,9 +1289,9 @@ export class Battle implements Scene {
       drawText(g, '…', x + Math.floor((w - measure('…')) / 2), y + 10, { color: flicker ? '#8a7f96' : '#4e4359' });
       return;
     }
-    const acting = this.allyT > 0;
-    const bob = acting ? -Math.round(Math.abs(Math.sin(this.allyT * 0.25)) * 3) : 0;
-    g.fillStyle = acting && Math.floor(this.allyT / 4) % 2 === 0 ? '#ffd84a' : MINA_ORANGE;
+    const acting = this.allyT > 0 || this.allyTalking;
+    const bob = this.allyT > 0 ? -Math.round(Math.abs(Math.sin(this.allyT * 0.25)) * 3) : 0;
+    g.fillStyle = acting ? '#ffd84a' : MINA_ORANGE;
     g.fillRect(x - 1, y - 1 + bob, w + 2, h + 2);
     g.fillStyle = '#1c1424';
     g.fillRect(x, y + bob, w, h);
@@ -1460,10 +1466,10 @@ export class Battle implements Scene {
       const tx = x + w / 2 - tw / 2;
       drawText(g, txt, tx, y + 52, { color: wd.emotion === 'neutre' ? '#2b2a5c' : EMOTION_COLOR[wd.emotion], scale, shadow: '#2b2a5c' });
       if (wd.emotion2) {
-        // Bittersweet: the lower half of the letters in the second color.
+        // Bittersweet: the lower half of the letters (from the middle of the x-height) in the second color.
         g.save();
         g.beginPath();
-        g.rect(tx - 2, y + 52 + 5 * scale, tw + 4, 20);
+        g.rect(tx - 2, y + 52 + Math.round(7.5 * scale), tw + 4, 20);
         g.clip();
         drawText(g, txt, tx, y + 52, { color: EMOTION_COLOR[wd.emotion2], scale, shadow: '#2b2a5c' });
         g.restore();

@@ -45,7 +45,7 @@ export class OptionsPanel {
       save();
       if (key === 'sfx') audio.sfx('blip');
     };
-    const toggle = (key: 'shake' | 'reduceFlashes' | 'crt' | 'storyMode' | 'vibration') => () => {
+    const toggle = (key: 'shake' | 'reduceFlashes' | 'crt' | 'storyMode' | 'vibration' | 'emotionShapes') => () => {
       s()[key] = !s()[key];
       save();
     };
@@ -63,6 +63,7 @@ export class OptionsPanel {
       { label: 'Mode Histoire', value: () => onOff(s().storyMode), change: toggle('storyMode') },
       { label: 'Secousses', value: () => onOff(s().shake), change: toggle('shake') },
       { label: 'Réduire les flashs', value: () => onOff(s().reduceFlashes), change: toggle('reduceFlashes') },
+      { label: 'Formes des émotions', value: () => onOff(s().emotionShapes), change: toggle('emotionShapes') },
       { label: 'Filtre CRT', value: () => onOff(s().crt), change: toggle('crt') },
       {
         label: 'Contrôles tactiles',
