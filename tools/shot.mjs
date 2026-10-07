@@ -6,7 +6,7 @@
  *   node tools/shot.mjs "debug=map&map=prairie" out.png --wait 1500 --keys "ArrowRight:600,KeyZ"
  *   node tools/shot.mjs "debug=battle&enemies=nuage" out.png --keys "KeyZ,KeyZ" --size 1280x720
  *
- * --keys: comma-separated key codes; "Code:ms" holds the key for ms; "wait:ms" pauses.
+ * --keys: comma-separated key codes; "Code:ms" holds the key for ms; "wait:ms" pauses; "shot:name" saves out-name.png.
  * Several shots in one run: --shots "500,1500,3000" (saves out-1.png, out-2.png, …).
  */
 import { chromium } from 'playwright';
@@ -25,7 +25,7 @@ const keys = opt('keys', '');
 const shots = opt('shots', '');
 const [vw, vh] = opt('size', '1280x720').split('x').map(Number);
 
-const server = await createServer({ server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
+const server = await createServer({ server: { port: 0, host: '127.0.0.1', hmr: false, watch: null }, logLevel: 'error' });
 await server.listen();
 const addr = server.httpServer.address();
 const url = `http://127.0.0.1:${addr.port}/?${query}`;
@@ -42,6 +42,10 @@ for (const k of keys.split(',').filter(Boolean)) {
   const [code, ms] = k.split(':');
   if (code === 'wait') {
     await page.waitForTimeout(Number(ms));
+    continue;
+  }
+  if (code === 'shot') {
+    await page.screenshot({ path: out.replace(/\.png$/, `-${ms}.png`) });
     continue;
   }
   if (ms) {

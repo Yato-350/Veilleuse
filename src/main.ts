@@ -98,7 +98,7 @@ function boot(): void {
   document.getElementById('boot')?.classList.add('done');
   window.setTimeout(() => document.getElementById('boot')?.remove(), 800);
   // Expose a tiny API for automated tests.
-  (window as unknown as { __veilleuse: unknown }).__veilleuse = { game, world, G, MAPS };
+  (window as unknown as { __veilleuse: unknown }).__veilleuse = { game, world, G, MAPS, dialogue, fx };
 }
 
 let fpsT = performance.now();

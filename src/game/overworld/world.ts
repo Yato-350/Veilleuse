@@ -203,7 +203,8 @@ export class WorldScene implements Scene {
   setFollower(char: string | null): void {
     if (this.follower) this.removeEntity(this.follower);
     this.follower = null;
-    if (!char) return;
+    // Before the first map load there is no player yet: load() creates the follower from G.state.party.
+    if (!char || !this.player || !this.map) return;
     const f = new Entity(char, 'follower', this.player.x, this.player.y - 1);
     f.char = char;
     f.variant = this.variant;
