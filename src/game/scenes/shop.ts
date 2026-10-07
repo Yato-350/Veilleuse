@@ -7,10 +7,15 @@ import { ITEMS } from '../../data/items';
 import { G, MAX_ITEMS } from '../state';
 import { box, heart } from '../ui/draw';
 
+/** Rows of the item list that fit above the shopkeeper's speech box (the list scrolls beyond). */
+const ROWS = 6;
+const ROW_H = 13;
+
 /** Simple shop: buy items with Boutons. */
 export class ShopScene implements Scene {
   transparent = true;
   private idx = 0;
+  private top = 0;
   private msg = '';
   private msgT = 0;
   private resolve: (() => void) | null = null;
@@ -19,12 +24,14 @@ export class ShopScene implements Scene {
     private stock: string[],
     greeting: string,
     private keeper: string,
+    /** 0.5 = half price. */
+    private discount = 0,
   ) {
     this.msg = greeting;
   }
 
-  static open(stock: string[], greeting = 'Qu\'est-ce qui te ferait plaisir ?', keeper = 'Chaussette'): Promise<void> {
-    const s = new ShopScene(stock, greeting, keeper);
+  static open(stock: string[], greeting = 'Qu\'est-ce qui te ferait plaisir ?', keeper = 'Chaussette', discount = 0): Promise<void> {
+    const s = new ShopScene(stock, greeting, keeper, discount);
     game.push(s);
     return new Promise((r) => {
       s.resolve = r;
@@ -42,6 +49,9 @@ export class ShopScene implements Scene {
       this.idx = (this.idx + 1) % n;
       audio.sfx('move');
     }
+    // Keep the selection inside the visible window.
+    if (this.idx < this.top) this.top = this.idx;
+    if (this.idx >= this.top + ROWS) this.top = this.idx - ROWS + 1;
     if (input.pressed('b') || (input.pressed('a') && this.idx === this.stock.length)) {
       audio.sfx('cancel');
       game.remove(this);
@@ -52,7 +62,7 @@ export class ShopScene implements Scene {
     if (input.pressed('a')) {
       const it = ITEMS[this.stock[this.idx]!];
       if (!it) return;
-      const price = it.price ?? 0;
+      const price = this.price(it.price ?? 0);
       if (G.state.boutons < price) {
         audio.sfx('cancel');
         this.say('Il te manque des boutons, mon chou.');
@@ -68,6 +78,10 @@ export class ShopScene implements Scene {
     }
   }
 
+  private price(base: number): number {
+    return this.discount > 0 && base > 0 ? Math.max(1, Math.ceil(base * (1 - this.discount))) : base;
+  }
+
   private say(t: string): void {
     this.msg = t;
     this.msgT = 120;
@@ -78,21 +92,28 @@ export class ShopScene implements Scene {
     g.fillRect(0, 0, W, H);
     box(g, 8, 8, 150, H - 70, 'dream');
     drawText(g, `Boutique de ${this.keeper}`, 16, 14, { color: '#d4b8f0' });
-    this.stock.forEach((id, i) => {
-      const it = ITEMS[id];
-      const y = 32 + i * 13;
+    const n = this.stock.length + 1;
+    for (let i = this.top; i < Math.min(n, this.top + ROWS); i++) {
+      const y = 32 + (i - this.top) * ROW_H;
       const sel = i === this.idx;
       if (sel) heart(g, 14, y + 3, '#ff4a5a');
-      drawText(g, it?.name ?? id, 25, y, { color: sel ? '#ffd84a' : '#fffaf2' });
-      drawText(g, `${it?.price ?? 0}`, 150, y, { color: '#f5c04f', align: 'right' });
-    });
-    const qy = 32 + this.stock.length * 13;
-    if (this.idx === this.stock.length) heart(g, 14, qy + 3, '#ff4a5a');
-    drawText(g, 'Partir', 25, qy, { color: this.idx === this.stock.length ? '#ffd84a' : '#b7aab8' });
+      if (i === this.stock.length) {
+        drawText(g, 'Partir', 25, y, { color: sel ? '#ffd84a' : '#b7aab8' });
+        continue;
+      }
+      const it = ITEMS[this.stock[i]!];
+      drawText(g, it?.name ?? this.stock[i]!, 25, y, { color: sel ? '#ffd84a' : '#fffaf2' });
+      drawText(g, `${this.price(it?.price ?? 0)}`, 150, y, { color: this.discount > 0 ? '#7ee08a' : '#f5c04f', align: 'right' });
+    }
+    // Scroll hints
+    g.fillStyle = '#d4b8f0';
+    if (this.top > 0) for (let k = 0; k < 3; k++) g.fillRect(83 - k, 26 + k, 1 + k * 2, 1);
+    if (this.top + ROWS < n) for (let k = 0; k < 3; k++) g.fillRect(83 - k, 113 - k, 1 + k * 2, 1);
     // Info panel
     box(g, 166, 8, W - 174, H - 70, 'dream');
     drawText(g, `● ${G.state.boutons} boutons`, 174, 14, { color: '#f5c04f' });
     drawText(g, `Poches : ${G.state.items.length}/${MAX_ITEMS}`, 174, 28, { color: '#b7aab8' });
+    if (this.discount > 0) drawText(g, `Prix doux : -${Math.round(this.discount * 100)} %`, 174, 100, { color: '#7ee08a' });
     const cur = ITEMS[this.stock[this.idx] ?? ''];
     if (cur) drawWrapped(g, cur.desc, 174, 48, W - 190, { color: '#d8cfe0' });
     // Keeper speech

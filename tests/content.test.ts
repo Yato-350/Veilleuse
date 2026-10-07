@@ -12,6 +12,9 @@ import { ILLUSTRATIONS, SOUVENIRS } from '../src/data/illustrations';
 import { SPEAKERS } from '../src/data/speakers';
 import { PATTERNS } from '../src/game/battle/patterns';
 import { WORD_POOLS } from '../src/data/words';
+import { ACCENTS, GLYPHS } from '../src/engine/font-data';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 
 // ---------------------------------------------------------------------------
 // Sprite key index (built without a DOM)
@@ -216,5 +219,33 @@ describe('words', () => {
         expect(pool.filter((w) => w.emotion === emo).length).toBeGreaterThanOrEqual(6);
       }
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Bitmap font coverage: every non-ASCII character in the game's text must have a glyph (otherwise it renders « ? »).
+// ---------------------------------------------------------------------------
+
+function sourceFiles(dir: string): string[] {
+  return readdirSync(dir).flatMap((f) => {
+    const p = join(dir, f);
+    return statSync(p).isDirectory() ? sourceFiles(p) : p.endsWith('.ts') ? [p] : [];
+  });
+}
+
+describe('font', () => {
+  const drawable = (ch: string): boolean => !!GLYPHS[ch] || !!ACCENTS[ch] || !!GLYPHS[ch.toUpperCase()];
+  it('has a glyph for every character used in strings', () => {
+    const missing = new Map<string, string>();
+    for (const file of sourceFiles('src')) {
+      if (file.includes('sprites') || file.endsWith('font-data.ts')) continue;
+      const src = readFileSync(file, 'utf8');
+      for (const m of src.matchAll(/'((?:\\.|[^'\\\n])*)'|`((?:\\.|[^`\\])*)`/g)) {
+        for (const ch of m[1] ?? m[2] ?? '') {
+          if (ch.charCodeAt(0) > 126 && !drawable(ch) && !missing.has(ch)) missing.set(ch, file);
+        }
+      }
+    }
+    expect([...missing].map(([ch, f]) => `${ch} (${f})`)).toEqual([]);
   });
 });

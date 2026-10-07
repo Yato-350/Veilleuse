@@ -84,8 +84,8 @@ export async function finishGame(d: Director, ending: EndingId): Promise<void> {
 }
 
 /** Opens a shop. */
-export function shop(stock: string[], greeting?: string, keeper?: string): Promise<void> {
-  return ShopScene.open(stock, greeting, keeper);
+export function shop(stock: string[], greeting?: string, keeper?: string, discount = 0): Promise<void> {
+  return ShopScene.open(stock, greeting, keeper, discount);
 }
 
 /** A dream save point (a little nightlight on a pedestal). */

@@ -224,6 +224,8 @@ export const chaussetteShop: Script = async () => {
   await shop(
     ['bonbon', 'lait', 'biscuit', 'chocolat', 'pomme', 'mouchoir', 'bulles', 'pluie', 'orage'],
     paire ? 'L\'étal ambulant des Chaussettes ! Tout est cousu main. Enfin… pied. Enfin… pieds !' : 'Bienvenue à l\'étal de Chaussette. Il fait un peu froid, mais les prix sont chauds.',
+    undefined,
+    paire ? 0.5 : 0,
   );
 };
 

@@ -11,7 +11,7 @@ import { drawSprite, silhouette } from '../../engine/sprite';
 import { ITEMS } from '../../data/items';
 import { WORD_POOLS } from '../../data/words';
 import { hasSpr, spr } from '../assets';
-import { attack, defense, G, level, maxHp } from '../state';
+import { attack, defense, G, level, MAX_ITEMS, maxHp } from '../state';
 import { bar, heart, nextArrow } from '../ui/draw';
 import { layoutRich, parseRich, type RichChar } from '../ui/richtext';
 import { BulletWorld, type Bullet } from './bullets';
@@ -454,22 +454,28 @@ export class Battle implements Scene {
     if (spared) parts.push(`{c:y}${spared} Étoile${spared > 1 ? 's' : ''}{/c}`);
     if (killed) parts.push(`{c:v}${killed} Encre${killed > 1 ? 's' : ''}{/c}`);
     parts.push(`${boutons} Bouton${boutons > 1 ? 's' : ''}`);
-    let line = `* C'est fini. Tu gagnes ${parts.join(', ')}.`;
+    const lines = [`* C'est fini. Tu gagnes ${parts.join(', ')}.`];
     if (maxHp(s) > hpBefore) {
-      line += `\n* Ta lumière grandit ! PV max +${maxHp(s) - hpBefore}.`;
+      lines.push(`* Ta lumière grandit ! PV max +${maxHp(s) - hpBefore}.`);
       this.hp += maxHp(s) - hpBefore;
     }
-    if (attack(s) > atkBefore) line += `\n* L'encre coule en toi… ATQ +${attack(s) - atkBefore}.`;
-    else if (level(s) > lvBefore && maxHp(s) === hpBefore) line += `\n* Tu passes au niveau ${level(s)}.`;
+    if (attack(s) > atkBefore) lines.push(`* L'encre coule en toi… ATQ +${attack(s) - atkBefore}.`);
+    else if (level(s) > lvBefore && maxHp(s) === hpBefore) lines.push(`* Tu passes au niveau ${level(s)}.`);
     for (const e of this.enemies) {
       if (e.def.rewards.item && (e.spared || e.dead)) {
         const it = ITEMS[e.def.rewards.item];
-        if (it?.key) s.keyItems.push(it.id);
-        else if (it && s.items.length < 8) s.items.push(it.id);
-        if (it) line += `\n* Tu obtiens : ${it.name}.`;
+        if (!it) continue;
+        if (it.key) {
+          if (!s.keyItems.includes(it.id)) s.keyItems.push(it.id);
+          lines.push(`* Tu obtiens : ${it.name}.`);
+        } else if (s.items.length < MAX_ITEMS) {
+          s.items.push(it.id);
+          lines.push(`* Tu obtiens : ${it.name}.`);
+        } else lines.push(`* Tes poches sont pleines. Tu laisses : ${it.name}.`);
       }
     }
-    await this.say(line, false, true);
+    // The text box holds about three lines: show the summary two sentences at a time.
+    for (let i = 0; i < lines.length; i += 2) await this.say(lines.slice(i, i + 2).join('\n'), false, true);
   }
 
   // ---------------------------------------------------------------------------

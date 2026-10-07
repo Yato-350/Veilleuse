@@ -287,6 +287,8 @@ export const chaussetteShop: Script = async (d) => {
   await shop(
     ['bonbon', 'lait', 'biscuit', 'mouchoir', 'bulles', 'pluie', 'orage', 'pomme'],
     paire ? 'Bienvenue, bienvenue ! On est deux maintenant, alors les prix sont deux fois plus doux !' : 'Bienvenue chez Chaussette ! Tout est cousu main. Enfin… pied.',
+    undefined,
+    paire ? 0.5 : 0,
   );
 };
 
@@ -336,9 +338,9 @@ const pillowItem =
       await d.say('Un gros oreiller. Tu as déjà regardé dessous.');
       return;
     }
-    d.set(id);
     await d.say(text);
-    await d.give(item);
+    // Only mark the pillow as searched once the item is actually taken (pockets may be full).
+    if (await d.give(item)) d.set(id);
   };
 
 export const pillowA = pillowItem('c1_pillow_a', 'pomme', 'Un gros oreiller. Dessous, il y a… une pomme d\'amour ?');

@@ -189,10 +189,11 @@ export class NameEntryScene implements Scene {
         const x = Math.round(W / 2 - total / 2 + c * spacing);
         const y = 72 + r * 15 + (isLast ? 6 : 0);
         const sel = r === this.row && c === this.col;
-        const label = ch === ' ' ? '␣' : ch;
-        const lw = label === '␣' ? 5 : measure(label);
+        // The space key is shown as « _ ».
+        const label = ch === ' ' ? '_' : ch;
+        const lw = measure(label);
         if (sel) heart(g, x - lw / 2 - 10, y + 3, '#ff4a5a');
-        drawText(g, label === '␣' ? '_' : label, x, y, { align: 'center', color: sel ? '#ffd84a' : '#d8cfe0' });
+        drawText(g, label, x, y, { align: 'center', color: sel ? '#ffd84a' : '#d8cfe0' });
       });
     });
     drawText(g, 'Clavier possible · B : effacer', W / 2, H - 12, { align: 'center', color: '#4e4359' });
