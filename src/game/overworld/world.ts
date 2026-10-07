@@ -405,11 +405,21 @@ export class WorldScene implements Scene {
 
   /** Teleports the follower behind the player (after cutscenes). */
   resetFollower(): void {
-    if (!this.follower) return;
-    const [vx, vy] = DIR_VEC[this.player.dir];
-    this.follower.x = this.player.x - vx * 14;
-    this.follower.y = this.player.y - vy * 14;
-    this.follower.dir = this.player.dir;
+    const f = this.follower;
+    if (!f) return;
+    const p = this.player;
+    const [vx, vy] = DIR_VEC[p.dir];
+    // Behind the player if there is room, otherwise beside or in front (never inside a wall or a bed).
+    const spots: Array<[number, number]> = [
+      [-vx * 14, -vy * 14],
+      [vy * 14, vx * 14],
+      [-vy * 14, -vx * 14],
+      [vx * 14, vy * 14],
+    ];
+    const free = spots.find(([dx, dy]) => !this.blocked(f, p.x + dx, p.y + dy)) ?? spots[0]!;
+    f.x = p.x + free[0];
+    f.y = p.y + free[1];
+    f.dir = p.dir;
     this.history = [];
   }
 
