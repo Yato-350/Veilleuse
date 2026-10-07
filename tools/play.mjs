@@ -37,7 +37,8 @@ const server = await createServer({ server: { port: 0, host: '127.0.0.1', hmr: f
 await server.listen();
 const addr = server.httpServer.address();
 const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || undefined });
-const page = await browser.newPage({ viewport: { width: vw, height: vh }, deviceScaleFactor: 1 });
+const touch = args.includes('--touch');
+const page = await browser.newPage({ viewport: { width: vw, height: vh }, deviceScaleFactor: touch ? 2 : 1, hasTouch: touch, isMobile: touch });
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.stack ?? e)));
 page.on('console', (m) => {

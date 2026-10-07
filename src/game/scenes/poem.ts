@@ -62,6 +62,15 @@ export class PoemScene implements Scene {
         game.remove(this);
         input.consume();
         this.resolve?.(this.chosen);
+        return;
+      }
+      // Move the cursor to the next word not used yet.
+      for (let k = 1; k < n; k++) {
+        const j = (this.idx + k) % n;
+        if (!this.chosen.includes(this.words[j]!)) {
+          this.idx = j;
+          break;
+        }
       }
     }
   }

@@ -8,6 +8,7 @@ import { G } from '../state';
 
 const LINES: Array<[string, string?]> = [
   ['VEILLEUSE', '#ffe991'],
+  [''],
   ['Fais de beaux rêves.', '#d4b8f0'],
   [''],
   ['— Histoire, design & code —', '#8a7f96'],
