@@ -829,6 +829,8 @@ export const DEBUG: Record<string, Script> = {
     G.state.flags.interlude = 3;
     G.state.chapter = 3;
     G.state.flags.i1_ate = true;
+    // The room's entrance cutscene already happened (otherwise it would run alongside the notebook).
+    G.state.flags.fin_room = true;
     d.load('chambre_mina', 'door');
     await d.fadeIn(10);
     await carnet(d);
