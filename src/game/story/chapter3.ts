@@ -18,6 +18,7 @@ import { isLateNight, setPageTitle } from '../meta';
 import type { Script } from '../overworld/types';
 import { world } from '../overworld/world';
 import { G } from '../state';
+import { tf, tr, translated } from '../../i18n';
 import { finishGame, isSilenceRoute, shop, wakeUp } from './common';
 
 /**
@@ -503,12 +504,12 @@ export const corridorDoor =
   async (d) => {
     const s = stage();
     if (s >= 3) {
-      await d.say([`Chambre ${LAST_WING[i]}.`, 'La porte est fermée. Derrière, il n\'y a pas un bruit.']);
+      await d.say([tf('Chambre {0}.', LAST_WING[i]!), 'La porte est fermée. Derrière, il n\'y a pas un bruit.']);
       return;
     }
     const n = DOORS[s]![i]!;
     if (n === 0) await d.say(['Chambre 000.', 'Les chiffres ont coulé sur la porte. On dirait qu\'ils pleurent.']);
-    else await d.say(`Chambre ${n}.`);
+    else await d.say(tf('Chambre {0}.', n));
     const r = await d.ask('Ouvrir la porte ?', ['Ouvrir', 'Laisser'], undefined, { cancelIndex: 1 });
     if (r !== 0) return;
     if (i === RIGHT[s]) await rightDoor(d, s);
@@ -929,7 +930,8 @@ export function drownedCount(encre: number): number {
 
 /** The illegible blot that replaces a drowned word in the notebook (same length, so it takes the word's place). */
 const blot = (text: string): string => [...text].map((c, i) => (c === ' ' ? ' ' : i % 3 === 1 ? '█' : '▓')).join('');
-const INK_OF: Record<string, WordDef> = Object.fromEntries(DROWN_ORDER.map((t) => [t, { text: blot(t), emotion: 'neutre' as Emotion }]));
+/** The blot of a drowned word, as long as the word shown in the current language. */
+const inkOf = (t: string): WordDef => ({ text: blot(tr(t)), emotion: 'neutre' as Emotion });
 const isBlot = (text: string): boolean => text.length > 0 && /^[▓█ ]+$/.test(text);
 
 /** Dodo, when a drowned word is written anyway. */
@@ -1011,7 +1013,7 @@ export function nextVisit(queue: string[], slots: number): string[] {
 
 /** « A, B et C ». */
 function listNames(names: string[]): string {
-  return names.length < 2 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} et ${names[names.length - 1]}.`;
+  return names.length < 2 ? (names[0] ?? '') : tf('{0} et {1}.', names.slice(0, -1).join(', '), names[names.length - 1]!);
 }
 
 /** Word-wraps a list to the battle text box (first line prefixed with `head`, the next ones indented with `tail`). */
@@ -1149,11 +1151,11 @@ function drawFinalOverlay(g: CanvasRenderingContext2D, b: Battle, s: FinalState)
     if (s.phase === 2) {
       g.fillStyle = '#fff6e0';
       g.fillRect(x + 22, y + h - 15, w - 26, 12);
-      drawText(g, 'dors · dors · dors · dors · dors', x + 24, y + h - 13, { color: '#9a7bd0' });
+      drawText(g, tr('dors · dors · dors · dors · dors'), x + 24, y + h - 13, { color: '#9a7bd0' });
     } else if (s.phase === 3 && !s.silence) {
       g.fillStyle = '#fff6e0';
       g.fillRect(x + 22, y + h - 15, w - 26, 12);
-      drawText(g, 'Écris avec moi. — Mina ♥', x + 24, y + h - 13, { color: '#e0834f' });
+      drawText(g, tr('Écris avec moi. — Mina ♥'), x + 24, y + h - 13, { color: '#e0834f' });
       // Mina's words drowned in the player's ink.
       if (!s.nbWriting) {
         s.nbWords.forEach((wd, i) => {
@@ -1255,7 +1257,11 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
     await director.say(['Noa ?', 'C\'est moi. Je suis là. Dans les mots.'], 'minavoix');
     if (s.drowned.length) {
       director.sfx('glitch', { vol: 0.5 });
-      await b.say(`* Mais sur la page, ${s.drowned.length > 1 ? 'deux mots sont noyés' : 'un mot est noyé'} d'encre.\n* Tu reconnais cette encre. C'est la tienne.`);
+      await b.say(
+        s.drowned.length > 1
+          ? "* Mais sur la page, deux mots sont noyés d'encre.\n* Tu reconnais cette encre. C'est la tienne."
+          : "* Mais sur la page, un mot est noyé d'encre.\n* Tu reconnais cette encre. C'est la tienne.",
+      );
       await director.say(['Y a des mots que j\'arrive plus à dire, Noa. C\'est tout taché.', 'Mais les autres sont encore là. Écris avec moi.'], 'minavoix');
     } else {
       await director.say(['Écris avec moi.', 'On a encore des choses à se dire.'], 'minavoix');
@@ -1278,12 +1284,13 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
 
   const healFor = (b: Battle): number => Math.max(4, Math.round(b.maxHp * 0.25));
 
-  /** Heals and returns the narration with the HP actually healed (the sentence is dropped at full HP). */
+  /** Heals and returns the (translated) narration with the HP actually healed (the {n} sentence is dropped at full HP). */
   function healText(b: Battle, n: number, text: string): string {
     const before = b.hp;
     b.heal(n);
     const got = b.hp - before;
-    return got > 0 ? text.replace('{n}', String(got)) : text.replace(/ Tu récupères \{n\} PV\./, '');
+    const t = tr(text);
+    return translated(got > 0 ? t.replace('{n}', String(got)) : t.replace(/ [^.!?\n]*\{n\}[^.!?\n]*\./, ''));
   }
 
   function onStage(f: Friend, slot: number): StageFriend {
@@ -1310,18 +1317,18 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
     return true;
   }
 
-  /** A friend's gift; returns its narration. */
+  /** A friend's gift; returns its narration (translated). */
   function gift(b: Battle, f: Friend, sf: StageFriend): string {
     const fallback = '* La nuit s\'éclaire un peu autour de toi. Tu récupères {n} PV.';
     if (f.gift === 'heal') return healText(b, healFor(b), f.act);
-    if (f.gift === 'crack') return lightCrack(b, 1) ? f.act : healText(b, healFor(b), fallback);
+    if (f.gift === 'crack') return lightCrack(b, 1) ? tr(f.act) : healText(b, healFor(b), fallback);
     if (f.gift === 'recolor') {
       // Pointless once Dodo is calm (his last attacks are harmless): then a little light instead.
       if (s.written.length >= WAKE_AT) return healText(b, healFor(b), fallback);
       s.recolorNext = 900;
       leave(s.recolorBy);
       s.recolorBy = sf;
-      return f.act;
+      return tr(f.act);
     }
     if (f.gift === 'placard') {
       lightCrack(b, 3);
@@ -1330,7 +1337,7 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
       s.sleep = 0;
       muffle();
       b.heal(b.maxHp);
-      return f.act;
+      return tr(f.act);
     }
     // Gomme: she erases the player's ink first.
     const word = s.drowned.shift();
@@ -1338,9 +1345,9 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
       lightCrack(b, 1);
       fx.flash('#fff6e0', 24, 0.6);
       director.sfx('chime', { pitch: 1.2 });
-      return `* Frrrt, frrrt. Elle frotte la tache d'encre.\n* De toutes ses forces.\n* Dessous, un mot revient : « ${word} ».`;
+      return tf("* Frrrt, frrrt. Elle frotte la tache d'encre.\n* De toutes ses forces.\n* Dessous, un mot revient : « {0} ».", tr(word));
     }
-    return lightCrack(b, 2) ? f.act : healText(b, healFor(b), fallback);
+    return lightCrack(b, 2) ? tr(f.act) : healText(b, healFor(b), fallback);
   }
 
   /** One visit of spared friends (at most one appearance each), at the start of a phase-3 turn. */
@@ -1364,16 +1371,16 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
       director.sfx('chime', { pitch: 0.9 + i * 0.15, vol: 0.5 });
       await game.wait(18);
       if (f.intro) await b.say(f.intro);
-      const name = `{c:${f.col}}${f.name} :{/c} `;
+      const name = `{c:${f.col}}${tf('{0} :', tr(f.name))}{/c} `;
       if (f.boss) {
-        await b.say(`${name}${f.line}`, false, true, f.voice);
+        await b.say(translated(`${name}${tr(f.line)}`), false, true, f.voice);
         const erased = f.gift === 'gomme' && s.drowned.length > 0;
         await b.say(gift(b, f, sf));
         const cry = f.gift === 'placard' ? 'Fermez ça ! FERMEZ ÇA !' : erased ? 'Non ! Cette encre, il l\'a méritée !' : 'Non ! Ça, c\'était à moi !';
         await b.bubble([{ e, text: cry }]);
       } else {
         const act = gift(b, f, sf);
-        await b.say(`${name}${f.line}\n${act}`, false, true, f.voice);
+        await b.say(translated(`${name}${tr(f.line)}\n${act}`), false, true, f.voice);
       }
     }
     for (const sf of shown) if (sf !== s.recolorBy) leave(sf);
@@ -1387,14 +1394,15 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
     fs.forEach((f, i) => onStage(f, i));
     director.sfx('chime', { pitch: 1.1 });
     if (fs.length === 1) {
-      await b.say(`* ${fs[0]!.name} est encore là, derrière toi.\n* Un petit signe. Bonne route, Noa.`);
+      await b.say(tf('* {0} est encore là, derrière toi.\n* Un petit signe. Bonne route, Noa.', tr(fs[0]!.name)));
       return;
     }
-    const names = wrapList(listNames(fs.map((f) => f.name)), '* ', '  ');
-    const bye = '* Ils te font signe. Bonne route, Noa.';
-    if (names.length <= 2) await b.say(['* Derrière toi, il y a encore du monde :', ...names, bye].join('\n'));
+    const names = wrapList(listNames(fs.map((f) => tr(f.name))), '* ', '  ');
+    const head = tr('* Derrière toi, il y a encore du monde :');
+    const bye = tr('* Ils te font signe. Bonne route, Noa.');
+    if (names.length <= 2) await b.say(translated([head, ...names, bye].join('\n')));
     else {
-      await b.say(['* Derrière toi, il y a encore du monde :', ...names].join('\n'));
+      await b.say(translated([head, ...names].join('\n')));
       await b.say(bye);
     }
   }
@@ -1571,7 +1579,7 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
           s.p2++;
           const name = ['FRAPPER', 'OBJET', 'ÉPARGNER'][s.p2 - 1];
           director.sfx('glitch');
-          if (name) await b.say(`* Le bouton ${name} s'efface.\n* À sa place, quelqu'un a écrit : DORMIR.`);
+          if (name) await b.say(tf("* Le bouton {0} s'efface.\n* À sa place, quelqu'un a écrit : DORMIR.", tr(name)));
           else await b.say('* Il ne reste que ÉCRIRE.\n* Et le carnet ne contient plus que ses mots à lui.');
         }
       }
@@ -1616,7 +1624,7 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
       if (s.phase === 2) return DODO_WORDS;
       if (s.silence) return INK_WORDS;
       const left = MINA_WORDS.filter((w) => !s.written.includes(w.text));
-      s.nbWords = (left.length ? left : MINA_WORDS).map((w) => (s.drowned.includes(w.text) ? (INK_OF[w.text] ?? w) : w));
+      s.nbWords = (left.length ? left : MINA_WORDS).map((w) => (s.drowned.includes(w.text) ? inkOf(w.text) : w));
       return s.nbWords;
     },
     onWord: async (b, e, w) => {
@@ -1638,7 +1646,7 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
         s.sleep = Math.min(MAX_SLEEP, s.sleep + 0.06);
         muffle();
         await b.bubble([{ e, text: DODO_WORD_LINES[w.text] ?? 'Oui…' }]);
-        await b.say(`* Tu écris « ${w.text} ». Ta main est lourde. Les lettres penchent.`);
+        await b.say(tf('* Tu écris « {0} ». Ta main est lourde. Les lettres penchent.', tr(w.text)));
         if (s.sleep >= MAX_SLEEP - 0.001) await offerStay(b);
         return true;
       }
