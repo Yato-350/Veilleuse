@@ -17,6 +17,8 @@ Inspiré d'*Undertale*, d'*OMORI* et de *Doki Doki Literature Club*.
 
 **[▶ Jouer dans le navigateur](https://yato-350.github.io/Veilleuse/)** · **[📱 Télécharger l'APK Android](https://github.com/Yato-350/Veilleuse/releases/latest)**
 
+*🇬🇧 Also available in English — [play in English](https://yato-350.github.io/Veilleuse/?lang=en), or Options → Language.*
+
 </div>
 
 <div align="center">
@@ -49,7 +51,8 @@ Sous le lit s'ouvre le **Pays de Coton**, un monde dessiné aux crayons de coule
 papier sur la tête, comme si rien ne s'était passé. Chaque nuit, Noa s'enfonce un peu plus loin dans le rêve. Chaque
 matin, l'appartement est un peu plus sombre, et la porte de la chambre de Mina reste fermée.
 
-**Prologue · 3 chapitres oniriques · 2 interludes dans le monde réel · un final · 3 fins.**
+**Prologue · 3 chapitres oniriques · 2 interludes dans le monde réel · un final · 3 fins · un épilogue jouable ·
+un chapitre bonus, « Les rêves des autres ».** En français et en anglais.
 
 ## Le système de combat *Plume & Cœur*
 

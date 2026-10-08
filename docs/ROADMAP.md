@@ -28,17 +28,25 @@ Légende : ✅ fait · 🚧 en cours · ⏳ prévu
 - ✅ Chapitre 2 (Forêt de Crayons) + Interlude II
 - ✅ Chapitre 3 (Hôpital de Papier) + Final + 3 fins
 - ✅ Bot de test (`tools/play.mjs`) avec lequel chaque scène clé, chaque boss et les trois fins ont été rejoués avant la sortie
-- 🚧 Équilibrage fin (le chapitre 3 est trop facile avec beaucoup d'Étoiles), relecture des dialogues par des joueurs
-- ⏳ Scénarios du bot enregistrés et rejoués automatiquement en CI
+- 🚧 Relecture des dialogues par des joueurs
 
 ## Phase 4 — Mobile natif 🚧
 - ✅ Empaquetage Capacitor (Android APK) via GitHub Actions
 - ✅ Publication des APK dans les Releases GitHub (tags `v*`)
 - ⏳ Version iOS native (nécessite macOS et un compte développeur Apple — la PWA couvre iPhone/iPad)
+- ✅ APK signé avec une clé stable + App Bundle (`.aab`) pour le Play Store
+- ⏳ Publication sur le Google Play Store
 - ⏳ Retour haptique avancé, plein écran natif
 
-## Phase 5 — Après la sortie ⏳
-- ⏳ Traduction anglaise (architecture i18n)
-- ⏳ Chapitre bonus « Les rêves des autres »
-- ⏳ Galerie des souvenirs, mode « Nouvelle partie + »
-- ⏳ Succès (achievements) locaux
+## Phase 5 — Version 1.1 ✅
+- ✅ Traduction anglaise (architecture i18n, test de couverture)
+- ✅ Chapitre bonus « Les rêves des autres » (le rêve de Maman)
+- ✅ Épilogue jouable, réponses à Maman, Carnet de souvenirs, partage du poème
+- ✅ Mots doux-amers, Mina alliée, musique selon l'émotion, formes des émotions, aide après trois défaites
+- ✅ Encre proportionnelle et amis épargnés au combat final ; mini-jeu des moutons au chapitre 1
+- ✅ Tactile direct sur tous les menus et dans le monde
+
+## Phase 6 — Ensuite ⏳
+- 🚧 Équilibrage après les retours de jeu (chapitre 3 trop facile avec beaucoup d'Étoiles)
+- ⏳ Mode « Nouvelle partie + », succès locaux
+- ⏳ Scénarios du bot rejoués automatiquement en CI
