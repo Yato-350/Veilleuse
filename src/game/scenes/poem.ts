@@ -2,7 +2,7 @@ import { audio } from '../../engine/audio';
 import { H, W } from '../../engine/constants';
 import { drawText } from '../../engine/font';
 import { game, type Scene } from '../../engine/game';
-import { input } from '../../engine/input';
+import { hits, input } from '../../engine/input';
 import { rng } from '../../engine/math';
 import { EMOTION_COLOR, type Emotion } from '../../engine/palette';
 import { POEM_WORDS } from '../../data/words';
@@ -52,7 +52,13 @@ export class PoemScene implements Scene {
       this.idx = (this.idx + COLS) % n;
       audio.sfx('move');
     }
-    if (input.pressed('a')) {
+    // Direct touch / mouse: hovering highlights a word, a tap writes it at once.
+    const hit = hits.pick(this);
+    if (typeof hit?.id === 'number') {
+      if (hit.id !== this.idx && !hit.tap) audio.sfx('move');
+      this.idx = hit.id;
+    }
+    if (input.pressed('a') || (hit?.tap && typeof hit.id === 'number')) {
       const w = this.words[this.idx]!;
       if (this.chosen.includes(w)) return;
       this.chosen.push(w);
@@ -96,6 +102,7 @@ export class PoemScene implements Scene {
       const wx = x + 44 + col * 84;
       const wy = y + 30 + row * 18;
       const sel = i === this.idx;
+      hits.add(this, i, wx - 14, wy - 5, 84, 18);
       const used = this.chosen.includes(wd);
       const color = used ? '#c8bfa8' : sel ? emoColor(wd.emotion) : '#2b2a5c';
       const dy = sel && this.hop > 0 ? -Math.round(Math.sin((this.hop / 12) * Math.PI) * 3) : 0;

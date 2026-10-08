@@ -3,7 +3,7 @@ import { H, W } from '../../engine/constants';
 import { drawText, measure } from '../../engine/font';
 import { fx } from '../../engine/fx';
 import { game, type Scene } from '../../engine/game';
-import { input } from '../../engine/input';
+import { hits, input } from '../../engine/input';
 import { rng } from '../../engine/math';
 import { hasSpr, spr } from '../assets';
 import { minaOffersHelp } from '../battle/battle';
@@ -73,9 +73,20 @@ export class GameOverScene implements Scene {
     this.t++;
     if (this.t === 120) audio.playMusic('gameover', { fadeIn: 2 });
     if (this.t < 200) return;
+    // Direct touch / mouse: hovering highlights, a tap answers at once (ids: offer answers 'o:i', choices 'c:i').
+    const hit = hits.pick(this, 300);
+    const [kind, arg] = typeof hit?.id === 'string' ? hit.id.split(':') : [];
     if (this.offer && this.offer !== 'done') {
-      this.updateOffer();
+      if (kind === 'o' && this.offerT >= 60) {
+        if (Number(arg) !== this.offerIdx) audio.sfx('move');
+        this.offerIdx = Number(arg);
+      }
+      this.updateOffer(kind === 'o' && !!hit?.tap);
       return;
+    }
+    if (kind === 'c') {
+      if (Number(arg) !== this.idx) audio.sfx('move');
+      this.idx = Number(arg);
     }
     const n = this.choices.length;
     if (input.repeat('left') || input.repeat('up')) {
@@ -86,7 +97,7 @@ export class GameOverScene implements Scene {
       this.idx = (this.idx + 1) % n;
       audio.sfx('move');
     }
-    if (input.pressed('a')) {
+    if (input.pressed('a') || (kind === 'c' && hit?.tap)) {
       audio.sfx('select');
       const c = this.choices[this.idx]![1];
       void this.choose(c);
@@ -94,7 +105,7 @@ export class GameOverScene implements Scene {
   }
 
   /** « Tu veux que je t'aide un peu ? » — accepting turns the Story Mode on (and says so); refusing is respected. */
-  private updateOffer(): void {
+  private updateOffer(tapped = false): void {
     this.offerT++;
     if (this.offer === 'reply') {
       if (this.offerT > 50) this.offer = 'done';
@@ -105,7 +116,7 @@ export class GameOverScene implements Scene {
       this.offerIdx = 1 - this.offerIdx;
       audio.sfx('move');
     }
-    if (!input.pressed('a')) return;
+    if (!input.pressed('a') && !tapped) return;
     this.accepted = this.offerIdx === 0;
     if (this.accepted) {
       G.settings.storyMode = true;
@@ -187,6 +198,7 @@ export class GameOverScene implements Scene {
       this.choices.forEach(([label], i) => {
         const x = W / 2 + (i - (total - 1) / 2) * 80;
         const sel = i === this.idx;
+        hits.add(this, `c:${i}`, Math.round(x - 38), y - 4, 76, 16);
         if (sel) heart(g, Math.round(x - measureHalf(label) - 11), y + 3, '#ff4a5a');
         drawText(g, label, Math.round(x), y, { color: sel ? '#ffd84a' : '#8a7f96', align: 'center' });
       });
@@ -209,6 +221,7 @@ export class GameOverScene implements Scene {
       opts.forEach((label, i) => {
         const x = W / 2 + (i - 0.5) * 110;
         const sel = i === this.offerIdx;
+        hits.add(this, `o:${i}`, Math.round(x - 52), 144, 104, 16);
         if (sel) heart(g, Math.round(x - measureHalf(label) - 11), 151, MINA_COLOR);
         drawText(g, label, Math.round(x), 148, { color: sel ? '#ffd84a' : '#8a7f96', align: 'center' });
       });

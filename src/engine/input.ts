@@ -58,6 +58,9 @@ export class Input {
   /** Where this frame's tap landed, in game pixels (set together with `tap`). */
   tapAt: { x: number; y: number } | null = null;
   private tapAtNext: { x: number; y: number } | null = null;
+  /** A quick horizontal / vertical flick on the game screen this frame (page turns), else null. */
+  swipe: 'left' | 'right' | 'up' | 'down' | null = null;
+  private swipeNext: 'left' | 'right' | 'up' | 'down' | null = null;
   /** Mouse position in game pixels when it moved this frame (hover highlight), else null. */
   hoverAt: { x: number; y: number } | null = null;
   private hoverNext: { x: number; y: number } | null = null;
@@ -114,7 +117,8 @@ export class Input {
       this.drag.active = true;
       this.pointerUsed = true;
       if (e.pointerType === 'touch') this.setDevice('touch');
-      this.onGesture?.();
+      // Browsers only grant audio on a mouse *down* or a touch / pen *up* (user-activation events).
+      if (e.pointerType === 'mouse') this.onGesture?.();
     });
     el.addEventListener('pointermove', (e) => {
       if (e.pointerType === 'mouse') this.hoverNext = this.toGame(e.clientX, e.clientY);
@@ -125,6 +129,7 @@ export class Input {
       this.dragLast = { x: e.clientX, y: e.clientY, id: e.pointerId };
     });
     const end = (e: PointerEvent) => {
+      if (e.type === 'pointerup' && e.pointerType !== 'mouse') this.onGesture?.();
       if (this.dragLast && e.pointerId === this.dragLast.id) {
         this.dragLast = null;
         this.drag.active = false;
@@ -132,6 +137,12 @@ export class Input {
         if (e.type === 'pointerup' && st && performance.now() - st.t < 500 && Math.hypot(e.clientX - st.x, e.clientY - st.y) < 14) {
           this.tapNext = true;
           this.tapAtNext = this.toGame(st.x, st.y);
+        } else if (e.type === 'pointerup' && st && performance.now() - st.t < 700) {
+          const k = this.scaleFn() || 1;
+          const dx = (e.clientX - st.x) / k;
+          const dy = (e.clientY - st.y) / k;
+          if (Math.abs(dx) > 28 && Math.abs(dx) > Math.abs(dy) * 1.5) this.swipeNext = dx < 0 ? 'left' : 'right';
+          else if (Math.abs(dy) > 28 && Math.abs(dy) > Math.abs(dx) * 1.5) this.swipeNext = dy < 0 ? 'up' : 'down';
         }
         this.dragStart = null;
       }
@@ -150,9 +161,10 @@ export class Input {
       this.touch.add(b);
       this.pointerUsed = true;
       this.setDevice('touch');
-      this.onGesture?.();
     } else {
       this.touch.delete(b);
+      // Releasing a virtual button is the user-activation event that may unlock audio.
+      this.onGesture?.();
     }
   }
 
@@ -192,6 +204,8 @@ export class Input {
     this.tapNext = false;
     this.hoverAt = this.hoverNext;
     this.hoverNext = null;
+    this.swipe = this.swipeNext;
+    this.swipeNext = null;
     this.pollGamepad();
     this.prev = this.cur;
     this.cur = new Set<Button>([...this.keys, ...this.touch, ...this.pad, ...this.tapped]);

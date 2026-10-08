@@ -3,7 +3,7 @@ import { H, W } from '../../engine/constants';
 import { drawText, measure } from '../../engine/font';
 import { fx } from '../../engine/fx';
 import { type Scene } from '../../engine/game';
-import { input } from '../../engine/input';
+import { hits, input } from '../../engine/input';
 import { flow } from '../flow';
 import { G } from '../state';
 import { heart } from '../ui/draw';
@@ -57,7 +57,7 @@ export class NameEntryScene implements Scene {
     if (this.done) return;
     if (this.reaction) {
       this.reaction.t++;
-      if (this.reaction.t > 30 && input.pressed('a')) {
+      if (this.reaction.t > 30 && (input.pressed('a') || input.tap)) {
         if (this.reaction.allow) this.confirm = true;
         else this.name = '';
         this.reaction = null;
@@ -65,16 +65,23 @@ export class NameEntryScene implements Scene {
       }
       return;
     }
+    // Direct touch / mouse: a tap on a letter types it (and moves the cursor there), on Oui / Non answers.
+    const hit = hits.pick(this);
+    const tapped = !!hit?.tap;
     if (this.confirm) {
       if (input.repeat('left') || input.repeat('right')) {
         this.confirmIdx = 1 - this.confirmIdx;
         audio.sfx('move');
       }
+      if (typeof hit?.id === 'number') {
+        if (hit.id !== this.confirmIdx) audio.sfx('move');
+        this.confirmIdx = hit.id;
+      }
       if (input.pressed('b')) {
         this.confirm = false;
         audio.sfx('cancel');
       }
-      if (input.pressed('a')) {
+      if (input.pressed('a') || (tapped && typeof hit?.id === 'number')) {
         audio.sfx('select');
         if (this.confirmIdx === 0) void this.finish();
         else this.confirm = false;
@@ -99,6 +106,12 @@ export class NameEntryScene implements Scene {
       return;
     }
     const cells = this.cells;
+    if (typeof hit?.id === 'string') {
+      const [r, c] = hit.id.split(',').map(Number) as [number, number];
+      if ((r !== this.row || c !== this.col) && !tapped) audio.sfx('move');
+      this.row = r;
+      this.col = c;
+    }
     if (input.repeat('up')) {
       this.row = (this.row + cells.length - 1) % cells.length;
       this.col = Math.min(this.col, cells[this.row]!.length - 1);
@@ -121,7 +134,7 @@ export class NameEntryScene implements Scene {
       this.name = [...this.name].slice(0, -1).join('');
       audio.sfx('cancel');
     }
-    if (input.pressed('a')) {
+    if (input.pressed('a') || (tapped && typeof hit?.id === 'string')) {
       const cell = cells[this.row]![this.col]!;
       if (cell === '←') {
         this.name = [...this.name].slice(0, -1).join('');
@@ -175,6 +188,7 @@ export class NameEntryScene implements Scene {
       drawText(g, 'C\'est bien toi ?', W / 2, 96, { align: 'center', color: '#fffaf2' });
       ['Oui', 'Non'].forEach((l, i) => {
         const x = W / 2 - 40 + i * 80;
+        hits.add(this, i, x - 30, 110, 60, 18);
         if (this.confirmIdx === i) heart(g, x - 18, 119, '#ff4a5a');
         drawText(g, l, x, 116, { align: 'center', color: this.confirmIdx === i ? '#ffd84a' : '#fffaf2' });
       });
@@ -189,6 +203,7 @@ export class NameEntryScene implements Scene {
         const x = Math.round(W / 2 - total / 2 + c * spacing);
         const y = 72 + r * 15 + (isLast ? 6 : 0);
         const sel = r === this.row && c === this.col;
+        hits.add(this, `${r},${c}`, x - spacing / 2, y - 3, spacing, isLast ? 17 : 15);
         // The space key is shown as « _ ».
         const label = ch === ' ' ? '_' : ch;
         const lw = measure(label);
@@ -196,6 +211,7 @@ export class NameEntryScene implements Scene {
         drawText(g, label, x, y, { align: 'center', color: sel ? '#ffd84a' : '#d8cfe0' });
       });
     });
-    drawText(g, 'Clavier possible · B : effacer', W / 2, H - 12, { align: 'center', color: '#4e4359' });
+    const hint = input.pointerUsed ? 'Touche les lettres · ← : effacer' : 'Clavier possible · B : effacer';
+    drawText(g, hint, W / 2, H - 12, { align: 'center', color: '#4e4359' });
   }
 }

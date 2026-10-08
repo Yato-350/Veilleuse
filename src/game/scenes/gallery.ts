@@ -2,7 +2,7 @@ import { audio } from '../../engine/audio';
 import { H, W } from '../../engine/constants';
 import { drawOutlined, drawText, measure, wrap } from '../../engine/font';
 import { game, type Scene } from '../../engine/game';
-import { input } from '../../engine/input';
+import { hits, input } from '../../engine/input';
 import { makeCanvas } from '../../engine/sprite';
 import { ILLUSTRATIONS, SOUVENIRS } from '../../data/illustrations';
 import { G, type SavedPoem } from '../state';
@@ -169,6 +169,9 @@ export class GalleryScene implements Scene {
   private busy = false;
   private result: ShareResult | null = null;
   private resultT = 0;
+  // Direct touch / mouse: region tapped / hovered this frame ('tab:1', 'cell:3', 'poem:0', 'prev', 'next', 'keep', 'close'…)
+  private tapped: string | null = null;
+  private hovered: string | null = null;
 
   enter(): void {
     this.poems = [...G.meta.poems].sort((a, b) => b.at - a.at);
@@ -195,7 +198,17 @@ export class GalleryScene implements Scene {
   }
 
   private get confirm(): boolean {
-    return input.pressed('a') || input.tap;
+    return input.pressed('a');
+  }
+
+  /** B, or the ✕ tapped. */
+  private get back(): boolean {
+    return input.pressed('b') || this.tapped === 'close';
+  }
+
+  /** Index of a region id such as 'cell:3' when it has the given prefix. */
+  private static num(prefix: string, id: string | null): number | null {
+    return id?.startsWith(`${prefix}:`) ? Number(id.slice(prefix.length + 1)) : null;
   }
 
   update(): void {
@@ -208,6 +221,9 @@ export class GalleryScene implements Scene {
     this.fade = Math.max(0, this.fade - 0.1);
     this.bakeOneThumb();
     if (this.resultT > 0) this.resultT--;
+    const hit = hits.pick(this);
+    this.tapped = hit?.tap ? String(hit.id) : null;
+    this.hovered = hit && !hit.tap ? String(hit.id) : null;
     if (this.mode === 'view') this.updateView();
     else if (this.mode === 'poem') this.updatePoem();
     else this.updateGrid();
@@ -222,12 +238,18 @@ export class GalleryScene implements Scene {
   // --- Notebook (tabs, grid, poem list) --------------------------------------------------------------------------
 
   private updateGrid(): void {
-    if (input.pressed('b')) {
+    if (this.back) {
       this.closing = true;
       audio.sfx('cancel');
       return;
     }
     if (input.pressed('menu')) return this.switchTab(this.tab === 0 ? 1 : 0);
+    const tab = GalleryScene.num('tab', this.tapped);
+    if (tab !== null) {
+      this.switchTab(tab as Tab);
+      this.onTabs = false;
+      return;
+    }
     if (this.onTabs) {
       if (input.repeat('left') || input.repeat('right')) this.switchTab(this.tab === 0 ? 1 : 0);
       else if (input.repeat('down') || this.confirm) {
@@ -251,6 +273,27 @@ export class GalleryScene implements Scene {
     const col = this.cell % COLS;
     const inPage = this.cell % PER_PAGE;
     let next = this.cell;
+    // Touch / mouse: hover highlights, a tap opens the photo; ◀ ▶ under the page or a flick turns it.
+    const over = GalleryScene.num('cell', this.hovered);
+    if (over !== null && over !== this.cell) {
+      this.cell = over;
+      audio.sfx('move');
+    }
+    const tapped = GalleryScene.num('cell', this.tapped);
+    if (tapped !== null) {
+      this.cell = tapped;
+      const e = this.entries[tapped];
+      if (e && this.seen(e.key)) this.openView(e.key);
+      else audio.sfx('miss');
+      return;
+    }
+    const turn = this.tapped === 'pgnext' || input.swipe === 'left' ? 1 : this.tapped === 'pgprev' || input.swipe === 'right' ? -1 : 0;
+    const page = Math.floor(this.cell / PER_PAGE) + turn;
+    if (turn && page >= 0 && page * PER_PAGE < n) {
+      this.cell = Math.min(n - 1, page * PER_PAGE + inPage);
+      audio.sfx('whoosh', { pitch: 1.6, vol: 0.4 });
+      return;
+    }
     // Left/right past the edge turns the page (same row); up from the first row reaches the tabs.
     if (input.repeat('left')) next = col > 0 ? this.cell - 1 : this.cell >= PER_PAGE ? this.cell - PER_PAGE + COLS - 1 : this.cell;
     else if (input.repeat('right')) {
@@ -290,7 +333,17 @@ export class GalleryScene implements Scene {
       }
       return;
     }
-    if (input.repeat('up')) {
+    const over = GalleryScene.num('poem', this.hovered);
+    if (over !== null && over !== this.poemIdx) {
+      this.poemIdx = over;
+      audio.sfx('move');
+    }
+    const tapped = GalleryScene.num('poem', this.tapped);
+    if (tapped !== null) return this.openPoem(tapped);
+    if (this.tapped === 'up' || this.tapped === 'down') {
+      this.poemIdx = this.tapped === 'up' ? Math.max(0, this.listTop - 1) : Math.min(n - 1, this.listTop + LIST_ROWS);
+      audio.sfx('move');
+    } else if (input.repeat('up')) {
       if (this.poemIdx === 0) this.onTabs = true;
       else this.poemIdx--;
       audio.sfx('move');
@@ -317,19 +370,21 @@ export class GalleryScene implements Scene {
     const list = this.seenEntries();
     const i = list.findIndex((e) => e.key === this.viewKey);
     const e = list[i];
-    if (input.pressed('b') || !e) {
+    if (this.back || !e) {
       this.mode = 'grid';
       const back = this.entries.findIndex((x) => x.key === this.viewKey);
       if (back >= 0) this.cell = back;
       audio.sfx('cancel');
       return;
     }
-    const step = input.repeat('left') ? -1 : input.repeat('right') ? 1 : 0;
+    // Touch: ◀ ▶ on the sides or a flick change the picture; a tap anywhere else shows the next caption.
+    const prev = input.repeat('left') || this.tapped === 'prev' || input.swipe === 'right';
+    const step = prev ? -1 : input.repeat('right') || this.tapped === 'next' || input.swipe === 'left' ? 1 : 0;
     if (step && list.length > 1) {
       this.viewKey = list[(i + step + list.length) % list.length]!.key;
       this.caption = 0;
       audio.sfx('whoosh', { pitch: 1.6, vol: 0.35 });
-    } else if (this.confirm) {
+    } else if (this.confirm || input.tap) {
       // Captions one by one; past the last one the text hides so the picture can be seen whole; then again.
       this.caption = this.caption >= Math.max(1, e.captions.length) ? 0 : this.caption + 1;
       audio.sfx('blip', { vol: 0.5 });
@@ -367,23 +422,24 @@ export class GalleryScene implements Scene {
     const lines = poemLines(p).length;
     if (this.poemShown() < lines) {
       if (this.poemT % 8 === 0 && poemLines(p)[this.poemShown() - 1]) audio.sfx('write', { pitch: 0.9, vol: 0.5 });
-      if (this.confirm || input.pressed('b')) this.poemT = lines * 8;
+      if (this.confirm || input.tap || this.tapped || input.pressed('b')) this.poemT = lines * 8;
       return;
     }
     if (this.busy) return;
-    if (input.pressed('b')) {
+    if (this.back) {
       this.mode = 'grid';
       audio.sfx('cancel');
       return;
     }
-    const step = input.repeat('left') ? -1 : input.repeat('right') ? 1 : 0;
+    const prev = input.repeat('left') || this.tapped === 'prev' || input.swipe === 'right';
+    const step = prev ? -1 : input.repeat('right') || this.tapped === 'next' || input.swipe === 'left' ? 1 : 0;
     if (step && this.poems.length > 1) {
       const n = this.poems.length;
       this.openPoem((this.poemIdx + step + n) % n);
       this.listTop = Math.max(0, Math.min(this.poemIdx, n - LIST_ROWS));
       return;
     }
-    if (this.confirm) {
+    if (this.confirm || this.tapped === 'keep') {
       this.busy = true;
       audio.sfx('select');
       void sharePoem(p, this.file ?? undefined).then((r) => {
@@ -459,9 +515,12 @@ export class GalleryScene implements Scene {
       g.fillRect(x, y, w, PAGE.y - y + (sel ? 1 : -2));
       drawText(g, label, x + 7 + (focus ? 9 : 0), y + 2, { color: sel ? RED : '#5e4636' });
       if (focus) heart(g, x + 5, y + 6 - Math.round(Math.abs(Math.sin(this.t * 0.08))), '#ff4a5a');
+      hits.add(this, `tab:${i}`, x, y - 2, w, PAGE.y - y + 2);
       x += w + 3;
     });
-    drawText(g, 'Carnet de souvenirs', W - 8, 6, { align: 'right', color: '#ffe991', shadow: '#120c0a' });
+    const close = input.pointerUsed;
+    drawText(g, 'Carnet de souvenirs', W - (close ? 20 : 8), 6, { align: 'right', color: '#ffe991', shadow: '#120c0a' });
+    if (close) this.drawClose(g, W - 12, 6);
   }
 
   private drawGrid(g: CanvasRenderingContext2D): void {
@@ -478,11 +537,19 @@ export class GalleryScene implements Scene {
       const y = GRID_Y + Math.floor(k / COLS) * (CELL_H + GAP_Y) + jy - (sel ? 1 : 0);
       if (this.seen(e.key)) this.drawPhoto(g, e.key, x, y, sel, i);
       else this.drawBlank(g, x, y, sel);
+      hits.add(this, `cell:${i}`, x - 2, y - 2, CELL_W + 4, CELL_H + 4);
     });
     // Footer, on the desk: what is under the cursor
     const e = this.entries[this.cell];
     if (this.onTabs) return;
     if (pages > 1) drawText(g, `p. ${page + 1}/${pages}`, PAGE.x, H - 12, { color: '#8a7f96' });
+    if (pages > 1 && input.pointerUsed) {
+      // Touch: ◀ ▶ at both ends of the desk turn the page (flicking the page works too).
+      drawText(g, '◀', 1, H - 12, { color: page > 0 ? '#d8cfe0' : '#4e4359' });
+      drawText(g, '▶', W - 6, H - 12, { color: page < pages - 1 ? '#d8cfe0' : '#4e4359' });
+      hits.add(this, 'pgprev', 0, H - 17, 40, 17);
+      hits.add(this, 'pgnext', W - 40, H - 17, 40, 17);
+    }
     if (e && this.seen(e.key)) {
       const kw = measure(`${e.kind} · `);
       const tw = measure(e.title);
@@ -544,6 +611,7 @@ export class GalleryScene implements Scene {
       const i = this.listTop + k;
       const y = p.y + 7 + k * ROW_H;
       const sel = i === this.poemIdx && !this.onTabs;
+      hits.add(this, `poem:${i}`, x - 4, y - 2, w + 8, ROW_H - 2);
       if (sel) {
         g.fillStyle = '#f6e3b8';
         g.fillRect(x - 4, y - 2, w + 8, ROW_H - 2);
@@ -553,8 +621,14 @@ export class GalleryScene implements Scene {
       drawText(g, poemDate(poem.at), x + w, y, { align: 'right', color: FADED });
       drawText(g, this.preview(poem, w - 10), x + 10, y + 11, { color: INK });
     });
-    if (this.listTop > 0) drawText(g, '↑', p.x + p.w - 8, p.y + 2, { color: FADED });
-    if (this.listTop + LIST_ROWS < this.poems.length) drawText(g, '↓', p.x + p.w - 8, p.y + p.h - 11, { color: FADED });
+    if (this.listTop > 0) {
+      drawText(g, '↑', p.x + p.w - 8, p.y + 2, { color: FADED });
+      hits.add(this, 'up', p.x + p.w - 14, p.y - 2, 16, 12);
+    }
+    if (this.listTop + LIST_ROWS < this.poems.length) {
+      drawText(g, '↓', p.x + p.w - 8, p.y + p.h - 11, { color: FADED });
+      hits.add(this, 'down', p.x + p.w - 14, p.y + p.h - 13, 16, 13);
+    }
     if (this.poems.length > 1 && !this.onTabs) drawText(g, `${this.poemIdx + 1}/${this.poems.length}`, PAGE.x, H - 12, { color: '#8a7f96' });
   }
 
@@ -578,7 +652,10 @@ export class GalleryScene implements Scene {
     const i = list.findIndex((e) => e.key === this.viewKey);
     const e = list[i];
     if (!e) return;
+    if (input.pointerUsed) this.drawClose(g, 6, 4, true);
     if (list.length > 1) {
+      hits.add(this, 'prev', 0, 16, 44, 96);
+      hits.add(this, 'next', W - 44, 16, 44, 96);
       const bob = Math.round(Math.sin(this.t * 0.1));
       drawOutlined(g, '◀', 4 - bob, H / 2 - 30, '#fffaf2', '#0b0710');
       drawOutlined(g, '▶', W - 10 + bob, H / 2 - 30, '#fffaf2', '#0b0710');
@@ -596,6 +673,13 @@ export class GalleryScene implements Scene {
     lines.forEach((l, k) => drawText(g, l, 16, y + 19 + k * 12, { color: INK }));
   }
 
+  /** Touch: a ✕ to leave (the page, or the notebook), with a comfortable tap area around it. */
+  private drawClose(g: CanvasRenderingContext2D, x: number, y: number, outlined = false): void {
+    if (outlined) drawOutlined(g, '✕', x, y, '#fffaf2', '#0b0710');
+    else drawText(g, '✕', x, y, { color: '#d8cfe0', shadow: '#120c0a' });
+    hits.add(this, 'close', x - 8, y - 6, 22, 20);
+  }
+
   private drawPoem(g: CanvasRenderingContext2D): void {
     this.drawDesk(g);
     const p = this.poems[this.poemIdx];
@@ -604,9 +688,12 @@ export class GalleryScene implements Scene {
     const w = W - 100;
     drawPoemPage(g, p, x, 4, w, 158, this.poemShown());
     const n = this.poems.length;
+    if (input.pointerUsed) this.drawClose(g, 10, 6);
     if (n > 1) {
       drawText(g, '◀', 30, 78, { color: '#8a7f96' });
       drawText(g, '▶', W - 36, 78, { color: '#8a7f96' });
+      hits.add(this, 'prev', 12, 60, 36, 44);
+      hits.add(this, 'next', W - 48, 60, 36, 44);
       drawText(g, `${this.poemIdx + 1}/${n}`, 8, H - 12, { color: '#8a7f96' });
     }
     if (this.poemShown() < poemLines(p).length) return;
@@ -620,7 +707,10 @@ export class GalleryScene implements Scene {
     const lw = measure(label);
     const lx = Math.round(W / 2 - lw / 2 + 5);
     const y = H - 13;
-    if (!this.busy && this.resultT <= 0) heart(g, lx - 12 + Math.round(Math.sin(this.t * 0.15)), y + 2, '#ff4a5a');
+    if (!this.busy && this.resultT <= 0) {
+      heart(g, lx - 12 + Math.round(Math.sin(this.t * 0.15)), y + 2, '#ff4a5a');
+      hits.add(this, 'keep', lx - 16, y - 4, lw + 22, 17);
+    }
     drawText(g, label, lx, y, { color: this.resultT > 0 ? '#f8b6cf' : GOLD, shadow: '#120c0a' });
   }
 }

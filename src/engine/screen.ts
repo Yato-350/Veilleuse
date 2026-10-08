@@ -24,6 +24,8 @@ export class Screen {
     this.bindTouch();
     const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     this.setTouchVisible(hasTouch);
+    // Touch screens show tap affordances (✕, page arrows) from the start; a key press hides them again.
+    input.pointerUsed = hasTouch;
     input.onDeviceChange = (d) => {
       if (this.touchMode !== 'auto') return;
       if (d === 'touch') this.setTouchVisible(true);

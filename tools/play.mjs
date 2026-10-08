@@ -17,6 +17,7 @@
  *   until:mode       advance text until the battle is in `mode` (dodge, menu, …)
  *   load:map/spawn   load a map;  flag:key[=value]  set a story flag
  *   (--touch: phone emulation with touch events; --canvas: screenshots of the game screen only)
+ *   swipe:x/y/x2/y2  quick pointer flick between two game pixels (mouse drag)
  *   tap:x/y          tap (touch with --touch, else mouse click) at game pixel (x, y) of the 320×180 screen
  *   Code[:ms]        press (or hold) a key; wait:ms; shot:name; log (prints state); eval:js
  * Prints a state line after each step; exits non-zero on page errors.
@@ -32,7 +33,8 @@ const opt = (name, def) => {
   const i = args.indexOf(`--${name}`);
   return i >= 0 ? args[i + 1] : def;
 };
-const steps = opt('steps', 'auto').split(',').filter(Boolean);
+// --sep ";" lets eval steps contain commas.
+const steps = opt('steps', 'auto').split(opt('sep', ',')).filter(Boolean);
 const [vw, vh] = opt('size', '640x360').split('x').map(Number);
 const quiet = args.includes('--quiet');
 /** --canvas: screenshots show only the game screen (handy with --touch / phone sizes). */
@@ -199,9 +201,25 @@ const snap = async (path) => {
   await page.screenshot({ path, clip });
 };
 
+async function swipe(arg) {
+  const [x1, y1, x2, y2] = arg.split('/').map(Number);
+  const r = await page.evaluate(() => {
+    const b = document.getElementById('game').getBoundingClientRect();
+    return { x: b.left, y: b.top, w: b.width, h: b.height };
+  });
+  const P = (gx, gy) => [r.x + (gx * r.w) / 320, r.y + (gy * r.h) / 180];
+  await page.mouse.move(...P(x1, y1));
+  await page.mouse.down();
+  for (let k = 1; k <= 6; k++) await page.mouse.move(...P(x1 + ((x2 - x1) * k) / 6, y1 + ((y2 - y1) * k) / 6));
+  await page.mouse.up();
+  await page.waitForTimeout(150);
+}
+
 const shotPath = (name) => out.replace(/\.png$/, `-${name}.png`);
 for (const step of steps) {
-  const [cmd, arg] = step.split(':');
+  const colon = step.indexOf(':');
+  const cmd = colon < 0 ? step : step.slice(0, colon);
+  const arg = colon < 0 ? undefined : step.slice(colon + 1);
   let res = '';
   if (cmd === 'auto') res = await auto(arg ? Number(arg) : 30000);
   else if (cmd === 'choose') await chooseList(Number(arg));
@@ -264,6 +282,7 @@ for (const step of steps) {
     }, arg);
   else if (cmd === 'eval') res = String(await page.evaluate(arg));
   else if (cmd === 'tap') res = await tapAt(arg);
+  else if (cmd === 'swipe') await swipe(arg);
   else await press(cmd, arg ? Number(arg) : 0);
   if (!quiet || cmd === 'auto' || cmd === 'log') console.log(`${step.padEnd(18)} → ${res} ${JSON.stringify(await state())}`);
 }
