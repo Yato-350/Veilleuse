@@ -153,6 +153,8 @@ const LULLABY_B = [
 ].join(' | ');
 
 const LULLABY = join(LULLABY_A, LULLABY_B);
+/** The leitmotif's melody as a tracker pattern (the music-box teeth of chapter 6 play it note by note). */
+export const LULLABY_PATTERN = LULLABY;
 const CH_A = ['C', 'G', 'Am', 'G', 'C', 'G', 'G7', 'C'];
 const CH_B = ['F', 'Dm', 'G7', 'C', 'F', 'Dm', 'G7', 'C'];
 const CH_LULLABY = [...CH_A, ...CH_B];
