@@ -1,6 +1,6 @@
 import { charWidth } from '../../engine/font';
 
-export type TextFx = 'none' | 'wave' | 'shake' | 'glitch';
+export type TextFx = 'none' | 'wave' | 'shake' | 'glitch' | 'static';
 
 export interface RichChar {
   ch: string;
@@ -10,6 +10,10 @@ export interface RichChar {
   pause: number;
   /** Reveal speed multiplier from this char on. */
   speed: number;
+  /** Speaker switch when the typewriter reaches this (empty) char: `{as:noa}` / `{as:noa:sad}`. */
+  as?: string;
+  /** Blip switch only (name and portrait unchanged): `{voice:noa}`. */
+  voice?: string;
 }
 
 export const NAMED_COLORS: Record<string, string> = {
@@ -31,6 +35,9 @@ const PUNCT_PAUSE: Record<string, number> = { '.': 10, '!': 10, '?': 10, '…': 
  * Parses dialogue markup.
  *   {c:y} … {/c}      color (named or #hex)
  *   {wave} {shake} {glitch} and their closing tags
+ *   {static} … {/static}  radio static (« friture »): letters crackle and drop out, the blip becomes noise
+ *   {as:noa} / {as:noa:sad}  from here on the box belongs to another speaker (name tag, portrait and blip change)
+ *   {voice:noa}       from here on only the blip changes
  *   {p:20} / {p}      pause
  *   {spd:0.5}         speed multiplier
  *   {anyVar}          variable substitution
@@ -61,12 +68,20 @@ export function parseRich(text: string, vars: Record<string, string> = {}): Rich
           case 'wave':
           case 'shake':
           case 'glitch':
+          case 'static':
             fx = name;
             break;
           case '/wave':
           case '/shake':
           case '/glitch':
+          case '/static':
             fx = 'none';
+            break;
+          case 'as':
+            out.push({ ch: '', color, fx, pause: 0, speed, as: tag.slice(3) });
+            break;
+          case 'voice':
+            out.push({ ch: '', color, fx, pause: 0, speed, voice: arg ?? '' });
             break;
           case 'p': {
             const n = arg ? parseInt(arg, 10) : 20;

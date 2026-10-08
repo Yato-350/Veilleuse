@@ -1,5 +1,6 @@
 import { audio, VOICES } from '../../engine/audio';
-import { drawChar, drawText, LINE_HEIGHT, measure } from '../../engine/font';
+import { charWidth, drawChar, drawText, LINE_HEIGHT, measure } from '../../engine/font';
+import { hash2 } from '../../engine/math';
 import { H, W } from '../../engine/constants';
 import { game } from '../../engine/game';
 import { hits, input } from '../../engine/input';
@@ -38,6 +39,7 @@ interface Page {
 }
 
 const GLITCH_CHARS = '#%&@$*?!<>/\\█▓░ΞΔ§¤';
+const STATIC_CHARS = '░·-~:.';
 
 /** Global dialogue box. Scripts call `await dialogue.say(...)`. */
 export class Dialogue {
@@ -63,6 +65,21 @@ export class Dialogue {
   private pendingChoices: { choices: string[]; cancel: number } | null = null;
   private lastChoice = 0;
   private blipCount = 0;
+  /** Speaker and portrait the box opened with (before any {as:…}). */
+  private baseSpeaker: Speaker = SPEAKERS.narrator!;
+  private basePortrait: string | null = null;
+  /** Last {as:…} / {voice:…} marker revealed (key of the current switch, '' = none). */
+  private asKey = '';
+  private voiceKey = '';
+  /** Name tag and portrait shown before the last switch (they flicker for a moment) and frames since it. */
+  private prevName = '';
+  private prevPortrait: string | null = null;
+  private switchT = 999;
+  /**
+   * « Bip de Dodo pour le narrateur »: when set (a voice id, e.g. 'dodo'), narrator boxes without an explicit voice use
+   * this blip. Off by default; the story sets it (see `nightNarratorVoice`).
+   */
+  narratorVoice: string | null = null;
 
   get busy(): boolean {
     return this.open || this.choices !== null;
@@ -107,8 +124,15 @@ export class Dialogue {
     this.opts = opts;
     const [who, expr] = (opts.who ?? 'narrator').split(':') as [string, string | undefined];
     this.speaker = SPEAKERS[who] ?? { name: who, voice: 'default' };
-    const pKey = this.speaker.portrait ? `face_${this.speaker.portrait}_${expr ?? 'neutral'}` : null;
-    this.portrait = pKey && hasSpr(pKey) ? pKey : null;
+    this.portrait = portraitOf(this.speaker, expr);
+    this.baseSpeaker = this.speaker;
+    this.basePortrait = this.portrait;
+    this.asKey = '';
+    this.voiceKey = '';
+    this.switchT = 999;
+    // A box that switches speaker keeps room for a portrait from the start, so the text does not jump.
+    const switchTo = /\{as:([a-z]+)/.exec(text)?.[1];
+    if (!this.portrait && switchTo && SPEAKERS[switchTo]?.portrait && this.speaker.name) this.portrait = portraitOf(SPEAKERS[switchTo]!, undefined);
     this.pages = this.buildPages(tr(text));
     this.pageIdx = 0;
     this.shown = 0;
@@ -159,6 +183,7 @@ export class Dialogue {
 
   update(): void {
     this.t++;
+    this.switchT++;
     if (this.openAnim < 1) this.openAnim = Math.min(1, this.openAnim + 0.2);
     if (this.choices) {
       this.updateChoices();
@@ -186,10 +211,14 @@ export class Dialogue {
           if (after > before) {
             const rc = this.charAt(after - 1);
             if (rc) {
+              if (rc.as !== undefined || rc.voice !== undefined) this.syncSwitch();
               if (rc.ch && rc.ch !== ' ' && !/[.,!?…;:]/.test(rc.ch)) {
-                if (this.blipCount++ % 2 === 0) {
-                  const v = VOICES[this.opts.voice ?? this.speaker.voice] ?? VOICES.default!;
-                  audio.voice(v);
+                if (rc.fx === 'static') {
+                  // Radio static: crackle instead of most blips, the voice only now and then.
+                  if (this.blipCount++ % 2 === 0) audio.sfx('static', { vol: 0.7, pitch: 0.8 + Math.random() * 0.5 });
+                  else if (Math.random() < 0.35) audio.voice(VOICES[this.blipVoice()] ?? VOICES.default!);
+                } else if (this.blipCount++ % 2 === 0) {
+                  audio.voice(VOICES[this.blipVoice()] ?? VOICES.default!);
                 }
               }
               if (rc.pause > 0 && G.settings.textSpeed < 3) {
@@ -203,6 +232,7 @@ export class Dialogue {
       if (!skipFrame && !this.opts.noSkip && (input.pressed('a') || input.pressed('b') || input.tap)) {
         this.shown = p.total;
         this.wait = 0;
+        this.syncSwitch();
       }
       return;
     }
@@ -223,12 +253,55 @@ export class Dialogue {
     if (!skipFrame && (input.pressed('a') || input.tap)) this.advance();
   }
 
+  /** Voice id of the next blip: {voice:…} > {as:…} speaker > explicit voice > narrator override > speaker. */
+  private blipVoice(): string {
+    if (this.voiceKey) return this.voiceKey;
+    if (this.asKey) return this.speaker.voice;
+    if (this.opts.voice) return this.opts.voice;
+    if (this.narratorVoice && this.speaker === SPEAKERS.narrator) return this.narratorVoice;
+    return this.speaker.voice;
+  }
+
+  /** Applies the last {as:…} / {voice:…} marker revealed so far (typewriter or skip). */
+  private syncSwitch(): void {
+    let as = '';
+    let voice = '';
+    const shown = Math.floor(this.shown);
+    for (let pi = 0; pi <= this.pageIdx; pi++) {
+      let n = 0;
+      for (const line of this.pages[pi]?.lines ?? []) {
+        for (const rc of line) {
+          if (pi === this.pageIdx && n >= shown) break;
+          n++;
+          if (rc.as !== undefined) as = rc.as;
+          if (rc.voice !== undefined) voice = rc.voice;
+        }
+      }
+    }
+    this.voiceKey = voice;
+    if (as === this.asKey) return;
+    this.prevName = this.speaker.name;
+    this.prevPortrait = this.portrait;
+    this.asKey = as;
+    if (!as) {
+      this.speaker = this.baseSpeaker;
+      this.portrait = this.basePortrait;
+    } else {
+      const [who, expr] = as.split(':') as [string, string | undefined];
+      this.speaker = SPEAKERS[who] ?? { name: who, voice: 'default' };
+      this.portrait = portraitOf(this.speaker, expr) ?? this.portrait;
+    }
+    this.switchT = 0;
+    audio.sfx('static', { vol: 0.35, pitch: 0.6 });
+  }
+
   private advance(): void {
     this.autoT = 0;
     if (this.pageIdx < this.pages.length - 1) {
       this.pageIdx++;
       this.shown = 0;
       this.wait = 0;
+      this.syncSwitch();
       audio.sfx('blip', { pitch: 0.8, vol: 0.4 });
     } else {
       this.close();
@@ -295,19 +368,26 @@ export class Dialogue {
   }
 
   private drawContent(g: CanvasRenderingContext2D, r: { x: number; y: number; w: number; h: number }, style: BoxStyle): void {
+    // Just after an {as:…} switch, the old name and face flicker with the new ones (unless flashes are reduced).
+    const flicker = this.switchT < 30 && !G.settings.reduceFlashes && Math.floor(this.switchT / 4) % 2 === 0;
+    const tagName = flicker ? this.prevName : this.speaker.name;
     // Name tag
-    if (this.speaker.name && style !== 'none') {
-      const name = tr(this.speaker.name);
+    if (tagName && style !== 'none') {
+      const name = tr(tagName);
       const nw = measure(name) + 10;
       const ny = r.y - 11;
       box(g, r.x + 4, ny, nw, 13, style);
-      drawText(g, name, r.x + 9, ny, { color: this.speaker.color ?? '#fffaf2' });
+      drawText(g, name, r.x + 9, ny, { color: flicker ? '#8a7f96' : (this.speaker.color ?? '#fffaf2') });
     }
+    const face = flicker ? this.prevPortrait : this.portrait;
     if (this.portrait) {
-      const p = spr(this.portrait);
       g.fillStyle = style === 'paper' ? '#ecd3a0' : '#0b0710';
       g.fillRect(r.x + 6, r.y + 7, 36, 36);
-      drawSprite(g, p, r.x + 24, r.y + 43);
+      if (face) {
+        const p = spr(face);
+        const jitter = this.switchT < 30 && !G.settings.reduceFlashes ? Math.round(Math.sin(this.switchT * 1.7) * 2) : 0;
+        drawSprite(g, p, r.x + 24 + jitter, r.y + 43);
+      }
     }
     const p = this.page;
     if (!p) return;
@@ -334,7 +414,23 @@ export class Dialogue {
         } else if (rc.fx === 'glitch' && Math.random() < 0.15) {
           ch = GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)]!;
         }
-        const color = rc.color ?? baseColor;
+        let color = rc.color ?? baseColor;
+        if (rc.fx === 'static') {
+          // Radio static: letters drop out, turn to snow, slip sideways; the colour comes and goes (every 4 frames).
+          const n = hash2(ci + li * 97, Math.floor(this.t / 4), 5);
+          const adv = charWidth(rc.ch);
+          if (n < 0.12) {
+            x += adv;
+            continue;
+          }
+          if (n < 0.22) ch = STATIC_CHARS[Math.floor(hash2(ci, this.t >> 2, 6) * STATIC_CHARS.length)]!;
+          if (n > 0.93) dx = n > 0.965 ? -1 : 1;
+          if (hash2(ci, this.t >> 2, 7) < 0.3) color = '#8a7f96';
+          if (style !== 'paper') drawChar(g, ch, x + dx + 1, y + dy + 1, '#0b0710');
+          drawChar(g, ch, x + dx, y + dy, color);
+          x += adv;
+          continue;
+        }
         if (style !== 'paper') drawChar(g, ch, x + dx + 1, y + dy + 1, '#0b0710');
         x += drawChar(g, ch, x + dx, y + dy, color);
       }
@@ -359,6 +455,19 @@ export class Dialogue {
       drawText(g, c, x + 17, cy, { color: sel ? '#ffd84a' : style === 'paper' ? '#2b2a5c' : '#fffaf2' });
     });
   }
+}
+
+function portraitOf(speaker: Speaker, expr: string | undefined): string | null {
+  const key = speaker.portrait ? `face_${speaker.portrait}_${expr ?? 'neutral'}` : null;
+  return key && hasSpr(key) ? key : null;
+}
+
+/**
+ * Meta (docs/HISTOIRE.md §2.8): between midnight and 5 a.m. (real time), narrator boxes use Dodo's blip — unless
+ * Dodo has fallen silent for good. Returns the voice for `dialogue.narratorVoice`.
+ */
+export function nightNarratorVoice(hour: number, dodoSilent: boolean): string | null {
+  return !dodoSilent && hour >= 0 && hour < 5 ? 'dodo' : null;
 }
 
 function measureLine(line: RichChar[]): number {

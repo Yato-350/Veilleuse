@@ -11,6 +11,8 @@ import { Battle } from './battle/battle';
 import { PATTERNS } from './battle/patterns';
 import { runScript } from './director';
 import { world } from './overworld/world';
+import type { MapDef } from './overworld/types';
+import { MAPS } from '../data/maps';
 import { G, maxHp, newState } from './state';
 import { TitleScene } from './scenes/title';
 import { ImageScene } from './scenes/image';
@@ -23,6 +25,7 @@ import { composePoem } from './scenes/poem';
  * Developer entry points, driven by URL parameters (used by tools/shot.mjs for visual checks):
  *   ?debug=sheet&filter=b_&scale=3      sprite sheet (all sprites whose key starts with `filter`)
  *   ?debug=map&map=prairie&spawn=default&chapter=1&party=mina&flags=a,b=2
+ *   ?debug=map&map=chambre&world=feutre   any map seen in another world material (feutre, stylo, blanc, ouate, faux…)
  *   ?debug=battle&enemies=nuage,pissenlit&chapter=1&emotion=joie
  *   ?debug=pattern&id=rain&emotion=tristesse
  *   ?debug=image&key=souvenir_fenetre
@@ -47,8 +50,11 @@ export function startDebug(p: URLSearchParams): void {
     case 'sheet':
       return showSheet(p.get('filter') ?? '', Number(p.get('scale') ?? 3), p.get('chars') !== null);
     case 'map': {
+      const id = p.get('map') ?? 'chambre';
+      const w = p.get('world');
+      if (w && MAPS[id]) MAPS[id] = { ...MAPS[id]!, world: w as MapDef['world'] };
       game.replace(world);
-      world.load(p.get('map') ?? 'chambre', p.get('spawn') ?? 'default');
+      world.load(id, p.get('spawn') ?? 'default');
       return;
     }
     case 'battle': {

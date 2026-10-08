@@ -8,6 +8,7 @@ import * as chapter1 from './chapter1';
 import * as chapter2 from './chapter2';
 import * as chapter3 from './chapter3';
 import * as bonus from './bonus';
+import * as socle from './socle';
 import * as battleDebug from '../battle/debug-battles';
 
 /** Talking to Mina while she follows Noa: a line depending on where you are. */
@@ -47,6 +48,7 @@ export const DEBUG_SCRIPTS: Record<string, Script> = {
   ...chapter2.DEBUG,
   ...chapter3.DEBUG,
   ...bonus.DEBUG,
+  ...socle.DEBUG,
   ...battleDebug.DEBUG,
 };
 

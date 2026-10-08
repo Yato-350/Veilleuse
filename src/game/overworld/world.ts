@@ -7,6 +7,7 @@ import { type Scene } from '../../engine/game';
 import { input } from '../../engine/input';
 import { clamp, DIR_VEC, rectsOverlap, rng, type Dir, type Rect, pointInRect, hash2 } from '../../engine/math';
 import { ctx2d, makeCanvas } from '../../engine/sprite';
+import { WORLD_BG } from '../../engine/palette';
 import { MAPS } from '../../data/maps';
 import { hasSpr } from '../assets';
 import { G, setFlag } from '../state';
@@ -575,7 +576,7 @@ export class WorldScene implements Scene {
     }
     const cx = Math.round(this.camX);
     const cy = Math.round(this.camY);
-    g.fillStyle = this.map.bg ?? (this.world === 'real' ? '#0a0b12' : '#1a1424');
+    g.fillStyle = this.map.bg ?? WORLD_BG[this.world] ?? (this.world === 'real' ? '#0a0b12' : '#1a1424');
     g.fillRect(0, 0, W, H);
     if (this.tilemap.ground) g.drawImage(this.tilemap.ground, -cx, -cy);
     this.tilemap.drawAnimated(g, cx, cy, this.frame, W, H);

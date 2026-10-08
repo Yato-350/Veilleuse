@@ -149,7 +149,15 @@ export type Sfx =
   | 'pop'
   | 'erase'
   | 'bark'
-  | 'baa';
+  | 'baa'
+  // v2: radio static (dialogue {static}), one knock on a wall, a knock in a radiator pipe, a tooth clicking into a
+  // music-box comb, a fingernail scratching a wall, a phone vibrating on a desk.
+  | 'static'
+  | 'knock1'
+  | 'pipe'
+  | 'tooth'
+  | 'scratch'
+  | 'buzz';
 
 export type Ambience = 'rain' | 'static' | 'wind' | 'hum' | 'none';
 
@@ -201,6 +209,11 @@ export class AudioEngine {
   tempoScale = 1;
   private pendingMusic: string | null = null;
   muted = false;
+  /** Music plays backwards (steps in reverse order, notes swell in and stop dead): the fake credits rewinding. */
+  reverse = false;
+  /** While holding, the sequence stops where it is and its last note rings on (see `hold`). */
+  private held: { at: number; nodes: OscillatorNode[]; gain: GainNode } | null = null;
+  private lastFreq = 523.25;
 
   register(id: string, t: Track): void {
     this.tracks.set(id, t);
@@ -347,6 +360,7 @@ export class AudioEngine {
   }
 
   stopMusic(fade = 0.6): void {
+    if (this.held) this.hold(false);
     if (!this.ctx || !this.playing) {
       this.pendingMusic = null;
       return;
@@ -368,6 +382,12 @@ export class AudioEngine {
     const ctx = this.ctx;
     const p = this.playing;
     if (!ctx || !p) return;
+    if (this.held) {
+      // Frozen: push the timeline forward so nothing new is scheduled until release.
+      p.startTime += ctx.currentTime - this.held.at;
+      this.held.at = ctx.currentTime;
+      return;
+    }
     const ahead = ctx.currentTime + 0.12;
     if (p.tempo !== this.tempoScale) {
       // Re-anchor so the next step keeps its position in time when the tempo changes.
@@ -385,7 +405,7 @@ export class AudioEngine {
       const when = p.startTime + step * stepDur;
       for (const ch of p.channels) {
         if (ch.length === 0) continue;
-        const local = step % ch.length;
+        const local = this.reverse ? ch.length - 1 - (step % ch.length) : step % ch.length;
         if (p.track.loop === false && step >= ch.length) continue;
         for (const ev of ch.events) {
           if (ev.step === local) this.playNote(ch, ev, when, ev.len * stepDur, p.gain);
@@ -410,8 +430,74 @@ export class AudioEngine {
       const midi = midi0 + (ch.transpose ?? 0);
       let freq = midiToFreq(midi);
       if (wob > 0) freq *= 1 + (Math.random() - 0.5) * 0.04 * wob - 0.03 * wob;
-      this.synth(ch.inst, freq, when, dur, vol / Math.sqrt(ev.midis.length), out, ch);
+      if (ch === this.playing?.channels[0]) this.lastFreq = freq;
+      if (this.reverse) this.backwardsNote(freq, when, Math.max(0.3, dur), vol / Math.sqrt(ev.midis.length), out);
+      else this.synth(ch.inst, freq, when, dur, vol / Math.sqrt(ev.midis.length), out, ch);
     }
+  }
+
+  /** A note played backwards: it swells in from silence and stops dead. */
+  private backwardsNote(freq: number, when: number, dur: number, vol: number, out: AudioNode): void {
+    const ctx = this.ctx!;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, when);
+    g.gain.exponentialRampToValueAtTime(vol * 0.8, when + dur * 0.92);
+    g.gain.linearRampToValueAtTime(0, when + dur);
+    g.connect(out);
+    const send = ctx.createGain();
+    send.gain.value = 0.4;
+    g.connect(send).connect(this.reverbBus);
+    const o = this.osc(this.waves.musicbox ? 'musicbox' : 'triangle', freq, when);
+    o.connect(g);
+    o.start(when);
+    o.stop(when + dur + 0.02);
+  }
+
+  /**
+   * Freezes the music on its last note (true) — the fake credits stopping on a line — or lets it go on (false).
+   * The held note rings with a slow, slightly sour vibrato.
+   */
+  hold(on: boolean): void {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    if (on && !this.held) {
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.16, ctx.currentTime + 0.08);
+      gain.connect(this.musicBus);
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 4.2;
+      const depth = ctx.createGain();
+      depth.gain.value = this.lastFreq * 0.006;
+      lfo.connect(depth);
+      const nodes = [lfo];
+      for (const [type, mul, det] of [
+        ['sine', 1, 0],
+        ['triangle', 2, 6],
+      ] as const) {
+        const o = this.osc(type, this.lastFreq * mul, ctx.currentTime);
+        o.detune.value = det;
+        depth.connect(o.frequency);
+        const g = ctx.createGain();
+        g.gain.value = mul === 1 ? 1 : 0.25;
+        o.connect(g).connect(gain);
+        o.start();
+        nodes.push(o);
+      }
+      lfo.start();
+      this.held = { at: ctx.currentTime, nodes, gain };
+    } else if (!on && this.held) {
+      const h = this.held;
+      this.held = null;
+      h.gain.gain.setTargetAtTime(0, ctx.currentTime, 0.12);
+      for (const n of h.nodes) n.stop(ctx.currentTime + 0.8);
+    }
+  }
+
+  /** One note on an instrument (story puzzles: the music-box comb plays the lullaby note by note). */
+  note(inst: Instrument, midi: number, dur = 0.5, vol = 0.5): void {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    this.synth(inst, midiToFreq(midi), this.ctx.currentTime + 0.01, dur, vol * 0.35, this.sfxBus);
   }
 
   private osc(type: string, freq: number, when: number): OscillatorNode {
@@ -736,6 +822,34 @@ export class AudioEngine {
         break;
       case 'bark':
         this.tone('sawtooth', 300, 150, 0.15, 0.1 * v);
+        break;
+      case 'static':
+        // A short crackle of radio « friture »: band-passed noise and two tiny clicks.
+        this.noiseBurst(0.07, 0.16 * v, 'bandpass', 2400 * p);
+        this.noiseBurst(0.02, 0.2 * v, 'highpass', 5000, t + 0.02 + Math.random() * 0.03);
+        break;
+      case 'knock1':
+        this.tone('sine', 120 * p, 62 * p, 0.12, 0.55 * v);
+        this.noiseBurst(0.06, 0.22 * v, 'lowpass', 520 * p);
+        break;
+      case 'pipe':
+        // A knock in the old radiator pipe: metallic, ringing, slightly out of tune.
+        this.tone('sine', 410 * p, 400 * p, 0.5, 0.16 * v);
+        this.tone('sine', 1130 * p, 1122 * p, 0.3, 0.07 * v);
+        this.tone('triangle', 96 * p, 70 * p, 0.08, 0.3 * v);
+        this.noiseBurst(0.04, 0.12 * v, 'bandpass', 1800 * p);
+        break;
+      case 'tooth':
+        this.tone('square', 2400 * p, 1800 * p, 0.02, 0.05 * v);
+        this.noiseBurst(0.025, 0.1 * v, 'highpass', 4000);
+        break;
+      case 'scratch':
+        this.noiseBurst(0.45, 0.07 * v, 'bandpass', 3200 * p);
+        this.noiseBurst(0.3, 0.05 * v, 'bandpass', 2100 * p, t + 0.2);
+        break;
+      case 'buzz':
+        // A phone vibrating on a wooden desk.
+        [0, 0.12, 0.24, 0.5, 0.62, 0.74].forEach((d) => this.tone('sawtooth', 58, 56, 0.1, 0.09 * v, t + d));
         break;
       case 'baa': {
         const o = this.osc('sawtooth', 380 * p, t);
