@@ -59,6 +59,8 @@
     "src/game/story/chapter1.ts",
     "src/game/story/chapter2.ts",
     "src/game/story/chapter3.ts",
-    "src/game/story/bonus.ts"
+    "src/game/story/bonus.ts",
+    "src/game/story/common.ts",
+    "src/game/story/index.ts"
   ]
 }
