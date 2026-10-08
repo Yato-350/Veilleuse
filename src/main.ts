@@ -4,7 +4,7 @@ import { W, H } from './engine/constants';
 import { drawText } from './engine/font';
 import { fx } from './engine/fx';
 import { game } from './engine/game';
-import { input } from './engine/input';
+import { hits, input } from './engine/input';
 import { screen } from './engine/screen';
 import { TRACKS } from './data/music';
 import { MAPS } from './data/maps';
@@ -42,6 +42,8 @@ function boot(): void {
   // Global UI layers.
   game.hooks.push(() => dialogue.update());
   game.topOverlays.push((g) => dialogue.draw(g));
+  // Touch / mouse regions drawn during this render become clickable (after every layer, dialogue included).
+  game.topOverlays.push(() => hits.flip());
   world.hooks = {
     run: (s) => runScript(s),
     encounter: (e) => void runScript((d) => d.encounter(e)),

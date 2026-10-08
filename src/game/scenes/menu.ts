@@ -2,7 +2,7 @@ import { audio } from '../../engine/audio';
 import { H, W } from '../../engine/constants';
 import { drawText, drawWrapped } from '../../engine/font';
 import { game, type Scene } from '../../engine/game';
-import { input } from '../../engine/input';
+import { hits, input } from '../../engine/input';
 import { drawSprite } from '../../engine/sprite';
 import { ITEMS } from '../../data/items';
 import { SOUVENIRS } from '../../data/illustrations';
@@ -31,12 +31,16 @@ export class MenuScene implements Scene {
   private t = 0;
   private anim = 0;
   private msg: { text: string; t: number } | null = null;
+  /** A tap that confirms the focused row this frame, like A (set by updatePointer). */
+  private tapA = false;
 
   update(): void {
     this.t++;
     this.anim = Math.min(1, this.anim + 0.15);
     if (this.msg && ++this.msg.t > 120) this.msg = null;
     if (dialogue.busy) return;
+    this.tapA = false;
+    if (this.updatePointer()) return;
     switch (this.focus) {
       case 'tabs':
         return this.updateTabs();
@@ -50,6 +54,73 @@ export class MenuScene implements Scene {
       case 'quit':
         return this.updateQuit();
     }
+  }
+
+  /**
+   * Direct touch / mouse. Tabs open at once; item rows select then use on a second tap; souvenirs open at once;
+   * options rows act at once (the panel handles them); « Oui » (back to title) needs a second tap; ✕ or a tap
+   * outside the boxes closes the menu. True when the tap was handled here.
+   */
+  private updatePointer(): boolean {
+    const at = input.tapAt;
+    // Options rows answer even while the tab column has the focus: hand the tap to the panel.
+    if (at && input.tap && this.tab === 3 && hits.at(this.options, at.x, at.y)) {
+      this.focus = 'options';
+      return false;
+    }
+    const hit = hits.pick(this);
+    if (!hit || typeof hit.id !== 'string') return false;
+    const [kind, arg] = hit.id.split(':');
+    const i = Number(arg);
+    if (!hit.tap) {
+      // Mouse hover: highlight rows of the focused list only.
+      if (kind === 'item' && this.focus === 'items' && i !== this.itemIdx) {
+        this.itemIdx = i;
+        audio.sfx('move');
+      } else if (kind === 'souv' && this.focus === 'souvenirs' && i !== this.souvIdx) {
+        this.souvIdx = i;
+        audio.sfx('move');
+      }
+      return false;
+    }
+    switch (kind) {
+      case 'close':
+        this.close();
+        return true;
+      case 'tab':
+        audio.sfx('select');
+        this.tab = i;
+        this.focus = (['items', 'souvenirs', 'tabs', 'options', 'quit'] as Focus[])[i]!;
+        if (this.focus === 'items') this.itemIdx = 0;
+        if (this.focus === 'quit') this.quitIdx = 1;
+        return true;
+      case 'item':
+        if (this.focus === 'items' && this.itemIdx === i) {
+          this.tapA = true; // second tap on the highlighted item: use it
+          return false;
+        }
+        audio.sfx('move');
+        this.focus = 'items';
+        this.itemIdx = i;
+        return true;
+      case 'souv':
+        this.focus = 'souvenirs';
+        this.souvIdx = i;
+        this.tapA = true; // opens it
+        return false;
+      case 'quit':
+        if (i === 1 || (this.focus === 'quit' && this.quitIdx === 0)) {
+          this.focus = 'quit';
+          this.quitIdx = i;
+          this.tapA = true; // « Non », or « Oui » tapped twice
+          return false;
+        }
+        audio.sfx('move');
+        this.focus = 'quit';
+        this.quitIdx = i;
+        return true;
+    }
+    return true;
   }
 
   private close(): void {
@@ -95,7 +166,7 @@ export class MenuScene implements Scene {
       this.itemIdx = (this.itemIdx + 1) % items.length;
       audio.sfx('move');
     }
-    if (input.pressed('a')) {
+    if (input.pressed('a') || this.tapA) {
       const id = items[this.itemIdx]!;
       const def = ITEMS[id];
       if (!def || def.key || !def.heal) {
@@ -133,7 +204,7 @@ export class MenuScene implements Scene {
       this.souvIdx = (this.souvIdx + 1) % list.length;
       audio.sfx('move');
     }
-    if (input.pressed('a')) {
+    if (input.pressed('a') || this.tapA) {
       const s = SOUVENIRS[list[this.souvIdx]!];
       if (s) {
         audio.sfx('select');
@@ -152,7 +223,7 @@ export class MenuScene implements Scene {
       this.focus = 'tabs';
       return;
     }
-    if (input.pressed('a')) {
+    if (input.pressed('a') || this.tapA) {
       audio.sfx('select');
       if (this.quitIdx === 0) {
         void flow.toTitle();
@@ -165,11 +236,20 @@ export class MenuScene implements Scene {
     g.fillStyle = `rgba(11,7,16,${0.55 * a})`;
     g.fillRect(0, 0, W, H);
     const ox = Math.round((1 - a) * -40);
+    // Touch: a tap on the dimmed background closes the menu; taps inside the boxes never do.
+    hits.add(this, 'close', 0, 0, W, H);
+    hits.add(this, 'box', 8, 8, 76, 164);
+    hits.add(this, 'box', 92, 8, W - 100, H - 16);
     // Tabs column
     box(g, 8 + ox, 8, 76, 86, 'dream');
+    if (input.pointerUsed) {
+      drawText(g, '✕', 72 + ox, 13, { color: '#8a7f96' });
+      hits.add(this, 'close', 64, 8, 20, 16);
+    }
     TABS.forEach((label, i) => {
       const y = 15 + i * 15;
       const sel = i === this.tab;
+      hits.add(this, `tab:${i}`, 10, y - 3, i === 0 ? 54 : 72, 15);
       if (sel) heart(g, 14 + ox, y + 3, this.focus === 'tabs' ? '#ff4a5a' : '#8a3a4a');
       drawText(g, label, 25 + ox, y, { color: sel ? '#ffd84a' : '#fffaf2' });
     });
@@ -203,6 +283,7 @@ export class MenuScene implements Scene {
         ['Oui', 'Non'].forEach((l, i) => {
           const x = px + 40 + i * 80;
           const sel = this.focus === 'quit' && this.quitIdx === i;
+          hits.add(this, `quit:${i}`, x - 16, py + 56, 48, 16);
           if (sel) heart(g, x - 11, py + 63, '#ff4a5a');
           drawText(g, l, x, py + 60, { color: sel ? '#ffd84a' : '#fffaf2' });
         });
@@ -242,6 +323,7 @@ export class MenuScene implements Scene {
       const def = ITEMS[items[i]!];
       const y = py + 24 + (i - start) * 12;
       const sel = this.focus === 'items' && i === this.itemIdx;
+      hits.add(this, `item:${i}`, px + 4, y - 2, pw - 8, 12);
       if (sel) heart(g, px + 8, y + 3, '#ff4a5a');
       const isKey = i >= G.state.items.length;
       drawText(g, def?.name ?? items[i]!, px + 19, y, { color: sel ? '#ffd84a' : isKey ? '#a7c7f0' : '#fffaf2' });
@@ -265,6 +347,7 @@ export class MenuScene implements Scene {
       const s = SOUVENIRS[id];
       const y = py + 24 + i * 14;
       const sel = this.focus === 'souvenirs' && i === this.souvIdx;
+      hits.add(this, `souv:${i}`, px + 4, y - 3, pw - 8, 14);
       if (sel) heart(g, px + 8, y + 3, '#ff4a5a');
       drawText(g, s?.title ?? id, px + 19, y, { color: sel ? '#ffd84a' : '#fffaf2' });
     });

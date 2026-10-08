@@ -46,6 +46,8 @@ export class Input {
   /** Pressed this frame by an event that may already be released (fast taps). */
   private tapped = new Set<Button>();
   lastDevice: Device = 'keyboard';
+  /** True when the last interaction was a tap / click on the screen or a virtual button (show tap affordances). */
+  pointerUsed = false;
   /** Text typed this frame (for name entry). */
   typed: string[] = [];
   /** Relative pointer drag accumulated during the frame (used to move the soul by dragging). */
@@ -53,6 +55,13 @@ export class Input {
   /** True for one frame after a short tap on the game screen (touch / mouse). */
   tap = false;
   private tapNext = false;
+  /** Where this frame's tap landed, in game pixels (set together with `tap`). */
+  tapAt: { x: number; y: number } | null = null;
+  private tapAtNext: { x: number; y: number } | null = null;
+  /** Mouse position in game pixels when it moved this frame (hover highlight), else null. */
+  hoverAt: { x: number; y: number } | null = null;
+  private hoverNext: { x: number; y: number } | null = null;
+  private toGame: (cx: number, cy: number) => { x: number; y: number } = (x, y) => ({ x, y });
   private dragLast: { x: number; y: number; id: number } | null = null;
   private dragStart: { x: number; y: number; t: number } | null = null;
   onDeviceChange: ((d: Device) => void) | null = null;
@@ -73,6 +82,7 @@ export class Input {
         e.preventDefault();
       }
       this.setDevice('keyboard');
+      this.pointerUsed = false;
       this.onGesture?.();
     });
     target.addEventListener('keyup', (e) => {
@@ -86,18 +96,28 @@ export class Input {
     target.addEventListener('gamepadconnected', () => this.setDevice('gamepad'));
   }
 
-  /** Enables drag-to-move on an element (the game canvas). */
-  attachDrag(el: HTMLElement, cssPixelsPerGamePixel: () => number): void {
+  /**
+   * Enables drag-to-move and taps on an element (the game canvas). `toGame` converts client (CSS) coordinates to
+   * game pixels so taps can hit the regions scenes register (see `hits`).
+   */
+  attachDrag(
+    el: HTMLElement,
+    cssPixelsPerGamePixel: () => number,
+    toGame?: (clientX: number, clientY: number) => { x: number; y: number },
+  ): void {
     this.dragTarget = el;
     this.scaleFn = cssPixelsPerGamePixel;
+    if (toGame) this.toGame = toGame;
     el.addEventListener('pointerdown', (e) => {
       this.dragLast = { x: e.clientX, y: e.clientY, id: e.pointerId };
       this.dragStart = { x: e.clientX, y: e.clientY, t: performance.now() };
       this.drag.active = true;
+      this.pointerUsed = true;
       if (e.pointerType === 'touch') this.setDevice('touch');
       this.onGesture?.();
     });
     el.addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'mouse') this.hoverNext = this.toGame(e.clientX, e.clientY);
       if (!this.dragLast || e.pointerId !== this.dragLast.id) return;
       const k = this.scaleFn() || 1;
       this.drag.dx += (e.clientX - this.dragLast.x) / k;
@@ -109,8 +129,9 @@ export class Input {
         this.dragLast = null;
         this.drag.active = false;
         const st = this.dragStart;
-        if (e.type === 'pointerup' && st && performance.now() - st.t < 350 && Math.hypot(e.clientX - st.x, e.clientY - st.y) < 14) {
+        if (e.type === 'pointerup' && st && performance.now() - st.t < 500 && Math.hypot(e.clientX - st.x, e.clientY - st.y) < 14) {
           this.tapNext = true;
+          this.tapAtNext = this.toGame(st.x, st.y);
         }
         this.dragStart = null;
       }
@@ -127,6 +148,7 @@ export class Input {
     if (down) {
       if (!this.touch.has(b)) this.tapped.add(b);
       this.touch.add(b);
+      this.pointerUsed = true;
       this.setDevice('touch');
       this.onGesture?.();
     } else {
@@ -156,14 +178,20 @@ export class Input {
       if (btn(0)) this.pad.add('a');
       if (btn(1)) this.pad.add('b');
       if (btn(9) || btn(3) || btn(8)) this.pad.add('menu');
-      if (this.pad.size) this.setDevice('gamepad');
+      if (this.pad.size) {
+        this.setDevice('gamepad');
+        this.pointerUsed = false;
+      }
     }
   }
 
   /** Call once at the start of each fixed update. */
   update(): void {
     this.tap = this.tapNext;
+    this.tapAt = this.tapNext ? this.tapAtNext : null;
     this.tapNext = false;
+    this.hoverAt = this.hoverNext;
+    this.hoverNext = null;
     this.pollGamepad();
     this.prev = this.cur;
     this.cur = new Set<Button>([...this.keys, ...this.touch, ...this.pad, ...this.tapped]);
@@ -217,6 +245,7 @@ export class Input {
     this.prev = new Set(this.cur);
     this.tapped.clear();
     this.tap = false;
+    this.tapAt = null;
   }
 
   releaseAll(): void {
@@ -227,3 +256,89 @@ export class Input {
 }
 
 export const input = new Input();
+
+export type HitId = number | string;
+interface HitRegion {
+  owner: object;
+  id: HitId;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** performance.now() when the region first appeared (taps on brand-new regions are ignored). */
+  born: number;
+}
+
+/**
+ * Clickable rectangles for direct touch / mouse. Scenes register them *while drawing* (game pixels, like everything
+ * they draw) under an owner (usually the scene itself); their update then asks which of its regions this frame's tap
+ * hit. Regions are double-buffered: the ones drawn during a render become active when it ends (`flip`, called once
+ * per render after every layer is drawn), so a tap is always tested against what was on screen, and regions of a
+ * scene that is not drawn any more simply vanish.
+ */
+export class HitRegions {
+  private cur: HitRegion[] = [];
+  private next: HitRegion[] = [];
+
+  /** Registers a clickable rectangle for `owner` (call it from `draw`). */
+  add(owner: object, id: HitId, x: number, y: number, w: number, h: number): void {
+    this.next.push({ owner, id, x, y, w, h, born: 0 });
+  }
+
+  /** Publishes the regions drawn during this render (keeps the age of those already on screen). */
+  flip(): void {
+    const now = typeof performance !== 'undefined' ? performance.now() : 0;
+    for (const r of this.next) {
+      const old = this.cur.find((o) => o.owner === r.owner && o.id === r.id);
+      r.born = old ? old.born : now;
+    }
+    this.cur = this.next;
+    this.next = [];
+  }
+
+  /** Topmost region of `owner` containing the point. */
+  at(owner: object, x: number, y: number): HitRegion | null {
+    for (let i = this.cur.length - 1; i >= 0; i--) {
+      const r = this.cur[i]!;
+      if (r.owner === owner && x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h) return r;
+    }
+    return null;
+  }
+
+  /**
+   * Id of the `owner` region under this frame's tap, or null. A tap on a region is consumed (`input.tap` turns
+   * false so it does not also advance text). Regions visible for less than `minAge` ms ignore taps: a menu that just
+   * popped up under a finger tapping through dialogue is not activated by accident.
+   */
+  tap(owner: object, minAge = 180): HitId | null {
+    const p = input.tapAt;
+    if (!input.tap || !p) return null;
+    const r = this.at(owner, p.x, p.y);
+    if (!r) return null;
+    input.tap = false;
+    const now = typeof performance !== 'undefined' ? performance.now() : 0;
+    return now - r.born < minAge ? null : r.id;
+  }
+
+  /** Id of the `owner` region under the mouse when it moved this frame (hover highlight), or null. */
+  hover(owner: object): HitId | null {
+    const p = input.hoverAt;
+    return p ? (this.at(owner, p.x, p.y)?.id ?? null) : null;
+  }
+
+  /** Hover or tap on one of `owner`'s regions: `{ id, tap }` (tap = activate), or null. */
+  pick(owner: object, minAge?: number): { id: HitId; tap: boolean } | null {
+    const t = this.tap(owner, minAge);
+    if (t !== null) return { id: t, tap: true };
+    const h = this.hover(owner);
+    return h !== null ? { id: h, tap: false } : null;
+  }
+
+  /** Drops every region (tests). */
+  clear(): void {
+    this.cur = [];
+    this.next = [];
+  }
+}
+
+export const hits = new HitRegions();

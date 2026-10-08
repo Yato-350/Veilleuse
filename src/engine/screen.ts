@@ -29,7 +29,11 @@ export class Screen {
       if (d === 'touch') this.setTouchVisible(true);
       else if (d === 'keyboard' || d === 'gamepad') this.setTouchVisible(false);
     };
-    input.attachDrag(this.canvas, () => this.scale);
+    input.attachDrag(
+      this.canvas,
+      () => this.scale,
+      (cx, cy) => this.toGame(cx, cy),
+    );
     this.resize();
   }
 
@@ -56,6 +60,12 @@ export class Screen {
 
   setCrt(on: boolean): void {
     document.getElementById('crt')?.classList.toggle('on', on);
+  }
+
+  /** Converts a client (CSS pixel) position to game pixels (0..W × 0..H inside the canvas). */
+  toGame(clientX: number, clientY: number): { x: number; y: number } {
+    const r = this.canvas.getBoundingClientRect();
+    return { x: ((clientX - r.left) * W) / (r.width || W), y: ((clientY - r.top) * H) / (r.height || H) };
   }
 
   get isPortrait(): boolean {

@@ -2,7 +2,7 @@ import { audio, VOICES } from '../../engine/audio';
 import { drawChar, drawText, LINE_HEIGHT, measure } from '../../engine/font';
 import { H, W } from '../../engine/constants';
 import { game } from '../../engine/game';
-import { input } from '../../engine/input';
+import { hits, input } from '../../engine/input';
 import { drawSprite } from '../../engine/sprite';
 import { SPEAKERS, type Speaker } from '../../data/speakers';
 import { hasSpr, spr } from '../assets';
@@ -57,6 +57,8 @@ export class Dialogue {
   private choices: string[] | null = null;
   private choiceIdx = 0;
   private choiceCancel = -1;
+  /** Touch: the highlighted choice was picked by a tap, so tapping it again confirms (story choices need 2 taps). */
+  private choiceArmed = false;
   private pendingChoices: { choices: string[]; cancel: number } | null = null;
   private lastChoice = 0;
   private blipCount = 0;
@@ -208,6 +210,7 @@ export class Dialogue {
       this.choices = this.pendingChoices.choices;
       this.choiceCancel = this.pendingChoices.cancel;
       this.choiceIdx = 0;
+      this.choiceArmed = false;
       this.pendingChoices = null;
       return;
     }
@@ -233,12 +236,27 @@ export class Dialogue {
 
   private updateChoices(): void {
     const n = this.choices!.length;
+    // Direct touch / mouse: hover or a first tap highlights a choice, tapping the highlighted one confirms it.
+    const hit = hits.pick(this, 250);
+    if (hit && typeof hit.id === 'number') {
+      const i = hit.id;
+      if (hit.tap && i === this.choiceIdx && this.choiceArmed) {
+        audio.sfx('select');
+        this.pickChoice(i);
+        return;
+      }
+      if (i !== this.choiceIdx) audio.sfx('move');
+      this.choiceIdx = i;
+      this.choiceArmed = true;
+    }
     if (input.repeat('up') || input.repeat('left')) {
       this.choiceIdx = (this.choiceIdx + n - 1) % n;
+      this.choiceArmed = false;
       audio.sfx('move');
     }
     if (input.repeat('down') || input.repeat('right')) {
       this.choiceIdx = (this.choiceIdx + 1) % n;
+      this.choiceArmed = false;
       audio.sfx('move');
     }
     if (input.pressed('a')) {
@@ -335,6 +353,7 @@ export class Dialogue {
     choices.forEach((c, i) => {
       const cy = y + 4 + i * 13;
       const sel = i === this.choiceIdx;
+      hits.add(this, i, x + 2, cy - 2, w - 4, 13);
       if (sel) heart(g, x + 6, cy + 4, '#ff4a5a');
       drawText(g, c, x + 17, cy, { color: sel ? '#ffd84a' : style === 'paper' ? '#2b2a5c' : '#fffaf2' });
     });

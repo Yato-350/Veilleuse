@@ -16,6 +16,8 @@
  *   god[:off]        keep Noa's HP full during enemy turns
  *   until:mode       advance text until the battle is in `mode` (dodge, menu, …)
  *   load:map/spawn   load a map;  flag:key[=value]  set a story flag
+ *   (--touch: phone emulation with touch events; --canvas: screenshots of the game screen only)
+ *   tap:x/y          tap (touch with --touch, else mouse click) at game pixel (x, y) of the 320×180 screen
  *   Code[:ms]        press (or hold) a key; wait:ms; shot:name; log (prints state); eval:js
  * Prints a state line after each step; exits non-zero on page errors.
  */
@@ -33,6 +35,8 @@ const opt = (name, def) => {
 const steps = opt('steps', 'auto').split(',').filter(Boolean);
 const [vw, vh] = opt('size', '640x360').split('x').map(Number);
 const quiet = args.includes('--quiet');
+/** --canvas: screenshots show only the game screen (handy with --touch / phone sizes). */
+const canvasOnly = args.includes('--canvas');
 
 const server = await createServer({ server: { port: 0, host: '127.0.0.1', hmr: false, watch: null }, logLevel: 'error' });
 await server.listen();
@@ -170,6 +174,31 @@ async function write(word) {
   return picked;
 }
 
+/** Taps game pixel (x, y): converts through the canvas bounding box (whatever the scale / layout). */
+async function tapAt(xy) {
+  const [gx, gy] = xy.split('/').map(Number);
+  const r = await page.evaluate(() => {
+    const b = document.getElementById('game').getBoundingClientRect();
+    return { x: b.left, y: b.top, w: b.width, h: b.height };
+  });
+  const px = r.x + ((gx + 0.5) * r.w) / 320;
+  const py = r.y + ((gy + 0.5) * r.h) / 180;
+  if (touch) await page.touchscreen.tap(px, py);
+  else await page.mouse.click(px, py);
+  await page.waitForTimeout(120);
+  return `${Math.round(px)},${Math.round(py)}`;
+}
+
+const snap = async (path) => {
+  const clip = canvasOnly
+    ? await page.evaluate(() => {
+        const b = document.getElementById('game').getBoundingClientRect();
+        return { x: b.left, y: b.top, width: b.width, height: b.height };
+      })
+    : undefined;
+  await page.screenshot({ path, clip });
+};
+
 const shotPath = (name) => out.replace(/\.png$/, `-${name}.png`);
 for (const step of steps) {
   const [cmd, arg] = step.split(':');
@@ -190,7 +219,7 @@ for (const step of steps) {
       await press(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'][Math.floor(Math.random() * 4)], 150);
     }
   } else if (cmd === 'wait') await page.waitForTimeout(Number(arg));
-  else if (cmd === 'shot') await page.screenshot({ path: shotPath(arg) });
+  else if (cmd === 'shot') await snap(shotPath(arg));
   else if (cmd === 'log') res = '';
   else if (cmd === 'god') god = arg !== 'off';
   else if (cmd === 'until') {
@@ -234,10 +263,11 @@ for (const step of steps) {
       return `${x},${y}`;
     }, arg);
   else if (cmd === 'eval') res = String(await page.evaluate(arg));
+  else if (cmd === 'tap') res = await tapAt(arg);
   else await press(cmd, arg ? Number(arg) : 0);
   if (!quiet || cmd === 'auto' || cmd === 'log') console.log(`${step.padEnd(18)} → ${res} ${JSON.stringify(await state())}`);
 }
-await page.screenshot({ path: out });
+await snap(out);
 if (errors.length) {
   console.log('PAGE ERRORS/WARNINGS:\n' + [...new Set(errors)].slice(0, 30).join('\n'));
   process.exitCode = 1;

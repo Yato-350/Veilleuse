@@ -3,7 +3,7 @@ import { H, VERSION, W } from '../../engine/constants';
 import { drawOutlined, drawText } from '../../engine/font';
 import { fx } from '../../engine/fx';
 import { game, type Scene } from '../../engine/game';
-import { input } from '../../engine/input';
+import { hits, input } from '../../engine/input';
 import { hash2 } from '../../engine/math';
 import { drawSprite } from '../../engine/sprite';
 import { hasSpr, spr } from '../assets';
@@ -92,7 +92,19 @@ export class TitleScene implements Scene {
     if (this.leaving) return;
     if (this.options) {
       if (!this.options.update()) this.options = null;
+      // Touch: the ✕ or a tap outside the panel closes it.
+      else if (hits.tap(this) === 'close') {
+        audio.sfx('cancel');
+        this.options = null;
+      }
       return;
+    }
+    // Direct touch / mouse: hovering highlights an entry, a tap picks it at once.
+    const hit = hits.pick(this);
+    const tapped = !!hit?.tap && typeof hit.id === 'number';
+    if (hit && typeof hit.id === 'number' && hit.id !== this.idx) {
+      this.idx = hit.id;
+      audio.sfx('move');
     }
     if (this.confirmNew) {
       if (input.repeat('left') || input.repeat('right')) {
@@ -103,7 +115,7 @@ export class TitleScene implements Scene {
         this.confirmNew = false;
         this.idx = 0;
         audio.sfx('cancel');
-      } else if (input.pressed('a')) {
+      } else if (input.pressed('a') || tapped) {
         audio.sfx('select');
         if (this.idx === 0) this.startNew();
         this.confirmNew = false;
@@ -120,7 +132,7 @@ export class TitleScene implements Scene {
       this.idx = (this.idx + 1) % n;
       audio.sfx('move');
     }
-    if (input.pressed('a') && this.t > 30) {
+    if ((input.pressed('a') || tapped) && this.t > 30) {
       audio.sfx('select');
       this.items[this.idx]!.action();
     }
@@ -130,9 +142,15 @@ export class TitleScene implements Scene {
     this.drawBackground(g);
     this.drawLogo(g);
     if (this.options) {
+      hits.add(this, 'close', 0, 0, W, H);
+      hits.add(this, 'panel', 40, 20, W - 80, H - 40);
       box(g, 40, 20, W - 80, H - 40, 'dream');
       drawText(g, 'Options', W / 2, 28, { align: 'center', color: '#d4b8f0' });
-      this.options.draw(g, 52, 46, W - 104, 9);
+      if (input.pointerUsed) {
+        drawText(g, '✕', W - 52, 27, { color: '#8a7f96' });
+        hits.add(this, 'close', W - 60, 20, 20, 18);
+      }
+      this.options.draw(g, 52, 46, W - 104, 8);
       return;
     }
     if (this.confirmNew) {
@@ -140,6 +158,7 @@ export class TitleScene implements Scene {
       drawText(g, 'Effacer la sauvegarde et recommencer ?', W / 2, 116, { align: 'center' });
       ['Oui', 'Non'].forEach((l, i) => {
         const x = W / 2 - 40 + i * 80;
+        hits.add(this, i, x - 30, 130, 60, 18);
         if (this.idx === i) heart(g, x - 18, 139, '#ff4a5a');
         drawText(g, l, x, 136, { align: 'center', color: this.idx === i ? '#ffd84a' : '#fffaf2' });
       });
@@ -154,6 +173,7 @@ export class TitleScene implements Scene {
       const sel = i === this.idx;
       const a = Math.min(1, Math.max(0, (this.t - 40 - i * 8) / 20));
       g.globalAlpha = a;
+      if (a >= 1) hits.add(this, i, W / 2 - 58, y - 1, 124, gap);
       if (sel) heart(g, W / 2 - 52, y + 3, '#ff4a5a');
       drawText(g, it.label, W / 2 - 40, y, { color: sel ? '#ffd84a' : (it.color ?? '#fffaf2'), shadow: '#0b0710' });
       g.globalAlpha = 1;
