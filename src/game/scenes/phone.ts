@@ -101,11 +101,11 @@ export class PhoneScene implements Scene {
     else if (m.from === 'them') audio.sfx('beep', { pitch: 1.4 });
   }
 
-  /** Sets the status line of the last sent message. */
+  /** Sets the status line of the last sent message (French, translated here: « Distribué », « Lu »…). */
   status(text: string): void {
     for (let i = this.msgs.length - 1; i >= 0; i--) {
       if (this.msgs[i]!.from === 'me') {
-        this.msgs[i]!.status = text;
+        this.msgs[i]!.status = tr(text);
         return;
       }
     }
