@@ -60,7 +60,7 @@ export class TitleScene implements Scene {
     });
     // After a first ending: the gallery of souvenirs and poems, and (after the dawn) the bonus chapter.
     if (G.meta.endings.length > 0 && (G.meta.seen.length > 0 || G.meta.poems.length > 0)) {
-      this.items.push({ label: 'Carnet de souvenirs', action: () => game.push(new GalleryScene()), color: '#ffe991' });
+      this.items.push({ label: 'Carnet de souvenirs', action: () => game.push(new GalleryScene()), color: '#b4e2c8' });
     }
     if (G.meta.endings.includes('aube')) {
       this.items.push({ label: 'Les rêves des autres', action: () => this.leave(() => flow.startBonus()), color: '#f8b6cf' });
@@ -145,9 +145,12 @@ export class TitleScene implements Scene {
       });
       return;
     }
-    const startY = 108;
+    // 1.1 added entries (souvenirs, bonus): a long menu starts higher and tightens so it never leaves the screen.
+    const n = this.items.length;
+    const gap = n >= 7 ? 12 : 13;
+    const startY = Math.min(108, 156 - (n - 1) * gap);
     this.items.forEach((it, i) => {
-      const y = startY + i * 13;
+      const y = startY + i * gap;
       const sel = i === this.idx;
       const a = Math.min(1, Math.max(0, (this.t - 40 - i * 8) / 20));
       g.globalAlpha = a;

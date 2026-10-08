@@ -16,6 +16,8 @@ import { TitleScene } from './scenes/title';
 import { ImageScene } from './scenes/image';
 import { DEBUG_SCRIPTS } from './story';
 import { CreditsScene } from './scenes/credits';
+import { GalleryScene } from './scenes/gallery';
+import { composePoem } from './scenes/poem';
 
 /**
  * Developer entry points, driven by URL parameters (used by tools/shot.mjs for visual checks):
@@ -26,6 +28,7 @@ import { CreditsScene } from './scenes/credits';
  *   ?debug=image&key=souvenir_fenetre
  *   ?debug=script&name=chapter1_intro&map=prairie
  *   ?debug=title | ?debug=credits
+ *   ?debug=gallery&seen=some|all|none&poems=3&open=1   title screen + « Carnet de souvenirs » with sample memories
  */
 export function startDebug(p: URLSearchParams): void {
   const mode = p.get('debug') ?? '';
@@ -87,6 +90,26 @@ export function startDebug(p: URLSearchParams): void {
       void runScript(async (d) => {
         await s(d);
       });
+      return;
+    }
+    case 'gallery': {
+      // Sample memories, in memory only (never written to the real save).
+      const keys = Object.keys(ILLUSTRATIONS);
+      const seen = p.get('seen') ?? 'some';
+      G.meta.seen = seen === 'all' ? keys : seen === 'none' ? [] : keys.filter((_, i) => i % 3 !== 2);
+      G.meta.endings = ['aube'];
+      const words = [
+        ['lune', 'coton', 'chevalière', 'lumière', 'courage', 'ensemble'],
+        ['pluie', 'silence', 'pardon', 'mouton', 'hôpital', 'nuit'],
+        ['étoile', 'peur', 'promesse', 'veilleuse', 'rire', 'demain'],
+      ];
+      const emo = ['joie', 'tristesse', 'peur'] as const;
+      G.meta.poems = Array.from({ length: Number(p.get('poems') ?? 3) }, (_, i) => {
+        const w = words[i % words.length]!.map((text) => ({ text, emotion: emo[i % 3]! }));
+        return { title: 'Pour Mina', text: composePoem(w).join('\n'), words: w.map((x) => x.text), at: Date.UTC(2026, 9, 8 - i * 9, 22) };
+      });
+      game.replace(new TitleScene());
+      if (p.get('open') !== '0') game.push(new GalleryScene());
       return;
     }
     case 'credits':
