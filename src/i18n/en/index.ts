@@ -11,6 +11,7 @@ import { STORY_EPILOGUE } from './story-epilogue';
 import { STORY_CHAPTER1 } from './story-chapter1';
 import { STORY_CHAPTER2 } from './story-chapter2';
 import { STORY_CHAPTER3 } from './story-chapter3';
+import { STORY_BONUS } from './story-bonus';
 
 export const CATALOG_PARTS: Record<string, Record<string, string>> = {
   ui: UI,
@@ -22,6 +23,7 @@ export const CATALOG_PARTS: Record<string, Record<string, string>> = {
   'story-chapter1': STORY_CHAPTER1,
   'story-chapter2': STORY_CHAPTER2,
   'story-chapter3': STORY_CHAPTER3,
+  'story-bonus': STORY_BONUS,
 };
 
 export const EN: Record<string, string> = Object.assign({}, ...Object.values(CATALOG_PARTS));

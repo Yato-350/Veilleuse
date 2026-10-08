@@ -14,6 +14,7 @@ import { world } from '../overworld/world';
 import { CreditsScene } from '../scenes/credits';
 import { PhoneScene, type PhoneMessage, type PhoneReply } from '../scenes/phone';
 import { deleteSave, G, hasSave, maxHp, readSave, writeMeta } from '../state';
+import { tf, tr } from '../../i18n';
 
 /**
  * Bonus chapter « Les rêves des autres » — Maman's dream. Unlocked on the title screen after the « aube » ending.
@@ -858,7 +859,7 @@ function bossHooks(s: BossState): Partial<BattleHooks> {
           s.p2++;
           const idx = P2_ORDER[s.p2 - 1];
           director.sfx('glitch');
-          if (idx !== undefined) await b.say(`* Le bouton ${LABELS[idx]} s'efface.\n* À sa place, il est écrit : DEBOUT.`);
+          if (idx !== undefined) await b.say(tf("* Le bouton {0} s'efface.\n* À sa place, il est écrit : DEBOUT.", tr(LABELS[idx]!)));
           else await b.say('* Il ne reste que ÉCRIRE.\n* Et le carnet ne contient plus que ses mots à lui.');
         }
       } else if (s.phase === 3 && turn > 1) {
@@ -911,7 +912,7 @@ function bossHooks(s: BossState): Partial<BattleHooks> {
         s.rush = Math.min(1, s.rush + 0.15);
         tempo();
         await b.bubble([{ e, text: CLOCK_WORD_LINES[wd.text] ?? 'Tic. Tac.' }]);
-        await b.say(`* Tu écris « ${wd.text} ». Tu l'écris tous les jours.`);
+        await b.say(tf("* Tu écris « {0} ». Tu l'écris tous les jours.", tr(wd.text)));
         return true;
       }
       await writeMine(b, wd);
