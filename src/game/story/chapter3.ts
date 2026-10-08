@@ -860,7 +860,7 @@ interface FinalState {
   nbWords: WordDef[];
   /** A word of the notebook is being written (the list is hidden). */
   nbWriting: boolean;
-  /** A friend's gift for the next dodge: frames during which the projectiles take the soul's color. */
+  /** A friend's gift: the whole next dodge takes the soul's color (frames left, longer than any attack). */
   recolorNext: number;
   recolorLeft: number;
   recolorEmo: Emotion;
@@ -937,12 +937,12 @@ const INK_CUTS = [
   'Tu ne peux pas lire ça, hein ? C\'est ton encre.',
   'Je t\'avais dit que ça partait au lavage. J\'ai menti.',
   'Elle voulait te le dire. Toi, tu frappais.',
-  'Ceux que tu as effacés non plus, tu ne les liras plus.',
+  'Ceux que tu as effacés aussi avaient des choses à dire.',
 ];
 
 /** …and where Mina's voice should have answered, nothing. */
 const INK_SILENCES = [
-  '* Tu écris par-dessus la tache. L\'encre boit les lettres.\n* Tu attends la voix de Mina. Elle ne vient pas.',
+  '* Tu écris sur la tache. L\'encre boit les lettres.\n* Tu attends la voix de Mina. Elle ne vient pas.',
   '* La tache s\'étale encore un peu.\n* Là où elle aurait dû parler, il n\'y a que du silence.',
 ];
 
@@ -966,6 +966,8 @@ interface Friend {
   intro?: string;
   boss?: boolean;
   scale?: number;
+  /** Feet on the stage (lower = higher on screen; fliers float). */
+  y?: number;
 }
 
 /** In order of appearance: the small ones first, then the spared bosses, who get the strongest moments. */
@@ -979,9 +981,9 @@ const FRIENDS: Friend[] = [
   { id: 'taille_crayon', sprite: 'b_taille_crayon', name: 'Taille-Crayon', col: 'r', voice: 'monster', line: 'Donne ton crayon. Crrr… Voilà. Bien pointu.', gift: 'crack', act: '* Ton crayon brille. Un trait de lumière fend Dodo.' },
   { id: 'bip', sprite: 'b_bip', name: 'Bip', col: 'o', voice: 'tv', line: 'Bip. Bip. Bip. Tu entends ? C\'est le tien.', gift: 'heal', act: '* Ton cœur bat plus fort. Tu récupères {n} PV.' },
   { id: 'perfusion', sprite: 'b_perfusion', name: 'Perfusion', col: 'p', voice: 'default', line: 'Goutte à goutte… Doucement. Ça va aller.', gift: 'heal', act: '* Une goutte de lumière. Tu récupères {n} PV.' },
-  { id: 'luciole', sprite: 'npc_luciole', name: 'Luciole', col: 'y', voice: 'default', line: 'Je brille encore. C\'est toi qui m\'as rallumée.', gift: 'crack', act: '* Elle se pose sur Dodo. Là où elle brille, la laine se fend.', scale: 1 },
-  { id: 'placard', sprite: 'b_placard', name: 'Monstre du Placard', col: 'y', voice: 'monster', line: 'Le noir, je connais, petit. J\'y ai vécu toute ma vie.\nEt je te le dis : il ne faut pas y rester.', gift: 'placard', act: '* Il ouvre grand ses portes. Toute la lumière de ses tiroirs\n* se déverse sur Dodo. Tu récupères tous tes PV.', intro: '* Au bord du vide, une armoire s\'ouvre en grinçant.\n* Le Monstre du Placard !', boss: true },
-  { id: 'gomme', sprite: 'b_gomme', name: 'Gomme', col: 'p', voice: 'eraser', line: 'Tu m\'as appris à garder. Même ce qui fait mal.\nAlors je garde. Et j\'efface juste ce qu\'il faut.', gift: 'gomme', act: '* Frrrt, frrrt. Elle efface un grand bout de laine noire.\n* Dessous, il n\'y a que de la lumière.', intro: '* Une petite gomme rose roule jusqu\'à tes pieds.\n* Gomme !', boss: true },
+  { id: 'luciole', sprite: 'b_luciole_2', name: 'Luciole', col: 'y', voice: 'default', line: 'Je brille encore. C\'est toi qui m\'as rallumée.', gift: 'crack', act: '* Elle se pose sur Dodo.\n* Là où elle brille, la laine se fend.', y: 64 },
+  { id: 'placard', sprite: 'b_placard', name: 'Monstre du Placard', col: 'y', voice: 'monster', line: 'Le noir, je connais, petit. J\'y ai vécu toute ma vie.\nEt je te le dis : il ne faut pas y rester.', gift: 'placard', act: '* Il ouvre grand ses portes.\n* Toute sa lumière se déverse sur Dodo.\n* Tu récupères tous tes PV.', intro: '* Au bord du vide, une armoire s\'ouvre en grinçant.\n* Le Monstre du Placard !', boss: true },
+  { id: 'gomme', sprite: 'b_gomme', name: 'Gomme', col: 'p', voice: 'eraser', line: 'Tu m\'as appris à garder. Même ce qui fait mal.\nAlors je garde. Et j\'efface juste ce qu\'il faut.', gift: 'gomme', act: '* Frrrt, frrrt. Elle efface la laine noire.\n* Dessous, il n\'y a que de la lumière.', intro: '* Une petite gomme rose roule jusqu\'à tes pieds.\n* Gomme !', boss: true },
 ];
 const FRIEND = (id: string): Friend | undefined => FRIENDS.find((f) => f.id === id);
 /** Where friends stand around Dodo (bottom-center anchor). */
@@ -1009,7 +1011,22 @@ export function nextVisit(queue: string[], slots: number): string[] {
 
 /** « A, B et C ». */
 function listNames(names: string[]): string {
-  return names.length < 2 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} et ${names[names.length - 1]}`;
+  return names.length < 2 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} et ${names[names.length - 1]}.`;
+}
+
+/** Word-wraps a list to the battle text box (first line prefixed with `head`, the next ones indented with `tail`). */
+function wrapList(text: string, head: string, tail: string, width = 274): string[] {
+  const out: string[] = [];
+  let line = head;
+  for (const word of text.split(' ')) {
+    const next = line === head || line === tail ? `${line}${word}` : `${line} ${word}`;
+    if (measure(next) > width && line !== head && line !== tail) {
+      out.push(line);
+      line = `${tail}${word}`;
+    } else line = next;
+  }
+  out.push(line);
+  return out;
 }
 
 function makeCrack(): Array<[number, number]> {
@@ -1070,11 +1087,11 @@ function drawStage(g: CanvasRenderingContext2D, s: FinalState): void {
     const sp = spr(f.sprite);
     const cy = Math.round(y - (sp.ay * f.scale) / 2);
     g.globalCompositeOperation = 'lighter';
-    g.fillStyle = '#ffe991';
-    g.globalAlpha = 0.08 * a;
-    disc(g, f.x, cy, 21);
-    g.globalAlpha = 0.12 * a;
-    disc(g, f.x, cy, 14);
+    g.fillStyle = '#ffd27a';
+    for (const [r, al] of [[22, 0.05], [17, 0.06], [12, 0.08], [7, 0.1]] as const) {
+      g.globalAlpha = al * a;
+      disc(g, f.x, cy, r);
+    }
     g.globalAlpha = 1;
     g.globalCompositeOperation = 'source-over';
     const key = hasSpr(`${f.sprite}_2`) && Math.floor((s.t + f.x) / 24) % 2 === 1 ? `${f.sprite}_2` : f.sprite;
@@ -1162,6 +1179,14 @@ function drawFinalOverlay(g: CanvasRenderingContext2D, b: Battle, s: FinalState)
   }
 }
 
+/** Removes the final battle's per-frame hook. */
+function unhook(s: FinalState): void {
+  if (!s.tick) return;
+  const i = game.hooks.indexOf(s.tick);
+  if (i >= 0) game.hooks.splice(i, 1);
+  s.tick = null;
+}
+
 /** `from`: 3 starts the battle directly in phase 3 (debug scripts). */
 function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
   const dodo = (b: Battle) => b.enemies[0]!;
@@ -1230,7 +1255,7 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
     await director.say(['Noa ?', 'C\'est moi. Je suis là. Dans les mots.'], 'minavoix');
     if (s.drowned.length) {
       director.sfx('glitch', { vol: 0.5 });
-      await b.say(`* Mais sur la page, ${s.drowned.length > 1 ? 'deux mots sont noyés' : 'un mot est noyé'} sous l'encre.\n* Tu reconnais cette encre. C'est la tienne.`);
+      await b.say(`* Mais sur la page, ${s.drowned.length > 1 ? 'deux mots sont noyés' : 'un mot est noyé'} d'encre.\n* Tu reconnais cette encre. C'est la tienne.`);
       await director.say(['Y a des mots que j\'arrive plus à dire, Noa. C\'est tout taché.', 'Mais les autres sont encore là. Écris avec moi.'], 'minavoix');
     } else {
       await director.say(['Écris avec moi.', 'On a encore des choses à se dire.'], 'minavoix');
@@ -1262,7 +1287,7 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
   }
 
   function onStage(f: Friend, slot: number): StageFriend {
-    const sf: StageFriend = { sprite: f.sprite, x: STAGE_X[slot % STAGE_X.length]!, y: 80, scale: f.scale ?? (f.boss ? 0.8 : 0.7), born: s.t, gone: null };
+    const sf: StageFriend = { sprite: f.sprite, x: STAGE_X[slot % STAGE_X.length]!, y: f.y ?? 80, scale: f.scale ?? (f.boss ? 0.8 : 0.7), born: s.t, gone: null };
     s.stage.push(sf);
     return sf;
   }
@@ -1293,7 +1318,7 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
     if (f.gift === 'recolor') {
       // Pointless once Dodo is calm (his last attacks are harmless): then a little light instead.
       if (s.written.length >= WAKE_AT) return healText(b, healFor(b), fallback);
-      s.recolorNext = 240;
+      s.recolorNext = 900;
       leave(s.recolorBy);
       s.recolorBy = sf;
       return f.act;
@@ -1313,7 +1338,7 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
       lightCrack(b, 1);
       fx.flash('#fff6e0', 24, 0.6);
       director.sfx('chime', { pitch: 1.2 });
-      return `* Frrrt, frrrt. Elle frotte la tache d'encre de toutes ses forces.\n* Dessous, un mot revient : « ${word} ».`;
+      return `* Frrrt, frrrt. Elle frotte la tache d'encre.\n* De toutes ses forces.\n* Dessous, un mot revient : « ${word} ».`;
     }
     return lightCrack(b, 2) ? f.act : healText(b, healFor(b), fallback);
   }
@@ -1342,8 +1367,10 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
       const name = `{c:${f.col}}${f.name} :{/c} `;
       if (f.boss) {
         await b.say(`${name}${f.line}`, false, true, f.voice);
+        const erased = f.gift === 'gomme' && s.drowned.length > 0;
         await b.say(gift(b, f, sf));
-        await b.bubble([{ e, text: f.gift === 'placard' ? 'Fermez ça ! FERMEZ ÇA !' : 'Non ! Ça, c\'était à moi !' }]);
+        const cry = f.gift === 'placard' ? 'Fermez ça ! FERMEZ ÇA !' : erased ? 'Non ! Cette encre, il l\'a méritée !' : 'Non ! Ça, c\'était à moi !';
+        await b.bubble([{ e, text: cry }]);
       } else {
         const act = gift(b, f, sf);
         await b.say(`${name}${f.line}\n${act}`, false, true, f.voice);
@@ -1359,11 +1386,25 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
     if (!fs.length) return;
     fs.forEach((f, i) => onStage(f, i));
     director.sfx('chime', { pitch: 1.1 });
-    await b.say(`* Derrière toi, il y a encore du monde :\n* ${listNames(fs.map((f) => f.name))}.\n* Ils te font signe. Bonne route, Noa.`);
+    if (fs.length === 1) {
+      await b.say(`* ${fs[0]!.name} est encore là, derrière toi.\n* Un petit signe. Bonne route, Noa.`);
+      return;
+    }
+    const names = wrapList(listNames(fs.map((f) => f.name)), '* ', '  ');
+    const bye = '* Ils te font signe. Bonne route, Noa.';
+    if (names.length <= 2) await b.say(['* Derrière toi, il y a encore du monde :', ...names, bye].join('\n'));
+    else {
+      await b.say(['* Derrière toi, il y a encore du monde :', ...names].join('\n'));
+      await b.say(bye);
+    }
   }
 
   /** Every frame: notebook state (blots) and the friends' recoloring of the next dodge. */
   function frame(b: Battle): void {
+    if (b.ended) {
+      unhook(s);
+      return;
+    }
     if (b.mode !== 'notebook') s.nbWriting = false;
     else if (input.pressed('a')) s.nbWriting = true;
     const dodge = b.mode === 'dodge';
@@ -1707,11 +1748,7 @@ async function finalBattle(d: Director, from: 1 | 3 = 1): Promise<void> {
     hooks: finalHooks(s, from),
     intro: '* Dodo t\'enveloppe. Il est immense, et si doux.',
   });
-  if (s.tick) {
-    const i = game.hooks.indexOf(s.tick);
-    if (i >= 0) game.hooks.splice(i, 1);
-    s.tick = null;
-  }
+  unhook(s);
   audio.setMuffle(1, 0.5);
   audio.tempoScale = 1;
   fx.glitch = 0;
