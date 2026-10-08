@@ -217,9 +217,10 @@ export class MenuScene implements Scene {
   private drawMiniStatus(g: CanvasRenderingContext2D, x: number, y: number): void {
     const s = G.state;
     box(g, x, y, 76, 72, 'dream');
-    const set = charSet('noa', world.variant);
+    const maman = s.playerChar === 'maman';
+    const set = charSet(maman ? 'maman' : 'noa', world.variant);
     if (set) drawSprite(g, set.down[0]!, x + 16, y + 30);
-    drawText(g, 'Noa', x + 30, y + 6, { color: '#d4b8f0' });
+    drawText(g, maman ? 'Maman' : 'Noa', x + 30, y + 6, { color: maman ? '#f8b6cf' : '#d4b8f0' });
     drawText(g, `NV ${level(s)}`, x + 30, y + 18, { color: '#fffaf2' });
     drawText(g, 'PV', x + 6, y + 36, { color: '#fffaf2' });
     bar(g, x + 22, y + 39, 46, 5, s.hp / maxHp(s), '#ffd84a', '#5a1c2c');

@@ -31,5 +31,12 @@ export const SPEAKERS: Record<string, Speaker> = {
   mamantel: { name: 'Maman (téléphone)', voice: 'maman', color: '#f8b6cf' },
   // Epilogue: the shopkeeper of the little shop down the street.
   vendeuse: { name: 'La vendeuse', voice: 'moon', color: '#c8bfa8' },
+  // Bonus « Les rêves des autres » (Maman's dream): the alarm clock, the night shift, the night nurse, Noa's voicemail.
+  reveil: { name: 'Le Réveil', voice: 'eraser', portrait: 'reveil', color: '#f5c04f' },
+  reveildark: { name: 'Le Réveil', voice: 'monster', portrait: 'reveil', color: '#e8505b' },
+  sabine: { name: 'Sabine', voice: 'owl', color: '#a7c7f0' },
+  albert: { name: 'M. Albert', voice: 'moon', color: '#c8bfa8' },
+  nadia: { name: 'Nadia', voice: 'narrator', color: '#b0f0e6' },
+  messagerie: { name: 'Messagerie de Noa', voice: 'noa', color: '#8a8fb0' },
   system: { name: '', voice: 'none' },
 };

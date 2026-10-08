@@ -87,7 +87,7 @@ export class WorldScene implements Scene {
 
     // Player
     const p = new Entity('player', 'player', sp.x * TILE + 8, sp.y * TILE + 14);
-    p.char = 'noa';
+    p.char = G.state.playerChar || 'noa';
     p.variant = variant;
     p.dir = sp.dir ?? 'down';
     this.player = p;

@@ -156,6 +156,8 @@ const LULLABY = join(LULLABY_A, LULLABY_B);
 const CH_A = ['C', 'G', 'Am', 'G', 'C', 'G', 'G7', 'C'];
 const CH_B = ['F', 'Dm', 'G7', 'C', 'F', 'Dm', 'G7', 'C'];
 const CH_LULLABY = [...CH_A, ...CH_B];
+/** Night shift / Le Réveil (bonus chapter): A minor. */
+const GARDE_CHORDS = ['Am', 'F', 'C', 'G', 'Am', 'F', 'Dm', 'E'];
 
 /** Same melody in 4/4 (8 eighth-note steps per bar): each 3/4 bar stretched with a dotted feel. */
 const LULLABY_44_A = [
@@ -607,6 +609,79 @@ export const TRACKS: Record<string, Track> = {
       }),
       ch('pad', padLine(['Am', 'Em', 'Dm', 'E', 'F', 'Dm', 'E', 'Am'], 3, 6), { vol: 0.16, reverb: 0.7 }),
       ch('bass', figure(['Am', 'Em', 'Dm', 'E', 'F', 'Dm', 'E', 'Am'], 2, 'R - - - - -'), { vol: 0.25 }),
+    ],
+  },
+
+  // ---------------------------------------------------------------------------
+  // Bonus « Les rêves des autres » — Maman's dream
+  // ---------------------------------------------------------------------------
+
+  /** The night shift: A minor, muted piano, a sparse bell tune, and a clock ticking on every beat. 8 bars 4/4. */
+  garde: {
+    bpm: 76,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch('piano', figure(GARDE_CHORDS, 3, 'R . 5 . 8 . 5 .'), { vol: 0.26, reverb: 0.5 }),
+      ch(
+        'bell',
+        join(
+          'E5 - - - C5 - - -',
+          'A4 - - - . . . .',
+          'G4 - C5 - E5 - - -',
+          'D5 - - - . . . .',
+          'E5 - - - C5 - A4 -',
+          'C5 - - - . . . .',
+          'D5 - - - F5 - E5 -',
+          'G#4 - - - - - . .',
+        ),
+        { vol: 0.16, reverb: 0.7 },
+      ),
+      ch('pad', padLine(GARDE_CHORDS, 3, 8), { vol: 0.12, reverb: 0.6, detune: 8 }),
+      ch('bass', figure(GARDE_CHORDS, 2, 'R - - - - - - -'), { vol: 0.2 }),
+      ch('hat', drums('x . x . x . x .', 8), { vol: 0.05 }),
+    ],
+  },
+
+  /** Maman's theme — the lullaby in F, slow, on a tired piano, like someone humming it alone in a kitchen. 16 bars 3/4. */
+  maman: {
+    bpm: 58,
+    stepsPerBeat: 2,
+    vol: 0.8,
+    channels: [
+      ch('piano', transpose(LULLABY, -7), { vol: 0.34, reverb: 0.55 }),
+      ch('piano', figure(CH_LULLABY.map((c) => transposeChord(c, 5)), 2, 'R 5 8 10 8 5'), { vol: 0.2, reverb: 0.5 }),
+      ch('pad', padLine(CH_LULLABY.map((c) => transposeChord(c, 5)), 3, 6), { vol: 0.12, reverb: 0.7 }),
+      ch('musicbox', join(rep(rest(6), 12), 'C6 - - - - -', 'A5 - - - - -', 'G5 - - - - -', 'F5 - - - - -'), { vol: 0.1, reverb: 0.8 }),
+    ],
+  },
+
+  /** Le Réveil — a relentless A minor tune, ticking eighths, a high bell that goes tic… tac…, the alarm at the end. 8 bars 4/4. */
+  reveil: {
+    bpm: 138,
+    stepsPerBeat: 4,
+    vol: 0.7,
+    channels: [
+      ch(
+        'pulse25',
+        join(
+          'A5 - - - C6 - B5 - A5 - - - E5 - - -',
+          'F5 - - - A5 - G5 - F5 - - - C5 - - -',
+          'E5 - - - G5 - A5 - C6 - - - B5 - A5 -',
+          'B5 - - - - - - - D6 - C6 - B5 - G5 -',
+          'A5 - - - C6 - B5 - A5 - - - E5 - - -',
+          'F5 - - - A5 - C6 - F6 - - - E6 - D6 -',
+          'D6 - - - F6 - E6 - D6 - C6 - B5 - A5 -',
+          'G#5 - - - B5 - - - E6 . E6 . E6 . E6 .',
+        ),
+        { vol: 0.15 },
+      ),
+      ch('bell', rep('A6 . . . . . . . E6 . . . . . . .', 8), { vol: 0.06, reverb: 0.4 }),
+      ch('bass', figure(GARDE_CHORDS, 2, 'R . R . 8 . R . R . R . 8 . 5 .'), { vol: 0.34 }),
+      ch('pad', padLine(GARDE_CHORDS, 3, 16), { vol: 0.07, detune: 10 }),
+      ch('kick', drums('x . . . . . . . x . . x . . . .', 8), { vol: 0.4 }),
+      ch('snare', drums('. . . . x . . . . . . . x . . .', 8), { vol: 0.24 }),
+      ch('hat', drums('x . x . x . x . x . x . x . x .', 8), { vol: 0.08 }),
     ],
   },
 };

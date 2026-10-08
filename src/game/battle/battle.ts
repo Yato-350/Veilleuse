@@ -158,7 +158,7 @@ export class Battle implements Scene {
   overlay: ((g: CanvasRenderingContext2D, b: Battle) => void) | null = null;
   ended = false;
   /** Player name label in the HUD. */
-  hudName = 'NOA';
+  hudName = G.state.playerChar === 'maman' ? 'MAMAN' : 'NOA';
   private hpGhost: number;
   /** Second color of a bicolor (bittersweet) soul. */
   soulEmo2: Emotion | null = null;

@@ -1,4 +1,4 @@
-import type { EnemyDef } from '../game/battle/types';
+import type { BattleHooks, EnemyDef } from '../game/battle/types';
 import { DEV_ENEMIES } from './enemies-dev';
 
 /**
@@ -7,6 +7,18 @@ import { DEV_ENEMIES } from './enemies-dev';
  * ch3 PV 30–40 / ATQ 3–4; Dodo PV 999 (cannot be beaten by force).
  * The `check` text hints at what the enemy needs (Plume & Cœur) without naming the rule.
  */
+/**
+ * Bonus chapter (Maman's dream): Maman never falls. When her HP reach 0, a clock rings somewhere and she gets up
+ * again — which is exactly her problem. No game over in her dream.
+ */
+const GETS_UP: Partial<BattleHooks> = {
+  async onPlayerDeath(b) {
+    b.hp = Math.ceil(b.maxHp / 2);
+    await b.say('* Tu tombes. Quelque part, un réveil sonne.\n* Tu te relèves. Tu te relèves toujours.');
+    return true;
+  },
+};
+
 export const ENEMIES: Record<string, EnemyDef> = {
   ...DEV_ENEMIES,
 
@@ -577,6 +589,161 @@ export const ENEMIES: Record<string, EnemyDef> = {
       async onDeath(b, e) {
         e.hp = e.maxHp;
         await b.bubble([{ e, text: 'On ne frappe pas le sommeil.' }]);
+        return true;
+      },
+    },
+  },
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Bonus — Les rêves des autres : la nuit de Maman (fatigue, culpabilité, tendresse ; jamais graphique)
+  // Maman : 20 PV, ATQ 6 (stylo), DÉF 3 (gilet). Ennemis PV 26–40, ATQ 2–3 ; le Réveil est scénarisé.
+  // -------------------------------------------------------------------------------------------------------------------
+
+  sonnette: {
+    id: 'sonnette',
+    name: 'Sonnette',
+    fem: true,
+    sprite: 'b_sonnette',
+    hp: 26,
+    atk: 2,
+    def: 1,
+    emotion: 'peur',
+    needs: [{ emotion: 'joie', count: 3 }],
+    hates: ['colere'],
+    check: 'Quelqu\'un, quelque part, a appuyé. Elle sonne pour ne pas rester seule. Les mots doux la calment, pas les cris.',
+    flavor: [
+      '* Driiing. Driiing.',
+      '* La petite lumière rouge clignote au-dessus d\'une porte.',
+      '* Quelque part, quelqu\'un attend.',
+      '* Sonnette compte les secondes depuis qu\'elle a sonné.',
+      '* Ça sent le savon de toilette et le café froid.',
+    ],
+    flavorCalm: '* Sonnette ne clignote plus. Elle brille tout doucement, comme une veilleuse.',
+    talk: ['Driiing !', 'Vous venez ? Vous venez ?', 'J\'ai appuyé il y a longtemps.', 'Il fait noir, dans la chambre.', 'Quelqu\'un ? N\'importe qui ?', 'Je sonne. Je sonne. Je sonne.'],
+    reactGood: ['…Vous êtes là ?', 'Oh. Quelqu\'un.', 'Ma lumière… elle se calme.'],
+    reactBad: ['DRIIIING !', 'Ne criez pas ! Ne criez pas !'],
+    reactNeutral: ['Driiing ?', 'Hein ? Quoi ?', 'Je n\'entends pas, avec la sonnerie.'],
+    reactSpecial: {
+      attendre: 'Attendre… avec moi ? D\'accord.',
+      rentrer: 'Vous rentrez ? Déjà ? …Bonne nuit, alors.',
+      nuit: 'La nuit, c\'est long, quand on est tout seul.',
+    },
+    spareText: '* Sonnette s\'éteint doucement. « Merci d\'être venue. On ne vient pas toujours. »',
+    killText: '* Sonnette se tait d\'un coup. Le silence est pire.',
+    patterns: ['call_bells', 'call_lights'],
+    rewards: { boutons: 10 },
+    bg: 'hospital',
+    hooks: GETS_UP,
+  },
+  cafe: {
+    id: 'cafe',
+    name: 'Café Serré',
+    sprite: 'b_cafe',
+    hp: 30,
+    atk: 3,
+    def: 1,
+    emotion: 'colere',
+    needs: [{ emotion: 'tristesse', count: 3 }],
+    hates: ['colere'],
+    check: 'Le quatrième de la nuit. Il te fait tenir debout. Il tremble d\'impatience : il attend que tu avoues que tu es fatiguée.',
+    flavor: [
+      '* Café Serré tremble dans sa tasse.',
+      '* Ça sent le café brûlé de trois heures du matin.',
+      '* Café Serré fait des ronds de vapeur nerveux.',
+      '* Un sucre tombe. Personne ne le ramasse.',
+      '* Café Serré compte : « Un, deux, trois, quatre… cinq ? »',
+    ],
+    flavorCalm: '* Café Serré refroidit doucement. Il a l\'air soulagé.',
+    talk: ['Encore une gorgée ! Une seule !', 'Tu n\'es pas fatiguée. PAS fatiguée.', 'Vite, vite, vite !', 'Amer, moi ? C\'est toi qui es amère.', 'Le jour, tu dors mal. La nuit, tu m\'as, moi.', 'Tic-tac, tic-tac !'],
+    reactGood: ['…Fatiguée ? Toi ?', 'Oh. Tu as le droit de le dire, alors.', 'Je… je refroidis.'],
+    reactBad: ['PLUS FORT ! PLUS SERRÉ !', 'Oui ! Énervée ! Réveillée !'],
+    reactNeutral: ['Hein ? Pas le temps !', 'Bois-moi, au lieu de parler.', 'Quoi ? Quoi ? Quoi ?'],
+    reactSpecial: {
+      attendre: 'Attendre ? Moi ? Je ne sais pas attendre !',
+      nuit: 'La nuit, c\'est mon territoire.',
+      matin: 'Le matin… on boit des tisanes, le matin ? Beurk.',
+    },
+    spareText: '* Café Serré a refroidi. « Bon. Une tisane, la prochaine fois. Promis. »',
+    killText: '* Café Serré se renverse. Une flaque brune, puis plus rien.',
+    patterns: ['coffee_spill', 'coffee_jitter'],
+    rewards: { boutons: 12 },
+    bg: 'hospital',
+    hooks: GETS_UP,
+  },
+  panier: {
+    id: 'panier',
+    name: 'Le Panier',
+    sprite: 'b_panier',
+    hp: 40,
+    atk: 2,
+    def: 2,
+    emotion: 'tristesse',
+    needs: [{ emotion: 'joie', count: 2 }, { word: 'plier' }],
+    specialWords: [
+      { text: 'plier', emotion: 'tristesse' },
+      { text: 'garder', emotion: 'joie' },
+    ],
+    check: 'Le linge d\'il y a un an. Tout au fond, un pyjama à étoiles qu\'on ne lave pas : il sent encore. Il faudrait le plier, doucement.',
+    flavor: [
+      '* Le Panier soupire. Une chaussette dépasse.',
+      '* Tout au fond, ça sent encore un peu la petite fille.',
+      '* Le Panier n\'a pas bougé depuis un an.',
+      '* Une petite cape rouge pend sur le bord.',
+      '* Le Panier se tasse sur lui-même.',
+    ],
+    flavorCalm: '* Le Panier se laisse faire. Les vêtements attendent qu\'on les plie.',
+    talk: ['Ne touche pas.', 'Si tu me laves, ça partira.', 'Son odeur, c\'est tout ce qui reste.', 'Laisse-moi devant la porte.', 'Ce pyjama est trop petit pour personne.', 'Un an. Ça ne fait qu\'un an.'],
+    reactGood: ['…Tu te souviens quand elle l\'a choisi ?', 'Elle voulait celui avec les étoiles. Rien d\'autre.', 'Doucement… doucement.'],
+    reactBad: ['Ne jette rien !', 'Pas comme ça !'],
+    reactNeutral: ['…', 'Le linge ne répond pas.', 'Le Panier ne bouge pas.'],
+    reactSpecial: {
+      plier: 'Plier… pas jeter. Juste plier. …D\'accord.',
+      garder: 'Garder… le pyjama ? Juste lui ? …Oui.',
+      oublier: 'Oublier ? Non ! Pas ça !',
+    },
+    spareText: '* Tu plies le pyjama à étoiles. Tu ne le laves pas.\n* Tu le poses sur ton oreiller. Le Panier s\'écarte de la porte.',
+    killText: '* Le Panier se renverse. Le linge s\'envole, trop loin pour le rattraper.',
+    patterns: ['laundry', 'yarn'],
+    rewards: { boutons: 14 },
+    bg: 'real',
+    hooks: GETS_UP,
+  },
+  reveil: {
+    id: 'reveil',
+    name: 'Le Réveil',
+    sprite: 'b_reveil',
+    hp: 999,
+    atk: 3,
+    def: 20,
+    emotion: 'colere',
+    needs: [{ emotion: 'joie', count: 6 }],
+    check: 'Il sonne pour que tu ne dormes plus jamais. On ne l\'arrête pas en tapant dessus.',
+    flavor: [
+      '* Tic. Tac. Tic. Tac.',
+      '* Les aiguilles sont arrêtées sur 3 h 33. Le tic-tac continue quand même.',
+      '* Le Réveil te regarde. Il ne cligne jamais des yeux.',
+      '* Quelque part, une sonnette répond à la sienne.',
+      '* Tes paupières piquent. Le Réveil le sait.',
+    ],
+    flavorCalm: '* Le Réveil fait tic… Puis il oublie de faire tac.',
+    talk: ['Debout.', 'Il est l\'heure. Il est toujours l\'heure.', 'Tic. Tac. Tic. Tac.', 'Tu dormiras plus tard.', 'Qui va s\'occuper de tout, sinon ?', 'Je veille. Toi aussi.'],
+    reactGood: ['…Ces mots-là, tu les écris à ton fils.', 'Non… pas pour toi…', 'Tic… tac…'],
+    reactBad: ['Debout.', 'DRIIING !'],
+    reactNeutral: ['Tic. Tac.', 'Ce mot-là ne fait pas d\'heures sup.', 'Pas le temps.'],
+    spareText: '* Le Réveil se tait.',
+    killText: '* On n\'arrête pas le temps en tapant dessus.',
+    patterns: ['clock_hands', 'tick_rain', 'alarm_ring'],
+    rewards: { boutons: 0 },
+    boss: true,
+    noFlee: true,
+    bg: 'hospital',
+    music: 'reveil',
+    hooks: {
+      ...GETS_UP,
+      // Default safety net (the bonus chapter passes its own hooks): the alarm clock cannot be beaten by force.
+      async onDeath(b, e) {
+        e.hp = e.maxHp;
+        await b.bubble([{ e, text: 'On ne casse pas le temps.' }]);
         return true;
       },
     },
