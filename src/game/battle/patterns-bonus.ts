@@ -201,8 +201,8 @@ export const BONUS_PATTERNS: Record<string, Pattern> = {
       const cy = b.y + b.h / 2;
       const fast = 0.016 + c.power * 0.005;
       const hands: Array<{ len: number; from: number; speed: number; emo: Emotion; a0: number }> = [
-        { len: 46, from: 10, speed: fast, emo: 'colere', a0: (33 / 60) * Math.PI * 2 },
-        { len: 24, from: 8, speed: fast / 3, emo: 'neutre', a0: (15 / 60) * Math.PI * 2 },
+        { len: 38, from: 9, speed: fast, emo: 'colere', a0: (33 / 60) * Math.PI * 2 },
+        { len: 23, from: 8, speed: fast / 3, emo: 'neutre', a0: (15 / 60) * Math.PI * 2 },
       ];
       for (const h of hands) {
         for (let r = h.from; r <= h.len; r += 5) {
@@ -226,8 +226,8 @@ export const BONUS_PATTERNS: Record<string, Pattern> = {
           });
         }
       }
-      // The pivot.
-      w.spawn({ x: cx, y: cy, shape: 'dot', r: 4, dmg: 3, emo: 'neutre', warn: 36, clip: false, maxLife: 386 });
+      // The pivot (the soul starts on it: it only bites after a full second, time to step aside).
+      w.spawn({ x: cx, y: cy, shape: 'dot', r: 3, dmg: 3, emo: 'neutre', warn: 60, clip: false, maxLife: 386 });
     },
     tick(w, t, c) {
       // Tick… tock: a small sound every second, and a stray tick mark from the edge.

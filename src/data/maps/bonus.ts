@@ -82,7 +82,7 @@ svc.set(DOOR_304, 1, '3').set(DOOR_304, 2, '4').set(HOME_DOOR, 1, 'E').set(HOME_
 /** Red call light above a door (blinking until Maman sits down; the one of 304 never goes out). */
 const callLight = (x: number): PropDef =>
   P('prop_appel_on', x, 1, {
-    id: `appel_${x}`,
+    id: x === DOOR_304 ? 'appel_304' : `appel_${x}`,
     solid: false,
     oy: -11,
     frames: ['prop_appel_on', 'prop_appel'],

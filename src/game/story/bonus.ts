@@ -316,7 +316,8 @@ async function sitDown(d: Director): Promise<void> {
   d.remove('reveil');
   d.music(null, 3);
   for (const e of world.entities) {
-    if (e.sprite !== 'prop_appel_on' && !e.frames?.includes('prop_appel_on')) continue;
+    // Every call light goes out — except the one above the door 304, which doesn't exist here.
+    if (e.id === 'appel_304' || (e.sprite !== 'prop_appel_on' && !e.frames?.includes('prop_appel_on'))) continue;
     await d.wait(20);
     e.frames = undefined;
     e.sprite = 'prop_appel';
