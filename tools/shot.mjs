@@ -10,6 +10,7 @@
  * Several shots in one run: --shots "500,1500,3000" (saves out-1.png, out-2.png, …).
  */
 import { chromium } from 'playwright';
+import { existsSync } from 'node:fs';
 import { createServer } from 'vite';
 import { resolve } from 'node:path';
 
@@ -29,7 +30,13 @@ const server = await createServer({ server: { port: 0, host: '127.0.0.1', hmr: f
 await server.listen();
 const addr = server.httpServer.address();
 const url = `http://127.0.0.1:${addr.port}/?${query}`;
-const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || undefined });
+// The bundled browser may be missing (e.g. a sandbox with a preinstalled Chromium): fall back to PW_CHROMIUM or
+// /opt/pw-browsers/chromium.
+const launch = (executablePath) => chromium.launch({ executablePath });
+const browser = await launch(process.env.PW_CHROMIUM || undefined).catch((e) => {
+  if (existsSync('/opt/pw-browsers/chromium')) return launch('/opt/pw-browsers/chromium');
+  throw e;
+});
 const page = await browser.newPage({ viewport: { width: vw, height: vh }, deviceScaleFactor: 1 });
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e)));
