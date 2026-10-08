@@ -3,7 +3,7 @@ import type { Script } from '../overworld/types';
 import { world } from '../overworld/world';
 import { G } from '../state';
 import { composePoem } from '../scenes/poem';
-import { finishGame } from './common';
+import { finishGame, REAL } from './common';
 import { trLine, translated } from '../../i18n';
 
 /*
@@ -468,7 +468,7 @@ async function goHome(d: Director): Promise<void> {
 // ---------------------------------------------------------------------------
 
 function debugBase(): void {
-  G.state.flags.interlude = 3;
+  G.state.flags.interlude = REAL.finale;
   G.state.flags.fin_room = true;
   G.state.flags.fin_route = 'aube';
   G.state.chapter = 3;

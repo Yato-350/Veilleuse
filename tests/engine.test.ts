@@ -26,8 +26,10 @@ import { soulLabel } from '../src/engine/palette';
 import { WORD_POOLS } from '../src/data/words';
 import { EnemyRuntime } from '../src/game/battle/enemy';
 import type { EnemyDef } from '../src/game/battle/types';
-import { attack, defense, level, maxHp, newState, readSave, writeSave, hasSave, deleteSave, readMeta } from '../src/game/state';
-import { useMemoryStorage } from '../src/engine/storage';
+import { attack, defense, level, maxHp, newState, readSave, writeSave, hasSave, deleteSave, readMeta, writeMeta, migrateSave, SAVE_VERSION, type GameState } from '../src/game/state';
+import { MAPS } from '../src/data/maps';
+import { REAL, wakePhase } from '../src/game/story/common';
+import { saveJSON, useMemoryStorage } from '../src/engine/storage';
 import { nameReaction } from '../src/game/scenes/nameentry';
 import { composePoem } from '../src/game/scenes/poem';
 
@@ -310,6 +312,95 @@ describe('state & saves', () => {
     deleteSave();
     expect(hasSave()).toBe(false);
     expect(readMeta().endings).toEqual([]);
+  });
+
+  // v1.1 saves (version 1), one per moment of a run: every one must still load in v2.
+  const V11 = (chapter: number, map: string, flags: GameState['flags'], extra: Partial<GameState> = {}): Partial<GameState> => ({
+    version: 1,
+    playerName: 'Sacha',
+    chapter,
+    map,
+    x: 40,
+    y: 60,
+    dir: 'down',
+    hp: 18,
+    etoiles: 5,
+    encre: 1,
+    items: ['biscuit'],
+    keyItems: [],
+    souvenirs: ['souvenir_fenetre'],
+    flags,
+    kills: { gribouille: 1 },
+    spares: { nuage: 2 },
+    cleared: ['c1_e1'],
+    party: chapter > 0 ? ['mina'] : [],
+    playtime: 1234,
+    savedAt: 1,
+    weapon: 'crayon',
+    armor: 'pyjama',
+    ...extra,
+  });
+  const V11_SAVES: Record<string, Partial<GameState>> = {
+    prologue: V11(0, 'chambre', { interlude: 0, p_reply: 'aime', world: 'real' }),
+    chapter1: V11(1, 'prairie', { interlude: 0, c1_sheep_round: 2, world: 'dream' }),
+    interlude1: V11(1, 'appartement', { interlude: 1, i1_ate: true, world: 'real' }),
+    chapter2: V11(2, 'foret', { interlude: 0, world: 'dream' }),
+    interlude2: V11(2, 'appartement_nuit', { interlude: 2, i2_reply: 'pardon', world: 'real' }),
+    chapter3: V11(3, 'hopital', { interlude: 0, world: 'ink' }),
+    finale: V11(3, 'chambre_mina', { interlude: 3, fin_room: true, world: 'real' }),
+    // A very old save: no version, no playerChar, no souvenirs.
+    legacy: { playerName: 'Léa', chapter: 1, map: 'prairie', x: 1, y: 1, flags: { interlude: 0 } } as Partial<GameState>,
+  };
+
+  it('loads a v1.1 save taken at every step of a run (migration v1 → v2)', () => {
+    useMemoryStorage();
+    for (const [step, raw] of Object.entries(V11_SAVES)) {
+      saveJSON('save.v1', raw);
+      const s = readSave()!;
+      expect(s, step).not.toBeNull();
+      expect(s.version, step).toBe(SAVE_VERSION);
+      expect(MAPS[s.map], `${step}: map ${s.map}`).toBeDefined();
+      expect(s.chapter, step).toBe(raw.chapter);
+      expect(s.playerName, step).toBe(raw.playerName);
+      expect(s.playerChar, step).toBe('noa');
+      expect(Array.isArray(s.souvenirs) && Array.isArray(s.cleared), step).toBe(true);
+      // Every flag survives, except the finale's moment, which moves from 3 to 9.
+      const flags = { ...raw.flags };
+      if (step === 'finale') flags.interlude = REAL.finale;
+      expect(s.flags, step).toEqual(flags);
+      // Saving and loading again changes nothing (no double migration).
+      writeSave(s);
+      expect({ ...readSave()!, savedAt: 0 }, step).toEqual({ ...s, savedAt: 0 });
+    }
+    deleteSave();
+  });
+
+  it('keeps the v1.1 run order: interludes I and II stay 1 and 2, only the old finale moves', () => {
+    expect(migrateSave({ version: 1, flags: { interlude: 1 } }).flags.interlude).toBe(1);
+    expect(migrateSave({ version: 1, flags: { interlude: 2 } }).flags.interlude).toBe(2);
+    expect(migrateSave({ version: 1, flags: { interlude: 3 } }).flags.interlude).toBe(9);
+    // A v2 save at interlude III (3) is not touched.
+    expect(migrateSave({ version: 2, flags: { interlude: 3 } }).flags.interlude).toBe(3);
+    expect([1, 2, 3, 4, 6].map((n) => wakePhase(n as 1 | 2 | 3 | 4 | 6))).toEqual([REAL.i1, REAL.i2, REAL.i3, REAL.i4, REAL.finale]);
+  });
+
+  it('migrates the v1.1 meta memory: endings copied to endingsV1, one night per ending', () => {
+    useMemoryStorage();
+    expect(readMeta()).toMatchObject({ nuits: 365, endingsV1: [], callVersion: null, dodoSilent: false, fauxGenerique: 0, beauxRevesAt: 0 });
+    saveJSON('meta.v1', { launches: 7, deaths: 12, endings: ['aube', 'silence'], names: ['Sacha'], poems: [], seen: ['fin_aube'] });
+    const m = readMeta();
+    expect(m.endings).toEqual(['aube', 'silence']);
+    expect(m.endingsV1).toEqual(['aube', 'silence']);
+    expect(m.nuits).toBe(367);
+    expect(m.deaths).toBe(12);
+    expect(m.metaVersion).toBe(2);
+    // Once written in the v2 format, v2 endings are never mistaken for v1.1 ones.
+    m.endings.push('aube_blanche');
+    m.nuits++;
+    writeMeta(m);
+    const again = readMeta();
+    expect(again.endingsV1).toEqual(['aube', 'silence']);
+    expect(again.nuits).toBe(368);
   });
 });
 

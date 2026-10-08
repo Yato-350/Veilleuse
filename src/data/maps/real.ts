@@ -108,7 +108,7 @@ const CHAMBRE: MapDef = {
   ],
   warps: [
     { x: 8, y: 2, door: true, to: 'appartement_nuit', spawn: 'noa', cond: () => phase() === 2 },
-    { x: 8, y: 2, door: true, to: 'appartement_aube', spawn: 'noa', cond: () => phase() === 3 },
+    { x: 8, y: 2, door: true, to: 'appartement_aube', spawn: 'noa', cond: () => R.isFinale() },
     { x: 8, y: 2, door: true, to: 'appartement', spawn: 'noa', cond: () => phase() === 1, locked: ['Tu poses la main sur la poignée.', 'Tu n\'as pas envie de sortir.'] },
   ],
 };

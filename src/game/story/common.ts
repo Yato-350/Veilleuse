@@ -13,33 +13,80 @@ import { setPageTitle } from '../meta';
 /**
  * Story wiring shared by every chapter module.
  *
- * The real world thread (prologue, interludes, finale) and the three dream chapters are written in separate modules
- * and connected only through this file:
+ * The real world thread (prologue, interludes, finale) and the six dream chapters are written in separate modules
+ * and connected only through this file. Version 2 (« Il fait toujours nuit », docs/HISTOIRE.md §3.1):
  *
- *   prologue ─ enterDream(1) ─▶ chapter 1 ─ wakeUp(1) ─▶ interlude 1 ─ enterDream(2) ─▶ chapter 2 ─ wakeUp(2) ─▶
- *   interlude 2 ─ enterDream(3) ─▶ chapter 3 ─┬─ wakeUp(3) ─▶ finale ─ finishGame('aube')
- *                                              ├─ finishGame('beaux_reves')
- *                                              └─ finishGame('silence')
+ *   prologue ─ enterDream(1) ─▶ ch. 1 ─ wakeUp(1) ─▶ I ─ enterDream(2) ─▶ ch. 2 ─ wakeUp(2) ─▶ II ─ enterDream(3) ─▶
+ *   ch. 3 ─ wakeUp(3) ─▶ (fausse aube) III ─ enterDream(4) ─▶ ch. 4 ─ wakeUp(4) ─▶ IV ─ enterDream(5) ─▶ ch. 5 ─
+ *   fallInto(6) ─▶ ch. 6 ─┬─ wakeUp(6) ─▶ finale ─ finishGame('aube' | 'aube_blanche' | 'veilleuse')
+ *                          ├─ finishGame('beaux_reves')
+ *                          └─ finishGame('silence')
+ *
+ * Until the new acts are wired (production lot 5), STORY.wake[3] is still the v1.1 finale.
  */
+
+/** Dream chapter numbers. */
+export type DreamNo = 1 | 2 | 3 | 4 | 5 | 6;
+
+/**
+ * Moments of the real-world thread, stored in `G.state.flags.interlude` (the same rooms are revisited):
+ * 0 prologue, 1–4 the interludes after chapters 1–4, 9 the finale (« Le carnet »). Dream chapters reset it to 0.
+ */
+export const REAL = { prologue: 0, i1: 1, i2: 2, i3: 3, i4: 4, finale: 9 } as const;
+
+/** Current real-world moment (see REAL). */
+export const realPhase = (): number => Number(G.state.flags.interlude ?? 0);
+
+/** True during the finale (and the epilogue that follows it). */
+export const isFinale = (): boolean => realPhase() === REAL.finale;
+
+/** The real-world moment reached by waking up from dream chapter `n` (chapter 5 never wakes up: Noa falls). */
+export function wakePhase(n: DreamNo): number {
+  return n === 6 ? REAL.finale : n;
+}
+
 export const STORY: {
   /** Dream chapter entry scripts: load the first map and play the opening. */
-  dream: Partial<Record<1 | 2 | 3, Script>>;
-  /** Real-world scripts played after waking up from chapter N (3 = finale). */
-  wake: Partial<Record<1 | 2 | 3, Script>>;
+  dream: Partial<Record<DreamNo, Script>>;
+  /** Real-world scripts played after waking up from chapter N (3 = interlude III, 6 = finale). */
+  wake: Partial<Record<DreamNo, Script>>;
 } = { dream: {}, wake: {} };
 
-export type EndingId = 'aube' | 'beaux_reves' | 'silence';
+export type EndingId = 'aube' | 'aube_blanche' | 'beaux_reves' | 'silence' | 'veilleuse';
 
 /** Falls asleep in the real world and enters dream chapter `n`. */
-export async function enterDream(d: Director, n: 1 | 2 | 3): Promise<void> {
+export async function enterDream(d: Director, n: DreamNo): Promise<void> {
   audio.stopMusic(2);
   audio.setAmbience('none');
   await d.fadeOut(90, '#000000');
+  d.sfx('whoosh', { pitch: 0.6 });
+  await d.wait(40);
+  await startDream(d, n);
+}
+
+/**
+ * Chapter 5 → 6: Noa does not wake up between the two, he falls (docs/HISTOIRE.md §3.1). No white flash and no real
+ * world: the music sinks, the screen goes dark from the top, a long low whoosh, and the next dream starts.
+ */
+export async function fallInto(d: Director, n: DreamNo): Promise<void> {
+  audio.tempoScale = 1;
+  audio.stopMusic(3);
+  audio.setAmbience('none');
+  fx.glitch = 0;
+  d.sfx('whoosh', { pitch: 0.35, vol: 0.9 });
+  d.shake(2, 50);
+  await d.fadeOut(110, '#000000');
+  d.sfx('whoosh', { pitch: 0.25, vol: 0.6 });
+  await d.wait(70);
+  d.sfx('heartbeat', { pitch: 0.8, vol: 0.5 });
+  await d.wait(50);
+  await startDream(d, n);
+}
+
+async function startDream(d: Director, n: DreamNo): Promise<void> {
   G.state.chapter = n;
   G.state.hp = maxHp(G.state);
   G.state.flags.interlude = 0;
-  d.sfx('whoosh', { pitch: 0.6 });
-  await d.wait(40);
   const script = STORY.dream[n];
   if (!script) {
     console.error(`No dream script for chapter ${n}`);
@@ -51,13 +98,14 @@ export async function enterDream(d: Director, n: 1 | 2 | 3): Promise<void> {
 }
 
 /** Wakes up in the real world after dream chapter `n`. */
-export async function wakeUp(d: Director, n: 1 | 2 | 3): Promise<void> {
+export async function wakeUp(d: Director, n: DreamNo): Promise<void> {
   audio.stopMusic(1.5);
+  audio.tempoScale = 1;
   fx.glitch = 0;
   await d.fadeOut(60, '#ffffff');
   await d.wait(30);
   await d.fadeOut(1, '#000000');
-  G.state.flags.interlude = n;
+  G.state.flags.interlude = wakePhase(n);
   G.state.party = [];
   const script = STORY.wake[n];
   if (!script) {

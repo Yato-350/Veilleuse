@@ -7,16 +7,19 @@ import { G, maxHp, writeMeta } from '../state';
 import { isLateNight, setPageTitle } from '../meta';
 import { composePoem } from '../scenes/poem';
 import { PhoneScene, type PhoneMessage, type PhoneReply } from '../scenes/phone';
-import { enterDream } from './common';
+import { enterDream, isFinale, REAL, realPhase } from './common';
 import { epilogue, EPILOGUE_DEBUG } from './epilogue';
 
 /**
  * Real world thread: prologue, interlude 1 (« Le frigo »), interlude 2 (« La porte ») and the finale (« Le carnet »).
- * The same rooms are reused; G.state.flags.interlude says which moment we are in:
- *   0 = prologue, 1 = after chapter 1, 2 = after chapter 2, 3 = finale (dawn route).
+ * The same rooms are reused; G.state.flags.interlude says which moment we are in (constants `REAL`, common.ts):
+ *   0 = prologue, 1 = after chapter 1, 2 = after chapter 2, 3 = interlude III (« Le sac », 4:06),
+ *   4 = interlude IV (« Le placard », 4:44), 9 = finale (dawn route). Saves of v1.1 stored the finale as 3: the save
+ *   migration (state.ts) turns it into 9.
  */
 
-const phase = (): number => Number(G.state.flags.interlude ?? 0);
+export { REAL, isFinale } from './common';
+const phase = realPhase;
 const flag = (k: string): boolean => !!G.state.flags[k];
 
 // ---------------------------------------------------------------------------
@@ -56,7 +59,8 @@ interface ReplyDef extends PhoneReply {
 }
 
 const REPLY_FLAGS = ['p_reply', 'i1_reply', 'i2_reply'] as const;
-const PHONE_CLOCK = ['23:52', '14:06', '3:33', '5:52'];
+/** Phone clock at each real-world moment (index = REAL phase; the finale reads PHONE_CLOCK[REAL.finale]). */
+export const PHONE_CLOCK: Record<number, string> = { [REAL.prologue]: '23:52', [REAL.i1]: '14:06', [REAL.i2]: '3:33', [REAL.i3]: '4:06', [REAL.i4]: '4:44', [REAL.finale]: '5:52' };
 const SILENCE: ReplyDef = { id: 'rien', text: 'Ne rien répondre', after: ['Tu ne réponds pas. Tu ne sais jamais quoi répondre.'] };
 
 const REPLIES: ReplyDef[][] = [
@@ -275,7 +279,7 @@ export const nightlight: Script = async (d) => {
     await d.savePoint('Tu fixes la petite lune jusqu\'à avoir des taches dans les yeux.');
     return;
   }
-  if (p === 3) {
+  if (p === REAL.finale) {
     await d.savePoint('La veilleuse de Mina. Dehors, le ciel pâlit. Elle n\'a presque plus besoin de briller.');
     return;
   }
@@ -322,7 +326,7 @@ export const dodoFloating: Script = async (d) => {
 
 export const desk: Script = async (d) => {
   const p = phase();
-  if (p === 3) {
+  if (p === REAL.finale) {
     await d.say(['Ton bureau. Tes cahiers.', 'Peut-être que tu les rouvriras. Un jour. Pas tout de suite.']);
     return;
   }
@@ -356,7 +360,7 @@ export const phone: Script = async (d) => {
     await answerMaman(d, 2);
   } else {
     await d.say('Un message de « Maman », il y a cinq minutes.');
-    const ph = PhoneScene.open('Maman', PHONE_CLOCK[3]!, thread(3, true));
+    const ph = PhoneScene.open('Maman', PHONE_CLOCK[REAL.finale]!, thread(3, true));
     await ph.waitKey();
     await ph.close();
     if (!sentReplies().length) await d.say(['Tu fais défiler la conversation. Des dizaines de messages.', 'Pas une seule réponse.']);
@@ -371,12 +375,12 @@ export const shelf: Script = async (d) => {
 export const clock: Script = async (d) => {
   const p = phase();
   if (p === 2) await d.say(['3h33.', 'L\'aiguille des secondes ne bouge plus.']);
-  else if (p === 3) await d.say(['5h58.', 'Le jour se lève dans deux minutes.']);
+  else if (p === REAL.finale) await d.say(['5h58.', 'Le jour se lève dans deux minutes.']);
   else await d.say('Tic. Tac. Tic. Tac.');
 };
 
 export const closet: Script = async (d) => {
-  if (phase() === 3) {
+  if (isFinale()) {
     await d.say(['Ton armoire. Fermée.', 'Il n\'y a pas de monstre dedans. Il n\'y en a jamais eu. Juste des pulls.']);
     return;
   }
@@ -385,7 +389,7 @@ export const closet: Script = async (d) => {
 };
 
 export const photo: Script = async (d) => {
-  if (phase() < 3) {
+  if (!isFinale()) {
     await d.say(['Un cadre photo, posé face contre le sol.', 'Tu ne le retournes pas.']);
     return;
   }
@@ -415,7 +419,7 @@ export async function interlude1(d: Director): Promise<void> {
 
 export const appartEnter: Script = async (d) => {
   const p = phase();
-  if (p === 3) {
+  if (p === REAL.finale) {
     world.extraDarkness = -0.25;
     d.ambience('none');
   } else {
@@ -434,20 +438,20 @@ export const familyPhoto: Script = async (d) => {
     return;
   }
   await d.say('L\'étagère du couloir. Une photo de famille, dans un cadre en bois.');
-  await d.image('photo_famille', p === 3 ? ['Vous souriez tous les trois.', 'C\'était vrai. Tout ça, c\'était vrai.'] : ['Le parc, l\'été dernier. L\'été d\'avant.', 'Tu ne regardes pas trop longtemps.']);
+  await d.image('photo_famille', p === REAL.finale ? ['Vous souriez tous les trois.', 'C\'était vrai. Tout ça, c\'était vrai.'] : ['Le parc, l\'été dernier. L\'été d\'avant.', 'Tu ne regardes pas trop longtemps.']);
 };
 
 export const hallClock: Script = async (d) => {
   const p = phase();
   if (p === 2) await d.say(['L\'horloge du couloir indique 3h33.', 'Comme celle de ta chambre. Comme toutes les horloges.']);
-  else if (p === 3) await d.say('L\'horloge du couloir. Six heures moins deux.');
+  else if (p === REAL.finale) await d.say('L\'horloge du couloir. Six heures moins deux.');
   else await d.say(['L\'horloge du couloir.', 'Elle avance de dix minutes. Personne ne l\'a jamais remise à l\'heure.']);
 };
 
 export const tv: Script = async (d) => {
   const p = phase();
   if (p === 2) await d.say(['La neige grésille sur l\'écran.', 'Si tu plisses les yeux, tu crois voir une couronne.']);
-  else if (p === 3) await d.say('La télé, éteinte. Ton reflet dans l\'écran noir a l\'air… réveillé.');
+  else if (p === REAL.finale) await d.say('La télé, éteinte. Ton reflet dans l\'écran noir a l\'air… réveillé.');
   else await d.say(['La télé est éteinte.', 'Mina regardait ses dessins animés le samedi matin, le son trop fort.']);
 };
 
@@ -493,7 +497,7 @@ export const stove: Script = async (d) => {
 };
 
 export const kitchenTable: Script = async (d) => {
-  if (phase() === 3) {
+  if (isFinale()) {
     await d.say(['La table de la cuisine.', 'Tout à l\'heure, il y aura du chocolat chaud. Tu le sais, sans savoir comment.']);
     return;
   }
@@ -503,13 +507,13 @@ export const kitchenTable: Script = async (d) => {
 export const frontDoor: Script = async (d) => {
   const p = phase();
   if (p === 2) await d.say(['La porte d\'entrée.', 'Tu n\'as pas réussi à l\'atteindre. Tu ne sais pas comment tu es arrivé là.']);
-  else if (p === 3) await d.say(['La porte d\'entrée.', 'Maman va rentrer par là. Bientôt.']);
+  else if (p === REAL.finale) await d.say(['La porte d\'entrée.', 'Maman va rentrer par là. Bientôt.']);
   else await d.say(['La porte d\'entrée.', 'Dehors, il pleut. Dehors, il y a des gens. Tu n\'as pas envie.']);
 };
 
 export const minaDoor: Script = async (d) => {
   const p = phase();
-  if (p === 3) {
+  if (p === REAL.finale) {
     await d.say(['La porte de Mina est entrouverte.', 'Une lumière pâle filtre par l\'interstice.']);
     const r = await d.ask('Entrer ?', ['Entrer', 'Attendre'], undefined, { cancelIndex: 1 });
     if (r === 0) await d.warp('chambre_mina', 'door', { sfx: 'door' });
@@ -525,7 +529,7 @@ export const bathroomDoor: Script = async (d) => {
     await d.say(['Derrière la porte de la salle de bain, l\'eau coule.', 'Personne n\'a ouvert le robinet.']);
     return;
   }
-  if (p === 3) {
+  if (p === REAL.finale) {
     await d.say(['Tu te passes de l\'eau froide sur le visage.', 'Dans le miroir, tu as les yeux rouges. Mais ce sont tes yeux.']);
     return;
   }
@@ -535,7 +539,7 @@ export const bathroomDoor: Script = async (d) => {
 export const mamanDoor: Script = async (d) => {
   const p = phase();
   if (p === 2) await d.say(['La chambre de Maman.', 'Le lit n\'a pas été défait. Elle n\'est toujours pas rentrée.']);
-  else if (p === 3) await d.say('La chambre de Maman. Vide. Plus pour longtemps.');
+  else if (p === REAL.finale) await d.say('La chambre de Maman. Vide. Plus pour longtemps.');
   else await d.say(['La chambre de Maman.', 'Elle travaille de nuit, maintenant. Depuis l\'année dernière. Elle dit que ça l\'aide à ne pas penser.']);
 };
 
@@ -639,6 +643,8 @@ async function interlude2Dodo(d: Director): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function finale(d: Director): Promise<void> {
+  // Reached through wakeUp(3) until the new acts are wired (lot 5), then through wakeUp(6).
+  G.state.flags.interlude = REAL.finale;
   setPageTitle(null);
   d.load('chambre', 'bed');
   inBed(d, true);
@@ -820,13 +826,13 @@ export const DEBUG: Record<string, Script> = {
     await d.fadeIn(10);
   },
   finale_room: async (d) => {
-    G.state.flags.interlude = 3;
+    G.state.flags.interlude = REAL.finale;
     G.state.chapter = 3;
     d.load('chambre_mina', 'door');
     await d.fadeIn(10);
   },
   finale_poem: async (d) => {
-    G.state.flags.interlude = 3;
+    G.state.flags.interlude = REAL.finale;
     G.state.chapter = 3;
     G.state.flags.i1_ate = true;
     // The room's entrance cutscene already happened (otherwise it would run alongside the notebook).
@@ -856,14 +862,14 @@ export const DEBUG: Record<string, Script> = {
     await phone(d);
   },
   finale_phone: async (d) => {
-    G.state.flags.interlude = 3;
+    G.state.flags.interlude = REAL.finale;
     d.load('chambre', 'bed');
     await d.fadeIn(10);
     await phone(d);
   },
   /** Maman comes home (the finale's reactions to the replies), then the epilogue. */
   finale_maman: async (d) => {
-    G.state.flags.interlude = 3;
+    G.state.flags.interlude = REAL.finale;
     G.state.chapter = 3;
     if (!G.state.flags.fin_poem) G.state.flags.fin_poem = composePoem(DEBUG_WORDS).join('\n');
     G.state.flags.fin_room = true;
