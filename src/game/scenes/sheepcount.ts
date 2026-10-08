@@ -10,6 +10,7 @@ import { charSet, spr } from '../assets';
 import { G } from '../state';
 import { dialogue } from '../ui/dialogue';
 import { box, rect } from '../ui/draw';
+import { tf, tr } from '../../i18n';
 
 /**
  * « Compter les moutons » — chapter 1 rhythm minigame on the Colline aux Couvertures.
@@ -386,7 +387,7 @@ export class SheepCountScene implements Scene {
       }
       this.counted++;
       best.flash = 14;
-      const word = `${NUMBERS[this.counted] ?? this.counted} !`;
+      const word = tf('{0} !', tr(NUMBERS[this.counted] ?? String(this.counted)));
       this.floats.push({ text: word, x: best.x, y: GROUND - 54, t: 0, color: '#ffe991' });
       this.say(word);
       audio.sfx('chime', { pitch: 0.9 + this.counted * 0.05, vol: 0.5 });
@@ -423,7 +424,7 @@ export class SheepCountScene implements Scene {
     const res: SheepResult = { ok, valid: this.valid, counted: this.counted, errors: this.errors, taps: this.taps };
     const resolve = this.resolve;
     this.resolve = null;
-    this.bubble = ok && !this.round?.blind ? `${NUMBERS[this.counted] ?? this.counted} ! Tous comptés !` : this.bubble;
+    this.bubble = ok && !this.round?.blind ? tf('{0} ! Tous comptés !', tr(NUMBERS[this.counted] ?? String(this.counted))) : this.bubble;
     this.bubbleT = ok ? 90 : 0;
     this.sheep = [];
     resolve?.(res);
@@ -499,8 +500,9 @@ export class SheepCountScene implements Scene {
     for (const f of this.floats) {
       const a = f.t < 36 ? 1 : 1 - (f.t - 36) / 14;
       const fy = f.y - Math.min(10, f.t / 3);
-      const fx = Math.max(x + measure(f.text) / 2 + 2, Math.min(x + w - measure(f.text) / 2 - 2, f.x));
-      drawText(g, f.text, Math.round(fx), Math.round(fy), {
+      const ft = tr(f.text);
+      const fx = Math.max(x + measure(ft) / 2 + 2, Math.min(x + w - measure(ft) / 2 - 2, f.x));
+      drawText(g, ft, Math.round(fx), Math.round(fy), {
         align: 'center',
         color: f.color,
         shadow: '#1c1424',
@@ -581,17 +583,18 @@ export class SheepCountScene implements Scene {
   private drawHud(g: CanvasRenderingContext2D): void {
     const r = this.round;
     if (!r) {
-      drawText(g, 'Compter les moutons', W / 2, 8, { align: 'center', color: '#ffe991', shadow: '#1c1424' });
+      drawText(g, tr('Compter les moutons'), W / 2, 8, { align: 'center', color: '#ffe991', shadow: '#1c1424' });
       return;
     }
-    drawText(g, `Manche ${this.roundNo}/3 · `, STAGE.x, 8, { color: '#fffaf2', shadow: '#1c1424' });
-    drawText(g, r.title, STAGE.x + measure(`Manche ${this.roundNo}/3 · `), 8, { color: '#ffe991', shadow: '#1c1424' });
+    const roundLabel = tf('Manche {0}/3 · ', this.roundNo);
+    drawText(g, roundLabel, STAGE.x, 8, { color: '#fffaf2', shadow: '#1c1424' });
+    drawText(g, tr(r.title), STAGE.x + measure(roundLabel), 8, { color: '#ffe991', shadow: '#1c1424' });
     const right = STAGE.x + STAGE.w;
     if (r.blind) {
-      drawText(g, 'Compte dans ta tête…', right, 8, { align: 'right', color: '#d4b8f0', shadow: '#1c1424' });
+      drawText(g, tr('Compte dans ta tête…'), right, 8, { align: 'right', color: '#d4b8f0', shadow: '#1c1424' });
       return;
     }
-    const label = `Comptés : ${this.counted}`;
+    const label = tf('Comptés : {0}', this.counted);
     drawText(g, label, right, 8, { align: 'right', color: '#fffaf2', shadow: '#1c1424' });
     // Cotton balls = mistakes still allowed.
     const left = right - measure(label) - 8;
@@ -629,7 +632,7 @@ export class SheepCountScene implements Scene {
     const mina = charSet('mina');
     if (mina && G.state.party.includes('mina')) drawSprite(g, mina.up[0]!, 268, 164);
     // His speech bubble.
-    const text = this.bubbleT > 0 || (this.round?.blind && this.playing) ? this.bubble : '';
+    const text = tr(this.bubbleT > 0 || (this.round?.blind && this.playing) ? this.bubble : '');
     if (text) {
       const bw = measure(text) + 10;
       const bx = 70;
@@ -649,7 +652,7 @@ export class SheepCountScene implements Scene {
           : input.lastDevice === 'gamepad'
             ? 'Appuie sur A quand un mouton passe la barrière.'
             : 'Espace ou Entrée quand un mouton passe la barrière.';
-      drawText(g, hint, W / 2, STAGE.y + STAGE.h + 6, { align: 'center', color: '#b7aab8', shadow: '#1c1424' });
+      drawText(g, tr(hint), W / 2, STAGE.y + STAGE.h + 6, { align: 'center', color: '#b7aab8', shadow: '#1c1424' });
     }
   }
 }

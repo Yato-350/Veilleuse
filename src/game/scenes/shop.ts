@@ -6,6 +6,7 @@ import { hits, input } from '../../engine/input';
 import { ITEMS } from '../../data/items';
 import { G, MAX_ITEMS } from '../state';
 import { box, heart } from '../ui/draw';
+import { tf, tr } from '../../i18n';
 
 /** Rows of the item list that fit above the shopkeeper's speech box (the list scrolls beyond). */
 const ROWS = 6;
@@ -87,7 +88,7 @@ export class ShopScene implements Scene {
         G.state.boutons -= price;
         G.state.items.push(it.id);
         audio.sfx('item');
-        this.say(`Et voilà : ${it.name} ! Merci, merci !`);
+        this.say(tf('Et voilà : {0} ! Merci, merci !', tr(it.name)));
       }
     }
   }
@@ -105,7 +106,7 @@ export class ShopScene implements Scene {
     g.fillStyle = 'rgba(11,7,16,0.5)';
     g.fillRect(0, 0, W, H);
     box(g, 8, 8, 150, H - 70, 'dream');
-    drawText(g, `Boutique de ${this.keeper}`, 16, 14, { color: '#d4b8f0' });
+    drawText(g, tf('Boutique de {0}', tr(this.keeper)), 16, 14, { color: '#d4b8f0' });
     const n = this.stock.length + 1;
     for (let i = this.top; i < Math.min(n, this.top + ROWS); i++) {
       const y = 32 + (i - this.top) * ROW_H;
@@ -113,11 +114,11 @@ export class ShopScene implements Scene {
       hits.add(this, i, 10, y - 2, 146, ROW_H);
       if (sel) heart(g, 14, y + 3, '#ff4a5a');
       if (i === this.stock.length) {
-        drawText(g, 'Partir', 25, y, { color: sel ? '#ffd84a' : '#b7aab8' });
+        drawText(g, tr('Partir'), 25, y, { color: sel ? '#ffd84a' : '#b7aab8' });
         continue;
       }
       const it = ITEMS[this.stock[i]!];
-      drawText(g, it?.name ?? this.stock[i]!, 25, y, { color: sel ? '#ffd84a' : '#fffaf2' });
+      drawText(g, tr(it?.name ?? this.stock[i]!), 25, y, { color: sel ? '#ffd84a' : '#fffaf2' });
       drawText(g, `${this.price(it?.price ?? 0)}`, 150, y, { color: this.discount > 0 ? '#7ee08a' : '#f5c04f', align: 'right' });
     }
     // Scroll hints
@@ -132,13 +133,13 @@ export class ShopScene implements Scene {
     }
     // Info panel
     box(g, 166, 8, W - 174, H - 70, 'dream');
-    drawText(g, `● ${G.state.boutons} boutons`, 174, 14, { color: '#f5c04f' });
-    drawText(g, `Poches : ${G.state.items.length}/${MAX_ITEMS}`, 174, 28, { color: '#b7aab8' });
-    if (this.discount > 0) drawText(g, `Prix doux : -${Math.round(this.discount * 100)} %`, 174, 100, { color: '#7ee08a' });
+    drawText(g, tf('● {0} boutons', G.state.boutons), 174, 14, { color: '#f5c04f' });
+    drawText(g, tf('Poches : {0}/{1}', G.state.items.length, MAX_ITEMS), 174, 28, { color: '#b7aab8' });
+    if (this.discount > 0) drawText(g, tf('Prix doux : -{0} %', Math.round(this.discount * 100)), 174, 100, { color: '#7ee08a' });
     const cur = ITEMS[this.stock[this.idx] ?? ''];
-    if (cur) drawWrapped(g, cur.desc, 174, 48, W - 190, { color: '#d8cfe0' });
+    if (cur) drawWrapped(g, tr(cur.desc), 174, 48, W - 190, { color: '#d8cfe0' });
     // Keeper speech
     box(g, 8, H - 56, W - 16, 48, 'dream');
-    drawWrapped(g, this.msg, 16, H - 50, W - 32, { color: '#fffaf2' });
+    drawWrapped(g, tr(this.msg), 16, H - 50, W - 32, { color: '#fffaf2' });
   }
 }

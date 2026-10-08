@@ -38,25 +38,30 @@ function unescape(raw) {
   });
 }
 
+/** Marks a `${…}` hole of a template literal while it is unescaped. */
+const HOLE = '\uE000';
+
 const REGEX_PREV = new Set(['(', ',', '=', ':', '[', '!', '&', '|', '?', '{', '}', ';', '+', '-', '*', '%', '<', '>', '~', '^', '']);
 
 /**
  * @returns {{ value: string, line: number, quote: string, dynamic: boolean, call: string, prev: string, next: string,
  *   ignored: boolean }[]}
  */
-export function tokenize(src) {
+export function tokenize(src, firstLine = 1, parentIgnored = null) {
   const out = [];
-  const ignoredLines = new Set();
-  const lines = src.split('\n');
-  let region = false;
-  lines.forEach((l, i) => {
-    if (/i18n-ignore-start/.test(l)) region = true;
-    if (region || /i18n-ignore(?![-\w])/.test(l)) ignoredLines.add(i + 1);
-    if (/i18n-ignore-end/.test(l)) region = false;
-  });
+  let ignoredLines = parentIgnored;
+  if (!ignoredLines) {
+    ignoredLines = new Set();
+    let region = false;
+    src.split('\n').forEach((l, i) => {
+      if (/i18n-ignore-start/.test(l)) region = true;
+      if (region || /i18n-ignore(?![-\w])/.test(l)) ignoredLines.add(i + 1);
+      if (/i18n-ignore-end/.test(l)) region = false;
+    });
+  }
 
   let i = 0;
-  let line = 1;
+  let line = firstLine;
   const n = src.length;
   /** Stack of call names for each open paren / brace / template expression. */
   const stack = [];
@@ -91,14 +96,18 @@ export function tokenize(src) {
         j += 2;
       } else if (src[j] === '$' && src[j + 1] === '{') {
         dynamic = true;
-        raw += '\u0000';
-        j = skipExpr(j + 2);
+        raw += HOLE;
+        const from = j + 2;
+        const fromLine = line;
+        j = skipExpr(from);
+        // Strings inside the expression (`${ok ? 'Oui' : 'Non'}`) are display strings too.
+        out.push(...tokenize(src.slice(from, j - 1), fromLine, ignoredLines));
       } else {
         if (src[j] === '\n') line++;
         raw += src[j++];
       }
     }
-    return [j + 1, unescape(raw).replace(/\u0000/g, '${}'), dynamic];
+    return [j + 1, unescape(raw).split(HOLE).join('${}'), dynamic];
   };
 
   // Skips a `${ … }` expression (nested strings included); returns index after the closing brace.
@@ -248,7 +257,7 @@ export function isDisplay(tok) {
   if (/^\d*(px|em|%)?\s*(bold |italic )*[\d.]+px\s/.test(text)) return false; // CSS font
   if (/^(rgba?|hsla?)\(/.test(text)) return false;
   // Pixel-art / tile grids: multi-line strings without real words.
-  if (/\n/.test(text) && !/[a-zà-ÿ]{3,} [a-zà-ÿ]/i.test(text)) return false;
+  if (/\n/.test(text) && !/[A-Za-zÀ-ÿŒœ]{2,}\s+\S*[A-Za-zÀ-ÿŒœ]/.test(text)) return false;
   const hasSpace = /\S\s+\S/.test(text);
   const hasAccent = ACCENTED.test(text) || /[A-Za-z]['’][a-zà-ÿ]/.test(text); // accents or French elision (l'aube)
   const capWord =
@@ -362,6 +371,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     }
   }
   console.log(`\n${missing} missing, ${dyn} dynamic template(s) to convert.`);
-  if (writeTo) console.log(`${appendSkeleton(writeTo, keys)} key(s) added to ${writeTo}.`);
+  // Keys already present in another catalog (even untranslated) are not duplicated.
+  if (writeTo) console.log(`${appendSkeleton(writeTo, keys.filter((k) => !catalog.has(k)))} key(s) added to ${writeTo}.`);
   process.exitCode = missing || dyn ? 1 : 0;
 }

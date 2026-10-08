@@ -15,7 +15,7 @@ import { CreditsScene } from './credits';
 import { install } from '../pwa';
 import { NameEntryScene } from './nameentry';
 import { GalleryScene } from './gallery';
-import { tf, tr } from '../../i18n';
+import { lang, tf, tr } from '../../i18n';
 
 type Item = { label: string; action: () => void; color?: string };
 
@@ -195,7 +195,7 @@ export class TitleScene implements Scene {
     if (h >= 0 && h < 5) {
       const a = 0.5 + 0.3 * Math.sin(this.t * 0.03);
       g.globalAlpha = a;
-      drawText(g, tf('Il est {0}h. Tu devrais dormir, toi aussi.', h), 4, H - 11, { color: '#6d5a8a' });
+      drawText(g, tf('Il est {0}h. Tu devrais dormir, toi aussi.', h === 0 && lang() === 'en' ? 12 : h), 4, H - 11, { color: '#6d5a8a' });
       g.globalAlpha = 1;
     } else if (G.meta.deaths > 5 && this.mood === 'night') {
       g.globalAlpha = 0.4;

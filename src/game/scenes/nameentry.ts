@@ -7,8 +7,9 @@ import { hits, input } from '../../engine/input';
 import { flow } from '../flow';
 import { G } from '../state';
 import { heart } from '../ui/draw';
+import { tr } from '../../i18n';
 
-const ROWS = ['ABCDEFGHIJKLM', 'NOPQRSTUVWXYZ', 'abcdefghijklm', 'nopqrstuvwxyz', 'éèêàçïôù-\' '];
+const ROWS = ['ABCDEFGHIJKLM', 'NOPQRSTUVWXYZ', 'abcdefghijklm', 'nopqrstuvwxyz', 'éèêàçïôù-\' ']; // i18n-ignore
 const MAX = 10;
 
 /** Special reactions to some names (Undertale style). */
@@ -172,25 +173,25 @@ export class NameEntryScene implements Scene {
   draw(g: CanvasRenderingContext2D): void {
     g.fillStyle = '#05030a';
     g.fillRect(0, 0, W, H);
-    drawText(g, 'Avant de commencer…', W / 2, 12, { align: 'center', color: '#8a7f96' });
-    drawText(g, 'Comment t\'appelles-tu ?', W / 2, 26, { align: 'center', color: '#fffaf2' });
+    drawText(g, tr('Avant de commencer…'), W / 2, 12, { align: 'center', color: '#8a7f96' });
+    drawText(g, tr('Comment t\'appelles-tu ?'), W / 2, 26, { align: 'center', color: '#fffaf2' });
     // Name field
     const shown = this.name + (Math.floor(this.t / 30) % 2 === 0 && [...this.name].length < MAX ? '_' : ' ');
     drawText(g, shown, W / 2, 46, { align: 'center', color: '#ffd84a', scale: 2 });
     if (this.reaction) {
       const a = Math.min(1, this.reaction.t / 30);
       g.globalAlpha = a;
-      drawText(g, this.reaction.text, W / 2, 100, { align: 'center', color: '#d4b8f0' });
+      drawText(g, tr(this.reaction.text), W / 2, 100, { align: 'center', color: '#d4b8f0' });
       g.globalAlpha = 1;
       return;
     }
     if (this.confirm) {
-      drawText(g, 'C\'est bien toi ?', W / 2, 96, { align: 'center', color: '#fffaf2' });
+      drawText(g, tr('C\'est bien toi ?'), W / 2, 96, { align: 'center', color: '#fffaf2' });
       ['Oui', 'Non'].forEach((l, i) => {
         const x = W / 2 - 40 + i * 80;
         hits.add(this, i, x - 30, 110, 60, 18);
         if (this.confirmIdx === i) heart(g, x - 18, 119, '#ff4a5a');
-        drawText(g, l, x, 116, { align: 'center', color: this.confirmIdx === i ? '#ffd84a' : '#fffaf2' });
+        drawText(g, tr(l), x, 116, { align: 'center', color: this.confirmIdx === i ? '#ffd84a' : '#fffaf2' });
       });
       return;
     }
@@ -205,13 +206,13 @@ export class NameEntryScene implements Scene {
         const sel = r === this.row && c === this.col;
         hits.add(this, `${r},${c}`, x - spacing / 2, y - 3, spacing, isLast ? 17 : 15);
         // The space key is shown as « _ ».
-        const label = ch === ' ' ? '_' : ch;
+        const label = ch === ' ' ? '_' : ch === 'OK' ? tr(ch) : ch;
         const lw = measure(label);
         if (sel) heart(g, x - lw / 2 - 10, y + 3, '#ff4a5a');
         drawText(g, label, x, y, { align: 'center', color: sel ? '#ffd84a' : '#d8cfe0' });
       });
     });
     const hint = input.pointerUsed ? 'Touche les lettres · ← : effacer' : 'Clavier possible · B : effacer';
-    drawText(g, hint, W / 2, H - 12, { align: 'center', color: '#4e4359' });
+    drawText(g, tr(hint), W / 2, H - 12, { align: 'center', color: '#4e4359' });
   }
 }

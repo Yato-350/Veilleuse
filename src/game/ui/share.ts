@@ -3,7 +3,7 @@ import { drawSprite, makeCanvas } from '../../engine/sprite';
 import { hasSpr, spr } from '../assets';
 import { isNative, toast } from '../pwa';
 import type { SavedPoem } from '../state';
-import { hasTr, lang, tf, tr } from '../../i18n';
+import { lang, tf, tr, trLine } from '../../i18n';
 
 /**
  * Poems as notebook pages: the page drawn in the gallery (same look as the finale's PaperScene) and the picture the
@@ -30,18 +30,9 @@ export function poemDate(at: number): string {
   return `le ${d.getDate() === 1 ? '1er' : d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`; // i18n-ignore
 }
 
-/**
- * A poem line for display. Saved poems keep their French text (the source); each line is translated as a whole
- * (« Pour Mina. ») or, for the chosen words (« lumière, »), as a word plus its punctuation.
- */
-export function trPoemLine(line: string): string {
-  if (lang() === 'fr' || !line) return line;
-  const m = /^(.*?)([.,]?)$/.exec(line)!;
-  return hasTr(line) ? tr(line) : tr(m[1]!) + m[2];
-}
-
+/** Lines for display. Saved poems keep their French text (the source) and are translated line by line. */
 export function poemLines(poem: SavedPoem): string[] {
-  return poem.text.split('\n').map(trPoemLine);
+  return poem.text.split('\n').map(trLine);
 }
 
 /** The finale's poems open with « Pour Mina. »: the title is then already on the page. */

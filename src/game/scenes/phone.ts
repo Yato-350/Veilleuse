@@ -7,6 +7,7 @@ import { EMOTION_COLOR, EMOTION_DARK, type Emotion } from '../../engine/palette'
 import { drawEmoIcon } from '../battle/emoshape';
 import { G } from '../state';
 import { heart, nextArrow } from '../ui/draw';
+import { tr } from '../../i18n';
 
 /*
  * Noa's phone: the conversation with « Maman », seen full screen. Scripts drive it step by step
@@ -78,7 +79,9 @@ export class PhoneScene implements Scene {
     private clock: string,
     messages: PhoneMessage[],
   ) {
-    this.msgs = messages.map((m) => ({ ...m, born: -100 }));
+    this.contact = tr(contact);
+    this.clock = tr(clock);
+    this.msgs = messages.map((m) => ({ ...trMessage(m), born: -100 }));
     this.scroll = Math.max(0, this.contentHeight() - AREA.h);
   }
 
@@ -93,7 +96,7 @@ export class PhoneScene implements Scene {
   /** Adds a message at the bottom of the thread (with a little pop). */
   add(m: PhoneMessage): void {
     this.typingOn = false;
-    this.msgs.push({ ...m, born: this.t });
+    this.msgs.push({ ...trMessage(m), born: this.t });
     if (m.from === 'me') audio.sfx('whoosh', { pitch: 2.2, vol: 0.5 });
     else if (m.from === 'them') audio.sfx('beep', { pitch: 1.4 });
   }
@@ -120,8 +123,8 @@ export class PhoneScene implements Scene {
 
   /** The player picks a reply in the little notebook next to the phone. Resolves with its index. */
   choose(prompt: string, replies: PhoneReply[]): Promise<number> {
-    this.prompt = prompt;
-    this.replies = replies;
+    this.prompt = tr(prompt);
+    this.replies = replies.map((r) => ({ ...r, text: tr(r.text) }));
     this.idx = 0;
     this.mode = 'choose';
     input.consume();
@@ -302,7 +305,7 @@ export class PhoneScene implements Scene {
     g.fillStyle = COL.field;
     roundRect(g, s.x + 3, fy, s.w - 6, 11);
     const typing = this.mode === 'choose';
-    drawText(g, typing ? (Math.floor(this.t / 30) % 2 ? '|' : '') : 'Message…', s.x + 7, fy - 1, { color: '#6a7090' });
+    drawText(g, typing ? (Math.floor(this.t / 30) % 2 ? '|' : '') : tr('Message…'), s.x + 7, fy - 1, { color: '#6a7090' });
     g.fillStyle = typing ? COL.me : '#3a4260';
     g.fillRect(s.x + s.w - 13, fy + 2, 7, 7);
     g.fillStyle = '#ffffff';
@@ -381,6 +384,11 @@ export class PhoneScene implements Scene {
       drawText(g, r.text, tx, ry, { color: textColor });
     });
   }
+}
+
+/** Translated copy of a message (text and status). */
+function trMessage(m: PhoneMessage): PhoneMessage {
+  return { ...m, text: tr(m.text), status: m.status === undefined ? undefined : tr(m.status) };
 }
 
 function easeOut(v: number): number {

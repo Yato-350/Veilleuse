@@ -1,6 +1,7 @@
 import type { Emotion } from '../../engine/palette';
 import { evaluateWord, needTotal, type WordResult } from './rules';
 import type { EnemyDef, NeedStep, WordDef } from './types';
+import { tr } from '../../i18n';
 
 /** Mutable battle state of one enemy. */
 export class EnemyRuntime {
@@ -41,8 +42,9 @@ export class EnemyRuntime {
     this.total = Math.max(1, needTotal(def.needs));
   }
 
+  /** Display name, translated (game logic uses `def.id`). */
   get name(): string {
-    return this.def.name;
+    return tr(this.def.name);
   }
 
   get need(): NeedStep | undefined {

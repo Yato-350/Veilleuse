@@ -4,7 +4,7 @@ import { drawText } from '../../engine/font';
 import { game, type Scene } from '../../engine/game';
 import { input } from '../../engine/input';
 import { nextArrow } from '../ui/draw';
-import { tr } from '../../i18n';
+import { tr, trLine } from '../../i18n';
 
 /** A full notebook page with handwritten lines (poems, letters, notes). Lines appear one by one. */
 export class PaperScene implements Scene {
@@ -59,7 +59,7 @@ export class PaperScene implements Scene {
     if (this.title) drawText(g, tr(this.title), W / 2, y + 6, { align: 'center', color: '#a8324a' });
     const startY = y + (this.title ? 21 : 9);
     this.lines.slice(0, this.shown).forEach((line, i) => {
-      drawText(g, tr(line), x + 24, startY + i * 12 - 1, { color: '#2b2a5c' });
+      drawText(g, trLine(line), x + 24, startY + i * 12 - 1, { color: '#2b2a5c' });
     });
     if (this.shown >= this.lines.length) nextArrow(g, x + w - 12, y + h - 9, this.t, '#2b2a5c');
   }

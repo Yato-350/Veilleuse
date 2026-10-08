@@ -10,6 +10,7 @@ import { minaOffersHelp } from '../battle/battle';
 import { flow } from '../flow';
 import { G, hasSave, writeMeta, writeSettings } from '../state';
 import { heart } from '../ui/draw';
+import { tr, trAll } from '../../i18n';
 
 const LINES = [
   'Noa a perdu tout espoir…',
@@ -40,7 +41,7 @@ export class GameOverScene implements Scene {
   private idx = 0;
   private resolve: ((c: Choice) => void) | null = null;
   private line = rng.pick(LINES);
-  private dodo = rng.pick(DODO_LINES).replace('{player}', G.state.playerName || '…');
+  private dodo = tr(rng.pick(DODO_LINES)).replace('{player}', G.state.playerName || '…');
   private choices: Array<[string, Choice]>;
   /** Mina's offer: 'ask' (yes/no), 'reply' (her answer), 'done' (regular choices below her answer). */
   private offer: 'ask' | 'reply' | 'done' | null;
@@ -180,7 +181,7 @@ export class GameOverScene implements Scene {
     if (t > 110) {
       const a = Math.min(1, (t - 110) / 40);
       g.globalAlpha = a;
-      drawText(g, this.line, W / 2, 96, { color: '#fffaf2', align: 'center' });
+      drawText(g, tr(this.line), W / 2, 96, { color: '#fffaf2', align: 'center' });
       g.globalAlpha = 1;
     }
     if (t > 160) {
@@ -195,7 +196,8 @@ export class GameOverScene implements Scene {
     if ((t >= 200 && (!this.offer || this.offer === 'done')) || this.t < 0) {
       const total = this.choices.length;
       const y = this.offer ? 158 : 144;
-      this.choices.forEach(([label], i) => {
+      this.choices.forEach(([fr], i) => {
+        const label = tr(fr);
         const x = W / 2 + (i - (total - 1) / 2) * 80;
         const sel = i === this.idx;
         hits.add(this, `c:${i}`, Math.round(x - 38), y - 4, 76, 16);
@@ -215,9 +217,9 @@ export class GameOverScene implements Scene {
     const fy = 110;
     const key = this.offer === 'ask' ? 'face_mina_sad' : this.accepted ? 'face_mina_happy' : 'face_mina_neutral';
     if (hasSpr(key)) g.drawImage(spr(key).img, fx0, fy);
-    lines.forEach((l, i) => drawText(g, l, fx0 + 40, fy + 4 + i * 12, { color: i === 0 ? MINA_COLOR : '#fffaf2' }));
+    lines.forEach((l, i) => drawText(g, tr(l), fx0 + 40, fy + 4 + i * 12, { color: i === 0 ? MINA_COLOR : '#fffaf2' }));
     if (this.offer === 'ask' && ot >= 60) {
-      const opts = ['Oui, aide-moi', 'Non, ça ira'];
+      const opts = trAll(['Oui, aide-moi', 'Non, ça ira']);
       opts.forEach((label, i) => {
         const x = W / 2 + (i - 0.5) * 110;
         const sel = i === this.offerIdx;
@@ -227,7 +229,7 @@ export class GameOverScene implements Scene {
       });
     }
     if (this.offer !== 'ask' && this.accepted) {
-      drawText(g, '(Mode Histoire activé — modifiable dans les Options.)', W / 2, 145, { color: '#8a7f96', align: 'center' });
+      drawText(g, tr('(Mode Histoire activé — modifiable dans les Options.)'), W / 2, 145, { color: '#8a7f96', align: 'center' });
     }
     g.globalAlpha = 1;
   }

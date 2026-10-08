@@ -50,8 +50,25 @@
       <div id="boot">
         <div class="boot-moon"></div>
         <p class="boot-text">Chargement…</p>
-        <noscript><p class="boot-text">Ce jeu nécessite JavaScript.</p></noscript>
+        <noscript><p class="boot-text">Ce jeu nécessite JavaScript. · This game needs JavaScript.</p></noscript>
       </div>
+      <script>
+        // Boot screen language (same rule as the game: ?lang=, then the saved setting, then the browser).
+        (function () {
+          try {
+            var q = /[?&]lang=(fr|en)\b/.exec(location.search);
+            var s = JSON.parse(localStorage.getItem('veilleuse.settings.v1') || '{}');
+            var l = q ? q[1] : s.language || (/^fr\b/i.test(navigator.language || 'fr') ? 'fr' : 'en');
+            if (l === 'en') {
+              document.documentElement.lang = 'en';
+              document.querySelector('.boot-text').textContent = 'Loading…';
+              document.getElementById('game').setAttribute('aria-label', 'Veilleuse game screen');
+            }
+          } catch (e) {
+            /* storage unavailable: keep French */
+          }
+        })();
+      </script>
     </div>
     <script type="module" src="./src/main.ts"></script>
   </body>

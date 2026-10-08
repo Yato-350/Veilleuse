@@ -94,6 +94,16 @@ export function hasTr(fr: string): boolean {
   return l === 'fr' || !!CATALOGS[l][fr];
 }
 
+/**
+ * Translates a line of a poem or a note: the whole line if the catalog has it, else its body without a trailing
+ * « , » or « . » (« lumière, » → "light,": poems are built from single words plus punctuation).
+ */
+export function trLine(line: string): string {
+  if (getLang() === 'fr' || !line || hasTr(line)) return tr(line);
+  const m = /^(.*?)([.,])$/.exec(line);
+  return m && hasTr(m[1]!) ? tr(m[1]!) + m[2] : tr(line);
+}
+
 /** Translates every string of a list. */
 export function trAll(list: readonly string[]): string[] {
   return list.map(tr);
@@ -111,6 +121,14 @@ export function format(template: string, ...args: Array<string | number>): strin
 export function tf(fr: string, ...args: Array<string | number>): string {
   const out = format(tr(fr), ...args);
   return getLang() === 'fr' ? out : remember(out);
+}
+
+/**
+ * Marks a string composed from translated parts (`tf(…) + tr(…)`) as final display text: passing it to a
+ * translating chokepoint (dialogue, battle box) then is not reported as a missing translation.
+ */
+export function translated(s: string): string {
+  return getLang() === 'fr' ? s : remember(s);
 }
 
 /**

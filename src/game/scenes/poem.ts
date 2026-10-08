@@ -7,6 +7,7 @@ import { rng } from '../../engine/math';
 import { EMOTION_COLOR, type Emotion } from '../../engine/palette';
 import { POEM_WORDS } from '../../data/words';
 import type { WordDef } from '../battle/types';
+import { tr } from '../../i18n';
 
 const PICKS = 6;
 const COLS = 3;
@@ -94,7 +95,7 @@ export class PoemScene implements Scene {
     for (let ly = y + 26; ly < y + h - 4; ly += 18) g.fillRect(x + 2, ly, w - 4, 1);
     g.fillStyle = '#f08a9a';
     g.fillRect(x + 22, y, 1, h);
-    drawText(g, this.title, W / 2, y + 7, { align: 'center', color: '#2b2a5c' });
+    drawText(g, tr(this.title), W / 2, y + 7, { align: 'center', color: '#2b2a5c' });
     drawText(g, `${this.chosen.length}/${PICKS}`, x + w - 8, y + 7, { align: 'right', color: '#8a7f96' });
     this.words.forEach((wd, i) => {
       const col = i % COLS;
@@ -112,10 +113,10 @@ export class PoemScene implements Scene {
         g.fillStyle = '#2b2a5c';
         g.fillRect(wx - 5, wy + 5 + dy, 1, 1);
       }
-      drawText(g, wd.text, wx, wy + dy, { color });
+      drawText(g, tr(wd.text), wx, wy + dy, { color });
     });
     // Chosen words preview along the bottom
-    const preview = this.chosen.map((c) => c.text).join(', ');
+    const preview = this.chosen.map((c) => tr(c.text)).join(', ');
     drawText(g, preview, W / 2, y + h - 14, { align: 'center', color: '#6e4a3a' });
   }
 }

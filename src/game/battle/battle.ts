@@ -5,7 +5,8 @@ import { fx } from '../../engine/fx';
 import { game, type Scene } from '../../engine/game';
 import { hits, input } from '../../engine/input';
 import { clamp, lerp, rng, type Rect } from '../../engine/math';
-import { EMOTION_COLOR, EMOTION_COLOR_NAME, EMOTION_LABEL, soulLabel, type Emotion } from '../../engine/palette';
+import { EMOTION_COLOR, emotionColorName, emotionLabel, soulLabel, type Emotion } from '../../engine/palette';
+import { tf, tn, tr, translated } from '../../i18n';
 import { vibrate } from '../../engine/screen';
 import { drawSprite, silhouette } from '../../engine/sprite';
 import { ITEMS } from '../../data/items';
@@ -51,8 +52,8 @@ type Mode = 'idle' | 'menu' | 'list' | 'notebook' | 'bar' | 'dodge' | 'text';
 /** Rich-text color code of each emotion ({c:y}…{/c}). */
 const RICH_CODE: Record<Emotion, string> = { neutre: 'g', joie: 'y', tristesse: 'b', colere: 'r', peur: 'v' };
 
-/** Agreement helper: "apaisé" / "apaisée". */
-export const agree = (e: EnemyRuntime, word: string): string => (e.def.fem ? `${word}e` : word);
+/** Agreement helper: "apaisé" / "apaisée", translated ("calm"). */
+export const agree = (e: EnemyRuntime, word: string): string => tr(e.def.fem ? `${word}e` : word);
 
 // -----------------------------------------------------------------------------
 // Music that follows the soul
@@ -224,7 +225,11 @@ export class Battle implements Scene {
     const first = this.enemies[0]!;
     const intro =
       this.opts.intro ??
-      (this.enemies.length > 1 ? `* ${first.name} et ses amis te barrent la route !` : `* ${first.name} ${first.def.boss ? 'se dresse devant toi.' : 'te barre la route !'}`);
+      (this.enemies.length > 1
+        ? tf('* {0} et ses amis te barrent la route !', first.name)
+        : first.def.boss
+          ? tf('* {0} se dresse devant toi.', first.name)
+          : tf('* {0} te barre la route !', first.name));
     await this.say(intro);
     while (!this.ended) {
       this.turn++;
@@ -337,7 +342,7 @@ export class Battle implements Scene {
         if (idx < 0) continue;
         if (idx >= G.state.items.length) {
           const id = items[idx]!;
-          if (!(await this.hooks.onItem?.(this, id))) await this.say(`* Tu sors : ${ITEMS[id]?.name ?? id}. Rien ne se passe.`);
+          if (!(await this.hooks.onItem?.(this, id))) await this.say(tf('* Tu sors : {0}. Rien ne se passe.', tr(ITEMS[id]?.name ?? id)));
           return 'acted';
         }
         await this.useItem(idx);
@@ -369,9 +374,8 @@ export class Battle implements Scene {
   }
 
   private async observe(e: EnemyRuntime): Promise<void> {
-    const emo = EMOTION_LABEL[e.emotion];
-    const col = e.emotion === 'neutre' ? 'g' : e.emotion === 'joie' ? 'y' : e.emotion === 'tristesse' ? 'b' : e.emotion === 'colere' ? 'r' : 'v';
-    await this.say(`* ${e.name.toUpperCase()} — ATQ ${e.def.atk} DÉF ${e.def.def} — {c:${col}}${emo}{/c}\n* ${e.def.check}`);
+    const emo = `{c:${RICH_CODE[e.emotion]}}${emotionLabel(e.emotion)}{/c}`;
+    await this.say(tf('* {0} — ATQ {1} DÉF {2} — {3}\n* {4}', e.name.toUpperCase(), e.def.atk, e.def.def, emo, tr(e.def.check)));
   }
 
   private async enemyTurn(): Promise<void> {
@@ -426,20 +430,20 @@ export class Battle implements Scene {
     this.allyActs++;
     this.allyT = 60;
     audio.sfx('write', { pitch: 1.3 });
-    let line = rng.pick(ALLY_LINES[effect]).replace('{color}', EMOTION_COLOR_NAME[this.soulEmo]);
+    let line = tr(rng.pick(ALLY_LINES[effect])).replace('{color}', emotionColorName(this.soulEmo));
     let after: string;
     if (effect === 'heal') {
       const before = this.hp;
       this.heal(allyHeal(this.maxHp));
-      after = `* Tu récupères ${this.hp - before} PV.`;
+      after = tf('* Tu récupères {0} PV.', this.hp - before);
     } else if (effect === 'shield') {
       this.nextDodge = { shield: 3 };
-      after = '* Un rond de crayon protège ton cœur (3 coups).';
+      after = tr('* Un rond de crayon protège ton cœur (3 coups).');
     } else {
       this.nextDodge = { recolor: this.soulEmo };
-      after = '* Les attaques blanches prennent ta couleur.';
+      after = tr('* Les attaques blanches prennent ta couleur.');
     }
-    line = `{c:o}Mina :{/c} ${line}\n${after}`;
+    line = tf('{c:o}Mina :{/c} {0}\n{1}', line, after);
     this.allyTalking = true;
     await this.say(line, false, true, 'mina');
     this.allyTalking = false;
@@ -573,7 +577,7 @@ export class Battle implements Scene {
     audio.sfx('die');
     this.result.killed.push(e.def.id);
     await game.wait(70);
-    await this.say(e.def.killText ?? `* ${e.name} se dissout en une flaque d'encre.`);
+    await this.say(e.def.killText ?? tf("* {0} se dissout en une flaque d'encre.", e.name));
   }
 
   private async writeWord(e: EnemyRuntime, w: WordDef): Promise<void> {
@@ -588,16 +592,18 @@ export class Battle implements Scene {
     else reaction = rng.pick(e.def.reactNeutral);
     await this.bubble([{ e, text: reaction }]);
     let line: string;
-    if (e.spareable) line = `* {c:y}${e.name} est ${agree(e, 'apaisé')}.{/c} Tu peux l'épargner.`;
-    else if (r.verdict === 'good' || r.verdict === 'special') line = `* Tes mots touchent ${e.name}.`;
-    else if (r.verdict === 'bad') line = `* ${e.name} se crispe. Ses attaques seront plus fortes.`;
-    else line = `* ${e.name} ne semble pas comprendre.`;
+    if (e.spareable) line = tf("* {c:y}{0} est {1}.{/c} Tu peux l'épargner.", e.name, agree(e, 'apaisé'));
+    else if (r.verdict === 'good' || r.verdict === 'special') line = tf('* Tes mots touchent {0}.', e.name);
+    else if (r.verdict === 'bad') line = tf('* {0} se crispe. Ses attaques seront plus fortes.', e.name);
+    else line = tf('* {0} ne semble pas comprendre.', e.name);
     await this.say(line);
     if (w.emotion2 && w.emotion2 !== w.emotion && !G.state.flags.b_doux_amer) {
       // The first bittersweet word ever written: explain the two-colored heart once.
       G.state.flags.b_doux_amer = true;
-      const tag = (x: Emotion) => `{c:${RICH_CODE[x]}}${EMOTION_COLOR_NAME[x]}{/c}`;
-      await this.say(`* Un mot doux-amer : ton cœur a deux couleurs.\n* Le ${tag(w.emotion)} et le ${tag(w.emotion2)} le traversent sans lui faire mal.`);
+      const tag = (x: Emotion) => `{c:${RICH_CODE[x]}}${emotionColorName(x)}{/c}`;
+      await this.say(
+        tf('* Un mot doux-amer : ton cœur a deux couleurs.\n* Le {0} et le {1} le traversent sans lui faire mal.', tag(w.emotion), tag(w.emotion2)),
+      );
     }
   }
 
@@ -608,24 +614,24 @@ export class Battle implements Scene {
     if (await this.hooks.onItem?.(this, id)) return;
     G.state.items.splice(idx, 1);
     audio.sfx('item');
-    let line = `* Tu utilises : ${item.name}. ${item.useText ?? ''}`;
+    let line = tf('* Tu utilises : {0}. {1}', tr(item.name), tr(item.useText ?? ''));
     if (item.heal) {
       const before = this.hp;
       this.heal(item.heal);
-      line += this.hp >= this.maxHp ? ' PV au maximum !' : ` +${this.hp - before} PV.`;
+      line += this.hp >= this.maxHp ? tr(' PV au maximum !') : tf(' +{0} PV.', this.hp - before);
     }
     if (item.emotion) {
       this.setEmotion(item.emotion);
-      line += ` Ton cœur devient ${EMOTION_LABEL[item.emotion]}.`;
+      line += tf(' Ton cœur devient {0}.', emotionLabel(item.emotion));
     }
-    await this.say(line);
+    await this.say(translated(line));
   }
 
   private async spare(): Promise<void> {
     const targets = this.alive.filter((e) => e.spareable);
     if (!targets.length) {
       const e = this.alive[0];
-      await this.say(this.alive.length === 1 && e ? `* ${e.name} n'est pas encore ${agree(e, 'apaisé')}.` : '* Personne n\'est prêt à partir en paix.');
+      await this.say(this.alive.length === 1 && e ? tf("* {0} n'est pas encore {1}.", e.name, agree(e, 'apaisé')) : '* Personne n\'est prêt à partir en paix.');
       return;
     }
     for (const e of targets) {
@@ -636,7 +642,7 @@ export class Battle implements Scene {
       audio.sfx('spare');
     }
     await game.wait(50);
-    for (const e of targets) if (e.spared) await this.say(e.def.spareText ?? `* ${e.name} s'en va en paix.`);
+    for (const e of targets) if (e.spared) await this.say(e.def.spareText ?? tf("* {0} s'en va en paix.", e.name));
   }
 
   private async victory(): Promise<void> {
@@ -660,31 +666,31 @@ export class Battle implements Scene {
     this.result.outcome = killed > 0 && spared === 0 ? 'win' : spared > 0 && killed === 0 ? 'spare' : 'win';
     audio.stopMusic(1.2);
     const parts: string[] = [];
-    if (spared) parts.push(`{c:y}${spared} Étoile${spared > 1 ? 's' : ''}{/c}`);
-    if (killed) parts.push(`{c:v}${killed} Encre${killed > 1 ? 's' : ''}{/c}`);
-    parts.push(`${boutons} Bouton${boutons > 1 ? 's' : ''}`);
-    const lines = [`* C'est fini. Tu gagnes ${parts.join(', ')}.`];
+    if (spared) parts.push(tn(spared, '{c:y}{0} Étoile{/c}', '{c:y}{0} Étoiles{/c}'));
+    if (killed) parts.push(tn(killed, '{c:v}{0} Encre{/c}', '{c:v}{0} Encres{/c}'));
+    parts.push(tn(boutons, '{0} Bouton', '{0} Boutons'));
+    const lines = [tf("* C'est fini. Tu gagnes {0}.", parts.join(', '))];
     if (maxHp(s) > hpBefore) {
-      lines.push(`* Ta lumière grandit ! PV max +${maxHp(s) - hpBefore}.`);
+      lines.push(tf('* Ta lumière grandit ! PV max +{0}.', maxHp(s) - hpBefore));
       this.hp += maxHp(s) - hpBefore;
     }
-    if (attack(s) > atkBefore) lines.push(`* L'encre coule en toi… ATQ +${attack(s) - atkBefore}.`);
-    else if (level(s) > lvBefore && maxHp(s) === hpBefore) lines.push(`* Tu passes au niveau ${level(s)}.`);
+    if (attack(s) > atkBefore) lines.push(tf("* L'encre coule en toi… ATQ +{0}.", attack(s) - atkBefore));
+    else if (level(s) > lvBefore && maxHp(s) === hpBefore) lines.push(tf('* Tu passes au niveau {0}.', level(s)));
     for (const e of this.enemies) {
       if (e.def.rewards.item && (e.spared || e.dead)) {
         const it = ITEMS[e.def.rewards.item];
         if (!it) continue;
         if (it.key) {
           if (!s.keyItems.includes(it.id)) s.keyItems.push(it.id);
-          lines.push(`* Tu obtiens : ${it.name}.`);
+          lines.push(tf('* Tu obtiens : {0}.', tr(it.name)));
         } else if (s.items.length < MAX_ITEMS) {
           s.items.push(it.id);
-          lines.push(`* Tu obtiens : ${it.name}.`);
-        } else lines.push(`* Tes poches sont pleines. Tu laisses : ${it.name}.`);
+          lines.push(tf('* Tu obtiens : {0}.', tr(it.name)));
+        } else lines.push(tf('* Tes poches sont pleines. Tu laisses : {0}.', tr(it.name)));
       }
     }
     // The text box holds about three lines: show the summary two sentences at a time.
-    for (let i = 0; i < lines.length; i += 2) await this.say(lines.slice(i, i + 2).join('\n'), false, true);
+    for (let i = 0; i < lines.length; i += 2) await this.say(translated(lines.slice(i, i + 2).join('\n')), false, true);
   }
 
   // ---------------------------------------------------------------------------
@@ -707,7 +713,7 @@ export class Battle implements Scene {
       this.text = null;
       return;
     }
-    const chars = parseRich(text, { player: G.state.playerName });
+    const chars = parseRich(tr(text), { player: G.state.playerName });
     const lines = layoutRich(chars, TEXT_BOX.w - 20);
     this.text = { chars: lines, shown: 0, total: lines.reduce((a, l) => a + l.length, 0), wait: 0, voice: 'narrator', waitInput };
     if (waitInput) this.mode = 'text';
@@ -789,7 +795,7 @@ export class Battle implements Scene {
   /** Shows speech bubbles next to enemies; resolves when the player confirms. */
   bubble(lines: Array<{ e: EnemyRuntime; text: string }>): Promise<void> {
     this.bubbles = lines.map(({ e, text }) => {
-      const chars = layoutRich(parseRich(text, { player: G.state.playerName }), 92);
+      const chars = layoutRich(parseRich(tr(text), { player: G.state.playerName }), 92);
       return { e, chars, shown: 0, total: chars.reduce((a, l) => a + l.length, 0) };
     });
     return new Promise((resolve) => {
@@ -1023,7 +1029,7 @@ export class Battle implements Scene {
     const nb = this.nb!;
     if (nb.writing) {
       nb.writing.t++;
-      const len = nb.writing.word.text.length;
+      const len = tr(nb.writing.word.text).length;
       if (nb.writing.t % 4 === 0 && nb.writing.t / 4 <= len) audio.sfx('write', { pitch: 0.8 + rng.next() * 0.5 });
       if (nb.writing.t > len * 4 + 40) {
         const w = nb.writing.word;
@@ -1150,7 +1156,8 @@ export class Battle implements Scene {
     for (const b of this.bubbles) this.drawBubble(g, b);
     for (const f of this.floaters) {
       const y = f.y - Math.min(14, f.t * 0.6);
-      drawOutlined(g, f.text, f.x - Math.floor(measure(f.text) / 2), Math.round(y), f.color, '#0b0710');
+      const ft = tr(f.text);
+      drawOutlined(g, ft, f.x - Math.floor(measure(ft) / 2), Math.round(y), f.color, '#0b0710');
     }
     this.overlay?.(g, this);
   }
@@ -1406,7 +1413,7 @@ export class Battle implements Scene {
       const sel = i === l.idx;
       hits.add(this, `l:${i}`, ix - 16, iy - 3, 140, 14);
       if (sel) soulHeart(g, ix - 12, iy + 3, ...this.soulColors());
-      const label = l.items[i]!.replace('{c:g}', '');
+      const label = tr(l.items[i]!.replace('{c:g}', ''));
       drawText(g, `* ${label}`, ix, iy, { color: l.colors[i] ?? (sel ? '#fffaf2' : '#d8cfe0') });
       // Enemy calm meter next to names
       const enemy = this.alive.find((e) => e.name === l.items[i]);
@@ -1451,9 +1458,9 @@ export class Battle implements Scene {
 
   private drawHud(g: CanvasRenderingContext2D): void {
     const y = 143;
-    drawText(g, this.hudName, 14, y, { color: '#fffaf2' });
-    drawText(g, `NV ${level(G.state)}`, 48, y, { color: '#fffaf2' });
-    drawText(g, 'PV', 88, y, { color: '#fffaf2' });
+    drawText(g, tr(this.hudName), 14, y, { color: '#fffaf2' });
+    drawText(g, tf('NV {0}', level(G.state)), 48, y, { color: '#fffaf2' });
+    drawText(g, tr('PV'), 88, y, { color: '#fffaf2' });
     const maxw = Math.min(70, 24 + this.maxHp);
     bar(g, 104, y + 3, maxw, 7, this.hp / this.maxHp, this.hp / this.maxHp < 0.3 ? '#ff4a5a' : '#ffd84a', '#5a1c2c', this.hpGhost / this.maxHp);
     drawText(g, `${this.hp}/${this.maxHp}`, 108 + maxw, y, { color: '#fffaf2' });
@@ -1488,7 +1495,7 @@ export class Battle implements Scene {
       g.fillRect(x, y, 72, 18);
       g.fillStyle = '#000';
       g.fillRect(x + 1, y + 1, 70, 16);
-      const label = this.menuLabels[i] ?? '';
+      const label = tr(this.menuLabels[i] ?? '');
       const lw = measure(label);
       // Long labels (« SE RÉVEILLER ») take the whole button: no icon, centered.
       if (lw > 56) {
@@ -1519,14 +1526,15 @@ export class Battle implements Scene {
     // Spiral
     g.fillStyle = '#8a7f96';
     for (let sy = y + 6; sy < y + h; sy += 10) g.fillRect(x - 3, sy, 6, 2);
-    drawText(g, `Carnet — ${nb.target.name}`, x + 24, y + 6, { color: '#2b2a5c' });
+    drawText(g, tf('Carnet — {0}', nb.target.name), x + 24, y + 6, { color: '#2b2a5c' });
     this.drawCalm(g, x + w - 10 - Math.min(6, nb.target.total) * 8, y + 9, nb.target);
     if (nb.writing) {
       const wd = nb.writing.word;
-      const n = Math.min(wd.text.length, Math.floor(nb.writing.t / 4));
-      const txt = wd.text.slice(0, n);
+      const word = tr(wd.text);
+      const n = Math.min(word.length, Math.floor(nb.writing.t / 4));
+      const txt = word.slice(0, n);
       const scale = 2;
-      const tw = measure(wd.text) * scale;
+      const tw = measure(word) * scale;
       const tx = x + w / 2 - tw / 2;
       drawText(g, txt, tx, y + 52, { color: wd.emotion === 'neutre' ? '#2b2a5c' : EMOTION_COLOR[wd.emotion], scale, shadow: '#2b2a5c' });
       if (wd.emotion2) {
@@ -1553,7 +1561,7 @@ export class Battle implements Scene {
     // Observe
     const obsSel = nb.idx === 0;
     if (obsSel) this.drawPencil(g, x + 22, y + 26);
-    drawText(g, 'Observer', x + 34, y + 23, { color: obsSel ? '#c46a2e' : '#6e4a3a' });
+    drawText(g, tr('Observer'), x + 34, y + 23, { color: obsSel ? '#c46a2e' : '#6e4a3a' });
     // Words
     nb.words.forEach((wd, i) => {
       const col = i % 2;
@@ -1562,13 +1570,13 @@ export class Battle implements Scene {
       const wy = y + 51 + row * 25;
       const sel = nb.idx === i + 1;
       hits.add(this, `nb:${i + 1}`, wx - 18, wy - 7, 98, 23);
-      let label = wd.text;
+      let label = tr(wd.text);
       if (nb.scramble) label = scramble(label, this.t + i);
       if (!nb.scramble) this.drawWordMark(g, wd, wx, wy, label);
       if (sel) this.drawPencil(g, wx - 16, wy + 2);
       drawText(g, label, wx, wy, { color: sel ? '#c46a2e' : '#2b2a5c' });
     });
-    drawText(g, 'Un mot change ton cœur.', x + 24, y + h - 13, { color: '#8a7f96' });
+    drawText(g, tr('Un mot change ton cœur.'), x + 24, y + h - 13, { color: '#8a7f96' });
   }
 
   /** The emotion mark before a word: a color square (split for bittersweet words), or shapes (accessibility). */

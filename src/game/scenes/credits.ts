@@ -5,6 +5,7 @@ import { fx } from '../../engine/fx';
 import { game, type Scene } from '../../engine/game';
 import { input } from '../../engine/input';
 import { G } from '../state';
+import { tr } from '../../i18n';
 
 const LINES: Array<[string, string?]> = [
   ['VEILLEUSE', '#ffe991'],
@@ -76,7 +77,7 @@ export class CreditsScene implements Scene {
     LINES.forEach(([text, color], i) => {
       const y = Math.round(this.y + i * 14);
       if (y < -14 || y > H) return;
-      const txt = text.replace('{player}', G.state.playerName || G.meta.names[G.meta.names.length - 1] || 'toi');
+      const txt = tr(text).replace('{player}', G.state.playerName || G.meta.names[G.meta.names.length - 1] || tr('toi'));
       drawText(g, txt, W / 2, y, { align: 'center', color: color ?? '#fffaf2', scale: i === 0 ? 2 : 1 });
     });
     drawText(g, `v${VERSION}`, W - 4, H - 11, { color: '#2a2238', align: 'right' });

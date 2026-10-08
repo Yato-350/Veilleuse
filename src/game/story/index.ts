@@ -2,6 +2,7 @@ import type { Script } from '../overworld/types';
 import { STORY } from './common';
 import { world } from '../overworld/world';
 import { G } from '../state';
+import { tr } from '../../i18n';
 import * as real from './real';
 import * as chapter1 from './chapter1';
 import * as chapter2 from './chapter2';
@@ -16,7 +17,8 @@ world.followerTalk = async (d) => {
   const n = Number(G.state.flags[`mina_talk_${G.state.map}`] ?? 0);
   G.state.flags[`mina_talk_${G.state.map}`] = n + 1;
   const line = lines[n % lines.length]!;
-  const [text, expr] = line.split('|') as [string, string | undefined];
+  // The catalog key is the whole "text|expression" line; the English value keeps the same suffix.
+  const [text, expr] = tr(line).split('|') as [string, string | undefined];
   await d.say(text, `mina:${expr ?? 'happy'}`);
 };
 
