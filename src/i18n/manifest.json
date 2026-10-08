@@ -39,6 +39,20 @@
     "src/game/flow.ts",
     "src/game/overworld/world.ts",
     "src/main.ts",
-    "src/data/enemies-dev.ts"
+    "src/data/enemies-dev.ts",
+    "src/data/enemies.ts",
+    "src/data/items.ts",
+    "src/data/words.ts",
+    "src/data/speakers.ts",
+    "src/data/illustrations.ts",
+    "src/data/illustrations-bonus.ts",
+    "src/data/maps/real.ts",
+    "src/data/maps/chapter1.ts",
+    "src/data/maps/chapter2.ts",
+    "src/data/maps/chapter3.ts",
+    "src/data/maps/epilogue.ts",
+    "src/data/maps/bonus.ts",
+    "src/data/maps/build.ts",
+    "src/data/maps/index.ts"
   ]
 }

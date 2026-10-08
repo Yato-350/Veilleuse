@@ -6,6 +6,8 @@ import { CATALOG_PARTS, EN } from '../src/i18n/en';
 import { bindLanguage, format, tf, tn, tr, trLine } from '../src/i18n';
 import { ACCENTS, GLYPHS } from '../src/engine/font-data';
 import { measure } from '../src/engine/font';
+import { DODO_WORDS, MINA_WORDS, POEM_WORDS, WORD_POOLS } from '../src/data/words';
+import { ENEMIES } from '../src/data/enemies';
 
 type Missing = { file: string; line: number; value: string; dynamic: boolean };
 
@@ -73,10 +75,17 @@ describe('English catalog', () => {
 
   it('fits battle button labels (all-caps entries) in their 70px buttons', () => {
     const tooWide = entries
-      .filter(([fr, en]) => en && fr.length <= 16 && !/[a-zà-ÿ{]/.test(fr) && /[A-Z]/.test(fr))
+      // (shouted lines such as « FERME LA PORTE. » end with punctuation: buttons never do)
+      .filter(([fr, en]) => en && fr.length <= 16 && !/[a-zà-ÿ{]/.test(fr) && /[A-Z]/.test(fr) && !/[.!?…]$/.test(fr))
       .filter(([, en]) => measure(en) > 68)
       .map(([fr, en]) => `${fr} → ${en} (${measure(en)}px)`);
     expect(tooWide).toEqual([]);
+  });
+
+  it('translates every notebook, poem and special word (lowercase words escape the extractor)', () => {
+    const words = [...Object.values(WORD_POOLS).flat(), ...DODO_WORDS, ...MINA_WORDS, ...POEM_WORDS];
+    for (const e of Object.values(ENEMIES)) words.push(...(e.specialWords ?? []));
+    expect([...new Set(words.map((w) => w.text))].filter((t) => !EN[t])).toEqual([]);
   });
 
   it('is plain data: catalog files hold only string entries', () => {

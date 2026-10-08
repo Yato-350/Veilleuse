@@ -14,7 +14,7 @@ import { dialogue } from '../ui/dialogue';
 import { bar, box, heart } from '../ui/draw';
 import { OptionsPanel } from '../ui/options';
 import { ImageScene } from './image';
-import { tf, tr } from '../../i18n';
+import { tf, tr, translated } from '../../i18n';
 
 const TABS = ['Objets', 'Souvenirs', 'Statut', 'Options', 'Quitter'];
 
@@ -184,7 +184,7 @@ export class MenuScene implements Scene {
       s.hp = Math.min(maxHp(s), s.hp + def.heal);
       s.items.splice(this.itemIdx, 1);
       audio.sfx('heal');
-      this.msg = { text: `${def.name} : ${def.useText ?? ''}`, t: 0 };
+      this.msg = { text: translated(tf('{0} : {1}', tr(def.name), tr(def.useText ?? ''))), t: 0 };
       this.itemIdx = Math.max(0, Math.min(this.itemIdx, this.allItems().length - 1));
     }
   }

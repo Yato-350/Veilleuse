@@ -258,6 +258,8 @@ export function isDisplay(tok) {
   if (/^(rgba?|hsla?)\(/.test(text)) return false;
   // Pixel-art / tile grids: multi-line strings without real words.
   if (/\n/.test(text) && !/[A-Za-zÀ-ÿŒœ]{2,}\s+\S*[A-Za-zÀ-ÿŒœ]/.test(text)) return false;
+  const rows = text.split('\n').map((l) => l.trim()).filter(Boolean);
+  if (rows.length > 1 && rows.every((r) => r.length >= 4 && r.length === rows[0].length && !/\s/.test(r))) return false;
   const hasSpace = /\S\s+\S/.test(text);
   const hasAccent = ACCENTED.test(text) || /[A-Za-z]['’][a-zà-ÿ]/.test(text); // accents or French elision (l'aube)
   const capWord =

@@ -108,6 +108,7 @@ export const UI: Record<string, string> = {
   'C\'est important. Tu le gardes.': 'It\'s important. You keep it.',
   'Ça ne sert qu\'en combat.': 'Only useful in battle.',
   'Tes PV sont déjà au maximum.': 'Your HP is already full.',
+  '{0} : {1}': '{0}: {1}',
   'A : modifier': 'A: change',
   'Retourner à l\'écran titre ? Ce qui n\'a pas été sauvegardé près d\'une veilleuse sera perdu.': 'Return to the title screen? Anything not saved at a nightlight will be lost.',
   'Oui': 'Yes',

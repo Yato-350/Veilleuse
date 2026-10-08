@@ -12,6 +12,7 @@
  *  - Real memories and endings: quiet, dark pixel scenes (dithered gradients, few light sources).
  */
 import { drawText, measure } from '../engine/font';
+import { lang, tr } from '../i18n';
 import { PAL } from '../engine/palette';
 import { ctx2d, makeCanvas, parseRows } from '../engine/sprite';
 import { BONUS_ILLUSTRATIONS } from './illustrations-bonus';
@@ -171,7 +172,9 @@ function withAlpha(g: Ctx, a: number, fn: () => void): void {
 
 // Static layers are rendered once and cached.
 const layers = new Map<string, HTMLCanvasElement>();
-function layer(key: string, paint: (g: Ctx) => void, w = SW, h = SH): HTMLCanvasElement {
+function layer(name: string, paint: (g: Ctx) => void, w = SW, h = SH): HTMLCanvasElement {
+  // Some layers carry handwritten words (Mina's drawings): one cached canvas per language.
+  const key = lang() + ':' + name;
   let c = layers.get(key);
   if (!c) {
     c = makeCanvas(w, h);
@@ -857,7 +860,7 @@ function paintPage1(g: Ctx): void {
   scrawl(g, 'NOA', 118, 40, CR.navy, { seed: 2, bold: true });
   pen(g, [134, 52, 146, 58], { c: CR.navy, seed: 81, wob: 0.2 });
   pen(g, [142, 59, 146, 58, 144, 55], { c: CR.navy, seed: 82, wob: 0.1 });
-  scrawl(g, 'MOI', 236, 46, CR.red, { seed: 4, bold: true });
+  scrawl(g, tr('MOI'), 236, 46, CR.red, { seed: 4, bold: true });
   pen(g, [238, 58, 230, 64], { c: CR.red, seed: 83, wob: 0.2 });
   pen(g, [230, 61, 230, 64, 233, 65], { c: CR.red, seed: 84, wob: 0.1 });
   // flowers
@@ -878,7 +881,7 @@ function paintPage1(g: Ctx): void {
   flowers.forEach(([fx, fy, c], i) => kidFlower(g, fx, fy, c, 90 + i));
   // title at the bottom
   kidStar(g, 78, 160, 5, CR.yellowD, 95, CR.yellow);
-  scrawl(g, 'Moi et Noa au Pays de Coton', 88, 156, CR.purple, { seed: 9, bold: true, jit: 1.2 });
+  scrawl(g, tr('Moi et Noa au Pays de Coton'), 88, 156, CR.purple, { seed: 9, bold: true, jit: 1.2 });
 }
 
 /** Small cotton puff. */
@@ -1061,9 +1064,9 @@ function paintCover(g: Ctx): void {
   pen(g, [lx + 5, ly + 5, lx + lw - 14, ly + 5], { c: CR.pink, seed: 26, wob: 0.6 });
   pen(g, [lx + 5, ly + lh - 6, lx + lw - 6, ly + lh - 6], { c: CR.pink, seed: 27, wob: 0.6 });
   // title
-  scrawl(g, 'Le Pays', lx + 30, ly + 9, CR.purple, { seed: 31, scale: 2, jit: 2 });
-  scrawl(g, 'de Coton', lx + 22, ly + 33, CR.blue, { seed: 32, scale: 2, jit: 2 });
-  scrawl(g, 'pour Noa', lx + 40, ly + 60, CR.red, { seed: 33, bold: true });
+  scrawl(g, tr('Le Pays'), lx + 30, ly + 9, CR.purple, { seed: 31, scale: 2, jit: 2 });
+  scrawl(g, tr('de Coton'), lx + 22, ly + 33, CR.blue, { seed: 32, scale: 2, jit: 2 });
+  scrawl(g, tr('pour Noa'), lx + 40, ly + 60, CR.red, { seed: 33, bold: true });
   kidHeart(g, lx + 106, ly + 66, 4, CR.red, CR.redD, 34);
   // gommettes (round stickers) and gold star stickers
   const gommette = (x: number, y: number, r: number, c: string, hi: string): void => {
@@ -1087,8 +1090,8 @@ function paintCover(g: Ctx): void {
   };
   STAR_STICKERS.forEach(([sx, sy, r]) => starSticker(sx, sy, r));
   // signature
-  scrawl(g, 'MINA', 200, 140, CR.yellow, { seed: 35, bold: true });
-  scrawl(g, '8 ans', 204, 152, '#e8e6f4', { seed: 36 });
+  scrawl(g, 'MINA', 200, 140, CR.yellow, { seed: 35, bold: true }); // i18n-ignore
+  scrawl(g, tr('8 ans'), 204, 152, '#e8e6f4', { seed: 36 });
   // dust
   field(g, COVER.x, COVER.y, COVER.w, COVER.h, (x, y) => (hash(x, y, 37) < 0.012 ? '#6a73a8' : null));
 }
@@ -1194,11 +1197,11 @@ function paintPage2(g: Ctx): void {
   }
   pen(g, [sx, 56, sx, 88], { c: CR.brown, seed: 112, w: 2, wob: 0.2 });
   pen(g, [sx + 66, 56, sx + 66, 88], { c: CR.brown, seed: 113, w: 2, wob: 0.2 });
-  scrawl(g, 'BOUTIQUE', sx + 4, 30, CR.purple, { seed: 114, bold: true });
+  scrawl(g, tr('BOUTIQUE'), sx + 4, 30, CR.purple, { seed: 114, bold: true });
   // socks for sale on the counter
   crayonPoly(g, [sx + 6, 90, sx + 10, 90, sx + 10, 97, sx + 14, 97, sx + 14, 101, sx + 6, 101], CR.pink, CR.pinkL, 115, { fill: 0.6, wob: 0.3 });
   crayonPoly(g, [sx + 52, 90, sx + 56, 90, sx + 56, 97, sx + 60, 97, sx + 60, 101, sx + 52, 101], CR.green, CR.greenD, 116, { fill: 0.6, wob: 0.3 });
-  scrawl(g, 'Chaussette', sx - 2, 114, CR.navy, { seed: 117, bold: true });
+  scrawl(g, tr('Chaussette'), sx - 2, 114, CR.navy, { seed: 117, bold: true });
   pen(g, [sx + 30, 113, sx + 32, 108], { c: CR.navy, seed: 118, wob: 0.1 });
   // villagers
   kidSheep(g, 50, 124, 120, { s: 1, dir: 1 });
@@ -1215,7 +1218,7 @@ function paintPage2(g: Ctx): void {
   ];
   fl.forEach(([fx, fy, c], i) => kidFlower(g, fx, fy, c, 126 + i));
   // title
-  scrawl(g, 'Le vilage des moutons', 96, 156, CR.red, { seed: 125, bold: true, jit: 1.2 });
+  scrawl(g, tr('Le vilage des moutons'), 96, 156, CR.red, { seed: 125, bold: true, jit: 1.2 });
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -1303,7 +1306,7 @@ function paintPage3(g: Ctx): void {
   // speech bubble
   crayonEll(g, 220, 28, 25, 10, CR.white, CR.black, 195, { fill: 1, spill: 0, grain: 0 });
   pen(g, [206, 36, 194, 46, 212, 37], { c: CR.black, seed: 196, wob: 0.2 });
-  scrawl(g, 'Hou hou !', 198, 21, CR.black, { seed: 197 });
+  scrawl(g, tr('Hou hou !'), 198, 21, CR.black, { seed: 197 });
   // fireflies (static part; they also twinkle)
   P3_FIREFLIES.forEach(([x, y]) => kidFirefly(g, x, y));
   // mushrooms
@@ -1312,10 +1315,10 @@ function paintPage3(g: Ctx): void {
   crayonEll(g, 222, 136, 5, 3, CR.red, CR.redD, 200, { fill: 0.7 });
   pen(g, [222, 138, 222, 143], { c: CR.white, seed: 201, w: 3, wob: 0 });
   // label + title
-  scrawl(g, 'le hibou', 104, 60, CR.yellow, { seed: 202, bold: true });
-  scrawl(g, 'il sait tout', 100, 71, CR.yellow, { seed: 203, bold: true });
+  scrawl(g, tr('le hibou'), 104, 60, CR.yellow, { seed: 202, bold: true });
+  scrawl(g, tr('il sait tout'), 100, 71, CR.yellow, { seed: 203, bold: true });
   pen(g, [148, 70, 154, 66], { c: CR.yellow, seed: 205, wob: 0.1 });
-  scrawl(g, 'La forêt des crayons', 92, 156, CR.purple, { seed: 204, bold: true, jit: 1.2 });
+  scrawl(g, tr('La forêt des crayons'), 92, 156, CR.purple, { seed: 204, bold: true, jit: 1.2 });
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -1340,8 +1343,8 @@ function paintPage4(g: Ctx): void {
   stars.forEach(([x, y, r], i) => kidStar(g, x, y, r, CR.yellowD, 212 + i, CR.yellow));
   // the message
   const x0 = 140;
-  P4_LINES.forEach((l, i) => scrawl(g, l, x0 + (i === 1 ? 8 : i === 3 ? 30 : i === 2 ? 22 : 0), 22 + i * 16, CR.navy, { seed: 220 + i, bold: true, jit: 1 }));
-  scrawl(g, '— Mina', 232, 90, CR.red, { seed: 225, bold: true });
+  P4_LINES.forEach((l, i) => scrawl(g, tr(l), x0 + (i === 1 ? 8 : i === 3 ? 30 : i === 2 ? 22 : 0), 22 + i * 16, CR.navy, { seed: 220 + i, bold: true, jit: 1 }));
+  scrawl(g, '— Mina', 232, 90, CR.red, { seed: 225, bold: true }); // i18n-ignore
   kidHeart(g, 281, 95, 4, CR.red, CR.redD, 226);
   // the night-light under the text, with Noa asleep next to it
   kidVeilleuse(g, 232, 146, 1.1, 230);
@@ -1429,7 +1432,7 @@ function paintDessin(g: Ctx): void {
   kidNoa(g, 120, 118, 330, { s: 1.1, armR: [11, -34, 18, -23] });
   kidMina(g, 158, 118, 340, { s: 1.1, colored: false, armL: [-5, -25, -12, -22] });
   // title in pencil, in the blank part
-  scrawl(g, 'Noa et moi', 222, 98, CR.black, { seed: 350 });
+  scrawl(g, tr('Noa et moi'), 222, 98, CR.black, { seed: 350 });
   // the yellow crayon, left where it stopped
   waxCrayon(g, 236, 132, 40, -0.42, CR.yellow, CR.yellowD, '#fff0a0');
   // night: the whole sheet sits in the dark, a little light from the window
@@ -1781,7 +1784,7 @@ function drawTv(g: Ctx, t: number): void {
   }
   // REC timestamp (blinking dot)
   if (Math.floor(t / 30) % 2 === 0) rect(g, x + 5, y + 6, 3, 3, '#ff4a5a');
-  drawText(g, 'REC', x + 10, y + 3, { color: '#fffaf2', shadow: '#000000' });
+  drawText(g, 'REC', x + 10, y + 3, { color: '#fffaf2', shadow: '#000000' }); // i18n-ignore
   drawText(g, '12/06  18:42', x + w - 4, y + h - 13, { color: '#fffaf2', shadow: '#000000', align: 'right' });
   // Screen glass curvature: darker corners
   field(g, x, y, w, h, (xx, yy) => {
