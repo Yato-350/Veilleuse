@@ -271,3 +271,72 @@ par des scripts de carte et des drapeaux `ep_*`, pour qu'une sauvegarde de suspe
 8. Dernières lignes, voix de Dodo : « Je veillerai sur lui. Pour de vrai, cette fois. » (ou, s'il est resté :
    « Je veillerai sur elle. Lui, il n'a plus peur du noir. Plus autant. ») « Merci, {player}. Bonne nuit. Et
    bonjour. » → `finishGame(d, 'aube')`.
+
+## Bonus — « Les rêves des autres » : la nuit de Maman (après la fin de l'aube)
+
+Entrée de l'écran titre débloquée par la fin `aube` (`flow.startBonus` → `story/bonus.ts`, partie séparée qui ne
+touche pas aux drapeaux de l'histoire principale, `flags.bonus`). Le joueur incarne **Maman**
+(`G.state.playerChar = 'maman'`, « MAMAN » dans le combat, stylo quatre couleurs et gilet de laine). 15–25 minutes.
+Cartes `src/data/maps/bonus.ts`, drapeaux `b_*`.
+
+**Ce que Maman porte.** Elle travaille de nuit comme aide-soignante aux Glycines, une maison de retraite, « pour ne
+pas penser ». Pendant les dernières semaines de Mina, elle a dormi **quarante et une nuits** dans le fauteuil des
+parents de la chambre 304. Le dernier soir, Mina a demandé sa veilleuse ; Noa ne l'a pas apportée. L'infirmière de nuit
+(Nadia) a dit à Maman de rentrer dormir — « Elle est calme, ce soir. Je reste avec elle. » Maman est rentrée, a
+remonté son vieux réveil sur **cinq heures** pour rapporter la veilleuse avant que Mina se réveille. Le réveil n'a
+jamais sonné : le téléphone a sonné avant, à **3 h 33**. Elle a posé la veilleuse sur la table de chevet, sans la
+brancher (« elle n'a jamais été branchée », ch. 3), puis l'a rapportée à la maison, le fil enroulé (final). Depuis,
+elle ne dort plus la nuit.
+
+1. **3 h 33, salle de pause** (noir). La messagerie de Noa (l'annonce d'il y a deux ans : Mina veut faire le bip
+   elle-même), puis **le message vocal de l'interlude II, mot pour mot**. « Tu fermes les yeux. Juste une seconde. »
+   Carte « Les rêves des autres — La nuit de Maman ».
+2. **Les Glycines, service de nuit** (`b_service`, couloir de papier). Son vieux réveil est vivant : **le Réveil**,
+   pendant de Dodo (gentil, efficace, puis possessif) — « Debout ! Tu ne dors jamais, c'est pour ça qu'on s'entend
+   si bien. » Il saute dans sa poche. Casier (photo de la plage), machine à café, téléphone (rappeler juste pour
+   entendre l'annonce), chambres 10 à 16 (Monsieur Paul, Madame Rose et l'heure, Madame Odette et sa main — « tu l'as
+   fait quarante et une nuits »), une **porte 304** qui n'existe pas aux Glycines et dont la lumière d'appel reste
+   allumée. PNJ : **Sabine** (collègue : un bonbon, « Ton grand, ça va ? », « Assieds-toi cinq minutes, je te
+   couvre »), **M. Albert** (insomniaque en fauteuil : « la nuit, c'est fait pour poser les choses », « le grand et la
+   petite »). Ennemis : **Sonnette**, **Café Serré**. **Boucle** : au bout du couloir, la porte de chez elle ; on n'y
+   arrive jamais (retour au début, sonnettes plus fortes, `b_loop`). La sortie : **s'asseoir cinq minutes sur le
+   banc** (`b_sat`) — le Réveil hurle, elle pose la main dessus, les sonnettes se taisent une à une, la porte de
+   chez elle s'entrouvre.
+3. **À la maison** (`b_appart`, aspect monde réel, `maman@real`). « Chut. Tu vas réveiller Noa. » La porte de Noa,
+   de la lumière dessous (frapper : pas de réponse, la main à plat sur la porte), le mot du frigo (quoi qu'elle
+   commence — « Mange quelque chose. », « Pardon. », « Je t'aime. » — le mot final est celui que Noa lit à
+   l'interlude I), les pâtes, la photo du parc, la chaise de Mina. Devant la porte de Mina : **le Panier** de linge
+   (combat ; besoin : JOIE ×2 puis le mot **« plier »**, ou « garder » ; épargné → le pyjama à étoiles plié sur son
+   oreiller). La pancarte : « DÉFENSE D'ENTRER (sauf Noa) » — « et Maman pour les câlins ». Derrière la porte de Mina
+   : un couloir d'hôpital.
+4. **Pédiatrie, troisième étage** (`b_hopital`, l'hôpital de papier un an plus tôt). Le « chocolat du robot » (B4),
+   les dessins de Mina, la salle des parents (« Il ne veut pas venir », dit tout bas), Gérard la plante. **Mina, à
+   3 heures du matin** (souvenir) : « On fait la course jusqu'au robot ? … Porte-moi, j'ai les jambes en coton. » —
+   « Toi aussi tu devrais dormir. Tu dis que tu dors, mais t'as toujours les yeux ouverts. » Point de sauvegarde (la
+   veilleuse de couloir ; ne remplace jamais une partie principale en cours). **Nadia**, devant la 304 : « Ce soir-là,
+   c'est moi qui vous ai dit de rentrer dormir. Vous m'en voulez ? » — « Non. Pas à vous. » — « …À qui, alors ? »
+5. **Chambre 304** (`b_304`). « Tu y as dormi quarante et une nuits. Quarante et une. Pas quarante-deux. » Le Réveil :
+   « Je n'ai jamais sonné. Le téléphone a sonné avant moi. Alors maintenant, je sonne. Tout le temps. »
+   **Boss : le Réveil** (fond hôpital, musique `reveil`, ne peut pas être vaincu par la force : FRAPPER = appuyer sur
+   le bouton du dessus, cinq minutes de silence, puis DRIIING).
+   - Phase 1 : il parle (« Chaque minute où tu ne fais rien, quelqu'un a besoin de toi… Un fils. » — « Et s'il
+     t'appelle, une nuit ? Et si tu dors ? »). Les mots glissent sur le cadran.
+   - Phase 2 : il sonne (`b_reveil_sonne`, bord rouge qui pulse) ; OBJET, FRAPPER puis ÉPARGNER deviennent
+     **DEBOUT** (se relever : quelques PV, mais le tic-tac accélère et les attaques durcissent ; à la fin, tenir coûte
+     des PV). Le carnet ne contient que ses mots : debout, encore, vite, ça va, tiens bon, plus tard.
+   - Phase 3 : son téléphone vibre dans sa poche. Le carnet montre **ses propres mots, ceux qu'elle écrit à Noa
+     chaque soir** — « repose-toi », « pleure », « pas ta faute » (doux-amer), « pardonne-toi », « je t'aime »,
+     « rentre » — à écrire, pour une fois, pour elle. Chacun fissure le cadran (`b_reveil_fele`), ralentit la musique,
+     fait revenir un souvenir (« Maman, tu fais dodo avec moi ? »). Après quatre mots, un bouton devient **DORMIR**
+     (le miroir de Dodo : pour Noa, dormir était le piège ; pour Maman, c'est la guérison). « Alors on m'appellera. Et
+     je me réveillerai. C'est tout. »
+   - Pas de game over dans ce rêve : à 0 PV, un réveil sonne et Maman se relève (« Tu te relèves toujours »).
+6. **Elle dort.** Le Réveil face contre le bois. Dans le fauteuil, Mina veille sur elle : « T'étais pas là, le dernier
+   soir. Je sais. Mais t'étais là tous les autres. Quarante et un. Je les ai comptés, moi aussi. » — Nadia lui a tenu
+   la main, la porte était entrouverte, « je voulais que tu dormes » ; la veilleuse au fil enroulé, « un jour,
+   quelqu'un va la rebrancher » (Noa, au final) ; « Noa a peur, comme toi : vous fermez les portes. Frappe quand
+   même. » — « Dors. Moi, je veille. »
+7. **Cinq heures cinquante** (illustration `maman_aube`, galerie). Sabine l'a laissée dormir deux heures. Elle écrit
+   à Noa (brouillons effacés : « Pardon. », « Tu dors ? ») : **« Je rentre. »** — le message de 5 h 52 du final. Le
+   statut passe à **« Lu »** : il ne dort pas. Des clés dans la serrure : « Noa ? Tu es réveillé ? » — la première
+   réplique de Maman au final. Crédits, titre ; `G.meta.bonusDone = true` (aucune fin enregistrée).

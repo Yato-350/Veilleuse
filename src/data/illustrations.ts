@@ -14,6 +14,7 @@
 import { drawText, measure } from '../engine/font';
 import { PAL } from '../engine/palette';
 import { ctx2d, makeCanvas, parseRows } from '../engine/sprite';
+import { BONUS_ILLUSTRATIONS } from './illustrations-bonus';
 
 export type Illustration = (g: CanvasRenderingContext2D, t: number) => void;
 
@@ -2075,6 +2076,8 @@ export const ILLUSTRATIONS: Record<string, Illustration> = {
       rect(g, x, 0, 1, Math.floor(len), '#0b0710');
     }
   },
+  // Bonus chapter « Les rêves des autres » (see illustrations-bonus.ts).
+  ...BONUS_ILLUSTRATIONS,
 };
 
 export interface Souvenir {

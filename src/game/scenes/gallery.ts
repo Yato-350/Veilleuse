@@ -59,6 +59,7 @@ const CATALOG: Array<[key: string, kind: string, title: string, captions: string
     ['Noa dort. Il fait de beaux rêves.', 'Dans le rêve, il fait toujours nuit, et personne n\'est jamais triste.', 'Dans l\'appartement, la veilleuse grésille encore un peu. Puis plus rien.'],
   ],
   ['fin_silence', KIND_FIN, 'Le silence', ['Le Pays de Coton est noyé d\'encre.', 'Il n\'y a plus de moutons. Plus de lune. Plus de princesse.', 'Il n\'y a plus personne pour se souvenir de rien.']],
+  ['maman_aube', 'Les rêves des autres', 'Cinq heures cinquante', ['Maman a dormi. Deux heures, d\'une traite.', 'Sur la table, le réveil est face contre le bois.', '« Je rentre. »']],
 ];
 
 /** Every illustration of the game, in story order; ones added later without a catalog entry go at the end. */

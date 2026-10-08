@@ -1,7 +1,8 @@
 import { audio } from '../../engine/audio';
-import { TILE } from '../../engine/constants';
+import { H, TILE, W } from '../../engine/constants';
 import { fx } from '../../engine/fx';
-import { game } from '../../engine/game';
+import { game, type Scene } from '../../engine/game';
+import { ILLUSTRATIONS } from '../../data/illustrations';
 import type { Battle } from '../battle/battle';
 import type { EnemyRuntime } from '../battle/enemy';
 import type { BattleHooks, WordDef } from '../battle/types';
@@ -998,6 +999,9 @@ async function rest(d: Director): Promise<void> {
 // Dawn — « Je rentre. »
 // ---------------------------------------------------------------------------
 
+/** The dawn illustration (src/data/illustrations-bonus.ts). */
+const DAWN = 'maman_aube';
+
 /** Maman's side of the thread (her messages on the right), up to the voicemail of 3:33. */
 function mamanThread(): PhoneMessage[] {
   const me = (text: string, status?: string): PhoneMessage => ({ from: 'me', text, status });
@@ -1013,6 +1017,27 @@ function mamanThread(): PhoneMessage[] {
   ];
 }
 
+/** The dawn illustration kept on screen under the dialogue and the phone (the world is gone by then). */
+class Backdrop implements Scene {
+  private t = 0;
+  /** 0..1: darkens the picture while the phone is up. */
+  dim = 0;
+  constructor(private key: string) {}
+  update(): void {
+    this.t++;
+  }
+  draw(g: CanvasRenderingContext2D): void {
+    g.fillStyle = '#0b0710';
+    g.fillRect(0, 0, W, H);
+    ILLUSTRATIONS[this.key]?.(g, this.t);
+    if (this.dim > 0) {
+      g.globalAlpha = this.dim;
+      g.fillRect(0, 0, W, H);
+      g.globalAlpha = 1;
+    }
+  }
+}
+
 async function dawn(d: Director): Promise<void> {
   d.music(null, 2);
   game.remove(world);
@@ -1020,16 +1045,20 @@ async function dawn(d: Director): Promise<void> {
   await d.wait(40);
   await d.narrate('Cinq heures cinquante.');
   d.music('maman', 2);
-  // The world is gone: the illustration fades in over black on its own.
-  fx.setFade(0);
-  await d.image('maman_aube', [
-    'Tu as dormi. Deux heures, d\'une traite.',
-    'Quelqu\'un a posé une couverture sur tes épaules. Le Réveil est face contre la table.',
-    'Dehors, le ciel pâlit. Juste un peu.',
-  ]);
-  await d.say(['Je t\'ai laissée dormir. Deux heures. Tu ronflais un peu.', 'Les sonnettes, j\'ai fait. Tout le monde est vivant. Toi aussi, on dirait.'], 'sabine');
+  // Remembered for the title-screen gallery, like any illustration shown with d.image().
+  if (!G.meta.seen.includes(DAWN)) {
+    G.meta.seen.push(DAWN);
+    writeMeta(G.meta);
+  }
+  const back = new Backdrop(DAWN);
+  game.push(back);
+  await d.fadeIn(90);
+  const paper = { style: 'paper' as const };
+  await d.say(['Tu as dormi. Deux heures, d\'une traite.', 'Quelqu\'un a posé une couverture sur tes épaules. Le Réveil est face contre la table.'], undefined, paper);
+  await d.say(['Je t\'ai laissée dormir. Tu ronflais un peu.', 'Les sonnettes, j\'ai fait. Tout le monde est vivant. Toi aussi, on dirait.'], 'sabine');
   await d.say('…Merci, Sabine.', 'maman:happy');
-  await d.say('Tu prends ton téléphone.');
+  await d.say('Dehors, le ciel pâlit. Juste un peu. Tu prends ton téléphone.', undefined, paper);
+  back.dim = 0.45;
   const ph = PhoneScene.open('Noa', '5:52', mamanThread());
   await d.wait(30);
   const drafts: Array<PhoneReply & { id: string }> = [
@@ -1053,8 +1082,12 @@ async function dawn(d: Director): Promise<void> {
   await d.say(['« Lu. »', 'Il ne dort pas. Il a lu.']);
   await ph.waitKey();
   await ph.close();
-  await d.narrate(['Tu enfiles ton manteau.', 'Tu laisses le réveil sur la table.']);
+  back.dim = 0;
+  await d.say(['Tu enfiles ton manteau.', 'Tu laisses le réveil sur la table.'], undefined, paper);
   d.music(null, 3);
+  await d.fadeOut(90);
+  game.remove(back);
+  fx.setFade(0);
   await d.wait(60);
   d.sfx('step', { pitch: 0.7 });
   await d.wait(24);
