@@ -22,6 +22,7 @@ import { CrashScene } from './scenes/crash';
 import { PoemScene } from './scenes/poem';
 import type { WordDef } from './battle/types';
 import { ScriptAbort } from './flow';
+import { tf, tr } from '../i18n';
 
 /** Scripting API used by cutscenes, NPCs and events. */
 export class Director {
@@ -219,14 +220,14 @@ export class Director {
       if (!G.state.keyItems.includes(item)) G.state.keyItems.push(item);
     } else {
       if (G.state.items.length >= MAX_ITEMS) {
-        if (!silent) await this.say(`Tes poches sont pleines. Tu laisses : ${def.name}.`);
+        if (!silent) await this.say(tf('Tes poches sont pleines. Tu laisses : {0}.', tr(def.name)));
         return false;
       }
       G.state.items.push(item);
     }
     if (!silent) {
       audio.sfx('item');
-      await this.say(`Tu obtiens : {c:y}${def.name}{/c}.`);
+      await this.say(tf('Tu obtiens : {c:y}{0}{/c}.', tr(def.name)));
     }
     return true;
   }

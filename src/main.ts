@@ -22,6 +22,7 @@ import { startBonus, startPrologue } from './game/story';
 import { setupMeta } from './game/meta';
 import { startDebug } from './game/debug';
 import { openMenu } from './game/scenes/menu';
+import { bindLanguage, isLang, missing } from './i18n';
 
 function boot(): void {
   const canvas = document.getElementById('game') as HTMLCanvasElement;
@@ -37,6 +38,10 @@ function boot(): void {
   G.meta.lastPlay = Date.now();
   writeMeta(G.meta);
   G.settings = readSettings();
+  bindLanguage(() => G.settings.language);
+  // ?lang=en / ?lang=fr: language for this visit (links, tests); the options can still change it.
+  const urlLang = new URLSearchParams(location.search).get('lang');
+  if (isLang(urlLang)) G.settings.language = urlLang;
   applySettings();
 
   // Global UI layers.
@@ -129,7 +134,17 @@ function boot(): void {
     if (t === world) return 'WorldScene';
     return t?.constructor.name ?? 'none';
   };
-  (window as unknown as { __veilleuse: unknown }).__veilleuse = { game, world, G, MAPS, dialogue, fx, scene };
+  const i18nMissing = (): string[] => [...missing];
+  (window as unknown as { __veilleuse: unknown }).__veilleuse = {
+    game,
+    world,
+    G,
+    MAPS,
+    dialogue,
+    fx,
+    scene,
+    i18nMissing,
+  };
 }
 
 let fpsT = performance.now();
@@ -143,7 +158,7 @@ function drawFps(g: CanvasRenderingContext2D): void {
     fpsN = 0;
     fpsT = now;
   }
-  if (G.settings.showFps) drawText(g, `${fps} fps`, W - 4, H - 11, { align: 'right', color: '#7ee08a' });
+  if (G.settings.showFps) drawText(g, `${fps} fps`, W - 4, H - 11, { align: 'right', color: '#7ee08a' }); // i18n-ignore
 }
 
 boot();

@@ -3,6 +3,7 @@ import { drawSprite, makeCanvas } from '../../engine/sprite';
 import { hasSpr, spr } from '../assets';
 import { isNative, toast } from '../pwa';
 import type { SavedPoem } from '../state';
+import { hasTr, lang, tf, tr } from '../../i18n';
 
 /**
  * Poems as notebook pages: the page drawn in the gallery (same look as the finale's PaperScene) and the picture the
@@ -19,22 +20,34 @@ const INK = '#2b2a5c';
 const RED = '#a8324a';
 const FADED = '#9a8f8a';
 
-const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']; // i18n-ignore
+const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']; // i18n-ignore
 
-/** « le 8 octobre 2026 » (no locale lookup: always French, always the same glyphs). */
+/** « le 8 octobre 2026 » / "October 8, 2026" (no locale lookup: always the same glyphs). */
 export function poemDate(at: number): string {
   const d = new Date(at);
-  return `le ${d.getDate() === 1 ? '1er' : d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  if (lang() === 'en') return `${MONTHS_EN[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  return `le ${d.getDate() === 1 ? '1er' : d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`; // i18n-ignore
+}
+
+/**
+ * A poem line for display. Saved poems keep their French text (the source); each line is translated as a whole
+ * (« Pour Mina. ») or, for the chosen words (« lumière, »), as a word plus its punctuation.
+ */
+export function trPoemLine(line: string): string {
+  if (lang() === 'fr' || !line) return line;
+  const m = /^(.*?)([.,]?)$/.exec(line)!;
+  return hasTr(line) ? tr(line) : tr(m[1]!) + m[2];
 }
 
 export function poemLines(poem: SavedPoem): string[] {
-  return poem.text.split('\n');
+  return poem.text.split('\n').map(trPoemLine);
 }
 
 /** The finale's poems open with « Pour Mina. »: the title is then already on the page. */
 function needsTitle(poem: SavedPoem): boolean {
   const first = (poemLines(poem)[0] ?? '').replace(/[.!…,]+$/, '').trim().toLowerCase();
-  return !!poem.title && first !== poem.title.trim().toLowerCase();
+  return !!poem.title && first !== tr(poem.title).trim().toLowerCase();
 }
 
 const TEXT_X = 24;
@@ -49,7 +62,7 @@ export function poemPageHeight(poem: SavedPoem): number {
 
 /** Page width that fits the longest line. */
 export function poemPageWidth(poem: SavedPoem, min = 176): number {
-  const widest = Math.max(measure(poem.title) - TEXT_X + 12, ...poemLines(poem).map(measure));
+  const widest = Math.max(measure(tr(poem.title)) - TEXT_X + 12, ...poemLines(poem).map(measure));
   return Math.max(min, widest + TEXT_X + 16);
 }
 
@@ -73,7 +86,7 @@ export function drawPoemPage(g: CanvasRenderingContext2D, poem: SavedPoem, x: nu
   g.fillRect(x + 16, y, 1, h);
   // Mina's star stickers were on everything she owned.
   star(g, x + w - 12, y + 4, '#f9cf3a', '#d89a1a');
-  if (title) drawText(g, poem.title, x + w / 2, y + 5, { align: 'center', color: RED });
+  if (title) drawText(g, tr(poem.title), x + w / 2, y + 5, { align: 'center', color: RED });
   lines.slice(0, shown).forEach((line, i) => drawText(g, line, x + TEXT_X, top + i * lh - 8, { color: INK }));
   if (shown >= lines.length) drawText(g, poemDate(poem.at), x + w - 6, y + h - 11, { align: 'right', color: FADED });
 }
@@ -131,7 +144,7 @@ export function renderPoemCard(poem: SavedPoem): HTMLCanvasElement {
   } else {
     drawText(g, sig, sx, sy, { color: '#ffe991', align: 'center' });
   }
-  drawText(g, 'Fais de beaux rêves.', Math.floor(cw / 2), sy + 12, { color: '#9a7bd0', align: 'center' });
+  drawText(g, tr('Fais de beaux rêves.'), Math.floor(cw / 2), sy + 12, { color: '#9a7bd0', align: 'center' });
   return c;
 }
 
@@ -148,7 +161,7 @@ export function upscale(src: HTMLCanvasElement, target = 1080): HTMLCanvasElemen
 function fileName(poem: SavedPoem): string {
   const d = new Date(poem.at);
   const p = (n: number) => String(n).padStart(2, '0');
-  return `veilleuse-poeme-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.png`;
+  return `veilleuse-${lang() === 'en' ? 'poem' : 'poeme'}-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.png`;
 }
 
 /** Renders the poem picture as a PNG file. Start it early: sharing must happen close to the player's key press. */
@@ -185,7 +198,7 @@ export async function sharePoem(poem: SavedPoem, file?: Promise<File>): Promise<
   }
   if (canShareFiles) {
     try {
-      await nav.share({ files: [f], title: poem.title, text: `« ${poem.title} » — un poème écrit dans Veilleuse.` });
+      await nav.share({ files: [f], title: tr(poem.title), text: tf('« {0} » — un poème écrit dans Veilleuse.', tr(poem.title)) });
       return 'shared';
     } catch (e) {
       if ((e as { name?: string }).name === 'AbortError') return 'cancelled';
@@ -207,7 +220,7 @@ export async function sharePoem(poem: SavedPoem, file?: Promise<File>): Promise<
     a.click();
     a.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 10000);
-    toast(`Poème enregistré : ${f.name}`);
+    toast(tf('Poème enregistré : {0}', f.name));
     return 'downloaded';
   } catch {
     toast('Le poème n\'a pas pu être enregistré. Désolé.');

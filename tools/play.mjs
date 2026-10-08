@@ -294,6 +294,10 @@ for (const step of steps) {
   if (!quiet || cmd === 'auto' || cmd === 'log') console.log(`${step.padEnd(18)} → ${res} ${JSON.stringify(await state())}`);
 }
 await snap(out);
+// English runs (lang=en): list the French strings that were displayed without a translation (dev builds only).
+const untranslated = await page.evaluate(() => window.__veilleuse.i18nMissing?.() ?? []).catch(() => []);
+if (untranslated.length)
+  console.log(`i18n: ${untranslated.length} untranslated string(s) shown:\n  ${untranslated.slice(0, 40).map((s) => JSON.stringify(s)).join('\n  ')}`);
 if (errors.length) {
   console.log('PAGE ERRORS/WARNINGS:\n' + [...new Set(errors)].slice(0, 30).join('\n'));
   process.exitCode = 1;

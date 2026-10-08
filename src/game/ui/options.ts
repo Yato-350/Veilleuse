@@ -5,6 +5,7 @@ import { hits, input } from '../../engine/input';
 import { screen, setVibration } from '../../engine/screen';
 import { G, TEXT_SPEED_LABELS, writeSettings, type Settings } from '../state';
 import { heart } from './draw';
+import { LANGUAGES, tr } from '../../i18n';
 
 interface Row {
   label: string;
@@ -25,10 +26,11 @@ export function applySettings(s: Settings = G.settings): void {
   screen.setTouchMode(s.touch);
   screen.setTouchStyle(s.touchOpacity, s.touchSize);
   setVibration(s.vibration);
+  if (typeof document !== 'undefined') document.documentElement.lang = s.language;
 }
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
-const onOff = (v: boolean) => (v ? 'Oui' : 'Non');
+const onOff = (v: boolean) => tr(v ? 'Oui' : 'Non');
 
 /** Settings list widget (used in the pause menu and on the title screen). */
 export class OptionsPanel {
@@ -59,11 +61,21 @@ export class OptionsPanel {
       save();
     };
     this.rows = [
+      {
+        // Shown in both languages, so that a player lost in a language they can't read still finds it.
+        label: 'Langue / Language',
+        value: () => LANGUAGES.find((l) => l.id === s().language)?.name ?? s().language,
+        change: (d) => {
+          const i = LANGUAGES.findIndex((l) => l.id === s().language);
+          s().language = LANGUAGES[(i + d + LANGUAGES.length) % LANGUAGES.length]!.id;
+          save();
+        },
+      },
       { label: 'Musique', value: () => pct(s().music), change: vol('music'), slider: true },
       { label: 'Effets sonores', value: () => pct(s().sfx), change: vol('sfx'), slider: true },
       {
         label: 'Vitesse du texte',
-        value: () => TEXT_SPEED_LABELS[s().textSpeed]!,
+        value: () => tr(TEXT_SPEED_LABELS[s().textSpeed]!),
         change: (d) => {
           s().textSpeed = (((s().textSpeed + d) % 4) + 4) % 4 as Settings['textSpeed'];
           save();
@@ -76,7 +88,7 @@ export class OptionsPanel {
       { label: 'Filtre CRT', value: () => onOff(s().crt), change: toggle('crt') },
       {
         label: 'Contrôles tactiles',
-        value: () => ({ auto: 'Auto', on: 'Toujours', off: 'Jamais' })[s().touch],
+        value: () => tr({ auto: 'Auto', on: 'Toujours', off: 'Jamais' }[s().touch]),
         change: (d) => {
           const order: Settings['touch'][] = ['auto', 'on', 'off'];
           s().touch = order[(order.indexOf(s().touch) + d + 3) % 3]!;
@@ -104,7 +116,7 @@ export class OptionsPanel {
       { label: 'Vibrations', value: () => onOff(s().vibration), change: toggle('vibration') },
       {
         label: 'Plein écran',
-        value: () => (document.fullscreenElement ? 'Oui' : 'Non'),
+        value: () => onOff(!!document.fullscreenElement),
         change: () => toggleFullscreen(),
         action: () => toggleFullscreen(),
       },
@@ -197,7 +209,7 @@ export class OptionsPanel {
       const sel = i === this.idx;
       hits.add(this, i, x - 4, ry - 2, w + 8, 13);
       if (sel) heart(g, x, ry + 3, '#ff4a5a');
-      drawText(g, r.label, x + 11, ry, { color: sel ? '#ffd84a' : '#fffaf2' });
+      drawText(g, tr(r.label), x + 11, ry, { color: sel ? '#ffd84a' : '#fffaf2' });
       const v = r.value();
       drawText(g, sel ? `◀ ${v} ▶` : v, x + w, ry, { color: sel ? '#ffd84a' : '#b7aab8', align: 'right' });
     }

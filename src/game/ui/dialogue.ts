@@ -5,6 +5,7 @@ import { game } from '../../engine/game';
 import { hits, input } from '../../engine/input';
 import { drawSprite } from '../../engine/sprite';
 import { SPEAKERS, type Speaker } from '../../data/speakers';
+import { lang, tr, trAll } from '../../i18n';
 import { hasSpr, spr } from '../assets';
 import { G, TEXT_SPEEDS } from '../state';
 import { box, heart, nextArrow, type BoxStyle } from './draw';
@@ -80,7 +81,7 @@ export class Dialogue {
     return {
       player: G.state.playerName || '…',
       PLAYER: (G.state.playerName || '…').toUpperCase(),
-      time: `${now.getHours()}h${String(now.getMinutes()).padStart(2, '0')}`,
+      time: `${now.getHours()}${lang() === 'en' ? ':' : 'h'}${String(now.getMinutes()).padStart(2, '0')}`,
       hour: String(now.getHours()),
     };
   }
@@ -108,7 +109,7 @@ export class Dialogue {
     this.speaker = SPEAKERS[who] ?? { name: who, voice: 'default' };
     const pKey = this.speaker.portrait ? `face_${this.speaker.portrait}_${expr ?? 'neutral'}` : null;
     this.portrait = pKey && hasSpr(pKey) ? pKey : null;
-    this.pages = this.buildPages(text);
+    this.pages = this.buildPages(tr(text));
     this.pageIdx = 0;
     this.shown = 0;
     this.wait = 0;
@@ -124,7 +125,7 @@ export class Dialogue {
 
   /** Shows a question with choices. Resolves with the chosen index (or `cancelIndex` on B, if >= 0). */
   async ask(text: string, choices: string[], opts: SayOptions & { cancelIndex?: number } = {}): Promise<number> {
-    this.pendingChoices = { choices, cancel: opts.cancelIndex ?? -1 };
+    this.pendingChoices = { choices: trAll(choices), cancel: opts.cancelIndex ?? -1 };
     await this.sayOne(text, { ...opts, auto: 0 });
     return this.lastChoice;
   }
@@ -296,7 +297,7 @@ export class Dialogue {
   private drawContent(g: CanvasRenderingContext2D, r: { x: number; y: number; w: number; h: number }, style: BoxStyle): void {
     // Name tag
     if (this.speaker.name && style !== 'none') {
-      const name = this.speaker.name;
+      const name = tr(this.speaker.name);
       const nw = measure(name) + 10;
       const ny = r.y - 11;
       box(g, r.x + 4, ny, nw, 13, style);

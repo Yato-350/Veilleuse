@@ -1,4 +1,5 @@
 /** Progressive Web App glue: service worker, install prompt, update notification. */
+import { tr } from '../i18n';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -81,11 +82,11 @@ export function toast(text: string, action?: string, onAction?: () => void, ms =
   const el = document.createElement('div');
   el.className = 'toast';
   const span = document.createElement('span');
-  span.textContent = text;
+  span.textContent = tr(text);
   el.appendChild(span);
   if (action && onAction) {
     const b = document.createElement('button');
-    b.textContent = action;
+    b.textContent = tr(action);
     b.addEventListener('click', () => {
       onAction();
       el.remove();

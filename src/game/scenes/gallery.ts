@@ -8,6 +8,7 @@ import { ILLUSTRATIONS, SOUVENIRS } from '../../data/illustrations';
 import { G, type SavedPoem } from '../state';
 import { box, heart } from '../ui/draw';
 import { drawPoemPage, poemDate, poemFile, poemLines, sharePoem, type ShareResult } from '../ui/share';
+import { tf, tr, trAll } from '../../i18n';
 
 /**
  * « Carnet de souvenirs » — opened from the title screen after a first ending.
@@ -70,10 +71,11 @@ export function galleryEntries(): GalleryEntry[] {
     if (!ILLUSTRATIONS[key]) continue;
     known.add(key);
     const s = Object.values(SOUVENIRS).find((x) => x.image === key);
-    out.push({ key, kind, title: title || s?.title || 'Un souvenir', captions: captions.length ? captions : (s?.captions ?? []) });
+    const caps = captions.length ? captions : (s?.captions ?? []);
+    out.push({ key, kind: tr(kind), title: tr(title || s?.title || 'Un souvenir'), captions: trAll(caps) });
   }
   for (const key of Object.keys(ILLUSTRATIONS)) {
-    if (!known.has(key)) out.push({ key, kind: 'Un rêve', title: 'Un autre souvenir', captions: [] });
+    if (!known.has(key)) out.push({ key, kind: tr('Un rêve'), title: tr('Un autre souvenir'), captions: [] });
   }
   return out;
 }
@@ -494,12 +496,12 @@ export class GalleryScene implements Scene {
     else this.drawList(g);
     if (this.onTabs) {
       const hint = this.tab === 0 ? 'Les images gardées, d\'une nuit à l\'autre.' : 'Les poèmes que tu as écrits pour Mina.';
-      drawText(g, hint, W / 2, H - 12, { align: 'center', color: '#8a7f96' });
+      drawText(g, tr(hint), W / 2, H - 12, { align: 'center', color: '#8a7f96' });
     }
   }
 
   private tabLabels(): string[] {
-    return [`Souvenirs ${this.seenCount()}/${this.entries.length}`, this.poems.length ? `Poèmes ${this.poems.length}` : 'Poèmes'];
+    return [tf('Souvenirs {0}/{1}', this.seenCount(), this.entries.length), this.poems.length ? tf('Poèmes {0}', this.poems.length) : tr('Poèmes')];
   }
 
   private drawTabs(g: CanvasRenderingContext2D): void {
@@ -519,7 +521,7 @@ export class GalleryScene implements Scene {
       x += w + 3;
     });
     const close = input.pointerUsed;
-    drawText(g, 'Carnet de souvenirs', W - (close ? 20 : 8), 6, { align: 'right', color: '#ffe991', shadow: '#120c0a' });
+    drawText(g, tr('Carnet de souvenirs'), W - (close ? 20 : 8), 6, { align: 'right', color: '#ffe991', shadow: '#120c0a' });
     if (close) this.drawClose(g, W - 12, 6);
   }
 
@@ -542,7 +544,7 @@ export class GalleryScene implements Scene {
     // Footer, on the desk: what is under the cursor
     const e = this.entries[this.cell];
     if (this.onTabs) return;
-    if (pages > 1) drawText(g, `p. ${page + 1}/${pages}`, PAGE.x, H - 12, { color: '#8a7f96' });
+    if (pages > 1) drawText(g, tf('p. {0}/{1}', page + 1, pages), PAGE.x, H - 12, { color: '#8a7f96' });
     if (pages > 1 && input.pointerUsed) {
       // Touch: ◀ ▶ at both ends of the desk turn the page (flicking the page works too).
       drawText(g, '◀', 1, H - 12, { color: page > 0 ? '#d8cfe0' : '#4e4359' });
@@ -557,7 +559,7 @@ export class GalleryScene implements Scene {
       drawText(g, `${e.kind} · `, x0, H - 12, { color: '#8a7f96' });
       drawText(g, e.title, x0 + kw, H - 12, { color: '#ffe991' });
     } else if (e) {
-      drawText(g, 'Un souvenir que tu n\'as pas encore trouvé.', W / 2, H - 12, { align: 'center', color: '#8a7f96' });
+      drawText(g, tr('Un souvenir que tu n\'as pas encore trouvé.'), W / 2, H - 12, { align: 'center', color: '#8a7f96' });
     }
   }
 
@@ -601,8 +603,8 @@ export class GalleryScene implements Scene {
   private drawList(g: CanvasRenderingContext2D): void {
     const p = PAGE;
     if (!this.poems.length) {
-      drawText(g, 'Pas encore de poème.', W / 2, p.y + 52, { align: 'center', color: INK });
-      drawText(g, 'Quelque part, une page blanche attend.', W / 2, p.y + 70, { align: 'center', color: FADED });
+      drawText(g, tr('Pas encore de poème.'), W / 2, p.y + 52, { align: 'center', color: INK });
+      drawText(g, tr('Quelque part, une page blanche attend.'), W / 2, p.y + 70, { align: 'center', color: FADED });
       return;
     }
     const x = p.x + 14;
@@ -617,7 +619,7 @@ export class GalleryScene implements Scene {
         g.fillRect(x - 4, y - 2, w + 8, ROW_H - 2);
         heart(g, x - 2 + Math.round(Math.sin(this.t * 0.15)), y + 2, '#ff4a5a');
       }
-      drawText(g, poem.title, x + 10, y, { color: RED });
+      drawText(g, tr(poem.title), x + 10, y, { color: RED });
       drawText(g, poemDate(poem.at), x + w, y, { align: 'right', color: FADED });
       drawText(g, this.preview(poem, w - 10), x + 10, y + 11, { color: INK });
     });
@@ -634,7 +636,7 @@ export class GalleryScene implements Scene {
 
   /** The chosen words, as far as they fit: « lune · coton · peur… ». */
   private preview(poem: SavedPoem, max: number): string {
-    const words = poem.words.length ? poem.words : poemLines(poem).filter(Boolean);
+    const words = poem.words.length ? poem.words.map(tr) : poemLines(poem).filter(Boolean);
     let s = '';
     for (const w of words) {
       const next = s ? `${s} · ${w}` : w;
@@ -697,13 +699,15 @@ export class GalleryScene implements Scene {
       drawText(g, `${this.poemIdx + 1}/${n}`, 8, H - 12, { color: '#8a7f96' });
     }
     if (this.poemShown() < poemLines(p).length) return;
-    const label = this.busy
-      ? 'Un instant…'
-      : this.resultT > 0 && this.result === 'shared'
-        ? 'Poème partagé.'
-        : this.resultT > 0 && this.result === 'downloaded'
-          ? 'Poème gardé.'
-          : 'Garder ce poème';
+    const label = tr(
+      this.busy
+        ? 'Un instant…'
+        : this.resultT > 0 && this.result === 'shared'
+          ? 'Poème partagé.'
+          : this.resultT > 0 && this.result === 'downloaded'
+            ? 'Poème gardé.'
+            : 'Garder ce poème',
+    );
     const lw = measure(label);
     const lx = Math.round(W / 2 - lw / 2 + 5);
     const y = H - 13;

@@ -14,6 +14,7 @@ import { dialogue } from '../ui/dialogue';
 import { bar, box, heart } from '../ui/draw';
 import { OptionsPanel } from '../ui/options';
 import { ImageScene } from './image';
+import { tf, tr } from '../../i18n';
 
 const TABS = ['Objets', 'Souvenirs', 'Statut', 'Options', 'Quitter'];
 
@@ -251,7 +252,7 @@ export class MenuScene implements Scene {
       const sel = i === this.tab;
       hits.add(this, `tab:${i}`, 10, y - 3, i === 0 ? 54 : 72, 15);
       if (sel) heart(g, 14 + ox, y + 3, this.focus === 'tabs' ? '#ff4a5a' : '#8a3a4a');
-      drawText(g, label, 25 + ox, y, { color: sel ? '#ffd84a' : '#fffaf2' });
+      drawText(g, tr(label), 25 + ox, y, { color: sel ? '#ffd84a' : '#fffaf2' });
     });
     // Mini status under tabs
     this.drawMiniStatus(g, 8 + ox, 100);
@@ -272,12 +273,12 @@ export class MenuScene implements Scene {
         this.drawStatus(g, px, py, pw);
         break;
       case 3:
-        drawText(g, 'Options', px + 10, py + 6, { color: '#d4b8f0' });
+        drawText(g, tr('Options'), px + 10, py + 6, { color: '#d4b8f0' });
         this.options.draw(g, px + 8, py + 24, pw - 18, 10);
-        if (this.focus !== 'options') drawText(g, 'A : modifier', px + pw - 10, py + ph - 14, { color: '#8a7f96', align: 'right' });
+        if (this.focus !== 'options') drawText(g, tr('A : modifier'), px + pw - 10, py + ph - 14, { color: '#8a7f96', align: 'right' });
         break;
       case 4:
-        drawWrapped(g, 'Retourner à l\'écran titre ? Ce qui n\'a pas été sauvegardé près d\'une veilleuse sera perdu.', px + 10, py + 10, pw - 20, {
+        drawWrapped(g, tr('Retourner à l\'écran titre ? Ce qui n\'a pas été sauvegardé près d\'une veilleuse sera perdu.'), px + 10, py + 10, pw - 20, {
           color: '#fffaf2',
         });
         ['Oui', 'Non'].forEach((l, i) => {
@@ -285,13 +286,13 @@ export class MenuScene implements Scene {
           const sel = this.focus === 'quit' && this.quitIdx === i;
           hits.add(this, `quit:${i}`, x - 16, py + 56, 48, 16);
           if (sel) heart(g, x - 11, py + 63, '#ff4a5a');
-          drawText(g, l, x, py + 60, { color: sel ? '#ffd84a' : '#fffaf2' });
+          drawText(g, tr(l), x, py + 60, { color: sel ? '#ffd84a' : '#fffaf2' });
         });
         break;
     }
     if (this.msg) {
       box(g, 20, H - 34, W - 40, 26, 'dream');
-      drawText(g, this.msg.text, 28, H - 28, { color: '#fffaf2' });
+      drawText(g, tr(this.msg.text), 28, H - 28, { color: '#fffaf2' });
     }
   }
 
@@ -301,9 +302,9 @@ export class MenuScene implements Scene {
     const maman = s.playerChar === 'maman';
     const set = charSet(maman ? 'maman' : 'noa', world.variant);
     if (set) drawSprite(g, set.down[0]!, x + 16, y + 30);
-    drawText(g, maman ? 'Maman' : 'Noa', x + 30, y + 6, { color: maman ? '#f8b6cf' : '#d4b8f0' });
-    drawText(g, `NV ${level(s)}`, x + 30, y + 18, { color: '#fffaf2' });
-    drawText(g, 'PV', x + 6, y + 36, { color: '#fffaf2' });
+    drawText(g, tr(maman ? 'Maman' : 'Noa'), x + 30, y + 6, { color: maman ? '#f8b6cf' : '#d4b8f0' });
+    drawText(g, tf('NV {0}', level(s)), x + 30, y + 18, { color: '#fffaf2' });
+    drawText(g, tr('PV'), x + 6, y + 36, { color: '#fffaf2' });
     bar(g, x + 22, y + 39, 46, 5, s.hp / maxHp(s), '#ffd84a', '#5a1c2c');
     drawText(g, `${s.hp}/${maxHp(s)}`, x + 6, y + 48, { color: '#fffaf2' });
     drawText(g, `● ${s.boutons}`, x + 6, y + 58, { color: '#f5c04f' });
@@ -311,10 +312,10 @@ export class MenuScene implements Scene {
 
   private drawItems(g: CanvasRenderingContext2D, px: number, py: number, pw: number, ph: number): void {
     const items = this.allItems();
-    drawText(g, 'Objets', px + 10, py + 6, { color: '#d4b8f0' });
+    drawText(g, tr('Objets'), px + 10, py + 6, { color: '#d4b8f0' });
     drawText(g, `${G.state.items.length}/8`, px + pw - 10, py + 6, { color: '#8a7f96', align: 'right' });
     if (!items.length) {
-      drawText(g, 'Rien. Tes poches sont vides.', px + 10, py + 26, { color: '#8a7f96' });
+      drawText(g, tr('Rien. Tes poches sont vides.'), px + 10, py + 26, { color: '#8a7f96' });
       return;
     }
     const visible = 8;
@@ -326,21 +327,21 @@ export class MenuScene implements Scene {
       hits.add(this, `item:${i}`, px + 4, y - 2, pw - 8, 12);
       if (sel) heart(g, px + 8, y + 3, '#ff4a5a');
       const isKey = i >= G.state.items.length;
-      drawText(g, def?.name ?? items[i]!, px + 19, y, { color: sel ? '#ffd84a' : isKey ? '#a7c7f0' : '#fffaf2' });
+      drawText(g, tr(def?.name ?? items[i]!), px + 19, y, { color: sel ? '#ffd84a' : isKey ? '#a7c7f0' : '#fffaf2' });
     }
     const cur = ITEMS[items[Math.min(this.itemIdx, items.length - 1)]!];
     if (cur && this.focus === 'items') {
       g.fillStyle = '#3a2c4c';
       g.fillRect(px + 6, py + ph - 40, pw - 12, 1);
-      drawWrapped(g, cur.desc, px + 10, py + ph - 36, pw - 20, { color: '#d8cfe0' });
+      drawWrapped(g, tr(cur.desc), px + 10, py + ph - 36, pw - 20, { color: '#d8cfe0' });
     }
   }
 
   private drawSouvenirs(g: CanvasRenderingContext2D, px: number, py: number, pw: number, ph: number): void {
-    drawText(g, 'Souvenirs', px + 10, py + 6, { color: '#d4b8f0' });
+    drawText(g, tr('Souvenirs'), px + 10, py + 6, { color: '#d4b8f0' });
     const list = G.state.souvenirs;
     if (!list.length) {
-      drawWrapped(g, 'Aucun souvenir pour l\'instant. Ils reviendront… quand tu seras prêt.', px + 10, py + 26, pw - 20, { color: '#8a7f96' });
+      drawWrapped(g, tr('Aucun souvenir pour l\'instant. Ils reviendront… quand tu seras prêt.'), px + 10, py + 26, pw - 20, { color: '#8a7f96' });
       return;
     }
     list.forEach((id, i) => {
@@ -349,14 +350,14 @@ export class MenuScene implements Scene {
       const sel = this.focus === 'souvenirs' && i === this.souvIdx;
       hits.add(this, `souv:${i}`, px + 4, y - 3, pw - 8, 14);
       if (sel) heart(g, px + 8, y + 3, '#ff4a5a');
-      drawText(g, s?.title ?? id, px + 19, y, { color: sel ? '#ffd84a' : '#fffaf2' });
+      drawText(g, s ? tr(s.title) : id, px + 19, y, { color: sel ? '#ffd84a' : '#fffaf2' });
     });
     drawText(g, `${list.length}/3`, px + pw - 10, py + ph - 14, { color: '#8a7f96', align: 'right' });
   }
 
   private drawStatus(g: CanvasRenderingContext2D, px: number, py: number, pw: number): void {
     const s = G.state;
-    drawText(g, 'Statut', px + 10, py + 6, { color: '#d4b8f0' });
+    drawText(g, tr('Statut'), px + 10, py + 6, { color: '#d4b8f0' });
     const rows: Array<[string, string, string?]> = [
       ['Niveau', `${level(s)}`],
       ['PV', `${s.hp} / ${maxHp(s)}`],
@@ -365,13 +366,13 @@ export class MenuScene implements Scene {
       ['Étoiles', `${s.etoiles}`, '#ffd84a'],
       ['Encre', `${s.encre}`, '#b06aff'],
       ['Boutons', `${s.boutons}`, '#f5c04f'],
-      ['Arme', WEAPONS[s.weapon]?.name ?? '-'],
-      ['Tenue', ARMORS[s.armor]?.name ?? '-'],
+      ['Arme', tr(WEAPONS[s.weapon]?.name ?? '-')],
+      ['Tenue', tr(ARMORS[s.armor]?.name ?? '-')],
       ['Temps de jeu', formatPlaytime(s.playtime)],
     ];
     rows.forEach(([k, v, c], i) => {
       const y = py + 22 + i * 13;
-      drawText(g, k, px + 12, y, { color: '#b7aab8' });
+      drawText(g, tr(k), px + 12, y, { color: '#b7aab8' });
       drawText(g, v, px + pw - 12, y, { color: c ?? '#fffaf2', align: 'right' });
     });
     if (s.playerName) drawText(g, `— ${s.playerName}`, px + 12, py + 22 + rows.length * 13 + 4, { color: '#6d6080' });

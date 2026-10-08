@@ -15,6 +15,7 @@ import { CreditsScene } from './credits';
 import { install } from '../pwa';
 import { NameEntryScene } from './nameentry';
 import { GalleryScene } from './gallery';
+import { tf, tr } from '../../i18n';
 
 type Item = { label: string; action: () => void; color?: string };
 
@@ -47,7 +48,7 @@ export class TitleScene implements Scene {
     this.items = [];
     if (save) {
       this.items.push({
-        label: `Continuer`,
+        label: 'Continuer',
         action: () => this.leave(() => flow.continueGame()),
       });
     }
@@ -145,7 +146,7 @@ export class TitleScene implements Scene {
       hits.add(this, 'close', 0, 0, W, H);
       hits.add(this, 'panel', 40, 20, W - 80, H - 40);
       box(g, 40, 20, W - 80, H - 40, 'dream');
-      drawText(g, 'Options', W / 2, 28, { align: 'center', color: '#d4b8f0' });
+      drawText(g, tr('Options'), W / 2, 28, { align: 'center', color: '#d4b8f0' });
       if (input.pointerUsed) {
         drawText(g, '✕', W - 52, 27, { color: '#8a7f96' });
         hits.add(this, 'close', W - 60, 20, 20, 18);
@@ -155,12 +156,12 @@ export class TitleScene implements Scene {
     }
     if (this.confirmNew) {
       box(g, 50, 108, W - 100, 50, 'dream');
-      drawText(g, 'Effacer la sauvegarde et recommencer ?', W / 2, 116, { align: 'center' });
+      drawText(g, tr('Effacer la sauvegarde et recommencer ?'), W / 2, 116, { align: 'center' });
       ['Oui', 'Non'].forEach((l, i) => {
         const x = W / 2 - 40 + i * 80;
         hits.add(this, i, x - 30, 130, 60, 18);
         if (this.idx === i) heart(g, x - 18, 139, '#ff4a5a');
-        drawText(g, l, x, 136, { align: 'center', color: this.idx === i ? '#ffd84a' : '#fffaf2' });
+        drawText(g, tr(l), x, 136, { align: 'center', color: this.idx === i ? '#ffd84a' : '#fffaf2' });
       });
       return;
     }
@@ -175,7 +176,7 @@ export class TitleScene implements Scene {
       g.globalAlpha = a;
       if (a >= 1) hits.add(this, i, W / 2 - 58, y - 1, 124, gap);
       if (sel) heart(g, W / 2 - 52, y + 3, '#ff4a5a');
-      drawText(g, it.label, W / 2 - 40, y, { color: sel ? '#ffd84a' : (it.color ?? '#fffaf2'), shadow: '#0b0710' });
+      drawText(g, tr(it.label), W / 2 - 40, y, { color: sel ? '#ffd84a' : (it.color ?? '#fffaf2'), shadow: '#0b0710' });
       g.globalAlpha = 1;
     });
     // Save info
@@ -194,11 +195,11 @@ export class TitleScene implements Scene {
     if (h >= 0 && h < 5) {
       const a = 0.5 + 0.3 * Math.sin(this.t * 0.03);
       g.globalAlpha = a;
-      drawText(g, `Il est ${h}h. Tu devrais dormir, toi aussi.`, 4, H - 11, { color: '#6d5a8a' });
+      drawText(g, tf('Il est {0}h. Tu devrais dormir, toi aussi.', h), 4, H - 11, { color: '#6d5a8a' });
       g.globalAlpha = 1;
     } else if (G.meta.deaths > 5 && this.mood === 'night') {
       g.globalAlpha = 0.4;
-      drawText(g, `Tu es tombé·e ${G.meta.deaths} fois.`, 4, H - 11, { color: '#6d5a8a' });
+      drawText(g, tf('Tu es tombé·e {0} fois.', G.meta.deaths), 4, H - 11, { color: '#6d5a8a' });
       g.globalAlpha = 1;
     }
   }
@@ -304,7 +305,7 @@ export class TitleScene implements Scene {
     // Glow
     drawOutlined(g, title, W / 2 - 1, y, '#ffe991', '#2a1a48', { scale: 3, align: 'center' });
     drawText(g, title, W / 2, y, { color: '#fff3cf', scale: 3, align: 'center' });
-    drawText(g, 'Fais de beaux rêves.', W / 2, y + 30, { color: this.mood === 'dream' ? '#9a7bd0' : '#d4b8f0', align: 'center', shadow: '#0b0710' });
+    drawText(g, tr('Fais de beaux rêves.'), W / 2, y + 30, { color: this.mood === 'dream' ? '#9a7bd0' : '#d4b8f0', align: 'center', shadow: '#0b0710' });
     g.globalAlpha = 1;
   }
 }

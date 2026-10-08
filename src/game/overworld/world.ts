@@ -1,6 +1,7 @@
 import { audio } from '../../engine/audio';
 import { H, TILE, W } from '../../engine/constants';
-import { drawOutlined, drawText } from '../../engine/font';
+import { drawOutlined, drawText, measure } from '../../engine/font';
+import { tr } from '../../i18n';
 import { fx } from '../../engine/fx';
 import { type Scene } from '../../engine/game';
 import { input } from '../../engine/input';
@@ -644,11 +645,12 @@ export class WorldScene implements Scene {
       const a = t < 30 ? t / 30 : t > 170 ? (200 - t) / 30 : 1;
       g.save();
       g.globalAlpha = Math.max(0, a);
-      const name = this.map.name;
+      const name = tr(this.map.name);
+      const bw = Math.max(140, measure(name) + 16);
       g.fillStyle = 'rgba(11,7,16,0.75)';
-      g.fillRect(0, 10, 140, 17);
+      g.fillRect(0, 10, bw, 17);
       g.fillStyle = '#fffaf2';
-      g.fillRect(0, 26, 140, 1);
+      g.fillRect(0, 26, bw, 1);
       drawText(g, name, 8, 12, { color: '#fffaf2', shadow: '#0b0710' });
       g.restore();
     }
