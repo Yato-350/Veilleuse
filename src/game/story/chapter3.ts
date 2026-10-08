@@ -998,7 +998,7 @@ export function friendQueue(spares: Record<string, number>, drowned: number): st
 
 /**
  * The next visit: a spared boss alone, or a small group, sized so that every boss still gets its own turn before
- * the player can wake up (`slots` = visits left until then, this one included).
+ * Dodo turns back into a plush (`slots` = visits left until then, this one included).
  */
 export function nextVisit(queue: string[], slots: number): string[] {
   if (!queue.length) return [];
@@ -1345,8 +1345,8 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
 
   /** One visit of spared friends (at most one appearance each), at the start of a phase-3 turn. */
   async function visit(b: Battle): Promise<void> {
-    // Visits left before the player can wake up, this one included.
-    const slots = Math.max(0, WAKE_AT - s.written.length) + 1;
+    // Visits left while Dodo is still dark (one word per turn), this one included: the bosses must come before.
+    const slots = Math.max(0, WAKE_AT - s.written.length);
     const ids = nextVisit(s.friends, slots);
     if (!ids.length) return;
     s.friends = s.friends.filter((id) => !ids.includes(id));
