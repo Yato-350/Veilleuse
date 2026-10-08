@@ -99,9 +99,10 @@ export function startDebug(p: URLSearchParams): void {
       G.meta.seen = seen === 'all' ? keys : seen === 'none' ? [] : keys.filter((_, i) => i % 3 !== 2);
       G.meta.endings = ['aube'];
       const words = [
-        ['lune', 'coton', 'chevalière', 'lumière', 'courage', 'ensemble'],
-        ['pluie', 'silence', 'pardon', 'mouton', 'hôpital', 'nuit'],
-        ['étoile', 'peur', 'promesse', 'veilleuse', 'rire', 'demain'],
+        // Words of POEM_WORDS, so the sample poems are translated like real ones.
+        ['lune', 'couronne', 'cape', 'lumière', 'câlin', 'printemps'],
+        ['pluie', 'silence', 'pardon', 'fenêtre', 'couloir', 'nuit'],
+        ['étoile', 'absence', 'dessin', 'veilleuse', 'rire', 'matin'],
       ];
       const emo = ['joie', 'tristesse', 'peur'] as const;
       G.meta.poems = Array.from({ length: Number(p.get('poems') ?? 3) }, (_, i) => {
