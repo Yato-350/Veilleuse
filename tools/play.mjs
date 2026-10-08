@@ -178,7 +178,14 @@ async function write(word) {
 
 /** Taps game pixel (x, y): converts through the canvas bounding box (whatever the scale / layout). */
 async function tapAt(xy) {
-  const [gx, gy] = xy.split('/').map(Number);
+  // "tap:@id" taps an overworld entity where it is drawn; "tap:x/y" taps game pixels.
+  const [gx, gy] = xy.startsWith('@')
+    ? await page.evaluate((id) => {
+        const w = window.__veilleuse.world;
+        const e = w.get(id);
+        return e ? [Math.round(e.x - Math.round(w.camX)), Math.round(e.y - 8 - Math.round(w.camY))] : [-99, -99];
+      }, xy.slice(1))
+    : xy.split('/').map(Number);
   const r = await page.evaluate(() => {
     const b = document.getElementById('game').getBoundingClientRect();
     return { x: b.left, y: b.top, w: b.width, h: b.height };

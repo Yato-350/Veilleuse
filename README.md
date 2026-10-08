@@ -74,8 +74,9 @@ L'empathie protège, littéralement.
 | | Clavier | Manette | Tactile |
 |---|---|---|---|
 | Se déplacer | Flèches · ZQSD · WASD | Stick · croix | Croix virtuelle (ou glisser pendant l'esquive) |
-| Valider / examiner | Entrée · Espace · Z (W en AZERTY) | A | A · toucher l'écran |
-| Annuler / courir | Échap · X · Maj | B | B |
+| Valider / examiner | Entrée · Espace · Z (W en AZERTY) | A | A · toucher un personnage, un objet ou une porte près de Noa |
+| Menus, carnet, choix | Flèches + Entrée | Croix + A | Toucher directement l'option (boutons, mots, listes, boutique…) |
+| Annuler / courir | Échap · X · Maj | B | B · toucher en dehors d'une fenêtre |
 | Menu | C · Tab | Start | ☰ |
 
 ### Installer sur mobile (Android · iPhone · iPad)
