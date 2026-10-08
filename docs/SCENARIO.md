@@ -30,6 +30,8 @@ il ne l'a pas apportée) n'est **dit clairement qu'au chapitre 3**. Avant, seule
    - **photo retournée** : « Tu ne la retournes pas. »
    - **calendrier** : arrêté sur un mois de l'an dernier.
    - **bureau / téléphone** : 14 messages non lus de « Maman ». Le dernier : « Je rentre tard. Il y a des pâtes. »
+     Le fil s'ouvre en plein écran (`PhoneScene`, `src/game/scenes/phone.ts`) et Noa **peut répondre** (voir
+     « Répondre à Maman » plus bas) → `p_reply`.
    - **fenêtre** : la pluie, la lune derrière les nuages.
    - **armoire** : « Tu n'aimes pas la laisser ouverte la nuit. »
    - **porte** : « Tu n'as pas envie de sortir. » (bloquée pendant le prologue)
@@ -58,6 +60,10 @@ Ton : merveilleux, drôle, tendre. Le malaise est minime (une ou deux notes faus
    Noa ! » Noa (portrait surpris) : « …Mina ? » — « Ben oui ! Qui d'autre ? Je suis la Princesse-Chevalière du
    Pays de Coton, je te signale. » Elle rejoint l'équipe (`d.follower('mina')`).
    Quête : une **étoile filante** est tombée sur la Colline aux Couvertures — « Si on la trouve, on fait un vœu ! »
+   Dans la prairie, en option : Mina réagit au lit (« Il grince pas »), au rocher au smiley (« Il te ressemble. …
+   Avant. Quand tu souriais. »), au buisson aux traces de bottes ; **secret** : le trésor de Mina caché en bas à
+   gauche (boîte « PAS TOUCHE. (sauf Noa) » : billes, bouton doré, une plume « qui écrit toute seule quand on est
+   triste », un biscuit étoile) → `c1_tresor`.
 5. **Village des Moutons** (`village`) : PNJ moutons drôles (un qui compte les autres pour s'endormir, un poète,
    un qui a peur de son ombre, un agneau qui a perdu son **ballon rouge** — quête annexe : le ballon est coincé dans
    un arbre de la prairie, récompense `crayon de cire` = arme `cire`), **Madame Lune** (endormie, parle en bâillant,
@@ -67,11 +73,39 @@ Ton : merveilleux, drôle, tendre. Le malaise est minime (une ou deux notes faus
    faire une sieste (soin) ; on peut y trouver le `plaid` ? (non : garder `plaid` pour le ch. 2).
    Mina commente beaucoup de choses (tableau d'affichage avec **ses** dessins : « C'est moi qui les ai faits ! …
    Enfin je crois. »).
+   **1.1 — plus de matière (optionnel)** : les PNJ ont une 2ᵉ / 3ᵉ réplique et changent selon la progression
+   (`c1_ballon_rendu`, `c1_sheep_done`) : le mouton qui se compte lui-même parle de son **grand frère le
+   Moutonnier** « là-haut sur la colline » ; le poète trouve sa rime (« …toute la semaine ») ; le peureux et son
+   ombre (Mina : « Une ombre, c'est de la lumière avec un trou dedans. C'est Maman qui dit ça. ») ; le banc
+   « M + N » (Mina ne se souvient pas de l'avoir gravé) ; frapper chez le Mouton Noir (« …Bonne nuit quand
+   même. ») ; le puits (« Garde ton vœu pour l'étoile ») ; le tableau affiche le ballon rendu et un « MERCI AU
+   GRAND COMPTEUR DE MOUTONS » ; Madame Lune, après les moutons : « À force de compter, certains s'endorment pour
+   de bon. »
 6. **Chaussette Perdue** (ennemi visible, route du village) : mot spécial « paire ». Si épargnée → elle retrouve la
    marchande ; flag `c1_chaussette_paire` ; Chaussette offre une réduction / un cadeau.
-7. **Colline aux Couvertures** (`colline`) : sol en courtepointe, oreillers géants, petite énigme (pousser /
-   contourner des oreillers ou trouver un chemin dans un labyrinthe de couvertures), ennemis. Avant le sommet,
+7. **Colline aux Couvertures** (`colline`) : sol en courtepointe, murs d'oreillers, ennemis. Avant le sommet,
    point de sauvegarde. Mina : « Les monstres sous le lit, ceux dans le placard… j'avais peur d'eux. Avant. »
+   - **Énigme : compter les moutons** (1.1, `src/game/scenes/sheepcount.ts`). Deux oreillers géants bouchent le
+     chemin du sommet : « Le soir, les oreillers ne se poussent que quand tous les moutons sont comptés et
+     couchés. » Le **Moutonnier** (grand frère du mouton du village) garde un enclos (deux moutons, un mouton noir
+     boudeur) mais s'endort toujours avant la fin. Jeu de rythme : les moutons trottent et sautent la barrière ;
+     on appuie sur A (ou on touche l'écran) quand un mouton passe **au-dessus**. Manche 1 « Doucement » (un mouton
+     hésite : on attend qu'il saute), manche 2 « Le mouton noir » (on ne le compte **jamais**, des moutons sautent
+     à deux), manche 3 « Les yeux fermés » (le Moutonnier dort : on compte dans sa tête, puis on donne le total
+     parmi trois nombres ; un mouton peut s'endormir sans sauter). Fenêtres larges, barrière qui s'illumine, deux
+     erreurs permises, nouvel essai libre (la séquence de la manche 3 change), « Plus tard » pour revenir, et après
+     deux échecs **« Je n'y arrive pas »** : « Moi non plus, je n'y arrive jamais… ils sont tous couchés quand
+     même. » (`c1_sheep_helped`). Réussite → les oreillers s'écartent, lait chaud, `c1_sheep_done` (progression :
+     `c1_sheep_round`, `c1_sheep_fails`). On peut recompter pour le plaisir.
+     *Présage* : même saut, même rythme, mêmes moutons (`b_sheep`, `b_sheep_big` un sur quatre), même « bêê » qui
+     monte que le motif `sheep_count` de Dodo au combat final, sur la berceuse de `mina`. Et le Moutonnier :
+     « C'est un grand mouton tout doux qui m'a appris à compter. Il dit qu'à force de compter, on oublie tout le
+     reste. C'est reposant, d'oublier… » — Mina : « Moi, je veux rien oublier. »
+   - **Scène optionnelle : l'oreiller géant** (près du sommet, avec Mina) : assis tous les deux, le coton qui tombe
+     sur le Pays de Coton. Mina se souvient du « bonhomme de neige tout petit, sur le rebord de la fenêtre, parce
+     qu'on avait pas le droit de sortir » — « Pourquoi, déjà ? » (Noa : « Il faisait trop froid. » → « Ce n'était
+     pas le froid. ») ; elle mange le coton ; « Si un jour j'oublie des trucs… tu me les raconteras ? » (« Promis. »
+     → `c1_promesse`). Soin complet. Prépare le chapitre 2 (Mina oublie) sans rien révéler.
 8. **Boss : le Monstre du Placard** (armoire seule au sommet). Il a peur du noir lui aussi. Hooks : au tour 2 ou 3
    Mina s'écrie : « Noa ! Il a peur du noir, lui aussi ! » ; utiliser la **Veilleuse de poche** (OBJET) le rend
    apaisable d'un coup (ou compte comme 2 mots), sinon 4 mots de JOIE. Épargné → il devient `npc_placard` gentil
@@ -84,7 +118,10 @@ Ton : merveilleux, drôle, tendre. Le malaise est minime (une ou deux notes faus
 
 Jour gris, pluie, lumière blafarde. Musique `interlude`.
 
-1. Noa se réveille. Dodo est une peluche immobile. Le téléphone vibre : un message de Maman (« Tu as mangé ? »).
+1. Noa se réveille. Dodo est une peluche immobile. Le téléphone vibre : un message de Maman (« Tu as mangé ? »),
+   précédé d'un mot qui répond à `p_reply` (« Merci pour ton « ok », hier. », « J'ai relu ton message dix fois. »…).
+   Réponse possible → `i1_reply` (« Oui. » est un mensonge tant que Noa n'a pas mangé : « Ce n'est pas vrai. Pas
+   encore. »).
 2. L'appartement s'ouvre (`appartement`) : couloir, salon (télé éteinte, canapé, photo), cuisine (frigo avec mot
    aimanté : « Noa, mange quelque chose s'il te plaît. Je t'aime. — Maman », et des dessins de Mina), salle de bain
    (miroir : « Tu évites ton reflet. »), chambre de Maman (fermée : « Elle n'est pas rentrée. »), **porte de Mina**
@@ -125,7 +162,9 @@ Ton : mélancolique, mystérieux. Mina commence à oublier.
 Nuit plus noire que jamais. Musique quasi absente, `hum`. Glitches discrets.
 
 1. L'horloge affiche **3:33**. Le téléphone : un **message vocal** de Maman : « Noa… ça fait un an demain. Je… je
-   rentre ce soir. On ira la voir ensemble, d'accord ? »
+   rentre ce soir. On ira la voir ensemble, d'accord ? » Son début change selon les réponses précédentes (silence :
+   « je sais que tu ne décroches pas » ; colère : « je sais que tu m'en veux » ; sinon : « tes petits messages, je
+   les garde tous »). Puis Noa peut répondre au message → `i2_reply` (à 3h33, personne ne répond : « Distribué »).
 2. `appartement_nuit` : même plan mais plus sombre (lumière limitée autour de Noa), la **télé s'allume seule** :
    vidéo de famille (`d.image('tv_mina')`, voix de Mina : « Noa ! Regarde ce que j'ai dessiné ! »), puis neige.
 3. Le **couloir s'allonge** (téléportation silencieuse vers une version plus longue, ou portes qui se répètent).
@@ -180,8 +219,124 @@ Ton : inquiétant puis bouleversant. Monde `ink` (tuiles et sprites corrompus).
 3. **Le carnet** : `d.image('carnet_couverture')`, puis `carnet_page1..4` (la dernière : « Si tu as peur du noir,
    regarde la lune. Moi je serai ta veilleuse. — Mina »).
 4. **Poème** (style DDLC) : `PoemScene.write('Pour Mina')` puis afficher `composePoem(mots)` sur papier.
+   Le poème est gardé : `fin_poem` (pour l'épilogue) et `G.meta.poems` (galerie de l'écran titre).
 5. Bruit de clés : **Maman** rentre. Elle trouve Noa dans la chambre de Mina. Elle ne dit rien d'abord. Puis :
-   « Tu es réveillé. » — `pose_hug`. « On ira la voir ensemble ? » — « …Oui. » (si `i1_ate` : « Tu as mangé les
-   pâtes ? » petit sourire). Le soleil se lève (`fin_aube`).
-6. Dernières lignes : Dodo, simple peluche, sur l'appui de fenêtre : « Je veillerai sur lui. Pour de vrai, cette
-   fois. Merci, {player}. » → `finishGame(d, 'aube')`.
+   « Tu es réveillé. » — `pose_hug`. Elle répond à ce que Noa a écrit (ou à son silence) : un mot sur les messages
+   (« Je t'écris tous les soirs, tu sais. Même quand tu ne réponds pas. » / le « moi aussi » lu au vestiaire / « tu
+   as le droit d'être en colère »…), le « oui » mensonger des pâtes, puis l'invitation qui reprend `i2_reply`
+   (« Tu m'as répondu « d'accord », cette nuit. » / « Si tu veux faire demi-tour, on fera demi-tour. »…). « On lui
+   apportera une veilleuse. Une neuve. » — « …Oui. » Le soleil se lève (`fin_aube`).
+6. **Épilogue — « Une veilleuse neuve »** (voir plus bas), puis `finishGame(d, 'aube')`.
+
+### Répondre à Maman (prologue, interludes I et II)
+
+Un seul mot par moment, choisi dans un petit carnet à côté du téléphone ; chaque réponse a une émotion (couleur,
+forme si l'option d'accessibilité est active), plus « Ne rien répondre » (on peut changer d'avis en revenant au
+téléphone). Le fil garde tout l'historique (le téléphone du final montre toute la conversation).
+
+| Moment | Réponses (`id`) | Maman |
+|---|---|---|
+| Prologue `p_reply` | « ok » (`ok`), « Moi aussi. » (`aime`), « J'arrive pas à dormir. » (`dormir`), « Laisse-moi. » (`laisse`) | répond tout de suite (« Merci de répondre. », « Laisse la veilleuse allumée. Je rentre vite. ») ; à « Laisse-moi » elle commence à écrire, plusieurs fois, puis plus rien |
+| Interlude I `i1_reply` | « Oui. » (`oui`), « C'était trop salé. » (`sale`, si `i1_ate`) / « Je vais essayer. » (`essayer`), « Pas faim. » (`faim`), « Arrête de demander. » (`arrete`) | « Même un yaourt. Pour me faire plaisir ? », « Pardon. Je m'inquiète, c'est tout. »… |
+| Interlude II `i2_reply` | « D'accord. » (`accord`), « Je peux pas. » (`peux`), « Pardon. » (`pardon`), « Pourquoi faire ? » (`pourquoi`) | pas de réponse (3h33) ; elle y répond au final |
+
+`rien` = « Ne rien répondre » ; un drapeau absent = téléphone jamais ouvert (compté comme un silence).
+
+## Épilogue — « Une veilleuse neuve » (fil RÉEL, route de l'aube, `bazar` → `jardin`)
+
+Le matin, un an jour pour jour. Monde réel de jour, musique `room_quiet`, aucun combat, 5–8 minutes. Tout est piloté
+par des scripts de carte et des drapeaux `ep_*`, pour qu'une sauvegarde de suspension reprenne proprement.
+
+1. Noir : « Plus tard, ce matin-là. », carte de titre « Épilogue — Une veilleuse neuve ». « Tu as mis Dodo dans ton
+   sac. Tu ne sais pas trop pourquoi. »
+2. **Le Petit Bazar** (`bazar`) : la vendeuse, Maman devant la vitrine (« Choisis, toi. C'est toi qui sais. »).
+   Objets à examiner (cartes postales de la plage aux quarante-deux coquillages, parapluie jaune à canards, tasses à
+   prénoms sans « Mina », boule à neige au mouton…). Sur la grande table, cinq veilleuses : **lune** (la même que
+   celle de Mina), **étoile**, **mouton**, **nuage**, **couronne** → `ep_vl`, réaction de Maman.
+3. **Le comptoir** : « C'est pour offrir ? » — Noa peut dire « C'est pour ma sœur. » (il ne le dit plus depuis un an)
+   ou se taire. La vendeuse se souvient de « la petite rousse qui voulait le parapluie à canards » ; elle comprend
+   sans qu'on le dise. Papier de soie, ruban jaune, deux bonbons à la fraise : « Un pour toi. Un pour elle. » →
+   `ep_paid`, la sortie s'ouvre.
+4. **Le jardin** (`jardin`) : Maman suit Noa (« C'est tout au fond. Sous le grand arbre. »). Tombes à lire, moineaux,
+   robinet et arrosoir (optionnel : `ep_water`, arroser les fleurs de Mina → `ep_watered`). Au coin du grand arbre,
+   Maman s'arrête : « Vas-y, toi. Je reste là. » (`ep_maman_wait`).
+5. **La pierre de Mina** (petite, blanche, une étoile gravée, sa couronne en papier) : « … Salut, Mina. » Noa pose la
+   veilleuse (`ep_placed` ; « En plein jour, on la voit à peine. Mais elle brille. »), puis **lit à voix haute** le
+   poème de la nuit (`fin_poem`, mot à mot) → `ep_poem`.
+6. **Dodo** : Noa l'assoit sur la pierre. Il ne dit rien ; ses yeux-boutons attrapent la lumière (♥). Le laisser à
+   Mina (« Veille sur elle, maintenant. ») ou le garder → `ep_dodo` = `laisse` | `garde`.
+7. Maman s'approche : « Elle l'aurait accroché sur le frigo. Avec l'aimant en forme de fraise. » Puis, quand le
+   joueur le décide (parler à Maman, ou le portail) : « On rentre ? Ce soir, je fais des pâtes. » (si `i1_reply` =
+   `sale` : « … Pas trop salées. ») Maman tend la main. Illustration `fin_jardin`.
+8. Dernières lignes, voix de Dodo : « Je veillerai sur lui. Pour de vrai, cette fois. » (ou, s'il est resté :
+   « Je veillerai sur elle. Lui, il n'a plus peur du noir. Plus autant. ») « Merci, {player}. Bonne nuit. Et
+   bonjour. » → `finishGame(d, 'aube')`.
+
+## Bonus — « Les rêves des autres » : la nuit de Maman (après la fin de l'aube)
+
+Entrée de l'écran titre débloquée par la fin `aube` (`flow.startBonus` → `story/bonus.ts`, partie séparée qui ne
+touche pas aux drapeaux de l'histoire principale, `flags.bonus`). Le joueur incarne **Maman**
+(`G.state.playerChar = 'maman'`, « MAMAN » dans le combat, stylo quatre couleurs et gilet de laine). 15–25 minutes.
+Cartes `src/data/maps/bonus.ts`, drapeaux `b_*`.
+
+**Ce que Maman porte.** Elle travaille de nuit comme aide-soignante aux Glycines, une maison de retraite, « pour ne
+pas penser ». Pendant les dernières semaines de Mina, elle a dormi **quarante et une nuits** dans le fauteuil des
+parents de la chambre 304. Le dernier soir, Mina a demandé sa veilleuse ; Noa ne l'a pas apportée. L'infirmière de nuit
+(Nadia) a dit à Maman de rentrer dormir — « Elle est calme, ce soir. Je reste avec elle. » Maman est rentrée, a
+remonté son vieux réveil sur **cinq heures** pour rapporter la veilleuse avant que Mina se réveille. Le réveil n'a
+jamais sonné : le téléphone a sonné avant, à **3 h 33**. Elle a posé la veilleuse sur la table de chevet, sans la
+brancher (« elle n'a jamais été branchée », ch. 3), puis l'a rapportée à la maison, le fil enroulé (final). Depuis,
+elle ne dort plus la nuit.
+
+1. **3 h 33, salle de pause** (noir). La messagerie de Noa (l'annonce d'il y a deux ans : Mina veut faire le bip
+   elle-même), puis **le message vocal de l'interlude II, mot pour mot**. « Tu fermes les yeux. Juste une seconde. »
+   Carte « Les rêves des autres — La nuit de Maman ».
+2. **Les Glycines, service de nuit** (`b_service`, couloir de papier). Son vieux réveil est vivant : **le Réveil**,
+   pendant de Dodo (gentil, efficace, puis possessif) — « Debout ! Tu ne dors jamais, c'est pour ça qu'on s'entend
+   si bien. » Il saute dans sa poche. Casier (photo de la plage), machine à café, téléphone (rappeler juste pour
+   entendre l'annonce), chambres 10 à 16 (Monsieur Paul, Madame Rose et l'heure, Madame Odette et sa main — « tu l'as
+   fait quarante et une nuits »), une **porte 304** qui n'existe pas aux Glycines et dont la lumière d'appel reste
+   allumée. PNJ : **Sabine** (collègue : un bonbon, « Ton grand, ça va ? », « Assieds-toi cinq minutes, je te
+   couvre »), **M. Albert** (insomniaque en fauteuil : « la nuit, c'est fait pour poser les choses », « le grand et la
+   petite »). Ennemis : **Sonnette**, **Café Serré**. **Boucle** : au bout du couloir, la porte de chez elle ; on n'y
+   arrive jamais (retour au début, sonnettes plus fortes, `b_loop`). La sortie : **s'asseoir cinq minutes sur le
+   banc** (`b_sat`) — le Réveil hurle, elle pose la main dessus, les sonnettes se taisent une à une, la porte de
+   chez elle s'entrouvre.
+3. **À la maison** (`b_appart`, aspect monde réel, `maman@real`). « Chut. Tu vas réveiller Noa. » La porte de Noa,
+   de la lumière dessous (frapper : pas de réponse, la main à plat sur la porte), le mot du frigo (quoi qu'elle
+   commence — « Mange quelque chose. », « Pardon. », « Je t'aime. » — le mot final est celui que Noa lit à
+   l'interlude I), les pâtes, la photo du parc, la chaise de Mina. Devant la porte de Mina : **le Panier** de linge
+   (combat ; besoin : JOIE ×2 puis le mot **« plier »**, ou « garder » ; épargné → le pyjama à étoiles plié sur son
+   oreiller). La pancarte : « DÉFENSE D'ENTRER (sauf Noa) » — « et Maman pour les câlins ». Derrière la porte de Mina
+   : un couloir d'hôpital.
+4. **Pédiatrie, troisième étage** (`b_hopital`, l'hôpital de papier un an plus tôt). Le « chocolat du robot » (B4),
+   les dessins de Mina, la salle des parents (« Il ne veut pas venir », dit tout bas), Gérard la plante. **Mina, à
+   3 heures du matin** (souvenir) : « On fait la course jusqu'au robot ? … Porte-moi, j'ai les jambes en coton. » —
+   « Toi aussi tu devrais dormir. Tu dis que tu dors, mais t'as toujours les yeux ouverts. » Point de sauvegarde (la
+   veilleuse de couloir ; ne remplace jamais une partie principale en cours). **Nadia**, devant la 304 : « Ce soir-là,
+   c'est moi qui vous ai dit de rentrer dormir. Vous m'en voulez ? » — « Non. Pas à vous. » — « …À qui, alors ? »
+5. **Chambre 304** (`b_304`). « Tu y as dormi quarante et une nuits. Quarante et une. Pas quarante-deux. » Le Réveil :
+   « Je n'ai jamais sonné. Le téléphone a sonné avant moi. Alors maintenant, je sonne. Tout le temps. »
+   **Boss : le Réveil** (fond hôpital, musique `reveil`, ne peut pas être vaincu par la force : FRAPPER = appuyer sur
+   le bouton du dessus, cinq minutes de silence, puis DRIIING).
+   - Phase 1 : il parle (« Chaque minute où tu ne fais rien, quelqu'un a besoin de toi… Un fils. » — « Et s'il
+     t'appelle, une nuit ? Et si tu dors ? »). Les mots glissent sur le cadran.
+   - Phase 2 : il sonne (`b_reveil_sonne`, bord rouge qui pulse) ; OBJET, FRAPPER puis ÉPARGNER deviennent
+     **DEBOUT** (se relever : quelques PV, mais le tic-tac accélère et les attaques durcissent ; à la fin, tenir coûte
+     des PV). Le carnet ne contient que ses mots : debout, encore, vite, ça va, tiens bon, plus tard.
+   - Phase 3 : son téléphone vibre dans sa poche. Le carnet montre **ses propres mots, ceux qu'elle écrit à Noa
+     chaque soir** — « repose-toi », « pleure », « pas ta faute » (doux-amer), « pardonne-toi », « je t'aime »,
+     « rentre » — à écrire, pour une fois, pour elle. Chacun fissure le cadran (`b_reveil_fele`), ralentit la musique,
+     fait revenir un souvenir (« Maman, tu fais dodo avec moi ? »). Après quatre mots, un bouton devient **DORMIR**
+     (le miroir de Dodo : pour Noa, dormir était le piège ; pour Maman, c'est la guérison). « Alors on m'appellera. Et
+     je me réveillerai. C'est tout. »
+   - Pas de game over dans ce rêve : à 0 PV, un réveil sonne et Maman se relève (« Tu te relèves toujours »).
+6. **Elle dort.** Le Réveil face contre le bois. Dans le fauteuil, Mina veille sur elle : « T'étais pas là, le dernier
+   soir. Je sais. Mais t'étais là tous les autres. Quarante et un. Je les ai comptés, moi aussi. » — Nadia lui a tenu
+   la main, la porte était entrouverte, « je voulais que tu dormes » ; la veilleuse au fil enroulé, « un jour,
+   quelqu'un va la rebrancher » (Noa, au final) ; « Noa a peur, comme toi : vous fermez les portes. Frappe quand
+   même. » — « Dors. Moi, je veille. »
+7. **Cinq heures cinquante** (illustration `maman_aube`, galerie). Sabine l'a laissée dormir deux heures. Elle écrit
+   à Noa (brouillons effacés : « Pardon. », « Tu dors ? ») : **« Je rentre. »** — le message de 5 h 52 du final. Le
+   statut passe à **« Lu »** : il ne dort pas. Des clés dans la serrure : « Noa ? Tu es réveillé ? » — la première
+   réplique de Maman au final. Crédits, titre ; `G.meta.bonusDone = true` (aucune fin enregistrée).

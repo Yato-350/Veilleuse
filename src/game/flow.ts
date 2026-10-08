@@ -6,6 +6,8 @@ export const flow = {
   toTitle: async (): Promise<void> => {},
   newGame: async (_name: string): Promise<void> => {},
   continueGame: async (): Promise<void> => {},
+  /** Bonus chapter « Les rêves des autres » (title screen, after the dawn ending). */
+  startBonus: async (): Promise<void> => {},
 };
 
 /** Thrown to stop a running cutscene script (e.g. after loading a save from the game over screen). */

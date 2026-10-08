@@ -2,6 +2,31 @@
 
 Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
+## [1.1.0] — 2026-10
+
+### Ajouté
+- **Anglais** : tout le jeu est traduit (histoire, combats, objets, interface). « Langue / Language » dans les options,
+  ou `?lang=en` dans l'adresse ; par défaut, la langue suit celle du navigateur.
+- **Chapitre bonus « Les rêves des autres »** : le rêve de Maman, jouable après la fin de l'aube, avec son boss, Le Réveil.
+- **Épilogue jouable** de la bonne fin : choisir une veilleuse neuve au bazar, la poser dans le jardin, lire le poème.
+- **Répondre à Maman** par téléphone, au prologue et dans les interludes ; ses messages et le final en tiennent compte.
+- **Carnet de souvenirs** sur l'écran titre : illustrations vues, poèmes écrits, « Garder ce poème » en image (partage
+  sur mobile).
+- **Combat** :
+  - **mots doux-amers** (cœur bicolore) ;
+  - **Mina alliée** (bouclier, recoloriage, soin) puis sa place vide après son effacement ;
+  - **musique qui suit l'émotion** ;
+  - **formes des émotions** pour les daltoniens (option) ;
+  - **l'aide de Mina** après trois défaites (mode Histoire).
+- **Combat final** : l'Encre noie une partie des mots de Mina ; les ennemis épargnés viennent aider contre Dodo.
+- **Chapitre 1** : mini-jeu des moutons à compter sur la Colline, nouvelles scènes et répliques.
+- **Tactile direct** : toucher les menus, le carnet, les listes, la boutique, les choix ; toucher un personnage, un
+  objet ou une porte près de Noa.
+- **Android** : APK signé avec une clé stable (secrets du dépôt) et fichier `.aab` pour le Play Store.
+
+### Modifié
+- Crédits : Yasin.
+
 ## [1.0.0] — 2026-10
 
 ### Ajouté

@@ -3,8 +3,11 @@ import { director, type Director } from '../director';
 import type { Script } from '../overworld/types';
 import { world } from '../overworld/world';
 import { G } from '../state';
+import { input } from '../../engine/input';
 import { SOUVENIRS } from '../../data/illustrations';
+import { SheepCountScene } from '../scenes/sheepcount';
 import { shop, wakeUp } from './common';
+import { tf, tr } from '../../i18n';
 
 /**
  * Chapter 1 — « Le Pays de Coton ».
@@ -12,6 +15,13 @@ import { shop, wakeUp } from './common';
  */
 
 const flag = (k: string): boolean => !!G.state.flags[k];
+const withMina = (): boolean => G.state.party.includes('mina');
+/** Talk counter stored in a flag: returns how many times this was seen before, then increments it. */
+function bump(k: string): number {
+  const n = Number(G.state.flags[k] ?? 0);
+  G.state.flags[k] = n + 1;
+  return n;
+}
 
 // ---------------------------------------------------------------------------
 // Opening
@@ -137,6 +147,45 @@ export const meetMina: Script = async (d) => {
 
 export const dreamBed: Script = async (d) => {
   await d.say(['Un lit, posé au milieu de la prairie.', 'Les draps sont tièdes. Ils sentent la lessive de Maman.']);
+  if (withMina() && !bump('c1_bed_mina')) {
+    await d.say(['C\'est ton lit ? Il ressemble à celui de la maison !', 'Sauf qu\'il grince pas. Et qu\'il y a pas tes chaussettes sales dessous.'], 'mina:happy');
+  }
+};
+
+export const smileyRock: Script = async (d) => {
+  await d.say('Un rocher. Quelqu\'un a dessiné un smiley dessus.');
+  if (!withMina()) return;
+  if (bump('c1_smiley') === 0) {
+    await d.say(['C\'est moi qui l\'ai dessiné ! Il te ressemble.', '…Enfin. Avant. Quand tu souriais.'], 'mina:neutral');
+    await d.say('…', 'noa:sad');
+    await d.say('Bon ! Je t\'en dessinerai un nouveau. Avec des dents.', 'mina:happy');
+  } else await d.say('Il sourit toujours, lui. Il a de la chance.', 'mina:neutral');
+};
+
+export const bootsBush: Script = async (d) => {
+  await d.say('Un buisson. Il y a des traces de petites bottes autour.');
+  if (withMina()) await d.say(['C\'est là que je me cachais pour te sauter dessus !', 'Tu as eu peur, hein ? Avoue.'], 'mina:happy');
+};
+
+/** Secret: Mina's treasure box, hidden at the bottom of the prairie. */
+export const minaTreasure: Script = async (d) => {
+  if (flag('c1_tresor')) {
+    await d.say('Le trésor de Mina. Trois billes, un bouton doré et une plume. On ne touche pas au reste.');
+    return;
+  }
+  await d.say([
+    'Une petite boîte en carton, cachée dans l\'herbe. Dessus, au feutre :',
+    '« TRÉSOR DE MINA. PAS TOUCHE. (sauf Noa) »',
+    'Dedans : trois billes, un bouton doré, une plume… et un biscuit en forme d\'étoile.',
+  ]);
+  if (withMina()) {
+    await d.emote('mina', '!');
+    await d.say(['Hé ! Mon trésor ! Comment tu l\'as trouvé ?!', '…Bon. C\'est marqué « sauf Noa ». Tu peux prendre le biscuit.'], 'mina:surprised');
+    await d.say('Mais pas la plume. C\'est une plume magique. Elle écrit toute seule quand on est triste.', 'mina:neutral');
+  } else {
+    await d.say('« Sauf Noa ». Tu prends le biscuit. Tu laisses le reste : c\'est un trésor.');
+  }
+  if (await d.give('biscuit')) d.set('c1_tresor');
 };
 
 export const balloonTree: Script = async (d) => {
@@ -179,6 +228,10 @@ export const lune: Script = async (d) => {
     if (G.state.party.includes('mina')) await d.say('…Je sais plus. C\'est pas grave !', 'mina:happy');
     return;
   }
+  if (flag('c1_sheep_done') && !bump('c1_lune_sheep')) {
+    await d.say(['Tu as compté les moutons du Moutonnier… *bâille*…', 'Fais attention, mon petit. À force de compter, certains s\'endorment pour de bon.', 'Zzz…'], 'lune:neutral');
+    return;
+  }
   const lines = [
     ['Les rêves sont des chambres… *bâille*… dont on oublie la porte.'],
     ['Le mouton qui veille… il veille trop, parfois. Zzz…'],
@@ -208,16 +261,54 @@ export const agneau: Script = async (d) => {
 };
 
 export const moutonCompteur: Script = async (d) => {
-  await d.say(['Un mouton… deux moutons… trois moutons…', 'Oh ! Bonjour. Je compte les moutons pour m\'endormir.', 'Mais je suis un mouton. Alors je me compte moi-même. {p:20}Un.'], 'mouton');
+  if (flag('c1_sheep_done')) {
+    await d.say([
+      'C\'est toi qui as aidé mon grand frère, là-haut ?',
+      'Il paraît que tu comptes mieux que tout le monde. Même mieux que moi !',
+      'Moi, je m\'arrête toujours à un. {p:20}Un.',
+    ], 'mouton');
+    return;
+  }
+  if (bump('c1_compteur') === 0) {
+    await d.say(['Un mouton… deux moutons… trois moutons…', 'Oh ! Bonjour. Je compte les moutons pour m\'endormir.', 'Mais je suis un mouton. Alors je me compte moi-même. {p:20}Un.'], 'mouton');
+    return;
+  }
+  await d.say([
+    'Mon grand frère, le Moutonnier, compte les vrais moutons, là-haut sur la colline.',
+    'Lui, il arrive jusqu\'à cent ! Mais ce soir, il a un problème.',
+    'Il s\'endort avant la fin. À chaque fois. C\'est les risques du métier.',
+  ], 'mouton');
 };
 
 export const moutonPoete: Script = async (d) => {
-  await d.say(['Ô laine, ô douce laine,', 'Toi qui… euh… toi qui…', 'Tu as une rime avec « laine » ? … « peine » ?'], 'mouton');
-  await d.say('Non, non. Trop triste. Ici, on n\'a pas le droit d\'être triste.', 'mouton');
+  const n = bump('c1_poete');
+  if (n === 0) {
+    await d.say(['Ô laine, ô douce laine,', 'Toi qui… euh… toi qui…', 'Tu as une rime avec « laine » ? … « peine » ?'], 'mouton');
+    await d.say('Non, non. Trop triste. Ici, on n\'a pas le droit d\'être triste.', 'mouton');
+    return;
+  }
+  if (n === 1) {
+    await d.say(['J\'ai trouvé ! Écoute :', '« Ô laine, ô douce laine, je t\'aime toute la semaine. »', 'C\'est beau, hein ? J\'en ai les sabots qui tremblent.'], 'mouton');
+    if (withMina()) {
+      await d.say('C\'est nul.', 'mina:neutral');
+      await d.wait(20);
+      await d.say('…Non, c\'est trop beau en fait. J\'ai rien dit.', 'mina:happy');
+    }
+    return;
+  }
+  await d.say(['Je cherche une rime avec « Noa ».', '« Noa… qui ne parle pas » ? Hmm. Ça te va bien, en tout cas.'], 'mouton');
 };
 
 export const moutonPeureux: Script = async (d) => {
-  await d.say(['Chut ! Ne fais pas de bruit !', 'Mon ombre me suit depuis ce matin.', '… Elle est encore là ? Ne te retourne pas.'], 'mouton');
+  if (bump('c1_peureux') === 0) {
+    await d.say(['Chut ! Ne fais pas de bruit !', 'Mon ombre me suit depuis ce matin.', '… Elle est encore là ? Ne te retourne pas.'], 'mouton');
+    return;
+  }
+  await d.say(['Elle est toujours là… Elle fait tout comme moi.', 'Quand j\'ai peur, elle a peur. Quand je cours, elle court.'], 'mouton');
+  if (withMina()) {
+    await d.say(['C\'est juste une ombre ! Une ombre, c\'est de la lumière avec un trou dedans.', 'C\'est Maman qui dit ça.'], 'mina:happy');
+    await d.say('…De la lumière avec un trou. Oh. Elle est moins effrayante, dit comme ça.', 'mouton');
+  }
 };
 
 export const moutonJaune: Script = async (d) => {
@@ -231,11 +322,39 @@ export const moutonJaune: Script = async (d) => {
 
 export const noticeBoard: Script = async (d) => {
   await d.say(['Le tableau d\'affichage du village.', 'Des dessins y sont punaisés : un mouton, une couronne, un garçon aux cheveux bleus.']);
-  if (G.state.party.includes('mina')) await d.say(['C\'est moi qui les ai faits !', '…Enfin, je crois. Je me rappelle plus quand.'], 'mina:neutral');
+  if (flag('c1_ballon_rendu')) await d.say('Un nouveau dessin, encore humide : un agneau qui tient un ballon rouge. Il sourit jusqu\'aux oreilles.');
+  if (flag('c1_sheep_done')) await d.say('Une affiche : « MERCI AU GRAND COMPTEUR DE MOUTONS. Signé : les moutons (tous). »');
+  if (G.state.party.includes('mina') && !bump('c1_board_mina')) await d.say(['C\'est moi qui les ai faits !', '…Enfin, je crois. Je me rappelle plus quand.'], 'mina:neutral');
 };
 
 export const well: Script = async (d) => {
   await d.say(['Un puits en pierres de coton.', 'Au fond, quelque chose brille. Une étoile ? Non. Juste ton reflet.']);
+  if (withMina() && !bump('c1_well_mina')) {
+    await d.say(['Fais un vœu ! … Non, attends.', 'Garde-le pour l\'étoile. Les vœux de puits, ça marche qu\'à moitié.'], 'mina:neutral');
+  }
+};
+
+export const benchMN: Script = async (d) => {
+  await d.say('Un banc en bois. Il porte des initiales gravées : « M + N ».');
+  if (!withMina()) return;
+  if (bump('c1_bench_mn') === 0) {
+    await d.say(['M + N… Mina et Noa ! C\'est nous !', 'C\'est moi qui l\'ai gravé ? Je m\'en souviens pas…'], 'mina:surprised');
+    await d.say('Bah. Ça doit être moi. Personne d\'autre n\'écrit aussi bien.', 'mina:happy');
+  } else await d.say('Un jour, j\'écrirai « M + N » sur la lune. Comme ça, tout le monde le verra.', 'mina:happy');
+};
+
+export const blackSheepHouse: Script = async (d) => {
+  await d.say(['Une chaumière.', 'Sur la porte : « Ici vit le Mouton Noir. ON NE FRAPPE PAS. »']);
+  if (flag('c1_knock')) return;
+  const r = await d.ask('Frapper quand même ?', ['Frapper', 'Laisser tranquille'], undefined, { cancelIndex: 1 });
+  if (r !== 0) return;
+  d.set('c1_knock');
+  d.sfx('knock');
+  await d.wait(40);
+  await d.say(['Une voix grogne derrière la porte :', '« J\'AI DIT : ON NE FRAPPE PAS. »']);
+  await d.wait(30);
+  await d.say('Puis, plus bas : « …Bonne nuit quand même. »');
+  if (withMina()) await d.say('Tu vois ? Il est grognon, mais il est gentil.', 'mina:happy');
 };
 
 export const stall: Script = async (d) => {
@@ -347,6 +466,305 @@ export const pillowA = pillowItem('c1_pillow_a', 'pomme', 'Un gros oreiller. Des
 export const pillowB = pillowItem('c1_pillow_b', 'chocolat', 'Un gros oreiller tout chaud. Dessous, une tasse de chocolat. Encore chaude.');
 export const pillowC = pillowItem('c1_pillow_c', 'mouchoir', 'Sous cet oreiller-là, un mouchoir brodé d\'une lune. Quelqu\'un a pleuré ici.');
 
+// ---------------------------------------------------------------------------
+// The Moutonnier and his sheep: the path to the summit
+// ---------------------------------------------------------------------------
+
+const NUMBER_WORDS = ['zéro', 'Un', 'Deux', 'Trois', 'Quatre', 'Cinq', 'Six', 'Sept', 'Huit', 'Neuf', 'Dix', 'Onze', 'Douze', 'Treize', 'Quatorze', 'Quinze'];
+
+const ROUND_INTRO: string[][] = [
+  [
+    'Première manche : tout doucement.',
+    'Quand un mouton passe {c:y}au-dessus de la barrière{/c}, tu comptes. Pas avant, pas après.',
+    'Et si un mouton hésite… attends qu\'il saute pour de vrai.',
+  ],
+  [
+    'Deuxième manche. Attention : voilà le {c:v}mouton noir{/c}.',
+    'Lui, on ne le compte {c:r}jamais{/c}. Il déteste ça. Il boude pendant des semaines.',
+    'Et parfois, ils sautent à deux. Deux moutons, ça fait deux !',
+  ],
+  [
+    'Dernière manche. La plus difficile.',
+    'Moi, je ferme les yeux… *bâille*… Et toi, tu comptes {c:y}dans ta tête{/c}.',
+    'Seulement ceux qui sautent pour de vrai. À la fin, tu me diras combien.',
+  ],
+];
+
+const FAIL_LINES = [
+  'Oh là là… je me suis emmêlé les sabots.',
+  'Ce n\'est pas grave. Les moutons adorent recommencer. Ils sautent pour le plaisir.',
+  'Hmm… On reprend la manche du début ?',
+];
+
+function controlsHint(): string {
+  const touch = input.lastDevice === 'touch' || ('ontouchstart' in window && input.lastDevice !== 'keyboard');
+  return touch
+    ? '{c:g}(Touche l\'écran ou A quand un mouton passe au-dessus de la barrière.){/c}'
+    : '{c:g}(Espace, Entrée ou Z quand un mouton passe au-dessus de la barrière.){/c}';
+}
+
+/** Slides the two pillows that block the summit path out of the way. */
+async function pillowsMoveAside(d: Director): Promise<void> {
+  const moves: [string, number][] = [
+    ['hill_pillow_l', -1],
+    ['hill_pillow_r', 1],
+  ];
+  d.sfx('whoosh');
+  for (let i = 0; i < 32; i++) {
+    for (const [id, dir] of moves) {
+      const e = d.find(id);
+      if (!e) continue;
+      e.x += dir;
+      if (e.rect) e.rect.x += dir;
+    }
+    await d.wait(i < 8 || i > 24 ? 2 : 1);
+  }
+  d.sfx('pop', { pitch: 0.7 });
+}
+
+/**
+ * The counting minigame (scenes/sheepcount.ts): three rounds, free retries, and after two failures
+ * « Je n'y arrive pas » lets Noa through anyway. Returns true when the way is open.
+ */
+async function countSheep(d: Director, replay = false): Promise<boolean> {
+  await d.fadeOut(24);
+  const scene = SheepCountScene.open();
+  await d.fadeIn(24);
+  let round = replay ? 1 : Math.min(3, Math.max(1, Number(G.state.flags.c1_sheep_round ?? 1)));
+  let fails = replay ? 0 : Number(G.state.flags.c1_sheep_fails ?? 0);
+  let attempt = 0;
+  let gaveUp = false;
+  if (round === 1 && !flag('c1_sheep_tried')) {
+    d.set('c1_sheep_tried');
+    await d.say(['Voilà mes moutons. Ils vont sauter la barrière, un par un.', 'À chaque mouton qui passe {c:y}au-dessus{/c}, tu comptes avec moi.'], 'mouton');
+    await d.say(controlsHint());
+  }
+  while (round <= 3) {
+    scene.announce(round);
+    if (attempt === 0) await d.say(ROUND_INTRO[round - 1]!, 'mouton');
+    const r = await scene.play(round, attempt + fails);
+    let ok = r.ok;
+    if (round === 3) {
+      const offsets = [
+        [-1, 0, 1],
+        [0, 1, 2],
+        [-2, -1, 0],
+      ][(attempt + fails) % 3]!;
+      const nums = offsets.map((o) => r.valid + o);
+      const i = await d.ask('*ouvre un œil* Alors… ça fait combien ?', nums.map(String), 'mouton');
+      ok = nums[i] === r.valid;
+      if (ok) await d.say([tf('{0} ! C\'est exactement ça.', tr(NUMBER_WORDS[r.valid] ?? String(r.valid))), 'Moi, j\'en avais compté quarante-deux. Mais je dormais un peu.'], 'mouton');
+      else await d.say([tf('Hmm… Moi, en ouvrant un œil, j\'en ai vu {0}.', r.valid), 'Ils vont ressauter dans un autre ordre. Ouvre bien les yeux… enfin, toi.'], 'mouton');
+    } else if (ok) {
+      if (round === 1) await d.say(['Bravo ! Ils sont tous passés.', 'Tu as un don. Ou alors… tu as du mal à dormir, toi aussi ?'], 'mouton');
+      else await d.say(r.errors ? 'Ils sont tous passés ! Et le mouton noir boude dans son coin. Parfait.' : 'Pas une seule erreur ! Le mouton noir est vexé. C\'est bon signe.', 'mouton');
+    }
+    if (ok) {
+      round++;
+      attempt = 0;
+      if (!replay) d.set('c1_sheep_round', Math.min(3, round));
+      continue;
+    }
+    fails++;
+    attempt++;
+    if (!replay) d.set('c1_sheep_fails', fails);
+    if (round < 3) await d.say(FAIL_LINES[(fails - 1) % FAIL_LINES.length]!, 'mouton');
+    if (fails === 1 && withMina()) await d.say('Courage, chevalier ! Moi, après dix, je me trompe tout le temps.', 'mina:happy');
+    const choices = ['On recommence', 'Plus tard'];
+    if (fails >= 2) choices.push('Je n\'y arrive pas');
+    const c = await d.ask('On recommence ?', choices, 'mouton', { cancelIndex: 1 });
+    if (c === 1) {
+      await d.fadeOut(24);
+      scene.close();
+      await d.fadeIn(24);
+      await d.say('D\'accord. Je ne bouge pas d\'ici. Enfin… si je ne m\'endors pas.', 'mouton');
+      return false;
+    }
+    if (c === 2) {
+      gaveUp = true;
+      break;
+    }
+  }
+  if (gaveUp) {
+    await d.say([
+      'Ce n\'est pas grave, tu sais.',
+      'Moi non plus, je n\'y arrive jamais. Je m\'endors toujours avant la fin.',
+      'Mais tu as compté avec moi. Et regarde : ils sont tous couchés quand même.',
+    ], 'mouton');
+    if (withMina()) await d.say('Tu vois ? T\'as réussi quand même. À ta façon.', 'mina:happy');
+  }
+  await d.fadeOut(24);
+  scene.close();
+  await d.fadeIn(24);
+  if (replay) {
+    await d.say(['Merci… Ça fait du bien, de compter à deux.', 'Zzz…'], 'mouton');
+    return true;
+  }
+  d.set('c1_sheep_done');
+  if (gaveUp) d.set('c1_sheep_helped');
+  else await d.say(['Tous comptés ! Tous couchés !', 'Merci, petit. Maintenant, je vais enfin pouvoir… *bâille*…'], 'mouton');
+  await d.say([
+    'C\'est un grand mouton tout doux qui m\'a appris à compter, tu sais.',
+    'Il dit qu\'à force de compter, on oublie tout le reste.',
+    'C\'est reposant, d\'oublier…',
+  ], 'mouton');
+  if (withMina()) await d.say('Moi, je veux rien oublier.', 'mina:neutral');
+  await d.say('Dans un grand soupir de plumes, les oreillers bâillent… et s\'écartent.');
+  await pillowsMoveAside(d);
+  await d.say(['Tiens, pour la route. Un lait chaud.', 'C\'est fait pour dormir… mais ça marche aussi pour être courageux.'], 'mouton');
+  await d.give('lait');
+  if (withMina()) await d.say('Le chemin est ouvert ! L\'étoile, on arrive !', 'mina:happy');
+  await d.emote('moutonnier', '…');
+  await d.say('Zzz… cent douze… cent treize… Zzz…', 'mouton');
+  return true;
+}
+
+async function offerHelp(d: Director): Promise<void> {
+  const r = await d.ask('Compter les moutons avec lui ?', ['Compter', 'Pas maintenant'], 'mouton', { cancelIndex: 1 });
+  if (r !== 0) {
+    await d.say('D\'accord. Je ne bouge pas d\'ici. Enfin… si je ne m\'endors pas.', 'mouton');
+    return;
+  }
+  if (withMina() && !bump('c1_sheep_mina')) await d.say('Noa est super fort pour compter ! Il m\'aidait toujours pour mes devoirs.', 'mina:happy');
+  await countSheep(d);
+}
+
+/** Trigger: the Moutonnier hails Noa when he reaches the pillows. */
+export const moutonnierMeet: Script = async (d) => {
+  d.face('moutonnier', 'left');
+  await d.emote('moutonnier', '!');
+  await d.say(['Hé ! Hé, vous deux ! Par ici !', 'Vous voulez monter au sommet ? Ah… Ça va être difficile.'], 'mouton');
+  await d.say([
+    'Le soir, les oreillers ferment le chemin.',
+    'Ils ne se poussent que quand tous les moutons sont {c:y}comptés et couchés{/c}. C\'est la règle.',
+    'Les oreillers sont très à cheval sur la règle.',
+  ], 'mouton');
+  if (withMina()) await d.say('Ben, compte-les, alors !', 'mina:neutral');
+  await d.say(['J\'essaie ! Mais au bout de trois ou quatre moutons… *bâille*…', '…je m\'endors. C\'est le problème, quand on compte les moutons.'], 'mouton');
+  await d.say('Tu voudrais bien compter avec moi ?', 'mouton');
+  await offerHelp(d);
+};
+
+export const moutonnier: Script = async (d) => {
+  if (flag('c1_sheep_done')) {
+    const n = bump('c1_moutonnier_after');
+    if (n % 2 === 0) {
+      await d.say('Zzz… deux cent… deux cent quoi, déjà… Zzz…', 'mouton');
+      return;
+    }
+    await d.say('*ouvre un œil* Tu veux recompter avec moi ? Juste pour le plaisir ?', 'mouton');
+    const r = await d.ask('Recompter les moutons ?', ['Oui', 'Non'], 'mouton', { cancelIndex: 1 });
+    if (r === 0) await countSheep(d, true);
+    else await d.say('Zzz…', 'mouton');
+    return;
+  }
+  d.set('c1_sheep_meet');
+  const round = Number(G.state.flags.c1_sheep_round ?? 1);
+  await d.say(round > 1 ? tf('Tu reviens ! On en était à la manche {0}. Les moutons t\'attendent.', round) : 'Alors ? Tu es prêt ? Les moutons s\'impatientent.', 'mouton');
+  await offerHelp(d);
+};
+
+export const penSheep: Script = async (d) => {
+  if (flag('c1_sheep_done')) {
+    await d.say('Le mouton dort debout, la tête sur la barrière. Il sourit.');
+    return;
+  }
+  await d.say(['Bêê.', '…Je suis prêt à sauter. Il faut juste que quelqu\'un me compte.'], 'mouton');
+};
+
+export const penBlackSheep: Script = async (d) => {
+  if (flag('c1_sheep_done')) {
+    await d.say('Le mouton noir fait semblant de dormir. Il a un œil ouvert.');
+    return;
+  }
+  await d.say(['Le mouton noir te tourne le dos.', 'Il marmonne : « On ne me compte pas. Jamais. Je ne suis pas un mouton comme les autres. »']);
+  if (withMina()) await d.say('Il est grognon. Mais je l\'aime bien, moi.', 'mina:happy');
+};
+
+export const blockingPillows: Script = async (d) => {
+  await d.say(['Deux oreillers géants bouchent le chemin du sommet.', 'Ils ronflent. Ils ne bougeront pas tant que les moutons ne sont pas couchés.']);
+  if (withMina()) await d.say('Pousse-toi, l\'oreiller ! … Il veut pas.', 'mina:angry');
+};
+
+// ---------------------------------------------------------------------------
+// Optional: sitting with Mina on the big pillow, watching the cotton fall
+// ---------------------------------------------------------------------------
+
+export const pillowSeat: Script = async (d) => {
+  if (!withMina()) {
+    await d.say('Un oreiller géant. Il garde la forme d\'une tête toute petite.');
+    return;
+  }
+  if (flag('c1_hill_sit')) {
+    await d.say('Un oreiller géant. Il garde la forme de deux têtes, maintenant. Une grande, une petite.');
+    return;
+  }
+  await d.say(['Oh, un oreiller géant ! On s\'assoit deux minutes ?', 'Les chevalières aussi ont le droit de se reposer.'], 'mina:happy');
+  const r = await d.ask('S\'asseoir avec Mina ?', ['S\'asseoir', 'Plus tard'], undefined, { cancelIndex: 1 });
+  if (r !== 0) {
+    await d.say('Rabat-joie.', 'mina:neutral');
+    return;
+  }
+  await sitWithMina(d);
+};
+
+async function sitWithMina(d: Director): Promise<void> {
+  d.set('c1_hill_sit');
+  d.bars(true);
+  await d.fadeOut(30);
+  const p = d.player;
+  p.x = 21 * 16 + 8;
+  p.y = 10 * 16 + 14;
+  d.face('player', 'down');
+  const m = d.find('mina');
+  if (m) {
+    m.x = 22 * 16 + 8;
+    m.y = 10 * 16 + 14;
+  }
+  d.face('mina', 'down');
+  await d.fadeIn(40);
+  await d.say([
+    'Vous vous asseyez au bord de l\'oreiller.',
+    'En bas, tout le Pays de Coton : la prairie, le village, les petites lunes des réverbères.',
+    'Le coton tombe sans un bruit.',
+  ]);
+  await d.wait(60);
+  await d.say('Tu te souviens, la fois où il a neigé pour de vrai ?', 'mina:neutral');
+  await d.say(['On avait fait un bonhomme de neige tout petit, sur le rebord de la fenêtre.', 'Parce qu\'on avait pas le droit de sortir.'], 'mina:happy');
+  await d.say('…', 'noa:tired');
+  await d.wait(20);
+  await d.say('Pourquoi on avait pas le droit, déjà ?', 'mina:neutral');
+  const a = await d.ask('…', ['Il faisait trop froid.', '…'], 'noa:sad', { cancelIndex: 1 });
+  if (a === 0) {
+    await d.say('Il faisait trop froid.', 'noa:sad');
+    await d.say('Ah oui. Sûrement.', 'mina:neutral');
+    await d.say('Ce n\'était pas le froid. Tu le sais. Tu ne sais plus pourquoi tu le sais.');
+  } else {
+    await d.say('Bah. C\'est pas grave.', 'mina:neutral');
+  }
+  await d.wait(30);
+  await d.say(['Ici, on a le droit de tout. Même de manger la neige.', 'Aaaah…'], 'mina:happy');
+  d.sfx('pop', { pitch: 1.4 });
+  await d.say('Ça a le goût de rien ! Trop bien !', 'mina:happy');
+  await d.say(['Elle rit. Le coton s\'accroche à ses cheveux.', 'Tu voudrais que ce moment ne finisse jamais.']);
+  await d.wait(40);
+  await d.say(['Noa ?', 'Si un jour j\'oublie des trucs… tu me les raconteras ?'], 'mina:neutral');
+  const b = await d.ask('…', ['Promis.', '…'], 'noa:neutral', { cancelIndex: 1 });
+  if (b === 0) {
+    d.set('c1_promesse');
+    await d.say('Promis.', 'noa:neutral');
+    await d.say(['Juré craché ?', '…Non, crache pas. C\'est dégoûtant.'], 'mina:happy');
+  } else {
+    await d.say('Je prends ça pour un oui. Les chevaliers, ça parle pas beaucoup.', 'mina:happy');
+  }
+  await d.fadeOut(40);
+  d.heal();
+  world.resetFollower();
+  d.bars(false);
+  await d.fadeIn(40);
+  await d.say('Tu te sens reposé. {c:l}PV au maximum.{/c}');
+}
+
 function placardHooks(): Partial<BattleHooks> {
   let hinted = false;
   let used = false;
@@ -436,11 +854,14 @@ export const MINA_LINES: Record<string, string[]> = {
     'Tu sens ? Ça sent la barbe à papa !|happy',
     'Fais attention aux Nuages Tristes. Ils pleurent sur tout le monde.|neutral',
     'Je suis contente que tu sois là. Vraiment vraiment.|happy',
+    'Ici, quand on tombe, ça fait pas mal. Regarde ! … Bon, je tombe pas. Mais ça ferait pas mal.|happy',
   ],
   village: [
     'Les moutons sont trop mignons. Sauf le noir. Il est grognon.|happy',
     'Tu veux un bonbon ? J\'en ai plus. Je les ai tous mangés.|neutral',
     'Madame Lune dort tout le temps. Mais elle sait plein de trucs.|neutral',
+    'Le mouton noir, il fait le grognon. Mais je crois qu\'il est juste timide.|neutral',
+    'Si j\'habitais ici, je voudrais la maison avec la porte ronde. Et un mouton de compagnie.|happy',
   ],
   boutique: ['Chaussette, c\'est ma copine. Elle cherche sa paire depuis toujours.|neutral', 'Achète des biscuits étoiles ! Ils rendent joyeux.|happy'],
   maison_mouton: ['Mémé Laine tricote des nuages. Je l\'ai vue !|happy'],
@@ -448,6 +869,7 @@ export const MINA_LINES: Record<string, string[]> = {
     'C\'est haut, hein ? On voit tout le Pays de Coton d\'ici !|happy',
     'Si on trouve l\'étoile, tu feras quel vœu, toi ?|neutral',
     'Moi, mon vœu, c\'est un secret. … Bon, d\'accord : c\'est que tu restes.|happy',
+    'Les moutons qui sautent, ça me donne envie de dormir. C\'est bizarre, non ?|neutral',
   ],
 };
 
@@ -474,6 +896,40 @@ export const DEBUG: Record<string, Script> = {
     d.follower('mina');
     d.load('village', 'west');
     await d.fadeIn(10);
+  },
+  c1_hill_puzzle: async (d) => {
+    G.state.chapter = 1;
+    d.set('c1_tutorial');
+    d.set('c1_mina');
+    d.set('c1_hill');
+    d.follower('mina');
+    d.load('colline', 'puzzle');
+    await d.fadeIn(10);
+  },
+  c1_sheep: async (d) => {
+    G.state.chapter = 1;
+    d.set('c1_tutorial');
+    d.set('c1_mina');
+    d.set('c1_hill');
+    d.set('c1_sheep_meet');
+    // &round=2 or &round=3 starts later in the minigame.
+    const round = Number(new URLSearchParams(location.search).get('round') ?? 1);
+    if (round > 1) d.set('c1_sheep_round', Math.min(3, round));
+    d.follower('mina');
+    d.load('colline', 'sheep');
+    await d.fadeIn(10);
+    await countSheep(d);
+  },
+  c1_hill_sit: async (d) => {
+    G.state.chapter = 1;
+    d.set('c1_tutorial');
+    d.set('c1_mina');
+    d.set('c1_hill');
+    d.set('c1_fears');
+    d.follower('mina');
+    d.load('colline', 'summit');
+    await d.fadeIn(10);
+    await sitWithMina(d);
   },
   c1_boss: async (d) => {
     G.state.chapter = 1;

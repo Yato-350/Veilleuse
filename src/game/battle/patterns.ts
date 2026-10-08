@@ -2,6 +2,7 @@ import { audio } from '../../engine/audio';
 import { rng } from '../../engine/math';
 import type { Emotion } from '../../engine/palette';
 import type { BulletWorld } from './bullets';
+import { BONUS_PATTERNS } from './patterns-bonus';
 
 export interface PatternCtx {
   /** Difficulty modifier: 0 = gentle, grows with agitation and turn count. */
@@ -514,4 +515,6 @@ export const PATTERNS: Record<string, Pattern> = {
       }
     },
   },
+  // Bonus chapter (Maman's dream): see patterns-bonus.ts.
+  ...BONUS_PATTERNS,
 };

@@ -3,9 +3,10 @@ import { H, W } from '../../engine/constants';
 import { drawChar, drawOutlined, drawText, LINE_HEIGHT, measure } from '../../engine/font';
 import { fx } from '../../engine/fx';
 import { game, type Scene } from '../../engine/game';
-import { input } from '../../engine/input';
+import { hits, input } from '../../engine/input';
 import { clamp, lerp, rng, type Rect } from '../../engine/math';
-import { EMOTION_COLOR, EMOTION_LABEL, type Emotion } from '../../engine/palette';
+import { EMOTION_COLOR, emotionColorName, emotionLabel, soulLabel, type Emotion } from '../../engine/palette';
+import { tf, tn, tr, translated } from '../../i18n';
 import { vibrate } from '../../engine/screen';
 import { drawSprite, silhouette } from '../../engine/sprite';
 import { ITEMS } from '../../data/items';
@@ -15,9 +16,23 @@ import { attack, defense, G, level, MAX_ITEMS, maxHp } from '../state';
 import { bar, heart, nextArrow } from '../ui/draw';
 import { layoutRich, parseRich, type RichChar } from '../ui/richtext';
 import { BulletWorld, type Bullet } from './bullets';
+import { drawEmoIcon, soulHeart } from './emoshape';
 import { EnemyRuntime } from './enemy';
 import { PATTERNS, type Pattern, type PatternCtx } from './patterns';
-import { enemyDamage, playerDamage, soulSpeed } from './rules';
+import {
+  ALLY_EVERY,
+  allyActsOn,
+  allyHeal,
+  allyState,
+  combatEmotion,
+  DefeatStreak,
+  enemyDamage,
+  pickAllyEffect,
+  playerDamage,
+  soulSpeed,
+  type AllyEffect,
+  type AllyState,
+} from './rules';
 import type { BattleHooks, BattleOptions, BattleResult, EnemyDef, WordDef } from './types';
 
 const TEXT_BOX: Rect = { x: 12, y: 86, w: 296, h: 54 };
@@ -34,8 +49,67 @@ interface Floater {
 
 type Mode = 'idle' | 'menu' | 'list' | 'notebook' | 'bar' | 'dodge' | 'text';
 
-/** Agreement helper: "apaisé" / "apaisée". */
-export const agree = (e: EnemyRuntime, word: string): string => (e.def.fem ? `${word}e` : word);
+/** Rich-text color code of each emotion ({c:y}…{/c}). */
+const RICH_CODE: Record<Emotion, string> = { neutre: 'g', joie: 'y', tristesse: 'b', colere: 'r', peur: 'v' };
+
+/** Agreement helper: "apaisé" / "apaisée", translated ("calm"). */
+export const agree = (e: EnemyRuntime, word: string): string => tr(e.def.fem ? `${word}e` : word);
+
+// -----------------------------------------------------------------------------
+// Music that follows the soul
+// -----------------------------------------------------------------------------
+
+/** How the soul's emotion shapes the battle track (lowpass « muffle », tempo, slight detune). */
+const MOODS: Record<Emotion, { muffle: number; tempo: number; wobble: number }> = {
+  neutre: { muffle: 1, tempo: 1, wobble: 0 },
+  joie: { muffle: 1, tempo: 1.05, wobble: 0 },
+  tristesse: { muffle: 0.5, tempo: 0.92, wobble: 0 },
+  colere: { muffle: 1, tempo: 1.1, wobble: 0 },
+  peur: { muffle: 0.68, tempo: 0.97, wobble: 0.2 },
+};
+
+// -----------------------------------------------------------------------------
+// Defeats in a row (Mina offers help on the game over screen)
+// -----------------------------------------------------------------------------
+
+const streak = new DefeatStreak();
+
+/** Consecutive defeats in the same fight (game over → retry → game over…). */
+export function defeatStreak(): number {
+  return streak.count;
+}
+
+/** Mina offers to help on the 3rd defeat in a row of the same fight — once, only if she fought at Noa's side. */
+export function minaOffersHelp(): boolean {
+  return streak.offersHelp(G.settings.storyMode);
+}
+
+/** Debug: pretend the fight against `ids` was just lost `n` times in a row. */
+export function setDefeatStreak(ids: string[], n: number, mina = true): void {
+  streak.key = ids.join('+');
+  streak.count = n;
+  streak.mina = mina;
+}
+
+// -----------------------------------------------------------------------------
+// Mina, the ally
+// -----------------------------------------------------------------------------
+
+const ALLY_SLOT = { x: 4, y: 4, w: 30, h: 30 };
+const MINA_ORANGE = '#f09a4a';
+
+const ALLY_LINES: Record<AllyEffect, string[]> = {
+  shield: ['Je dessine un bouclier ! Bouge pas !', 'Bouclier de chevalière ! Tadaaa !', 'Attends, je te fais une armure en crayon !'],
+  color: ['Je colorie tout le blanc en {color} !', 'Hop ! Tout en {color}, comme ton cœur !'],
+  heal: ['Tiens, un pansement à paillettes !', 'Bouge pas, je fais un bisou magique !'],
+};
+
+const ABSENT_LINES = [
+  '* Tu attends le dessin de Mina. Il ne vient pas.',
+  '* Tu te tournes vers Mina pour lui dire « à toi ! ».\n* Il n\'y a personne.',
+  '* D\'habitude, à ce moment-là, quelqu\'un criait « Vas-y, chevalier ! ».',
+  '* La place de Mina est vide. Tu la gardes quand même.',
+];
 
 /** A battle. `await new Battle(...).run()` resolves with the outcome. */
 export class Battle implements Scene {
@@ -85,8 +159,26 @@ export class Battle implements Scene {
   overlay: ((g: CanvasRenderingContext2D, b: Battle) => void) | null = null;
   ended = false;
   /** Player name label in the HUD. */
-  hudName = 'NOA';
+  hudName = G.state.playerChar === 'maman' ? 'MAMAN' : 'NOA';
   private hpGhost: number;
+  /** Second color of a bicolor (bittersweet) soul. */
+  soulEmo2: Emotion | null = null;
+  /** Mina at Noa's side (or her empty slot). */
+  ally: AllyState;
+  private allyActs = 0;
+  /** Frames of the « Mina acts » animation. */
+  private allyT = 0;
+  /** Mina's line (or the line about her absence) is on screen. */
+  private allyTalking = false;
+  private absentNoted = false;
+  /** Help prepared by Mina for the next dodge. */
+  private nextDodge: { shield?: number; recolor?: Emotion } | null = null;
+  private readonly key: string;
+  /** The soul's emotion shapes the track (off when the battle's scripts own the music filter/tempo). */
+  private readonly moodMusic: boolean;
+  private moodSaved: { tempo: number; wobble: number } | null = null;
+  /** Last mood applied to the music (debug / tests). */
+  mood = '';
 
   constructor(defs: EnemyDef[], opts: BattleOptions = {}) {
     this.enemies = defs.map((d) => new EnemyRuntime(d));
@@ -96,6 +188,17 @@ export class Battle implements Scene {
     this.hpGhost = this.hp;
     this.soulEmo = opts.emotion ?? defs.find((d) => d.inflict)?.inflict ?? 'neutre';
     this.bgKind = opts.bg ?? defs[0]?.bg ?? 'dream';
+    this.key = defs.map((d) => d.id).join('+');
+    this.ally = allyState({
+      enemyIds: defs.map((d) => d.id),
+      bg: opts.bg ?? defs[0]?.bg,
+      tutorial: opts.tutorial,
+      noAlly: opts.noAlly,
+      chapter: G.state.chapter,
+      party: G.state.party,
+      flags: G.state.flags,
+    });
+    this.moodMusic = !opts.fixedMusic && !defs.some((d) => d.id === 'dodo');
     const n = this.enemies.length;
     this.enemies.forEach((e, i) => {
       e.x = Math.round(W / 2 + (i - (n - 1) / 2) * (n > 2 ? 86 : 110));
@@ -118,10 +221,15 @@ export class Battle implements Scene {
   async run(): Promise<BattleResult> {
     const music = this.opts.music ?? this.enemies[0]?.def.music ?? (this.enemies.some((e) => e.def.boss) ? 'boss' : 'battle');
     audio.playMusic(music, { fadeIn: 0.2, fadeOut: 0.2 });
+    this.applyMood();
     const first = this.enemies[0]!;
     const intro =
       this.opts.intro ??
-      (this.enemies.length > 1 ? `* ${first.name} et ses amis te barrent la route !` : `* ${first.name} ${first.def.boss ? 'se dresse devant toi.' : 'te barre la route !'}`);
+      (this.enemies.length > 1
+        ? tf('* {0} et ses amis te barrent la route !', first.name)
+        : first.def.boss
+          ? tf('* {0} se dresse devant toi.', first.name)
+          : tf('* {0} te barre la route !', first.name));
     await this.say(intro);
     while (!this.ended) {
       this.turn++;
@@ -148,6 +256,10 @@ export class Battle implements Scene {
     return this.finish();
   }
 
+  exit(): void {
+    this.resetMood();
+  }
+
   /** Ends the battle from a script. */
   end(outcome: BattleResult['outcome'] = 'scripted'): void {
     this.result.outcome = outcome;
@@ -157,7 +269,34 @@ export class Battle implements Scene {
   private finish(): BattleResult {
     G.state.hp = clamp(this.hp, 1, this.maxHp);
     this.mode = 'idle';
+    this.resetMood();
+    streak.record(this.key, this.result.outcome === 'lose', this.ally === 'mina');
     return this.result;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Music mood
+  // ---------------------------------------------------------------------------
+
+  /** Shapes the current track after the soul's emotion(s): sadness muffles and slows, anger speeds up… */
+  private applyMood(): void {
+    if (!this.moodMusic) return;
+    const a = MOODS[this.soulEmo];
+    const b = MOODS[this.soulEmo2 ?? this.soulEmo];
+    if (!this.moodSaved) this.moodSaved = { tempo: audio.tempoScale, wobble: audio.corruption };
+    audio.setMuffle((a.muffle + b.muffle) / 2, 1.5);
+    audio.tempoScale = this.moodSaved.tempo * ((a.tempo + b.tempo) / 2);
+    audio.corruption = Math.max(this.moodSaved.wobble, (a.wobble + b.wobble) / 2);
+    this.mood = this.soulEmo2 ? `${this.soulEmo}+${this.soulEmo2}` : this.soulEmo;
+  }
+
+  private resetMood(): void {
+    if (!this.moodSaved) return;
+    audio.setMuffle(1, 0.6);
+    audio.tempoScale = this.moodSaved.tempo;
+    audio.corruption = this.moodSaved.wobble;
+    this.moodSaved = null;
+    this.mood = '';
   }
 
   private async playerTurn(): Promise<'acted' | 'fled'> {
@@ -203,7 +342,7 @@ export class Battle implements Scene {
         if (idx < 0) continue;
         if (idx >= G.state.items.length) {
           const id = items[idx]!;
-          if (!(await this.hooks.onItem?.(this, id))) await this.say(`* Tu sors : ${ITEMS[id]?.name ?? id}. Rien ne se passe.`);
+          if (!(await this.hooks.onItem?.(this, id))) await this.say(tf('* Tu sors : {0}. Rien ne se passe.', tr(ITEMS[id]?.name ?? id)));
           return 'acted';
         }
         await this.useItem(idx);
@@ -235,9 +374,8 @@ export class Battle implements Scene {
   }
 
   private async observe(e: EnemyRuntime): Promise<void> {
-    const emo = EMOTION_LABEL[e.emotion];
-    const col = e.emotion === 'neutre' ? 'g' : e.emotion === 'joie' ? 'y' : e.emotion === 'tristesse' ? 'b' : e.emotion === 'colere' ? 'r' : 'v';
-    await this.say(`* ${e.name.toUpperCase()} — ATQ ${e.def.atk} DÉF ${e.def.def} — {c:${col}}${emo}{/c}\n* ${e.def.check}`);
+    const emo = `{c:${RICH_CODE[e.emotion]}}${emotionLabel(e.emotion)}{/c}`;
+    await this.say(tf('* {0} — ATQ {1} DÉF {2} — {3}\n* {4}', e.name.toUpperCase(), e.def.atk, e.def.def, emo, tr(e.def.check)));
   }
 
   private async enemyTurn(): Promise<void> {
@@ -252,12 +390,63 @@ export class Battle implements Scene {
       if (custom) break;
     }
     if (lines.length) await this.bubble(lines);
+    await this.allyTurn();
+    if (this.ended) return;
     // Attack
     const src = alive[rng.int(0, alive.length - 1)]!;
     const pid = this.hooks.pattern?.(this, this.turn) ?? rng.pick(src.def.patterns);
     const power = Math.min(3, Math.max(...alive.map((e) => e.agitation)) + Math.floor(this.turn / 4) + (alive.length > 1 ? 1 : 0));
     await this.runPattern(pid, power, src.emotion);
-    if (this.hp > 0 && this.soulEmo === 'tristesse') this.heal(1, false);
+    if (this.hp > 0 && this.combatEmo === 'tristesse') this.heal(1, false);
+  }
+
+  /** Emotion used by the triangle and damage (a bicolor soul counts as neutral). */
+  get combatEmo(): Emotion {
+    return combatEmotion(this.soulEmo, this.soulEmo2);
+  }
+
+  /** Turns left before Mina's next action (0 = she acts this turn). */
+  get allyCharge(): number {
+    return (ALLY_EVERY - (this.turn % ALLY_EVERY)) % ALLY_EVERY;
+  }
+
+  /** Every 3rd turn, before the enemy attacks: Mina helps — or, after she was erased, her absence is felt. */
+  private async allyTurn(): Promise<void> {
+    if (this.ally === 'none' || !allyActsOn(this.turn)) return;
+    if (this.ally === 'absent') {
+      // Sparingly: at most once per battle, always the first time, then one battle in three.
+      if (this.absentNoted) return;
+      this.absentNoted = true;
+      const first = !G.state.flags.c3_mina_absence_felt;
+      if (!first && !rng.chance(0.35)) return;
+      G.state.flags.c3_mina_absence_felt = true;
+      this.allyT = 60;
+      this.allyTalking = true;
+      await this.say(first ? ABSENT_LINES[0]! : rng.pick(ABSENT_LINES));
+      this.allyTalking = false;
+      return;
+    }
+    const effect = pickAllyEffect(this.hp, this.maxHp, this.soulEmo, this.allyActs);
+    this.allyActs++;
+    this.allyT = 60;
+    audio.sfx('write', { pitch: 1.3 });
+    let line = tr(rng.pick(ALLY_LINES[effect])).replace('{color}', emotionColorName(this.soulEmo));
+    let after: string;
+    if (effect === 'heal') {
+      const before = this.hp;
+      this.heal(allyHeal(this.maxHp));
+      after = tf('* Tu récupères {0} PV.', this.hp - before);
+    } else if (effect === 'shield') {
+      this.nextDodge = { shield: 3 };
+      after = tr('* Un rond de crayon protège ton cœur (3 coups).');
+    } else {
+      this.nextDodge = { recolor: this.soulEmo };
+      after = tr('* Les attaques blanches prennent ta couleur.');
+    }
+    line = tf('{c:o}Mina :{/c} {0}\n{1}', line, after);
+    this.allyTalking = true;
+    await this.say(line, false, true, 'mina');
+    this.allyTalking = false;
   }
 
   /** Runs one dodge phase. */
@@ -277,10 +466,18 @@ export class Battle implements Scene {
     bw.soul.y = by + pattern.box.h / 2;
     bw.soul.inv = 20;
     bw.soul.emo = this.soulEmo;
+    bw.soul.emo2 = this.soulEmo2;
     bw.onHit = (b) => this.hurt(b);
     bw.onResonate = () => {
       this.soulFlash = 10;
       audio.sfx('chime', { vol: 0.25, pitch: 1.2 });
+    };
+    bw.shield = this.nextDodge?.shield ?? 0;
+    bw.recolor = this.nextDodge?.recolor ?? null;
+    this.nextDodge = null;
+    bw.onShield = () => {
+      audio.sfx('write', { pitch: 0.7 });
+      fx.shake(1, 4);
     };
     const ctx: PatternCtx = { power, turn: this.turn, emo, mem: {} };
     pattern.start?.(bw, ctx);
@@ -297,7 +494,7 @@ export class Battle implements Scene {
   private hurt(b: Bullet): void {
     if (b.dmg <= 0) return;
     const src = this.alive[0];
-    const dmg = enemyDamage(b.dmg, src?.def.atk ?? 0, defense(G.state), this.soulEmo, src?.emotion ?? 'neutre', G.settings.storyMode);
+    const dmg = enemyDamage(b.dmg, src?.def.atk ?? 0, defense(G.state), this.combatEmo, src?.emotion ?? 'neutre', G.settings.storyMode);
     this.hp = Math.max(0, this.hp - dmg);
     this.bw.soul.inv = 50;
     audio.sfx('hurt');
@@ -318,12 +515,23 @@ export class Battle implements Scene {
     void text;
   }
 
-  setEmotion(e: Emotion, sound = true): void {
-    if (this.soulEmo === e) return;
+  /** Changes the soul's color. `e2`: second color of a bicolor (bittersweet) soul. */
+  setEmotion(e: Emotion, sound = true, e2: Emotion | null = null): void {
+    const second = e2 && e2 !== e ? e2 : null;
+    if (this.soulEmo === e && this.soulEmo2 === second) return;
     this.soulEmo = e;
+    this.soulEmo2 = second;
     this.bw.soul.emo = e;
+    this.bw.soul.emo2 = second;
     this.soulFlash = 16;
-    if (sound) audio.sfx('emotion', { pitch: e === 'joie' ? 1.2 : e === 'tristesse' ? 0.8 : e === 'colere' ? 1 : 0.9 });
+    if (sound) audio.sfx('emotion', { pitch: second ? 1 : e === 'joie' ? 1.2 : e === 'tristesse' ? 0.8 : e === 'colere' ? 1 : 0.9 });
+    if (sound && second) window.setTimeout(() => audio.sfx('emotion', { pitch: 0.8, vol: 0.6 }), 120);
+    this.applyMood();
+  }
+
+  /** Main color of the soul and its second color (bicolor soul), for drawing. */
+  private soulColors(): [string, string | null] {
+    return [EMOTION_COLOR[this.soulEmo], this.soulEmo2 ? EMOTION_COLOR[this.soulEmo2] : null];
   }
 
   // ---------------------------------------------------------------------------
@@ -337,8 +545,8 @@ export class Battle implements Scene {
       await game.wait(40);
       return;
     }
-    const crit = acc > 0.93 || (this.soulEmo === 'joie' && rng.chance(0.2));
-    const dmg = playerDamage(attack(G.state), acc, this.soulEmo, e.emotion, e.def.def, crit);
+    const crit = acc > 0.93 || (this.combatEmo === 'joie' && rng.chance(0.2));
+    const dmg = playerDamage(attack(G.state), acc, this.combatEmo, e.emotion, e.def.def, crit);
     this.slash = { e, t: 0, crit };
     audio.sfx('slash');
     await game.wait(18);
@@ -369,13 +577,12 @@ export class Battle implements Scene {
     audio.sfx('die');
     this.result.killed.push(e.def.id);
     await game.wait(70);
-    await this.say(e.def.killText ?? `* ${e.name} se dissout en une flaque d'encre.`);
+    await this.say(e.def.killText ?? tf("* {0} se dissout en une flaque d'encre.", e.name));
   }
 
   private async writeWord(e: EnemyRuntime, w: WordDef): Promise<void> {
     const r = e.applyWord(w);
-    const newEmo: Emotion = w.emotion === 'peur' ? 'peur' : w.emotion;
-    this.setEmotion(newEmo);
+    this.setEmotion(w.emotion, true, w.emotion2 ?? null);
     if (await this.hooks.onWord?.(this, e, w)) return;
     const special = e.def.reactSpecial?.[w.text];
     let reaction: string;
@@ -385,11 +592,19 @@ export class Battle implements Scene {
     else reaction = rng.pick(e.def.reactNeutral);
     await this.bubble([{ e, text: reaction }]);
     let line: string;
-    if (e.spareable) line = `* {c:y}${e.name} est ${agree(e, 'apaisé')}.{/c} Tu peux l'épargner.`;
-    else if (r.verdict === 'good' || r.verdict === 'special') line = `* Tes mots touchent ${e.name}.`;
-    else if (r.verdict === 'bad') line = `* ${e.name} se crispe. Ses attaques seront plus fortes.`;
-    else line = `* ${e.name} ne semble pas comprendre.`;
+    if (e.spareable) line = tf("* {c:y}{0} est {1}.{/c} Tu peux l'épargner.", e.name, agree(e, 'apaisé'));
+    else if (r.verdict === 'good' || r.verdict === 'special') line = tf('* Tes mots touchent {0}.', e.name);
+    else if (r.verdict === 'bad') line = tf('* {0} se crispe. Ses attaques seront plus fortes.', e.name);
+    else line = tf('* {0} ne semble pas comprendre.', e.name);
     await this.say(line);
+    if (w.emotion2 && w.emotion2 !== w.emotion && !G.state.flags.b_doux_amer) {
+      // The first bittersweet word ever written: explain the two-colored heart once.
+      G.state.flags.b_doux_amer = true;
+      const tag = (x: Emotion) => `{c:${RICH_CODE[x]}}${emotionColorName(x)}{/c}`;
+      await this.say(
+        tf('* Un mot doux-amer : ton cœur a deux couleurs.\n* Le {0} et le {1} le traversent sans lui faire mal.', tag(w.emotion), tag(w.emotion2)),
+      );
+    }
   }
 
   private async useItem(idx: number): Promise<void> {
@@ -399,24 +614,24 @@ export class Battle implements Scene {
     if (await this.hooks.onItem?.(this, id)) return;
     G.state.items.splice(idx, 1);
     audio.sfx('item');
-    let line = `* Tu utilises : ${item.name}. ${item.useText ?? ''}`;
+    let line = tf('* Tu utilises : {0}. {1}', tr(item.name), tr(item.useText ?? ''));
     if (item.heal) {
       const before = this.hp;
       this.heal(item.heal);
-      line += this.hp >= this.maxHp ? ' PV au maximum !' : ` +${this.hp - before} PV.`;
+      line += this.hp >= this.maxHp ? tr(' PV au maximum !') : tf(' +{0} PV.', this.hp - before);
     }
     if (item.emotion) {
       this.setEmotion(item.emotion);
-      line += ` Ton cœur devient ${EMOTION_LABEL[item.emotion]}.`;
+      line += tf(' Ton cœur devient {0}.', emotionLabel(item.emotion));
     }
-    await this.say(line);
+    await this.say(translated(line));
   }
 
   private async spare(): Promise<void> {
     const targets = this.alive.filter((e) => e.spareable);
     if (!targets.length) {
       const e = this.alive[0];
-      await this.say(this.alive.length === 1 && e ? `* ${e.name} n'est pas encore ${agree(e, 'apaisé')}.` : '* Personne n\'est prêt à partir en paix.');
+      await this.say(this.alive.length === 1 && e ? tf("* {0} n'est pas encore {1}.", e.name, agree(e, 'apaisé')) : '* Personne n\'est prêt à partir en paix.');
       return;
     }
     for (const e of targets) {
@@ -427,7 +642,7 @@ export class Battle implements Scene {
       audio.sfx('spare');
     }
     await game.wait(50);
-    for (const e of targets) if (e.spared) await this.say(e.def.spareText ?? `* ${e.name} s'en va en paix.`);
+    for (const e of targets) if (e.spared) await this.say(e.def.spareText ?? tf("* {0} s'en va en paix.", e.name));
   }
 
   private async victory(): Promise<void> {
@@ -451,40 +666,41 @@ export class Battle implements Scene {
     this.result.outcome = killed > 0 && spared === 0 ? 'win' : spared > 0 && killed === 0 ? 'spare' : 'win';
     audio.stopMusic(1.2);
     const parts: string[] = [];
-    if (spared) parts.push(`{c:y}${spared} Étoile${spared > 1 ? 's' : ''}{/c}`);
-    if (killed) parts.push(`{c:v}${killed} Encre${killed > 1 ? 's' : ''}{/c}`);
-    parts.push(`${boutons} Bouton${boutons > 1 ? 's' : ''}`);
-    const lines = [`* C'est fini. Tu gagnes ${parts.join(', ')}.`];
+    if (spared) parts.push(tn(spared, '{c:y}{0} Étoile{/c}', '{c:y}{0} Étoiles{/c}'));
+    if (killed) parts.push(tn(killed, '{c:v}{0} Encre{/c}', '{c:v}{0} Encres{/c}'));
+    parts.push(tn(boutons, '{0} Bouton', '{0} Boutons'));
+    const lines = [tf("* C'est fini. Tu gagnes {0}.", parts.join(', '))];
     if (maxHp(s) > hpBefore) {
-      lines.push(`* Ta lumière grandit ! PV max +${maxHp(s) - hpBefore}.`);
+      lines.push(tf('* Ta lumière grandit ! PV max +{0}.', maxHp(s) - hpBefore));
       this.hp += maxHp(s) - hpBefore;
     }
-    if (attack(s) > atkBefore) lines.push(`* L'encre coule en toi… ATQ +${attack(s) - atkBefore}.`);
-    else if (level(s) > lvBefore && maxHp(s) === hpBefore) lines.push(`* Tu passes au niveau ${level(s)}.`);
+    if (attack(s) > atkBefore) lines.push(tf("* L'encre coule en toi… ATQ +{0}.", attack(s) - atkBefore));
+    else if (level(s) > lvBefore && maxHp(s) === hpBefore) lines.push(tf('* Tu passes au niveau {0}.', level(s)));
     for (const e of this.enemies) {
       if (e.def.rewards.item && (e.spared || e.dead)) {
         const it = ITEMS[e.def.rewards.item];
         if (!it) continue;
         if (it.key) {
           if (!s.keyItems.includes(it.id)) s.keyItems.push(it.id);
-          lines.push(`* Tu obtiens : ${it.name}.`);
+          lines.push(tf('* Tu obtiens : {0}.', tr(it.name)));
         } else if (s.items.length < MAX_ITEMS) {
           s.items.push(it.id);
-          lines.push(`* Tu obtiens : ${it.name}.`);
-        } else lines.push(`* Tes poches sont pleines. Tu laisses : ${it.name}.`);
+          lines.push(tf('* Tu obtiens : {0}.', tr(it.name)));
+        } else lines.push(tf('* Tes poches sont pleines. Tu laisses : {0}.', tr(it.name)));
       }
     }
     // The text box holds about three lines: show the summary two sentences at a time.
-    for (let i = 0; i < lines.length; i += 2) await this.say(lines.slice(i, i + 2).join('\n'), false, true);
+    for (let i = 0; i < lines.length; i += 2) await this.say(translated(lines.slice(i, i + 2).join('\n')), false, true);
   }
 
   // ---------------------------------------------------------------------------
   // Widgets (promise-based)
   // ---------------------------------------------------------------------------
 
-  /** Types text in the box. If `wait`, resolves after the player confirms. */
-  async say(text: string, auto = false, wait = true): Promise<void> {
+  /** Types text in the box. If `wait`, resolves after the player confirms. `voice`: blip voice (default narrator). */
+  async say(text: string, auto = false, wait = true, voice?: string): Promise<void> {
     this.setText(text, wait && !auto);
+    if (voice && this.text && VOICES[voice]) this.text.voice = voice;
     await new Promise<void>((resolve) => {
       if (this.text) this.text.resolve = resolve;
     });
@@ -497,7 +713,7 @@ export class Battle implements Scene {
       this.text = null;
       return;
     }
-    const chars = parseRich(text, { player: G.state.playerName });
+    const chars = parseRich(tr(text), { player: G.state.playerName });
     const lines = layoutRich(chars, TEXT_BOX.w - 20);
     this.text = { chars: lines, shown: 0, total: lines.reduce((a, l) => a + l.length, 0), wait: 0, voice: 'narrator', waitInput };
     if (waitInput) this.mode = 'text';
@@ -535,7 +751,7 @@ export class Battle implements Scene {
     this.setText(null);
     audio.sfx('pop', { pitch: 0.8 });
     return new Promise((resolve) => {
-      this.nb = { target, words, idx: 1, resolve, writing: null, scramble: this.soulEmo === 'peur' };
+      this.nb = { target, words, idx: 1, resolve, writing: null, scramble: this.soulEmo === 'peur' || this.soulEmo2 === 'peur' };
     });
   }
 
@@ -549,7 +765,7 @@ export class Battle implements Scene {
     const need = e.need;
     for (const sw of e.def.specialWords ?? []) if (out.length < 2) out.push(sw);
     if (need?.emotion) {
-      const match = rng.shuffle(pool.filter((w) => w.emotion === need.emotion));
+      const match = rng.shuffle(pool.filter((w) => w.emotion === need.emotion || w.emotion2 === need.emotion));
       out.push(...match.slice(0, rng.chance(0.5) ? 2 : 1));
     }
     const rest = rng.shuffle(pool.filter((w) => !out.some((o) => o.text === w.text)));
@@ -579,7 +795,7 @@ export class Battle implements Scene {
   /** Shows speech bubbles next to enemies; resolves when the player confirms. */
   bubble(lines: Array<{ e: EnemyRuntime; text: string }>): Promise<void> {
     this.bubbles = lines.map(({ e, text }) => {
-      const chars = layoutRich(parseRich(text, { player: G.state.playerName }), 92);
+      const chars = layoutRich(parseRich(tr(text), { player: G.state.playerName }), 92);
       return { e, chars, shown: 0, total: chars.reduce((a, l) => a + l.length, 0) };
     });
     return new Promise((resolve) => {
@@ -613,6 +829,7 @@ export class Battle implements Scene {
     }
     this.floaters = this.floaters.filter((f) => ++f.t < 60);
     if (this.soulFlash > 0) this.soulFlash--;
+    if (this.allyT > 0) this.allyT--;
 
     this.updateText();
     if (this.bubbles.length) {
@@ -656,12 +873,12 @@ export class Battle implements Scene {
           if (rc?.pause && G.settings.textSpeed < 3) tx.wait = rc.pause;
         }
       }
-      if (tx.waitInput && (input.pressed('a') || input.pressed('b'))) tx.shown = tx.total;
-      else if (!tx.waitInput && tx.resolve && (input.pressed('a') || input.pressed('b'))) tx.shown = tx.total;
+      if (tx.waitInput && (input.pressed('a') || input.pressed('b') || this.freeTap)) tx.shown = tx.total;
+      else if (!tx.waitInput && tx.resolve && (input.pressed('a') || input.pressed('b') || this.freeTap)) tx.shown = tx.total;
       return;
     }
     if (tx.resolve) {
-      if (!tx.waitInput || input.pressed('a')) {
+      if (!tx.waitInput || input.pressed('a') || this.freeTap) {
         const r = tx.resolve;
         tx.resolve = undefined;
         if (tx.waitInput) {
@@ -682,11 +899,11 @@ export class Battle implements Scene {
         all = false;
       }
     }
-    if (!all && (input.pressed('a') || input.pressed('b'))) {
+    if (!all && (input.pressed('a') || input.pressed('b') || this.freeTap)) {
       for (const b of this.bubbles) b.shown = b.total;
       return;
     }
-    if (all && input.pressed('a')) {
+    if (all && (input.pressed('a') || this.freeTap)) {
       this.bubbles = [];
       input.consume();
       const r = this.bubbleResolve;
@@ -695,8 +912,44 @@ export class Battle implements Scene {
     }
   }
 
+  /** A tap on the battle screen that is not on one of its buttons / rows (advances text, like A). */
+  private get freeTap(): boolean {
+    const p = input.tapAt;
+    return input.tap && !!p && !hits.at(this, p.x, p.y);
+  }
+
+  /**
+   * Direct touch / mouse on the menu, a list or the notebook. Ids: 'm:i' menu buttons, 'l:i' list rows, 'nb:i'
+   * notebook (0 = Observer), 'l:page' next page, 'cancel' (outside a list / the notebook, or another menu button).
+   * Returns the tapped id (hover only moves the highlight).
+   */
+  private pointer(): string | null {
+    const hit = hits.pick(this);
+    if (!hit || typeof hit.id !== 'string') return null;
+    const [kind, arg] = hit.id.split(':') as [string, string | undefined];
+    const i = Number(arg);
+    if (!hit.tap) {
+      if (kind === 'm' && this.mode === 'menu' && i !== this.menuIdx) {
+        this.menuIdx = i;
+        audio.sfx('move');
+      } else if (kind === 'l' && this.list && !isNaN(i) && i !== this.list.idx) {
+        this.list.idx = i;
+        audio.sfx('move');
+      } else if (kind === 'nb' && this.nb && !this.nb.writing && i !== this.nb.idx) {
+        this.nb.idx = i;
+        audio.sfx('move');
+      }
+      return null;
+    }
+    // While a list or the notebook is open, the menu buttons below step back to the menu (like B).
+    if (kind === 'm' && this.mode !== 'menu') return 'cancel';
+    return hit.id;
+  }
+
   private updateMenu(): void {
     const n = 4;
+    const tap = this.pointer();
+    if (tap?.startsWith('m:')) this.menuIdx = Number(tap.slice(2));
     if (input.repeat('left')) {
       this.menuIdx = (this.menuIdx + n - 1) % n;
       audio.sfx('move');
@@ -705,7 +958,7 @@ export class Battle implements Scene {
       this.menuIdx = (this.menuIdx + 1) % n;
       audio.sfx('move');
     }
-    if (input.pressed('a')) {
+    if (input.pressed('a') || tap?.startsWith('m:')) {
       if (this.menuDisabled[this.menuIdx]) {
         audio.sfx('cancel');
         return;
@@ -723,6 +976,22 @@ export class Battle implements Scene {
     const l = this.list!;
     const n = l.items.length;
     const cols = 2;
+    const tap = this.pointer();
+    if (tap === 'l:page') {
+      l.idx = (Math.floor(l.idx / 6) + 1) * 6 < n ? (Math.floor(l.idx / 6) + 1) * 6 : 0;
+      audio.sfx('move');
+      return;
+    }
+    if (tap === 'cancel') {
+      if (!l.cancel) return;
+      audio.sfx('cancel');
+      return this.closeList(-1);
+    }
+    if (tap?.startsWith('l:')) {
+      l.idx = Number(tap.slice(2));
+      audio.sfx('select');
+      return this.closeList(l.idx);
+    }
     if (input.repeat('up') && l.idx - cols >= 0) {
       l.idx -= cols;
       audio.sfx('move');
@@ -760,7 +1029,7 @@ export class Battle implements Scene {
     const nb = this.nb!;
     if (nb.writing) {
       nb.writing.t++;
-      const len = nb.writing.word.text.length;
+      const len = tr(nb.writing.word.text).length;
       if (nb.writing.t % 4 === 0 && nb.writing.t / 4 <= len) audio.sfx('write', { pitch: 0.8 + rng.next() * 0.5 });
       if (nb.writing.t > len * 4 + 40) {
         const w = nb.writing.word;
@@ -773,6 +1042,9 @@ export class Battle implements Scene {
     }
     // idx 0 = observe, 1..6 = words (2 columns x 3 rows)
     const nWords = nb.words.length;
+    // Touch / mouse: a tap on a word writes it at once, on « Observer » observes; outside the page closes it.
+    const tap = this.pointer();
+    if (tap?.startsWith('nb:')) nb.idx = Number(tap.slice(3));
     if (input.repeat('up')) {
       if (nb.idx <= 2) nb.idx = 0;
       else nb.idx -= 2;
@@ -791,7 +1063,7 @@ export class Battle implements Scene {
       nb.idx++;
       audio.sfx('move');
     }
-    if (input.pressed('a')) {
+    if (input.pressed('a') || tap?.startsWith('nb:')) {
       audio.sfx('select');
       if (nb.idx === 0) {
         this.nb = null;
@@ -801,7 +1073,7 @@ export class Battle implements Scene {
         return;
       }
       nb.writing = { word: nb.words[nb.idx - 1]!, t: 0 };
-    } else if (input.pressed('b')) {
+    } else if (input.pressed('b') || tap === 'cancel') {
       audio.sfx('cancel');
       this.nb = null;
       this.mode = 'idle';
@@ -816,7 +1088,8 @@ export class Battle implements Scene {
     const w = TEXT_BOX.w - 16;
     if (!a.done) {
       a.x += a.speed;
-      if (input.pressed('a')) {
+      // A tap anywhere strikes, like A.
+      if (input.pressed('a') || input.tap) {
         a.done = true;
         const center = w / 2;
         a.acc = clamp(1 - Math.abs(a.x - center) / center, 0, 1);
@@ -843,7 +1116,7 @@ export class Battle implements Scene {
     // Soul movement
     const s = bw.soul;
     const ax = input.axis();
-    const speed = 1.5 * soulSpeed(this.soulEmo);
+    const speed = 1.5 * soulSpeed(this.soulEmo, this.soulEmo2);
     let dx = ax.x;
     let dy = ax.y;
     if (dx && dy) {
@@ -856,6 +1129,7 @@ export class Battle implements Scene {
     s.x = clamp(s.x, b.x + 5, b.x + b.w - 5);
     s.y = clamp(s.y, b.y + 5, b.y + b.h - 5);
     s.emo = this.soulEmo;
+    s.emo2 = this.soulEmo2;
     if (s.inv > 0) s.inv--;
     bw.update();
     const over = d.t >= d.pattern.duration || this.hp <= 0;
@@ -873,6 +1147,7 @@ export class Battle implements Scene {
   draw(g: CanvasRenderingContext2D): void {
     this.drawBackground(g);
     for (const e of this.enemies) this.drawEnemy(g, e);
+    this.drawAlly(g);
     this.drawSlash(g);
     this.drawBox(g);
     this.drawHud(g);
@@ -881,7 +1156,8 @@ export class Battle implements Scene {
     for (const b of this.bubbles) this.drawBubble(g, b);
     for (const f of this.floaters) {
       const y = f.y - Math.min(14, f.t * 0.6);
-      drawOutlined(g, f.text, f.x - Math.floor(measure(f.text) / 2), Math.round(y), f.color, '#0b0710');
+      const ft = tr(f.text);
+      drawOutlined(g, ft, f.x - Math.floor(measure(ft) / 2), Math.round(y), f.color, '#0b0710');
     }
     this.overlay?.(g, this);
   }
@@ -1003,7 +1279,7 @@ export class Battle implements Scene {
     if (this.mode === 'dodge' && this.dodge) {
       this.bw.draw(g);
       this.drawSoul(g);
-      if (this.soulEmo === 'peur' || this.fear > 0) this.drawFear(g, x, y, w, h);
+      if (this.soulEmo === 'peur' || this.soulEmo2 === 'peur' || this.fear > 0) this.drawFear(g, x, y, w, h);
     }
     if (this.text) this.drawBoxText(g, x, y);
     if (this.list) this.drawList(g, x, y);
@@ -1025,9 +1301,78 @@ export class Battle implements Scene {
 
   private drawSoul(g: CanvasRenderingContext2D): void {
     const s = this.bw.soul;
+    const sx = Math.round(s.x);
+    const sy = Math.round(s.y);
+    if (this.bw.shield > 0) this.drawShield(g, sx, sy);
     if (s.inv > 0 && Math.floor(s.inv / 4) % 2 === 0) return;
-    const color = this.soulFlash > 0 && this.soulFlash % 4 < 2 ? '#fffaf2' : EMOTION_COLOR[this.soulEmo];
-    heart(g, Math.round(s.x - 3), Math.round(s.y - 3), color);
+    const flash = this.soulFlash > 0 && this.soulFlash % 4 < 2;
+    const [c1, c2] = this.soulColors();
+    soulHeart(g, sx - 3, sy - 3, flash ? '#fffaf2' : c1, flash ? null : c2);
+    if (G.settings.emotionShapes) {
+      // Accessibility: the emotion's shape(s) just above the heart.
+      g.globalAlpha = 0.9;
+      if (this.soulEmo2) {
+        drawEmoIcon(g, this.soulEmo, sx - 6, sy - 11, c1, '#0b0710');
+        drawEmoIcon(g, this.soulEmo2, sx + 1, sy - 11, c2!, '#0b0710');
+      } else drawEmoIcon(g, this.soulEmo, sx - 3, sy - 11, c1, '#0b0710');
+      g.globalAlpha = 1;
+    }
+  }
+
+  /** Mina's crayon shield: a scribbled circle, one third per remaining hit. */
+  private drawShield(g: CanvasRenderingContext2D, sx: number, sy: number): void {
+    const n = this.bw.shield;
+    const steps = 24;
+    const shown = Math.round((steps * Math.min(3, n)) / 3);
+    const rot = this.t * 0.03;
+    g.fillStyle = MINA_ORANGE;
+    for (let i = 0; i < shown; i++) {
+      const a = rot + (i / steps) * Math.PI * 2;
+      const r = 8 + ((i * 7) % 3 === 0 ? 1 : 0);
+      g.fillRect(Math.round(sx + Math.cos(a) * r), Math.round(sy + Math.sin(a) * r), 1, 1);
+    }
+    g.fillStyle = '#e8505b';
+    for (let i = 0; i < shown; i += 3) {
+      const a = -rot * 1.5 + (i / steps) * Math.PI * 2;
+      g.fillRect(Math.round(sx + Math.cos(a) * 10), Math.round(sy + Math.sin(a) * 10), 1, 1);
+    }
+  }
+
+  /** Mina's portrait in the top-left corner, with three pips filling up to her next action (or her empty slot). */
+  private drawAlly(g: CanvasRenderingContext2D): void {
+    if (this.ally === 'none') return;
+    const { x, y, w, h } = ALLY_SLOT;
+    if (this.ally === 'absent') {
+      const flicker = (this.allyT > 0 || this.allyTalking) && Math.floor(this.t / 8) % 2 === 0;
+      g.fillStyle = flicker ? '#5c5468' : '#2d2238';
+      g.fillRect(x, y, w, 1);
+      g.fillRect(x, y + h - 1, w, 1);
+      g.fillRect(x, y, 1, h);
+      g.fillRect(x + w - 1, y, 1, h);
+      drawText(g, '…', x + Math.floor((w - measure('…')) / 2), y + 10, { color: flicker ? '#8a7f96' : '#4e4359' });
+      return;
+    }
+    const acting = this.allyT > 0 || this.allyTalking;
+    const bob = this.allyT > 0 ? -Math.round(Math.abs(Math.sin(this.allyT * 0.25)) * 3) : 0;
+    g.fillStyle = acting ? '#ffd84a' : MINA_ORANGE;
+    g.fillRect(x - 1, y - 1 + bob, w + 2, h + 2);
+    g.fillStyle = '#1c1424';
+    g.fillRect(x, y + bob, w, h);
+    const expr = acting ? 'happy' : this.hp <= this.maxHp * 0.3 ? 'surprised' : 'neutral';
+    const key = hasSpr(`face_mina_${expr}`) ? `face_mina_${expr}` : 'face_mina_neutral';
+    if (hasSpr(key)) {
+      const face = spr(key);
+      // Crop the 32×32 face into the 28×28 frame (keeps the paper crown).
+      g.drawImage(face.img, 2, 1, w - 2, h - 2, x + 1, y + 1 + bob, w - 2, h - 2);
+    }
+    // Pips: lit as turns pass; all three lit = she acts before the next attack.
+    const lit = this.turn > 0 ? ALLY_EVERY - this.allyCharge : 0;
+    for (let i = 0; i < ALLY_EVERY; i++) {
+      g.fillStyle = '#0b0710';
+      g.fillRect(x + 4 + i * 8, y + h + 2, 6, 4);
+      g.fillStyle = i < lit ? (lit === ALLY_EVERY ? '#ffd84a' : MINA_ORANGE) : '#3a2c4c';
+      g.fillRect(x + 5 + i * 8, y + h + 3, 4, 2);
+    }
   }
 
   private drawBoxText(g: CanvasRenderingContext2D, x: number, y: number): void {
@@ -1057,20 +1402,27 @@ export class Battle implements Scene {
     const perPage = 6;
     const page = Math.floor(l.idx / perPage);
     const start = page * perPage;
+    // Touch: outside the rows steps back (when allowed); the box itself is neutral.
+    hits.add(this, 'cancel', 0, 0, W, H);
+    hits.add(this, 'box', x - 2, y - 2, TEXT_BOX.w + 4, TEXT_BOX.h + 4);
     for (let i = start; i < Math.min(l.items.length, start + perPage); i++) {
       const col = i % 2;
       const row = Math.floor((i - start) / 2);
       const ix = x + 22 + col * 140;
       const iy = y + 6 + row * 14;
       const sel = i === l.idx;
-      if (sel) heart(g, ix - 12, iy + 3, EMOTION_COLOR[this.soulEmo]);
-      const label = l.items[i]!.replace('{c:g}', '');
+      hits.add(this, `l:${i}`, ix - 16, iy - 3, 140, 14);
+      if (sel) soulHeart(g, ix - 12, iy + 3, ...this.soulColors());
+      const label = tr(l.items[i]!.replace('{c:g}', ''));
       drawText(g, `* ${label}`, ix, iy, { color: l.colors[i] ?? (sel ? '#fffaf2' : '#d8cfe0') });
       // Enemy calm meter next to names
       const enemy = this.alive.find((e) => e.name === l.items[i]);
       if (enemy) this.drawCalm(g, ix + measure(`* ${label}`) + 6, iy + 3, enemy);
     }
-    if (l.items.length > perPage) drawText(g, `${page + 1}/${Math.ceil(l.items.length / perPage)}`, x + TEXT_BOX.w - 30, y + TEXT_BOX.h - 13, { color: '#8a7f96' });
+    if (l.items.length > perPage) {
+      drawText(g, `${page + 1}/${Math.ceil(l.items.length / perPage)}`, x + TEXT_BOX.w - 30, y + TEXT_BOX.h - 13, { color: '#8a7f96' });
+      hits.add(this, 'l:page', x + TEXT_BOX.w - 36, y + TEXT_BOX.h - 16, 36, 16);
+    }
   }
 
   private drawCalm(g: CanvasRenderingContext2D, x: number, y: number, e: EnemyRuntime): void {
@@ -1106,16 +1458,29 @@ export class Battle implements Scene {
 
   private drawHud(g: CanvasRenderingContext2D): void {
     const y = 143;
-    drawText(g, this.hudName, 14, y, { color: '#fffaf2' });
-    drawText(g, `NV ${level(G.state)}`, 48, y, { color: '#fffaf2' });
-    drawText(g, 'PV', 88, y, { color: '#fffaf2' });
+    drawText(g, tr(this.hudName), 14, y, { color: '#fffaf2' });
+    drawText(g, tf('NV {0}', level(G.state)), 48, y, { color: '#fffaf2' });
+    drawText(g, tr('PV'), 88, y, { color: '#fffaf2' });
     const maxw = Math.min(70, 24 + this.maxHp);
     bar(g, 104, y + 3, maxw, 7, this.hp / this.maxHp, this.hp / this.maxHp < 0.3 ? '#ff4a5a' : '#ffd84a', '#5a1c2c', this.hpGhost / this.maxHp);
     drawText(g, `${this.hp}/${this.maxHp}`, 108 + maxw, y, { color: '#fffaf2' });
-    const label = EMOTION_LABEL[this.soulEmo];
+    const label = soulLabel(this.soulEmo, this.soulEmo2);
     const lw = measure(label);
-    heart(g, W - 22 - lw, y + 3, EMOTION_COLOR[this.soulEmo]);
-    drawText(g, label, W - 12 - lw, y, { color: EMOTION_COLOR[this.soulEmo] });
+    const [c1, c2] = this.soulColors();
+    soulHeart(g, W - 22 - lw, y + 3, c1, c2);
+    if (c2) {
+      // « DOUX-AMER »: each half in its color.
+      const dash = label.indexOf('-') + 1 || Math.ceil(label.length / 2);
+      const head = label.slice(0, dash);
+      drawText(g, head, W - 12 - lw, y, { color: c1 });
+      drawText(g, label.slice(dash), W - 12 - lw + measure(head), y, { color: c2 });
+    } else drawText(g, label, W - 12 - lw, y, { color: c1 });
+    if (G.settings.emotionShapes) {
+      if (this.soulEmo2) {
+        drawEmoIcon(g, this.soulEmo2, W - 30 - lw, y + 3, c2!, '#0b0710');
+        drawEmoIcon(g, this.soulEmo, W - 37 - lw, y + 3, c1, '#0b0710');
+      } else drawEmoIcon(g, this.soulEmo, W - 30 - lw, y + 3, c1, '#0b0710');
+    }
   }
 
   private drawMenu(g: CanvasRenderingContext2D): void {
@@ -1124,19 +1489,20 @@ export class Battle implements Scene {
       const x = 10 + i * 76;
       const sel = this.menuIdx === i && (this.mode === 'menu' || this.mode === 'list' || this.mode === 'notebook' || this.mode === 'bar');
       const disabled = this.menuDisabled[i];
+      if (this.mode === 'menu' || this.mode === 'list' || this.mode === 'notebook') hits.add(this, `m:${i}`, x, y - 2, 72, 22);
       const color = disabled ? '#4e4359' : sel ? '#ffd84a' : '#f09a4a';
       g.fillStyle = color;
       g.fillRect(x, y, 72, 18);
       g.fillStyle = '#000';
       g.fillRect(x + 1, y + 1, 70, 16);
-      const label = this.menuLabels[i] ?? '';
+      const label = tr(this.menuLabels[i] ?? '');
       const lw = measure(label);
       // Long labels (« SE RÉVEILLER ») take the whole button: no icon, centered.
       if (lw > 56) {
         drawText(g, label, x + 1 + Math.floor((70 - lw) / 2), y + 3, { color });
         continue;
       }
-      if (sel && this.mode === 'menu') heart(g, x + 5, y + 6, EMOTION_COLOR[this.soulEmo]);
+      if (sel && this.mode === 'menu') soulHeart(g, x + 5, y + 6, ...this.soulColors());
       else drawText(g, ICONS[i]!, x + 5, y + 3, { color });
       drawText(g, label, x + 14 + Math.floor((56 - lw) / 2), y + 3, { color });
     }
@@ -1160,15 +1526,26 @@ export class Battle implements Scene {
     // Spiral
     g.fillStyle = '#8a7f96';
     for (let sy = y + 6; sy < y + h; sy += 10) g.fillRect(x - 3, sy, 6, 2);
-    drawText(g, `Carnet — ${nb.target.name}`, x + 24, y + 6, { color: '#2b2a5c' });
+    drawText(g, tf('Carnet — {0}', nb.target.name), x + 24, y + 6, { color: '#2b2a5c' });
     this.drawCalm(g, x + w - 10 - Math.min(6, nb.target.total) * 8, y + 9, nb.target);
     if (nb.writing) {
       const wd = nb.writing.word;
-      const n = Math.min(wd.text.length, Math.floor(nb.writing.t / 4));
-      const txt = wd.text.slice(0, n);
+      const word = tr(wd.text);
+      const n = Math.min(word.length, Math.floor(nb.writing.t / 4));
+      const txt = word.slice(0, n);
       const scale = 2;
-      const tw = measure(wd.text) * scale;
-      drawText(g, txt, x + w / 2 - tw / 2, y + 52, { color: wd.emotion === 'neutre' ? '#2b2a5c' : EMOTION_COLOR[wd.emotion], scale, shadow: '#2b2a5c' });
+      const tw = measure(word) * scale;
+      const tx = x + w / 2 - tw / 2;
+      drawText(g, txt, tx, y + 52, { color: wd.emotion === 'neutre' ? '#2b2a5c' : EMOTION_COLOR[wd.emotion], scale, shadow: '#2b2a5c' });
+      if (wd.emotion2) {
+        // Bittersweet: the lower half of the letters (from the middle of the x-height) in the second color.
+        g.save();
+        g.beginPath();
+        g.rect(tx - 2, y + 52 + Math.round(7.5 * scale), tw + 4, 20);
+        g.clip();
+        drawText(g, txt, tx, y + 52, { color: EMOTION_COLOR[wd.emotion2], scale, shadow: '#2b2a5c' });
+        g.restore();
+      }
       // Pencil
       const px = x + w / 2 - tw / 2 + measure(txt) * scale + 2;
       g.fillStyle = '#f5c04f';
@@ -1177,10 +1554,14 @@ export class Battle implements Scene {
       g.fillRect(px + 1, y + 60, 1, 2);
       return;
     }
+    // Touch: outside the page closes the notebook; the page itself is neutral.
+    hits.add(this, 'cancel', 0, 0, W, H);
+    hits.add(this, 'paper', x - 4, y - 2, w + 6, h + 4);
+    hits.add(this, 'nb:0', x + 20, y + 19, 100, 16);
     // Observe
     const obsSel = nb.idx === 0;
     if (obsSel) this.drawPencil(g, x + 22, y + 26);
-    drawText(g, 'Observer', x + 34, y + 23, { color: obsSel ? '#c46a2e' : '#6e4a3a' });
+    drawText(g, tr('Observer'), x + 34, y + 23, { color: obsSel ? '#c46a2e' : '#6e4a3a' });
     // Words
     nb.words.forEach((wd, i) => {
       const col = i % 2;
@@ -1188,20 +1569,36 @@ export class Battle implements Scene {
       const wx = x + 34 + col * 100;
       const wy = y + 51 + row * 25;
       const sel = nb.idx === i + 1;
-      let label = wd.text;
+      hits.add(this, `nb:${i + 1}`, wx - 18, wy - 7, 98, 23);
+      let label = tr(wd.text);
       if (nb.scramble) label = scramble(label, this.t + i);
-      if (!nb.scramble) {
-        g.fillStyle = wd.emotion === 'neutre' ? '#b7aab8' : EMOTION_COLOR[wd.emotion];
-        g.fillRect(wx - 7, wy + 4, 4, 4);
-        g.fillStyle = '#2b2a5c';
-        g.globalAlpha = 0.4;
-        g.fillRect(wx - 7, wy + 8, 4, 1);
-        g.globalAlpha = 1;
-      }
+      if (!nb.scramble) this.drawWordMark(g, wd, wx, wy, label);
       if (sel) this.drawPencil(g, wx - 16, wy + 2);
       drawText(g, label, wx, wy, { color: sel ? '#c46a2e' : '#2b2a5c' });
     });
-    drawText(g, 'Un mot change ton cœur.', x + 24, y + h - 13, { color: '#8a7f96' });
+    drawText(g, tr('Un mot change ton cœur.'), x + 24, y + h - 13, { color: '#8a7f96' });
+  }
+
+  /** The emotion mark before a word: a color square (split for bittersweet words), or shapes (accessibility). */
+  private drawWordMark(g: CanvasRenderingContext2D, wd: WordDef, wx: number, wy: number, label: string): void {
+    const c1 = wd.emotion === 'neutre' ? '#b7aab8' : EMOTION_COLOR[wd.emotion];
+    const c2 = wd.emotion2 ? EMOTION_COLOR[wd.emotion2] : null;
+    if (G.settings.emotionShapes) {
+      drawEmoIcon(g, wd.emotion, wx - 8, wy + 3, c1, '#2b2a5c');
+      if (wd.emotion2) drawEmoIcon(g, wd.emotion2, wx + measure(label) + 3, wy + 3, c2!, '#2b2a5c');
+      return;
+    }
+    g.fillStyle = c1;
+    g.fillRect(wx - 7, wy + 4, 4, 4);
+    if (c2) {
+      g.fillStyle = c2;
+      g.fillRect(wx - 5, wy + 4, 2, 4);
+      g.fillRect(wx - 6, wy + 6, 1, 2);
+    }
+    g.fillStyle = '#2b2a5c';
+    g.globalAlpha = 0.4;
+    g.fillRect(wx - 7, wy + 8, 4, 1);
+    g.globalAlpha = 1;
   }
 
   private drawPencil(g: CanvasRenderingContext2D, x: number, y: number): void {

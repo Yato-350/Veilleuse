@@ -5,6 +5,11 @@ import type { EnemyRuntime } from './enemy';
 export interface WordDef {
   text: string;
   emotion: Emotion;
+  /**
+   * Second emotion of a bittersweet word (« mot doux-amer », e.g. « souvenir » = joie + tristesse).
+   * Writing it makes the soul bicolor: projectiles of either color pass through.
+   */
+  emotion2?: Emotion;
   /** Calm multiplier (default 1). */
   power?: number;
 }
@@ -109,4 +114,11 @@ export interface BattleOptions {
   intro?: string;
   /** Can't flee and no game over retry prompt customization. */
   boss?: boolean;
+  /** No ally in the HUD (Mina) for this battle. Implied for the tutorial and the final Dodo battle. */
+  noAlly?: boolean;
+  /**
+   * The battle's scripts own the music filter/tempo (audio.setMuffle / tempoScale): the soul's emotion does not shape
+   * the track. Implied for the final Dodo battle.
+   */
+  fixedMusic?: boolean;
 }

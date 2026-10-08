@@ -1,3 +1,4 @@
+import { tr } from '../i18n';
 /**
  * Global palette. Every sprite is authored as text where each character is a key of this table.
  * '.' and ' ' are transparent.
@@ -81,6 +82,29 @@ export const EMOTION_LABEL: Record<Emotion, string> = {
   colere: 'COLÈRE',
   peur: 'PEUR',
 };
+
+/** Color names, for lines such as « je colorie tout en bleu ». */
+export const EMOTION_COLOR_NAME: Record<Emotion, string> = {
+  neutre: 'blanc',
+  joie: 'jaune',
+  tristesse: 'bleu',
+  colere: 'rouge',
+  peur: 'violet',
+};
+
+/** HUD label of a soul that may hold two emotions at once (bittersweet words: joie + tristesse = « DOUX-AMER »). */
+export function soulLabel(e: Emotion, e2: Emotion | null = null): string {
+  if (!e2 || e2 === e) return emotionLabel(e);
+  const pair = [e, e2].sort().join('+');
+  if (pair === 'joie+tristesse') return tr('DOUX-AMER');
+  return `${emotionLabel(e)}/${emotionLabel(e2)}`;
+}
+
+/** Translated emotion name (« JOIE » / "JOY"). */
+export const emotionLabel = (e: Emotion): string => tr(EMOTION_LABEL[e]);
+
+/** Translated color name (« bleu » / "blue"). */
+export const emotionColorName = (e: Emotion): string => tr(EMOTION_COLOR_NAME[e]);
 
 /** UI colors. */
 export const UI = {

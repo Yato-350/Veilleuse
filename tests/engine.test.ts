@@ -5,7 +5,25 @@ import { GLYPHS, ACCENTS } from '../src/engine/font-data';
 import { hash2, Rng, clamp, rectsOverlap } from '../src/engine/math';
 import { parseRows } from '../src/engine/sprite';
 import { layoutRich, parseRich, plainText } from '../src/game/ui/richtext';
-import { beats, enemyDamage, evaluateWord, needTotal, playerDamage, resonates, soulSpeed } from '../src/game/battle/rules';
+import {
+  allyActsOn,
+  allyHeal,
+  allyState,
+  beats,
+  combatEmotion,
+  DefeatStreak,
+  enemyDamage,
+  evaluateWord,
+  needTotal,
+  pickAllyEffect,
+  playerDamage,
+  resonates,
+  soulSpeed,
+  wordEmotions,
+  type AllyContext,
+} from '../src/game/battle/rules';
+import { soulLabel } from '../src/engine/palette';
+import { WORD_POOLS } from '../src/data/words';
 import { EnemyRuntime } from '../src/game/battle/enemy';
 import type { EnemyDef } from '../src/game/battle/types';
 import { attack, defense, level, maxHp, newState, readSave, writeSave, hasSave, deleteSave, readMeta } from '../src/game/state';
@@ -165,6 +183,105 @@ describe('battle rules', () => {
     e.applyWord({ text: 'soleil', emotion: 'joie' });
     expect(e.spareable).toBe(true);
     expect(e.emotion).toBe('neutre');
+  });
+});
+
+describe('battle 1.1: bittersweet words', () => {
+  const souvenir = { text: 'souvenir', emotion: 'joie', emotion2: 'tristesse' } as const;
+  it('a bittersweet word carries two emotions', () => {
+    expect(wordEmotions(souvenir)).toEqual(['joie', 'tristesse']);
+    expect(wordEmotions({ text: 'pluie', emotion: 'tristesse' })).toEqual(['tristesse']);
+    expect(wordEmotions({ text: 'x', emotion: 'joie', emotion2: 'joie' })).toEqual(['joie']);
+  });
+  it('a bicolor soul resonates with both of its colors, never with white or a third color', () => {
+    expect(resonates('joie', 'joie', 'tristesse')).toBe(true);
+    expect(resonates('joie', 'tristesse', 'tristesse')).toBe(true);
+    expect(resonates('joie', 'colere', 'tristesse')).toBe(false);
+    expect(resonates('joie', 'peur', 'tristesse')).toBe(false);
+    expect(resonates('joie', 'neutre', 'tristesse')).toBe(false);
+  });
+  it('a bicolor soul fights like a neutral heart and moves at the average speed', () => {
+    expect(combatEmotion('joie', 'tristesse')).toBe('neutre');
+    expect(combatEmotion('joie', null)).toBe('joie');
+    expect(combatEmotion('joie', 'joie')).toBe('joie');
+    expect(soulSpeed('joie', 'tristesse')).toBeCloseTo((soulSpeed('joie') + soulSpeed('tristesse')) / 2);
+    expect(soulLabel('joie', 'tristesse')).toBe('DOUX-AMER');
+    expect(soulLabel('tristesse', 'joie')).toBe('DOUX-AMER');
+    expect(soulLabel('colere')).toBe('COLÈRE');
+  });
+  it('answers a need of either emotion, +1 only', () => {
+    expect(evaluateWord(souvenir, { emotion: 'joie' })).toEqual({ verdict: 'good', gain: 1 });
+    expect(evaluateWord(souvenir, { emotion: 'tristesse' })).toEqual({ verdict: 'good', gain: 1 });
+    expect(evaluateWord(souvenir, { emotion: 'colere' }).verdict).toBe('neutral');
+  });
+  it('the needed half carries the hated half; otherwise a hated half agitates', () => {
+    expect(evaluateWord(souvenir, { emotion: 'tristesse' }, ['joie']).verdict).toBe('good');
+    expect(evaluateWord(souvenir, { emotion: 'colere' }, ['joie']).verdict).toBe('bad');
+    expect(evaluateWord(souvenir, { emotion: 'colere' }, ['tristesse']).verdict).toBe('bad');
+    // A single-emotion word is still upsetting when hated, whatever the need.
+    expect(evaluateWord({ text: 'rire', emotion: 'joie' }, { emotion: 'joie' }, ['joie']).verdict).toBe('bad');
+  });
+  it('chapters 2 and 3 have bittersweet words, chapter 1 none; all pool words are unique', () => {
+    expect(WORD_POOLS[1]!.some((w) => w.emotion2)).toBe(false);
+    for (const ch of [2, 3]) {
+      const doux = WORD_POOLS[ch]!.filter((w) => w.emotion2);
+      expect(doux.length).toBeGreaterThanOrEqual(3);
+      for (const w of doux) expect(wordEmotions(w)).toEqual(['joie', 'tristesse']);
+    }
+    for (const pool of Object.values(WORD_POOLS)) expect(new Set(pool.map((w) => w.text)).size).toBe(pool.length);
+  });
+});
+
+describe('battle 1.1: Mina the ally', () => {
+  const ctx = (o: Partial<AllyContext>): AllyContext => ({ enemyIds: ['nuage'], chapter: 1, party: ['mina'], flags: {}, ...o });
+  it('is at Noa\'s side in dream chapters when she is in the party', () => {
+    expect(allyState(ctx({}))).toBe('mina');
+    expect(allyState(ctx({ chapter: 2 }))).toBe('mina');
+    expect(allyState(ctx({ chapter: 3 }))).toBe('mina');
+    expect(allyState(ctx({ party: [] }))).toBe('none');
+  });
+  it('never in the tutorial, the final Dodo battle, the real world or outside chapters 1-3', () => {
+    expect(allyState(ctx({ tutorial: true }))).toBe('none');
+    expect(allyState(ctx({ noAlly: true }))).toBe('none');
+    expect(allyState(ctx({ enemyIds: ['dodo'], chapter: 3 }))).toBe('none');
+    expect(allyState(ctx({ bg: 'real' }))).toBe('none');
+    expect(allyState(ctx({ flags: { interlude: 1 } }))).toBe('none');
+    expect(allyState(ctx({ chapter: 0 }))).toBe('none');
+    expect(allyState(ctx({ chapter: 4 }))).toBe('none');
+  });
+  it('leaves an empty slot in chapter 3 once she was erased', () => {
+    expect(allyState(ctx({ chapter: 3, party: [], flags: { c3_mina_erased: true } }))).toBe('absent');
+    expect(allyState(ctx({ chapter: 2, party: [], flags: { c3_mina_erased: true } }))).toBe('none');
+    expect(allyState(ctx({ chapter: 3, party: [], flags: { c3_mina_erased: true }, enemyIds: ['dodo'] }))).toBe('none');
+  });
+  it('acts every 3rd turn: heals when hurt, else alternates shield and coloring', () => {
+    expect([1, 2, 3, 4, 5, 6].filter(allyActsOn)).toEqual([3, 6]);
+    expect(pickAllyEffect(10, 20, 'joie', 0)).toBe('heal');
+    expect(pickAllyEffect(20, 20, 'joie', 0)).toBe('shield');
+    expect(pickAllyEffect(20, 20, 'joie', 1)).toBe('color');
+    expect(pickAllyEffect(20, 20, 'neutre', 1)).toBe('shield');
+    expect(allyHeal(20)).toBe(5);
+    expect(allyHeal(8)).toBe(4);
+  });
+  it('offers help on exactly the 3rd defeat in a row of the same fight', () => {
+    const s = new DefeatStreak();
+    s.record('nuage', true, true);
+    s.record('nuage', true, true);
+    expect(s.offersHelp(false)).toBe(false);
+    s.record('nuage', true, true);
+    expect(s.count).toBe(3);
+    expect(s.offersHelp(false)).toBe(true);
+    expect(s.offersHelp(true)).toBe(false);
+    s.record('nuage', true, true);
+    expect(s.offersHelp(false)).toBe(false);
+    // Another fight starts a new streak; a win (or a flight) resets it.
+    s.record('gomme', true, true);
+    expect(s.count).toBe(1);
+    s.record('gomme', false, true);
+    expect(s.count).toBe(0);
+    // Without Mina at Noa's side, nobody offers anything.
+    for (let i = 0; i < 3; i++) s.record('bip', true, false);
+    expect(s.offersHelp(false)).toBe(false);
   });
 });
 

@@ -2,9 +2,10 @@ import { audio, VOICES } from '../../engine/audio';
 import { drawChar, drawText, LINE_HEIGHT, measure } from '../../engine/font';
 import { H, W } from '../../engine/constants';
 import { game } from '../../engine/game';
-import { input } from '../../engine/input';
+import { hits, input } from '../../engine/input';
 import { drawSprite } from '../../engine/sprite';
 import { SPEAKERS, type Speaker } from '../../data/speakers';
+import { lang, tr, trAll } from '../../i18n';
 import { hasSpr, spr } from '../assets';
 import { G, TEXT_SPEEDS } from '../state';
 import { box, heart, nextArrow, type BoxStyle } from './draw';
@@ -57,6 +58,8 @@ export class Dialogue {
   private choices: string[] | null = null;
   private choiceIdx = 0;
   private choiceCancel = -1;
+  /** Touch: the highlighted choice was picked by a tap, so tapping it again confirms (story choices need 2 taps). */
+  private choiceArmed = false;
   private pendingChoices: { choices: string[]; cancel: number } | null = null;
   private lastChoice = 0;
   private blipCount = 0;
@@ -78,7 +81,7 @@ export class Dialogue {
     return {
       player: G.state.playerName || '…',
       PLAYER: (G.state.playerName || '…').toUpperCase(),
-      time: `${now.getHours()}h${String(now.getMinutes()).padStart(2, '0')}`,
+      time: `${now.getHours()}${lang() === 'en' ? ':' : 'h'}${String(now.getMinutes()).padStart(2, '0')}`,
       hour: String(now.getHours()),
     };
   }
@@ -106,7 +109,7 @@ export class Dialogue {
     this.speaker = SPEAKERS[who] ?? { name: who, voice: 'default' };
     const pKey = this.speaker.portrait ? `face_${this.speaker.portrait}_${expr ?? 'neutral'}` : null;
     this.portrait = pKey && hasSpr(pKey) ? pKey : null;
-    this.pages = this.buildPages(text);
+    this.pages = this.buildPages(tr(text));
     this.pageIdx = 0;
     this.shown = 0;
     this.wait = 0;
@@ -122,7 +125,7 @@ export class Dialogue {
 
   /** Shows a question with choices. Resolves with the chosen index (or `cancelIndex` on B, if >= 0). */
   async ask(text: string, choices: string[], opts: SayOptions & { cancelIndex?: number } = {}): Promise<number> {
-    this.pendingChoices = { choices, cancel: opts.cancelIndex ?? -1 };
+    this.pendingChoices = { choices: trAll(choices), cancel: opts.cancelIndex ?? -1 };
     await this.sayOne(text, { ...opts, auto: 0 });
     return this.lastChoice;
   }
@@ -208,6 +211,7 @@ export class Dialogue {
       this.choices = this.pendingChoices.choices;
       this.choiceCancel = this.pendingChoices.cancel;
       this.choiceIdx = 0;
+      this.choiceArmed = false;
       this.pendingChoices = null;
       return;
     }
@@ -233,12 +237,27 @@ export class Dialogue {
 
   private updateChoices(): void {
     const n = this.choices!.length;
+    // Direct touch / mouse: hover or a first tap highlights a choice, tapping the highlighted one confirms it.
+    const hit = hits.pick(this, 250);
+    if (hit && typeof hit.id === 'number') {
+      const i = hit.id;
+      if (hit.tap && i === this.choiceIdx && this.choiceArmed) {
+        audio.sfx('select');
+        this.pickChoice(i);
+        return;
+      }
+      if (i !== this.choiceIdx) audio.sfx('move');
+      this.choiceIdx = i;
+      this.choiceArmed = true;
+    }
     if (input.repeat('up') || input.repeat('left')) {
       this.choiceIdx = (this.choiceIdx + n - 1) % n;
+      this.choiceArmed = false;
       audio.sfx('move');
     }
     if (input.repeat('down') || input.repeat('right')) {
       this.choiceIdx = (this.choiceIdx + 1) % n;
+      this.choiceArmed = false;
       audio.sfx('move');
     }
     if (input.pressed('a')) {
@@ -278,7 +297,7 @@ export class Dialogue {
   private drawContent(g: CanvasRenderingContext2D, r: { x: number; y: number; w: number; h: number }, style: BoxStyle): void {
     // Name tag
     if (this.speaker.name && style !== 'none') {
-      const name = this.speaker.name;
+      const name = tr(this.speaker.name);
       const nw = measure(name) + 10;
       const ny = r.y - 11;
       box(g, r.x + 4, ny, nw, 13, style);
@@ -335,6 +354,7 @@ export class Dialogue {
     choices.forEach((c, i) => {
       const cy = y + 4 + i * 13;
       const sel = i === this.choiceIdx;
+      hits.add(this, i, x + 2, cy - 2, w - 4, 13);
       if (sel) heart(g, x + 6, cy + 4, '#ff4a5a');
       drawText(g, c, x + 17, cy, { color: sel ? '#ffd84a' : style === 'paper' ? '#2b2a5c' : '#fffaf2' });
     });

@@ -4,6 +4,7 @@ import { drawText } from '../../engine/font';
 import { fx } from '../../engine/fx';
 import { game, type Scene } from '../../engine/game';
 import { input } from '../../engine/input';
+import { tr } from '../../i18n';
 
 /** A fake crash / error screen (fourth wall). Waits `frames` then for a key press. */
 export class CrashScene implements Scene {
@@ -42,7 +43,7 @@ export class CrashScene implements Scene {
     g.fillRect(0, 0, W, H);
     this.lines.forEach((l, i) => {
       if (this.t < 20 + i * 12) return;
-      drawText(g, l, 10, 10 + i * 13, { color: i === 0 ? '#ff4a5a' : '#d8d8d8' });
+      drawText(g, tr(l), 10, 10 + i * 13, { color: i === 0 ? '#ff4a5a' : '#d8d8d8' });
     });
     if (Math.floor(this.t / 30) % 2 === 0) drawText(g, '_', 10, 10 + this.lines.length * 13, { color: '#d8d8d8' });
   }

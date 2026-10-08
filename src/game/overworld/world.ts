@@ -1,6 +1,7 @@
 import { audio } from '../../engine/audio';
 import { H, TILE, W } from '../../engine/constants';
-import { drawOutlined, drawText } from '../../engine/font';
+import { drawOutlined, drawText, measure } from '../../engine/font';
+import { tr } from '../../i18n';
 import { fx } from '../../engine/fx';
 import { type Scene } from '../../engine/game';
 import { input } from '../../engine/input';
@@ -87,7 +88,7 @@ export class WorldScene implements Scene {
 
     // Player
     const p = new Entity('player', 'player', sp.x * TILE + 8, sp.y * TILE + 14);
-    p.char = 'noa';
+    p.char = G.state.playerChar || 'noa';
     p.variant = variant;
     p.dir = sp.dir ?? 'down';
     this.player = p;
@@ -353,6 +354,7 @@ export class WorldScene implements Scene {
         p.moving = false;
       }
       if (input.pressed('a')) this.interact();
+      else if (input.tap && input.tapAt) this.tapInteract(input.tapAt.x, input.tapAt.y);
       this.checkTriggers();
       this.checkWarps();
     } else if (!p.target) {
@@ -427,6 +429,53 @@ export class WorldScene implements Scene {
     const p = this.player;
     const [vx, vy] = DIR_VEC[p.dir];
     return { x: p.x + vx * 11, y: p.y - 3 + vy * 10 };
+  }
+
+  /**
+   * Direct touch: tapping the player, or an interactable / door within reach, faces it and interacts (like A).
+   * Taps elsewhere do nothing (movement stays on the D-pad).
+   */
+  private tapInteract(sx: number, sy: number): void {
+    const p = this.player;
+    const wx = sx + Math.round(this.camX);
+    const wy = sy + Math.round(this.camY);
+    const reach = TILE * 2.5;
+    if (pointInRect(wx, wy, inflate(p.box, 6))) {
+      input.tap = false;
+      this.interact();
+      return;
+    }
+    const near = (x: number, y: number): boolean => Math.hypot(x - p.x, y - p.y) <= reach;
+    const target = this.entities
+      .filter((e) => e !== p && e.visible && (e.interact || e.text) && pointInRect(wx, wy, inflate(e.kind === 'prop' ? e.box : e.talkBox, 4)))
+      .filter((e) => near(e.x, e.y - 6))
+      .sort((a, b) => Math.hypot(a.x - wx, a.y - wy) - Math.hypot(b.x - wx, b.y - wy))[0];
+    const door = target ? undefined : (this.map.warps ?? []).find((w) => w.door && pointInRect(wx, wy, this.warpRect(w)) && near(wx, wy));
+    if (!target && !door) return;
+    input.tap = false;
+    const tx = target ? target.x : wx;
+    const ty = target ? target.y - 6 : wy;
+    const dx = tx - p.x;
+    const dy = ty - (p.y - 6);
+    p.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up';
+    if (target === this.follower && target?.interact) {
+      void this.hooks.run(async (d) => {
+        await target.interact!(d);
+      });
+      return;
+    }
+    if (target) {
+      if (target.kind === 'npc' && target.char) target.dir = opposite(p.dir);
+      void this.hooks.run(async (d) => {
+        if (target.interact) await target.interact(d);
+        else if (target.text) await d.say(target.text, target.who);
+      });
+      return;
+    }
+    if (door) {
+      const doors = (this.map.warps ?? []).filter((w) => w.door && w.x === door.x && w.y === door.y);
+      this.doWarp(doors.find((w) => !w.cond || w.cond()) ?? door);
+    }
   }
 
   private interact(): void {
@@ -596,11 +645,12 @@ export class WorldScene implements Scene {
       const a = t < 30 ? t / 30 : t > 170 ? (200 - t) / 30 : 1;
       g.save();
       g.globalAlpha = Math.max(0, a);
-      const name = this.map.name;
+      const name = tr(this.map.name);
+      const bw = Math.max(140, measure(name) + 16);
       g.fillStyle = 'rgba(11,7,16,0.75)';
-      g.fillRect(0, 10, 140, 17);
+      g.fillRect(0, 10, bw, 17);
       g.fillStyle = '#fffaf2';
-      g.fillRect(0, 26, 140, 1);
+      g.fillRect(0, 26, bw, 1);
       drawText(g, name, 8, 12, { color: '#fffaf2', shadow: '#0b0710' });
       g.restore();
     }

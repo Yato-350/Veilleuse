@@ -4,7 +4,7 @@ import { W, H } from './engine/constants';
 import { drawText } from './engine/font';
 import { fx } from './engine/fx';
 import { game } from './engine/game';
-import { input } from './engine/input';
+import { hits, input } from './engine/input';
 import { screen } from './engine/screen';
 import { TRACKS } from './data/music';
 import { MAPS } from './data/maps';
@@ -18,10 +18,11 @@ import { dialogue } from './game/ui/dialogue';
 import { applySettings } from './game/ui/options';
 import { TitleScene } from './game/scenes/title';
 import { WarningScene } from './game/scenes/warning';
-import { startPrologue } from './game/story';
+import { startBonus, startPrologue } from './game/story';
 import { setupMeta } from './game/meta';
 import { startDebug } from './game/debug';
 import { openMenu } from './game/scenes/menu';
+import { bindLanguage, isLang, missing } from './i18n';
 
 function boot(): void {
   const canvas = document.getElementById('game') as HTMLCanvasElement;
@@ -37,11 +38,17 @@ function boot(): void {
   G.meta.lastPlay = Date.now();
   writeMeta(G.meta);
   G.settings = readSettings();
+  bindLanguage(() => G.settings.language);
+  // ?lang=en / ?lang=fr: language for this visit (links, tests); the options can still change it.
+  const urlLang = new URLSearchParams(location.search).get('lang');
+  if (isLang(urlLang)) G.settings.language = urlLang;
   applySettings();
 
   // Global UI layers.
   game.hooks.push(() => dialogue.update());
   game.topOverlays.push((g) => dialogue.draw(g));
+  // Touch / mouse regions drawn during this render become clickable (after every layer, dialogue included).
+  game.topOverlays.push(() => hits.flip());
   world.hooks = {
     run: (s) => runScript(s),
     encounter: (e) => void runScript((d) => d.encounter(e)),
@@ -69,6 +76,16 @@ function boot(): void {
     game.replace(world);
     await runScript(async (d) => {
       await startPrologue(d);
+    });
+  };
+  flow.startBonus = async () => {
+    // A separate short run: it never touches the main save's story flags (flags.bonus marks it).
+    G.state = newState(G.meta.names[G.meta.names.length - 1] ?? '');
+    G.state.flags.bonus = 1;
+    G.state.hp = maxHp(G.state);
+    game.replace(world);
+    await runScript(async (d) => {
+      await startBonus(d);
     });
   };
   flow.continueGame = async () => {
@@ -117,7 +134,17 @@ function boot(): void {
     if (t === world) return 'WorldScene';
     return t?.constructor.name ?? 'none';
   };
-  (window as unknown as { __veilleuse: unknown }).__veilleuse = { game, world, G, MAPS, dialogue, fx, scene };
+  const i18nMissing = (): string[] => [...missing];
+  (window as unknown as { __veilleuse: unknown }).__veilleuse = {
+    game,
+    world,
+    G,
+    MAPS,
+    dialogue,
+    fx,
+    scene,
+    i18nMissing,
+  };
 }
 
 let fpsT = performance.now();
@@ -131,7 +158,7 @@ function drawFps(g: CanvasRenderingContext2D): void {
     fpsN = 0;
     fpsT = now;
   }
-  if (G.settings.showFps) drawText(g, `${fps} fps`, W - 4, H - 11, { align: 'right', color: '#7ee08a' });
+  if (G.settings.showFps) drawText(g, `${fps} fps`, W - 4, H - 11, { align: 'right', color: '#7ee08a' }); // i18n-ignore
 }
 
 boot();

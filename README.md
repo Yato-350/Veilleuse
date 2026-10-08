@@ -17,6 +17,8 @@ Inspiré d'*Undertale*, d'*OMORI* et de *Doki Doki Literature Club*.
 
 **[▶ Jouer dans le navigateur](https://yato-350.github.io/Veilleuse/)** · **[📱 Télécharger l'APK Android](https://github.com/Yato-350/Veilleuse/releases/latest)**
 
+*🇬🇧 Also available in English — [play in English](https://yato-350.github.io/Veilleuse/?lang=en), or Options → Language.*
+
 </div>
 
 <div align="center">
@@ -49,7 +51,8 @@ Sous le lit s'ouvre le **Pays de Coton**, un monde dessiné aux crayons de coule
 papier sur la tête, comme si rien ne s'était passé. Chaque nuit, Noa s'enfonce un peu plus loin dans le rêve. Chaque
 matin, l'appartement est un peu plus sombre, et la porte de la chambre de Mina reste fermée.
 
-**Prologue · 3 chapitres oniriques · 2 interludes dans le monde réel · un final · 3 fins.**
+**Prologue · 3 chapitres oniriques · 2 interludes dans le monde réel · un final · 3 fins · un épilogue jouable ·
+un chapitre bonus, « Les rêves des autres ».** En français et en anglais.
 
 ## Le système de combat *Plume & Cœur*
 
@@ -74,8 +77,9 @@ L'empathie protège, littéralement.
 | | Clavier | Manette | Tactile |
 |---|---|---|---|
 | Se déplacer | Flèches · ZQSD · WASD | Stick · croix | Croix virtuelle (ou glisser pendant l'esquive) |
-| Valider / examiner | Entrée · Espace · Z (W en AZERTY) | A | A · toucher l'écran |
-| Annuler / courir | Échap · X · Maj | B | B |
+| Valider / examiner | Entrée · Espace · Z (W en AZERTY) | A | A · toucher un personnage, un objet ou une porte près de Noa |
+| Menus, carnet, choix | Flèches + Entrée | Croix + A | Toucher directement l'option (boutons, mots, listes, boutique…) |
+| Annuler / courir | Échap · X · Maj | B | B · toucher en dehors du menu ou le ✕ |
 | Menu | C · Tab | Start | ☰ |
 
 ### Installer sur mobile (Android · iPhone · iPad)
@@ -94,7 +98,14 @@ contrôles se placent sur les côtés.
 [dernière version](https://github.com/Yato-350/Veilleuse/releases/latest), l'ouvrir sur le téléphone et autoriser
 l'installation depuis cette source. L'APK est construit par le workflow [Android APK](.github/workflows/android.yml)
 (Capacitor) : *Actions → Android APK → Run workflow*, avec un numéro de version (`v1.0.1`…) pour publier une
-nouvelle *Release*, ou vide pour un simple test.
+nouvelle *Release*, ou vide pour un simple test. Chaque version publie aussi un fichier `.aab` pour le Google Play
+Store.
+
+**Clé de signature Android** : pour que chaque nouvel APK s'installe par-dessus le précédent (et pour le Play Store),
+les builds sont signés avec une clé stable stockée dans les secrets du dépôt (*Settings → Secrets and variables →
+Actions*) : `ANDROID_KEYSTORE_BASE64` (le fichier `.jks` encodé en base64), `ANDROID_KEYSTORE_PASSWORD`,
+`ANDROID_KEY_ALIAS` et `ANDROID_KEY_PASSWORD`. Sans ces secrets, une clé jetable est utilisée (l'APK s'installe, mais
+ne peut pas mettre à jour une installation existante). La clé ne doit jamais être ajoutée au dépôt.
 
 ## Développement
 
@@ -136,7 +147,7 @@ Chaque scène clé possède un script de débogage (`c1_boss`, `c2_lanterns`, `c
 
 Documentation : [Conception](docs/GAME_DESIGN.md) · [Scénario](docs/SCENARIO.md) ·
 [Architecture](docs/ARCHITECTURE.md) · [Contrat de contenu](docs/CONTENT_CONTRACT.md) ·
-[Feuille de route](docs/ROADMAP.md) · [Contribuer](CONTRIBUTING.md)
+[Feuille de route](docs/ROADMAP.md) · [Traduction](docs/I18N.md) · [Contribuer](CONTRIBUTING.md)
 
 ### Publier sur GitHub Pages
 
@@ -147,7 +158,7 @@ Documentation : [Conception](docs/GAME_DESIGN.md) · [Scénario](docs/SCENARIO.m
 
 ## Crédits
 
-Histoire, design et code : **Yato-350** & **Claude**. Pixel art, musique et sons générés par le code.
+Histoire, design et code : **Yasin**. Pixel art, musique et sons générés par le code.
 Merci à Toby Fox, OMOCAT et Team Salvato pour l'inspiration.
 
 Licence [MIT](LICENSE).

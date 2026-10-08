@@ -3,7 +3,7 @@ import { H, VERSION, W } from '../../engine/constants';
 import { drawOutlined, drawText } from '../../engine/font';
 import { fx } from '../../engine/fx';
 import { game, type Scene } from '../../engine/game';
-import { input } from '../../engine/input';
+import { hits, input } from '../../engine/input';
 import { hash2 } from '../../engine/math';
 import { drawSprite } from '../../engine/sprite';
 import { hasSpr, spr } from '../assets';
@@ -14,6 +14,8 @@ import { OptionsPanel } from '../ui/options';
 import { CreditsScene } from './credits';
 import { install } from '../pwa';
 import { NameEntryScene } from './nameentry';
+import { GalleryScene } from './gallery';
+import { lang, tf, tr } from '../../i18n';
 
 type Item = { label: string; action: () => void; color?: string };
 
@@ -46,7 +48,7 @@ export class TitleScene implements Scene {
     this.items = [];
     if (save) {
       this.items.push({
-        label: `Continuer`,
+        label: 'Continuer',
         action: () => this.leave(() => flow.continueGame()),
       });
     }
@@ -57,6 +59,13 @@ export class TitleScene implements Scene {
         else this.startNew();
       },
     });
+    // After a first ending: the gallery of souvenirs and poems, and (after the dawn) the bonus chapter.
+    if (G.meta.endings.length > 0 && (G.meta.seen.length > 0 || G.meta.poems.length > 0)) {
+      this.items.push({ label: 'Carnet de souvenirs', action: () => game.push(new GalleryScene()), color: '#b4e2c8' });
+    }
+    if (G.meta.endings.includes('aube')) {
+      this.items.push({ label: 'Les rêves des autres', action: () => this.leave(() => flow.startBonus()), color: '#f8b6cf' });
+    }
     this.items.push({ label: 'Options', action: () => (this.options = new OptionsPanel()) });
     if (canInstall()) this.items.push({ label: 'Installer le jeu', action: () => void install(), color: '#a7c7f0' });
     this.items.push({ label: 'Crédits', action: () => game.push(new CreditsScene(false)) });
@@ -84,7 +93,19 @@ export class TitleScene implements Scene {
     if (this.leaving) return;
     if (this.options) {
       if (!this.options.update()) this.options = null;
+      // Touch: the ✕ or a tap outside the panel closes it.
+      else if (hits.tap(this) === 'close') {
+        audio.sfx('cancel');
+        this.options = null;
+      }
       return;
+    }
+    // Direct touch / mouse: hovering highlights an entry, a tap picks it at once.
+    const hit = hits.pick(this);
+    const tapped = !!hit?.tap && typeof hit.id === 'number';
+    if (hit && typeof hit.id === 'number' && hit.id !== this.idx) {
+      this.idx = hit.id;
+      audio.sfx('move');
     }
     if (this.confirmNew) {
       if (input.repeat('left') || input.repeat('right')) {
@@ -95,7 +116,7 @@ export class TitleScene implements Scene {
         this.confirmNew = false;
         this.idx = 0;
         audio.sfx('cancel');
-      } else if (input.pressed('a')) {
+      } else if (input.pressed('a') || tapped) {
         audio.sfx('select');
         if (this.idx === 0) this.startNew();
         this.confirmNew = false;
@@ -112,7 +133,7 @@ export class TitleScene implements Scene {
       this.idx = (this.idx + 1) % n;
       audio.sfx('move');
     }
-    if (input.pressed('a') && this.t > 30) {
+    if ((input.pressed('a') || tapped) && this.t > 30) {
       audio.sfx('select');
       this.items[this.idx]!.action();
     }
@@ -122,29 +143,40 @@ export class TitleScene implements Scene {
     this.drawBackground(g);
     this.drawLogo(g);
     if (this.options) {
+      hits.add(this, 'close', 0, 0, W, H);
+      hits.add(this, 'panel', 40, 20, W - 80, H - 40);
       box(g, 40, 20, W - 80, H - 40, 'dream');
-      drawText(g, 'Options', W / 2, 28, { align: 'center', color: '#d4b8f0' });
-      this.options.draw(g, 52, 46, W - 104, 9);
+      drawText(g, tr('Options'), W / 2, 28, { align: 'center', color: '#d4b8f0' });
+      if (input.pointerUsed) {
+        drawText(g, '✕', W - 52, 27, { color: '#8a7f96' });
+        hits.add(this, 'close', W - 60, 20, 20, 18);
+      }
+      this.options.draw(g, 52, 46, W - 104, 8);
       return;
     }
     if (this.confirmNew) {
       box(g, 50, 108, W - 100, 50, 'dream');
-      drawText(g, 'Effacer la sauvegarde et recommencer ?', W / 2, 116, { align: 'center' });
+      drawText(g, tr('Effacer la sauvegarde et recommencer ?'), W / 2, 116, { align: 'center' });
       ['Oui', 'Non'].forEach((l, i) => {
         const x = W / 2 - 40 + i * 80;
+        hits.add(this, i, x - 30, 130, 60, 18);
         if (this.idx === i) heart(g, x - 18, 139, '#ff4a5a');
-        drawText(g, l, x, 136, { align: 'center', color: this.idx === i ? '#ffd84a' : '#fffaf2' });
+        drawText(g, tr(l), x, 136, { align: 'center', color: this.idx === i ? '#ffd84a' : '#fffaf2' });
       });
       return;
     }
-    const startY = 108;
+    // 1.1 added entries (souvenirs, bonus): a long menu starts higher and tightens so it never leaves the screen.
+    const n = this.items.length;
+    const gap = n >= 7 ? 12 : 13;
+    const startY = Math.min(108, 156 - (n - 1) * gap);
     this.items.forEach((it, i) => {
-      const y = startY + i * 13;
+      const y = startY + i * gap;
       const sel = i === this.idx;
       const a = Math.min(1, Math.max(0, (this.t - 40 - i * 8) / 20));
       g.globalAlpha = a;
+      if (a >= 1) hits.add(this, i, W / 2 - 58, y - 1, 124, gap);
       if (sel) heart(g, W / 2 - 52, y + 3, '#ff4a5a');
-      drawText(g, it.label, W / 2 - 40, y, { color: sel ? '#ffd84a' : (it.color ?? '#fffaf2'), shadow: '#0b0710' });
+      drawText(g, tr(it.label), W / 2 - 40, y, { color: sel ? '#ffd84a' : (it.color ?? '#fffaf2'), shadow: '#0b0710' });
       g.globalAlpha = 1;
     });
     // Save info
@@ -163,11 +195,11 @@ export class TitleScene implements Scene {
     if (h >= 0 && h < 5) {
       const a = 0.5 + 0.3 * Math.sin(this.t * 0.03);
       g.globalAlpha = a;
-      drawText(g, `Il est ${h}h. Tu devrais dormir, toi aussi.`, 4, H - 11, { color: '#6d5a8a' });
+      drawText(g, tf('Il est {0}h. Tu devrais dormir, toi aussi.', h === 0 && lang() === 'en' ? 12 : h), 4, H - 11, { color: '#6d5a8a' });
       g.globalAlpha = 1;
     } else if (G.meta.deaths > 5 && this.mood === 'night') {
       g.globalAlpha = 0.4;
-      drawText(g, `Tu es tombé·e ${G.meta.deaths} fois.`, 4, H - 11, { color: '#6d5a8a' });
+      drawText(g, tf('Tu es tombé·e {0} fois.', G.meta.deaths), 4, H - 11, { color: '#6d5a8a' });
       g.globalAlpha = 1;
     }
   }
@@ -273,7 +305,7 @@ export class TitleScene implements Scene {
     // Glow
     drawOutlined(g, title, W / 2 - 1, y, '#ffe991', '#2a1a48', { scale: 3, align: 'center' });
     drawText(g, title, W / 2, y, { color: '#fff3cf', scale: 3, align: 'center' });
-    drawText(g, 'Fais de beaux rêves.', W / 2, y + 30, { color: this.mood === 'dream' ? '#9a7bd0' : '#d4b8f0', align: 'center', shadow: '#0b0710' });
+    drawText(g, tr('Fais de beaux rêves.'), W / 2, y + 30, { color: this.mood === 'dream' ? '#9a7bd0' : '#d4b8f0', align: 'center', shadow: '#0b0710' });
     g.globalAlpha = 1;
   }
 }

@@ -1,7 +1,7 @@
 import { hash2 } from '../../engine/math';
 import type { MapDef, PropDef } from '../../game/overworld/types';
 import { G } from '../../game/state';
-import { savePoint, nf } from '../../game/story/common';
+import { savePoint, f, nf } from '../../game/story/common';
 import * as C1 from '../../game/story/chapter1';
 import { Grid } from './build';
 
@@ -81,11 +81,12 @@ const PRAIRIE: MapDef = {
     DECO('prop_tree_small', 25, 15, 'Un petit arbre qui pousse. Il deviendra grand si on rêve assez longtemps.'),
     DECO('prop_tree_small', 3, 19, 'Un arbrisseau.'),
     DECO('prop_bush', 5, 16, 'Un buisson rond comme une pelote.'),
-    DECO('prop_bush', 24, 8, 'Un buisson. Il y a des traces de petites bottes autour.'),
+    DECO('prop_bush', 24, 8, undefined, { script: C1.bootsBush }),
     DECO('prop_bush', 36, 13, 'Un buisson qui sent la fraise.'),
     DECO('prop_bush', 31, 14, 'Un buisson.'),
     DECO('prop_rock', 14, 15, 'Un caillou tout doux. C\'est de la guimauve.'),
-    DECO('prop_rock', 32, 7, 'Un rocher. Quelqu\'un a dessiné un smiley dessus.'),
+    DECO('prop_rock', 32, 7, undefined, { script: C1.smileyRock }),
+    P('prop_toybox', 3, 21, { script: C1.minaTreasure }),
     SOFT('prop_mushroom', 9, 4, 'Un champignon à pois. Il fait « boing » si on saute dessus. Tu ne sautes pas.'),
     SOFT('prop_mushroom', 26, 19, 'Un champignon.'),
     SOFT('prop_mushroom', 37, 8, 'Un champignon qui a l\'air de dormir.'),
@@ -181,11 +182,11 @@ const VILLAGE: MapDef = {
     P('prop_shop', 24, 4, { w: 3, h: 2 }),
     P('prop_house', 31, 4, { w: 3, h: 2, text: 'Une chaumière. On entend ronfler à l\'intérieur. Fort.' }),
     P('prop_house_b', 3, 19, { w: 3, h: 2, text: 'Une chaumière. Une guirlande de chaussettes sèche devant la porte.' }),
-    P('prop_house', 33, 17, { w: 3, h: 2, text: ['Une chaumière.', 'Sur la porte : « Ici vit le Mouton Noir. ON NE FRAPPE PAS. »'] }),
+    P('prop_house', 33, 17, { w: 3, h: 2, script: C1.blackSheepHouse }),
     P('prop_well', 19, 14, { w: 2, script: C1.well }),
     DECO('prop_sign', 16, 11, undefined, { script: C1.noticeBoard }),
     P('prop_stall', 11, 16, { w: 2, script: C1.stall }),
-    P('prop_bench', 25, 18, { w: 2, text: 'Un banc en bois. Il porte des initiales gravées : « M + N ».' }),
+    P('prop_bench', 25, 18, { w: 2, script: C1.benchMN }),
     P('prop_bench', 13, 8, { w: 2, text: 'Un banc. Le coussin est en laine, évidemment.' }),
     P('prop_lamppost', 15, 10, { light: LAMP, text: 'Un réverbère. Au lieu d\'une ampoule, il y a une petite lune qui dort.' }),
     P('prop_lamppost', 24, 10, { light: LAMP, text: 'Un réverbère à lune.' }),
@@ -332,9 +333,11 @@ hill
   .rect(1, 20, 28, 1, 'O')
   .rect(4, 20, 3, 1, 'a')
   .rect(1, 14, 28, 1, 'O')
-  .rect(21, 14, 3, 1, 'b')
+  .rect(21, 14, 4, 1, 'b')
   .rect(10, 22, 1, 3, 'O')
   .rect(20, 16, 1, 3, 'O')
+  .rect(24, 16, 5, 4, 'F')
+  .rect(25, 17, 3, 2, 'g')
   .open(14, 33, 2, 1, 'a')
   .open(14, 32, 2, 1, 'a');
 
@@ -346,21 +349,34 @@ const COLLINE: MapDef = {
   particles: 'cotton',
   banner: true,
   tiles: hill.toString(),
-  legend: { a: 'quilt_a', b: 'quilt_b', O: 'pillow', C: 'cotton_wall' },
+  legend: { a: 'quilt_a', b: 'quilt_b', O: 'pillow', C: 'cotton_wall', F: 'fence', g: 'grass' },
   spawns: {
     default: { x: 14, y: 31, dir: 'up' },
     south: { x: 14, y: 31, dir: 'up' },
     summit: { x: 14, y: 8, dir: 'up' },
+    puzzle: { x: 18, y: 15, dir: 'right' },
+    sheep: { x: 21, y: 15, dir: 'right' },
   },
   props: [
     P('prop_closet_door', 14, 4, { id: 'closet_door', w: 2, script: C1.closetBoss, cond: () => !G.state.flags.c1_boss_done }),
     savePoint(9, 9, 'Une veilleuse posée sur la couverture. Tout là-haut, quelque chose respire dans le noir.'),
     P('prop_pillow_big', 2, 23, { w: 2, script: C1.pillowA }),
-    P('prop_pillow_big', 25, 17, { w: 2, script: C1.pillowB }),
+    P('prop_pillow_big', 16, 16, { w: 2, script: C1.pillowB }),
+    // The summit path: two pillows block it until the Moutonnier's sheep are counted, then they move aside.
+    P('prop_pillow_big', 21, 14, { id: 'hill_pillow_l', w: 2, script: C1.blockingPillows, cond: nf('c1_sheep_done') }),
+    P('prop_pillow_big', 23, 14, { id: 'hill_pillow_r', w: 2, script: C1.blockingPillows, cond: nf('c1_sheep_done') }),
+    P('prop_pillow_big', 19, 14, { w: 2, text: 'Un oreiller qui s\'est poussé pour vous laisser passer. Il ronfle.', cond: f('c1_sheep_done') }),
+    P('prop_pillow_big', 25, 14, { w: 2, text: 'Un oreiller. Il dort sur le côté, comme quelqu\'un de poli.', cond: f('c1_sheep_done') }),
     P('prop_pillow_big', 3, 6, { w: 2, script: C1.pillowC }),
-    P('prop_pillow_big', 21, 9, { w: 2, text: 'Un oreiller géant. Il garde la forme d\'une tête toute petite.' }),
+    P('prop_pillow_big', 21, 9, { w: 2, script: C1.pillowSeat }),
     P('prop_cloud_big', 23, 4, { w: 3, text: 'Un nuage qui s\'est posé pour se reposer.' }),
     P('prop_cloud_big', 4, 29, { w: 3, text: 'Un nuage endormi.' }),
+  ],
+  npcs: [
+    { id: 'moutonnier', char: 'mouton', x: 22, y: 16, dir: 'down', script: C1.moutonnier },
+    { id: 'pen_sheep', char: 'mouton', x: 25, y: 17, dir: 'left', script: C1.penSheep },
+    { id: 'pen_sheep_2', char: 'mouton_rose', x: 26, y: 18, dir: 'left', script: C1.penSheep },
+    { id: 'pen_black', sprite: 'ow_mouton_noir', x: 27, y: 17, script: C1.penBlackSheep },
   ],
   enemies: [
     { id: 'c1_nuage_2', enemies: ['nuage'], x: 8, y: 29, wander: 2 },
@@ -371,6 +387,7 @@ const COLLINE: MapDef = {
   triggers: [
     { x: 1, y: 30, w: 28, h: 1, once: 'c1_hill', script: C1.hillIntro },
     { x: 1, y: 12, w: 28, h: 1, once: 'c1_fears', script: C1.hillFears },
+    { x: 21, y: 15, w: 3, h: 5, once: 'c1_sheep_meet', cond: nf('c1_sheep_done'), script: C1.moutonnierMeet },
   ],
   warps: [{ x: 14, y: 33, w: 2, to: 'village', spawn: 'north' }],
 };

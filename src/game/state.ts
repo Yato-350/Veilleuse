@@ -29,6 +29,8 @@ export interface GameState {
   savedAt: number;
   weapon: string;
   armor: string;
+  /** Walking character the player controls ('noa'; 'maman' in the bonus chapter). */
+  playerChar: string;
 }
 
 export function newState(playerName = ''): GameState {
@@ -56,6 +58,7 @@ export function newState(playerName = ''): GameState {
     savedAt: 0,
     weapon: 'crayon',
     armor: 'pyjama',
+    playerChar: 'noa',
   };
 }
 
@@ -74,12 +77,16 @@ export const WEAPONS: Record<string, { name: string; atk: number; desc: string }
   crayon: { name: 'Crayon gris', atk: 0, desc: 'Un crayon à papier mâchouillé.' },
   cire: { name: 'Crayon de cire', atk: 3, desc: 'Le rouge préféré de Mina.' },
   plume: { name: 'Plume dorée', atk: 6, desc: 'Elle écrit toute seule, parfois.' },
+  // Bonus chapter (Maman).
+  stylo: { name: 'Stylo quatre couleurs', atk: 2, desc: 'Celui du service. Le vert ne marche plus.' },
 };
 
 export const ARMORS: Record<string, { name: string; def: number; desc: string }> = {
   pyjama: { name: 'Pyjama étoilé', def: 0, desc: 'Un peu trop petit maintenant.' },
   plaid: { name: 'Plaid tout doux', def: 2, desc: 'Ça sent la lessive de Maman.' },
   cape: { name: 'Cape de Mina', def: 5, desc: 'Rouge, avec une étoile cousue main.' },
+  // Bonus chapter (Maman).
+  gilet: { name: 'Gilet de laine', def: 2, desc: 'Mina l\'appelait « le gilet-câlin ».' },
 };
 
 export function attack(s: GameState): number {
@@ -115,6 +122,20 @@ export interface Meta {
   runInProgress: boolean;
   resets: number;
   tabLeaves: number;
+  /** Illustration ids seen at least once, in any run (souvenirs, carnet pages, endings…): the title-screen gallery. */
+  seen: string[];
+  /** Poems written for Mina in the finale, newest last (kept after the run ends). */
+  poems: SavedPoem[];
+  /** Bonus chapter « Les rêves des autres » completed at least once. */
+  bonusDone: boolean;
+}
+
+export interface SavedPoem {
+  title: string;
+  /** The poem as displayed (lines joined with \n). */
+  text: string;
+  words: string[];
+  at: number;
 }
 
 export function newMeta(): Meta {
@@ -130,6 +151,9 @@ export function newMeta(): Meta {
     runInProgress: false,
     resets: 0,
     tabLeaves: 0,
+    seen: [],
+    poems: [],
+    bonusDone: false,
   };
 }
 
@@ -150,6 +174,10 @@ export interface Settings {
   touchSize: number;
   vibration: boolean;
   showFps: boolean;
+  /** Accessibility: draw a shape per emotion (drop, star, spikes…) on the soul and on bullets, not only a color. */
+  emotionShapes: boolean;
+  /** Text language. */
+  language: 'fr' | 'en';
 }
 
 export function defaultSettings(): Settings {
@@ -166,6 +194,8 @@ export function defaultSettings(): Settings {
     touchSize: 1,
     vibration: true,
     showFps: false,
+    emotionShapes: false,
+    language: typeof navigator !== 'undefined' && !/^fr\b/i.test(navigator.language ?? 'fr') ? 'en' : 'fr',
   };
 }
 

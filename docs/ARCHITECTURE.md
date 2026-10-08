@@ -46,6 +46,11 @@ index.html ─ main.ts ─┬─ engine/   (indépendant du jeu)
 Déclaratif et validé par `tests/content.test.ts` : sprites (`sprites/*.ts`), tuiles, cartes (`maps/*.ts`),
 ennemis, objets, mots du carnet, musiques, illustrations, interlocuteurs. Voir `docs/CONTENT_CONTRACT.md`.
 
+## `src/i18n` — traduction
+
+Le français est la langue source : les textes restent en français dans le code et sont traduits à l'affichage
+(`tr`, `tf`, `tn`) par recherche exacte dans un catalogue anglais (`src/i18n/en/`). Voir `docs/I18N.md`.
+
 ## Flux d'une partie
 
 ```

@@ -75,23 +75,52 @@ jobs:
           sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"$VERSION\"/" android/app/build.gradle
           grep -n "versionCode\|versionName" android/app/build.gradle
 
-      - name: Build the APK
+      - name: Build release APK and App Bundle (unsigned)
         working-directory: android
         run: |
           echo "Android SDK: $ANDROID_HOME"
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleRelease bundleRelease --no-daemon
 
-      - name: Rename
+      # Stable signing key from the repository secrets (see README « Clé de signature Android »).
+      # Without secrets, a throwaway key signs the build: it installs, but cannot update a previous install.
+      - name: Sign
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
+          set -e
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > signing.jks
+            KEY_PASS="${KEY_PASS:-$KS_PASS}"
+            echo "Signing with the release key from the repository secrets."
+          else
+            KS_PASS=ephemeral-$RANDOM$RANDOM; KEY_PASS=$KS_PASS; KS_ALIAS=veilleuse
+            keytool -genkeypair -keystore signing.jks -storetype PKCS12 -alias "$KS_ALIAS" -keyalg RSA -keysize 2048 \
+              -validity 10000 -storepass "$KS_PASS" -keypass "$KEY_PASS" -dname "CN=Veilleuse (test), O=Veilleuse, C=FR"
+            echo "::warning::No ANDROID_KEYSTORE_BASE64 secret: signed with a throwaway key (an update over a previous install will be refused)."
+          fi
+          BT=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)
           VERSION=$(node -p "require('./package.json').version")
-          cp android/app/build/outputs/apk/debug/app-debug.apk "Veilleuse-$VERSION.apk"
+          "$ANDROID_HOME/build-tools/$BT/zipalign" -p -f 4 android/app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
+          "$ANDROID_HOME/build-tools/$BT/apksigner" sign --ks signing.jks --ks-pass env:KS_PASS --ks-key-alias "$KS_ALIAS" \
+            --key-pass env:KEY_PASS --out "Veilleuse-$VERSION.apk" aligned.apk
+          "$ANDROID_HOME/build-tools/$BT/apksigner" verify --print-certs "Veilleuse-$VERSION.apk" | head -3
+          cp android/app/build/outputs/bundle/release/app-release.aab "Veilleuse-$VERSION.aab"
+          jarsigner -keystore signing.jks -storepass "$KS_PASS" -keypass "$KEY_PASS" "Veilleuse-$VERSION.aab" "$KS_ALIAS" > /dev/null
+          jarsigner -verify "Veilleuse-$VERSION.aab" | tail -1
+          rm -f signing.jks aligned.apk
           echo "APK=Veilleuse-$VERSION.apk" >> "$GITHUB_ENV"
+          echo "AAB=Veilleuse-$VERSION.aab" >> "$GITHUB_ENV"
 
       - uses: actions/upload-artifact@v4
         with:
           name: veilleuse-android
-          path: ${{ env.APK }}
+          path: |
+            ${{ env.APK }}
+            ${{ env.AAB }}
 
       - name: Release notes
         if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.release != '')
@@ -102,11 +131,15 @@ jobs:
           ### Jouer
           - **Dans le navigateur** (ordinateur, téléphone, tablette) : https://yato-350.github.io/Veilleuse/
           - **Android** : télécharger le fichier `.apk` ci-dessous, l'ouvrir, puis autoriser l'installation depuis cette source.
+            (Le fichier `.aab` sert uniquement à la publication sur le Google Play Store.)
           - **iPhone / iPad** : ouvrir le lien dans Safari → *Partager* → *Sur l'écran d'accueil*.
 
           ### Contenu
-          Prologue, trois chapitres oniriques, deux interludes dans le monde réel, un final et trois fins.
-          Système de combat original *Plume & Cœur* : les mots que tu écris changent la couleur de ton cœur.
+          Prologue, trois chapitres oniriques, deux interludes dans le monde réel, un final, trois fins, un épilogue
+          jouable et un chapitre bonus, « Les rêves des autres ». Système de combat original *Plume & Cœur* : les mots
+          que tu écris changent la couleur de ton cœur. Nouveautés : voir le [journal des changements](https://github.com/Yato-350/Veilleuse/blob/main/CHANGELOG.md).
+
+          🇬🇧 *Also in English: Options → Language, or https://yato-350.github.io/Veilleuse/?lang=en*
 
           > Le jeu aborde le deuil, la maladie d'un enfant et la culpabilité. Si tu traverses un moment difficile,
           > parles-en : en France, le **3114** répond 24h/24.
@@ -120,4 +153,6 @@ jobs:
           target_commitish: ${{ github.sha }}
           name: Veilleuse ${{ inputs.release || github.ref_name }}
           body_path: release-notes.md
-          files: ${{ env.APK }}
+          files: |
+            ${{ env.APK }}
+            ${{ env.AAB }}

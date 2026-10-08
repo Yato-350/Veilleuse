@@ -2,6 +2,9 @@ import type { WordDef } from '../game/battle/types';
 
 const w = (emotion: WordDef['emotion'], ...texts: string[]): WordDef[] => texts.map((text) => ({ text, emotion }));
 
+/** Bittersweet words (« mots doux-amers »): joie + tristesse at once. Writing one makes the soul bicolor. */
+const doux = (...texts: string[]): WordDef[] => texts.map((text) => ({ text, emotion: 'joie', emotion2: 'tristesse' }));
+
 /** Words available in the notebook, by chapter. */
 export const WORD_POOLS: Record<number, WordDef[]> = {
   1: [
@@ -15,12 +18,15 @@ export const WORD_POOLS: Record<number, WordDef[]> = {
     ...w('tristesse', 'gris', 'oublier', 'manque', 'pleurer', 'fané', 'silence', 'partir', 'brouillard', 'regret', 'automne'),
     ...w('colere', 'griffer', 'rouge', 'hurler', 'casser', 'foudre', 'menteur', 'brûler', 'serrer', 'grogner', 'tempête'),
     ...w('neutre', 'crayon', 'arbre', 'chemin', 'feuille', 'cahier'),
+    // « souvenir » is Gomme's special word in this chapter: not a pool word here.
+    ...doux('berceuse', 'photo', 'goûter d\'avant', 'vieux dessin'),
   ],
   3: [
     ...w('joie', 'matin', 'guérir', 'espoir', 'rentrer', 'chaleur', 'promesse', 'vivre', 'soleil', 'courage', 'merci'),
     ...w('tristesse', 'pardon', 'couloir', 'attendre', 'perfusion', 'pâle', 'jamais', 'trop tard', 'nuit', 'froid', 'lâcher'),
     ...w('colere', 'pourquoi', 'injuste', 'personne', 'tais-toi', 'cogner', 'faute', 'assez', 'déchirer', 'mensonge', 'crier'),
     ...w('neutre', 'chambre', 'lit', 'blouse', 'horloge', 'numéro'),
+    ...doux('souvenir', 'dessin', 'son rire', 'anniversaire'),
   ],
 };
 
