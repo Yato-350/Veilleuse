@@ -222,13 +222,8 @@ export class GalleryScene implements Scene {
 
   private updateGrid(): void {
     if (input.pressed('b')) {
-      if (this.onTabs) {
-        this.closing = true;
-        audio.sfx('cancel');
-      } else {
-        this.onTabs = true;
-        audio.sfx('cancel');
-      }
+      this.closing = true;
+      audio.sfx('cancel');
       return;
     }
     if (input.pressed('menu')) return this.switchTab(this.tab === 0 ? 1 : 0);
@@ -393,7 +388,7 @@ export class GalleryScene implements Scene {
       void sharePoem(p, this.file ?? undefined).then((r) => {
         this.busy = false;
         this.result = r;
-        this.resultT = r === 'cancelled' ? 0 : 180;
+        this.resultT = r === 'shared' || r === 'downloaded' ? 180 : 0;
         if (r === 'shared' || r === 'downloaded') audio.sfx('chime', { pitch: 1.2 });
         else if (r === 'failed') audio.sfx('cancel');
       });
