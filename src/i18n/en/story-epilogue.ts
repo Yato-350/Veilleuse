@@ -141,7 +141,9 @@ export const STORY_EPILOGUE: Record<string, string> = {
   'Tu arroses le petit pot de fleurs, au pied de la pierre.': 'You water the little pot of flowers at the foot of the stone.',
   'L\'eau brille au soleil. La terre sent bon.': 'The water sparkles in the sun. The earth smells good.',
 
-  // The poem, read aloud
+  // The poem, read aloud (the fallback poem uses two words outside POEM_WORDS)
+  'coton': 'cotton',
+  'absente': 'absent',
   'Tu sors le carnet de Mina de ton sac.': 'You take Mina\'s notebook out of your bag.',
   'La page que tu as écrite cette nuit.': 'The page you wrote last night.',
   'Tu prends ta respiration.': 'You take a breath.',
