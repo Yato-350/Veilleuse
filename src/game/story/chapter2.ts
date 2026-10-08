@@ -10,6 +10,7 @@ import type { Entity } from '../overworld/entity';
 import type { NpcDef, Script } from '../overworld/types';
 import { world } from '../overworld/world';
 import { G } from '../state';
+import { tf, tr } from '../../i18n';
 import { shop, wakeUp } from './common';
 
 /**
@@ -508,11 +509,11 @@ export const lantern =
   (c: LanternColor): Script =>
   async (d) => {
     if (flag('c2_lanterns_ok')) {
-      await d.say(`La lanterne ${LANTERN_NAME[c]} brille doucement. Des lucioles dansent autour.`);
+      await d.say(tf('La lanterne {0} brille doucement. Des lucioles dansent autour.', tr(LANTERN_NAME[c])));
       return;
     }
     if (lanternSeq.includes(c)) {
-      await d.say(`La lanterne ${LANTERN_NAME[c]} brille déjà.`);
+      await d.say(tf('La lanterne {0} brille déjà.', tr(LANTERN_NAME[c])));
       return;
     }
     d.sfx('chime', { pitch: 0.8 + LANTERN_ORDER.indexOf(c) * 0.12 });
@@ -520,7 +521,7 @@ export const lantern =
     lanternSeq.push(c);
     const expected = LANTERN_ORDER.slice(0, lanternSeq.length);
     const right = lanternSeq.every((x, i) => x === expected[i]);
-    await d.say(`Tu effleures la lanterne ${LANTERN_NAME[c]}. Une petite flamme s'y réveille.`);
+    await d.say(tf("Tu effleures la lanterne {0}. Une petite flamme s'y réveille.", tr(LANTERN_NAME[c])));
     if (!right) {
       await d.wait(20);
       d.sfx('whoosh', { pitch: 0.5 });

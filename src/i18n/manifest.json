@@ -56,6 +56,7 @@
     "src/data/maps/index.ts",
     "src/game/story/real.ts",
     "src/game/story/epilogue.ts",
-    "src/game/story/chapter1.ts"
+    "src/game/story/chapter1.ts",
+    "src/game/story/chapter2.ts"
   ]
 }

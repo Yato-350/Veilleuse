@@ -9,6 +9,7 @@ import { MAPS } from './maps';
 import { STORY_REAL } from './story-real';
 import { STORY_EPILOGUE } from './story-epilogue';
 import { STORY_CHAPTER1 } from './story-chapter1';
+import { STORY_CHAPTER2 } from './story-chapter2';
 
 export const CATALOG_PARTS: Record<string, Record<string, string>> = {
   ui: UI,
@@ -18,6 +19,7 @@ export const CATALOG_PARTS: Record<string, Record<string, string>> = {
   'story-real': STORY_REAL,
   'story-epilogue': STORY_EPILOGUE,
   'story-chapter1': STORY_CHAPTER1,
+  'story-chapter2': STORY_CHAPTER2,
 };
 
 export const EN: Record<string, string> = Object.assign({}, ...Object.values(CATALOG_PARTS));
