@@ -2,8 +2,8 @@
  * Tiny i18n layer. French is the source language: every text in the code stays French and is looked up, as is,
  * in an English catalog (exact match) when the game runs in English. See docs/I18N.md.
  *
- *   tr('Nouvelle partie')                          → 'New game'
- *   tf('Tu obtiens : {c:y}{0}{/c}.', tr(item))     → 'You got: {c:y}Cotton candy{/c}.'
+ *   tr('Nouvelle partie')                          → 'New Game'
+ *   tf('Tu obtiens : {c:y}{0}{/c}.', tr(item))     → 'You got the {c:y}Strawberry Candy{/c}.'
  *   tn(n, '{0} Étoile', '{0} Étoiles')             → '1 Star' / '3 Stars' (plural rule of the current language)
  *
  * This module is a leaf (no game imports): the game binds the language source with `bindLanguage`.
@@ -86,6 +86,19 @@ export function tr(fr: string): string {
   if (v) return v;
   miss(fr);
   return fr;
+}
+
+/**
+ * Dev check for text drawn directly by the font (`drawText`, `drawWrapped`): a French catalog key reaching the screen
+ * in another language means a missing `tr()` on the way, so it is reported like a missing translation. No-op in
+ * production builds and in French.
+ */
+export function checkDrawn(text: string): void {
+  if (!DEV) return;
+  const l = getLang();
+  if (l === 'fr') return;
+  const v = CATALOGS[l][text];
+  if (v && v !== text) miss(text);
 }
 
 /** True if the current language has an entry for this French string (always true in French). */

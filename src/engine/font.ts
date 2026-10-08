@@ -1,5 +1,6 @@
 import { ACCENTS, ACCENT_PIXELS, FONT_METRICS, GLYPHS } from './font-data';
 import { ctx2d, makeCanvas } from './sprite';
+import { checkDrawn } from '../i18n';
 
 interface Glyph {
   w: number;
@@ -153,6 +154,7 @@ export function drawChar(g: CanvasRenderingContext2D, ch: string, x: number, y: 
 
 /** Draws a single line of text. */
 export function drawText(g: CanvasRenderingContext2D, text: string, x: number, y: number, opts: TextOptions = {}): number {
+  checkDrawn(text);
   const scale = opts.scale ?? 1;
   const color = opts.color ?? '#fffaf2';
   const w = measure(text) * scale;
@@ -179,6 +181,7 @@ export function drawWrapped(
   maxWidth: number,
   opts: TextOptions & { lineHeight?: number } = {},
 ): number {
+  checkDrawn(text);
   const lines = wrap(text, maxWidth / (opts.scale ?? 1));
   const lh = (opts.lineHeight ?? LINE_HEIGHT) * (opts.scale ?? 1);
   lines.forEach((line, i) => {

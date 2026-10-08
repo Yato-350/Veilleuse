@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 // @ts-expect-error — plain JS tool, no type declarations
 import { findMissing, readManifest, extractStrings } from '../tools/i18n-missing.mjs';
 import { CATALOG_PARTS, EN } from '../src/i18n/en';
-import { bindLanguage, format, tf, tn, tr, trLine } from '../src/i18n';
+import { bindLanguage, checkDrawn, format, missing, tf, tn, tr, trLine } from '../src/i18n';
 import { ACCENTS, GLYPHS } from '../src/engine/font-data';
 import { measure } from '../src/engine/font';
 import { DODO_WORDS, MINA_WORDS, POEM_WORDS, WORD_POOLS } from '../src/data/words';
@@ -124,5 +124,18 @@ describe('i18n API', () => {
     expect(trLine('Pour Mina.')).toBe('For Mina.');
     expect(trLine('Oui,')).toBe('Yes,');
     expect(trLine('')).toBe('');
+  });
+
+  it('reports French catalog keys drawn directly in English (a missing tr() before drawText)', () => {
+    bindLanguage(() => 'fr');
+    checkDrawn('Distribué');
+    expect(missing.has('Distribué')).toBe(false);
+    bindLanguage(() => 'en');
+    checkDrawn('Distribué');
+    checkDrawn('Delivered');
+    checkDrawn('Options');
+    expect(missing.has('Distribué')).toBe(true);
+    expect(missing.has('Delivered')).toBe(false);
+    expect(missing.has('Options')).toBe(false);
   });
 });
