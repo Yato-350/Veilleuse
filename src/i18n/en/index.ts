@@ -6,12 +6,16 @@ import { UI } from './ui';
 import { BATTLE } from './battle';
 import { DATA } from './data';
 import { MAPS } from './maps';
+import { STORY_REAL } from './story-real';
+import { STORY_EPILOGUE } from './story-epilogue';
 
 export const CATALOG_PARTS: Record<string, Record<string, string>> = {
   ui: UI,
   battle: BATTLE,
   data: DATA,
   maps: MAPS,
+  'story-real': STORY_REAL,
+  'story-epilogue': STORY_EPILOGUE,
 };
 
 export const EN: Record<string, string> = Object.assign({}, ...Object.values(CATALOG_PARTS));

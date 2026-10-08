@@ -4,6 +4,7 @@ import { world } from '../overworld/world';
 import { G } from '../state';
 import { composePoem } from '../scenes/poem';
 import { finishGame } from './common';
+import { trLine, translated } from '../../i18n';
 
 /*
  * Epilogue of the dawn route (« aube »): the morning after. Noa and Maman buy a new nightlight at the little shop
@@ -361,16 +362,19 @@ async function readPoem(d: Director): Promise<void> {
   d.music('mina', 1.5);
   await d.ask('Tu prends ta respiration.', ['Lire à voix haute']);
   await d.say(lines[0] ?? 'Pour Mina.', face);
+  // The poem is stored in French (flag fin_poem): each line is translated on its own (« lune, » → "moon,").
   for (let i = 0; i < words.length; i += 3) {
     await d.say(
-      words
-        .slice(i, i + 3)
-        .map((w) => `${w}{p:18}`)
-        .join('\n'),
+      translated(
+        words
+          .slice(i, i + 3)
+          .map((w) => `${trLine(w)}{p:18}`)
+          .join('\n'),
+      ),
       face,
     );
   }
-  if (ending.length) await d.say(ending.join('\n'), face);
+  if (ending.length) await d.say(translated(ending.map(trLine).join('\n')), face);
   d.set('ep_poem');
   await d.wait(40);
   await d.say(['Ta voix a tremblé.', 'Mais tu es allé jusqu\'au bout.']);

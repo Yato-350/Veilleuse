@@ -53,6 +53,8 @@
     "src/data/maps/epilogue.ts",
     "src/data/maps/bonus.ts",
     "src/data/maps/build.ts",
-    "src/data/maps/index.ts"
+    "src/data/maps/index.ts",
+    "src/game/story/real.ts",
+    "src/game/story/epilogue.ts"
   ]
 }
