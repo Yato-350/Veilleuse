@@ -7,6 +7,7 @@ import { input } from '../../engine/input';
 import { SOUVENIRS } from '../../data/illustrations';
 import { SheepCountScene } from '../scenes/sheepcount';
 import { shop, wakeUp } from './common';
+import { tf, tr } from '../../i18n';
 
 /**
  * Chapter 1 — « Le Pays de Coton ».
@@ -552,8 +553,8 @@ async function countSheep(d: Director, replay = false): Promise<boolean> {
       const nums = offsets.map((o) => r.valid + o);
       const i = await d.ask('*ouvre un œil* Alors… ça fait combien ?', nums.map(String), 'mouton');
       ok = nums[i] === r.valid;
-      if (ok) await d.say([`${NUMBER_WORDS[r.valid] ?? r.valid} ! C'est exactement ça.`, 'Moi, j\'en avais compté quarante-deux. Mais je dormais un peu.'], 'mouton');
-      else await d.say([`Hmm… Moi, en ouvrant un œil, j'en ai vu ${r.valid}.`, 'Ils vont ressauter dans un autre ordre. Ouvre bien les yeux… enfin, toi.'], 'mouton');
+      if (ok) await d.say([tf('{0} ! C\'est exactement ça.', tr(NUMBER_WORDS[r.valid] ?? String(r.valid))), 'Moi, j\'en avais compté quarante-deux. Mais je dormais un peu.'], 'mouton');
+      else await d.say([tf('Hmm… Moi, en ouvrant un œil, j\'en ai vu {0}.', r.valid), 'Ils vont ressauter dans un autre ordre. Ouvre bien les yeux… enfin, toi.'], 'mouton');
     } else if (ok) {
       if (round === 1) await d.say(['Bravo ! Ils sont tous passés.', 'Tu as un don. Ou alors… tu as du mal à dormir, toi aussi ?'], 'mouton');
       else await d.say(r.errors ? 'Ils sont tous passés ! Et le mouton noir boude dans son coin. Parfait.' : 'Pas une seule erreur ! Le mouton noir est vexé. C\'est bon signe.', 'mouton');
@@ -659,7 +660,7 @@ export const moutonnier: Script = async (d) => {
   }
   d.set('c1_sheep_meet');
   const round = Number(G.state.flags.c1_sheep_round ?? 1);
-  await d.say(round > 1 ? `Tu reviens ! On en était à la manche ${round}. Les moutons t'attendent.` : 'Alors ? Tu es prêt ? Les moutons s\'impatientent.', 'mouton');
+  await d.say(round > 1 ? tf('Tu reviens ! On en était à la manche {0}. Les moutons t\'attendent.', round) : 'Alors ? Tu es prêt ? Les moutons s\'impatientent.', 'mouton');
   await offerHelp(d);
 };
 
