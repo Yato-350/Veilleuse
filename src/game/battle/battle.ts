@@ -3,7 +3,7 @@ import { H, W } from '../../engine/constants';
 import { drawChar, drawOutlined, drawText, LINE_HEIGHT, measure } from '../../engine/font';
 import { fx } from '../../engine/fx';
 import { game, type Scene } from '../../engine/game';
-import { input } from '../../engine/input';
+import { hits, input } from '../../engine/input';
 import { clamp, lerp, rng, type Rect } from '../../engine/math';
 import { EMOTION_COLOR, EMOTION_COLOR_NAME, EMOTION_LABEL, soulLabel, type Emotion } from '../../engine/palette';
 import { vibrate } from '../../engine/screen';
@@ -867,12 +867,12 @@ export class Battle implements Scene {
           if (rc?.pause && G.settings.textSpeed < 3) tx.wait = rc.pause;
         }
       }
-      if (tx.waitInput && (input.pressed('a') || input.pressed('b'))) tx.shown = tx.total;
-      else if (!tx.waitInput && tx.resolve && (input.pressed('a') || input.pressed('b'))) tx.shown = tx.total;
+      if (tx.waitInput && (input.pressed('a') || input.pressed('b') || this.freeTap)) tx.shown = tx.total;
+      else if (!tx.waitInput && tx.resolve && (input.pressed('a') || input.pressed('b') || this.freeTap)) tx.shown = tx.total;
       return;
     }
     if (tx.resolve) {
-      if (!tx.waitInput || input.pressed('a')) {
+      if (!tx.waitInput || input.pressed('a') || this.freeTap) {
         const r = tx.resolve;
         tx.resolve = undefined;
         if (tx.waitInput) {
@@ -893,11 +893,11 @@ export class Battle implements Scene {
         all = false;
       }
     }
-    if (!all && (input.pressed('a') || input.pressed('b'))) {
+    if (!all && (input.pressed('a') || input.pressed('b') || this.freeTap)) {
       for (const b of this.bubbles) b.shown = b.total;
       return;
     }
-    if (all && input.pressed('a')) {
+    if (all && (input.pressed('a') || this.freeTap)) {
       this.bubbles = [];
       input.consume();
       const r = this.bubbleResolve;
@@ -906,8 +906,44 @@ export class Battle implements Scene {
     }
   }
 
+  /** A tap on the battle screen that is not on one of its buttons / rows (advances text, like A). */
+  private get freeTap(): boolean {
+    const p = input.tapAt;
+    return input.tap && !!p && !hits.at(this, p.x, p.y);
+  }
+
+  /**
+   * Direct touch / mouse on the menu, a list or the notebook. Ids: 'm:i' menu buttons, 'l:i' list rows, 'nb:i'
+   * notebook (0 = Observer), 'l:page' next page, 'cancel' (outside a list / the notebook, or another menu button).
+   * Returns the tapped id (hover only moves the highlight).
+   */
+  private pointer(): string | null {
+    const hit = hits.pick(this);
+    if (!hit || typeof hit.id !== 'string') return null;
+    const [kind, arg] = hit.id.split(':') as [string, string | undefined];
+    const i = Number(arg);
+    if (!hit.tap) {
+      if (kind === 'm' && this.mode === 'menu' && i !== this.menuIdx) {
+        this.menuIdx = i;
+        audio.sfx('move');
+      } else if (kind === 'l' && this.list && !isNaN(i) && i !== this.list.idx) {
+        this.list.idx = i;
+        audio.sfx('move');
+      } else if (kind === 'nb' && this.nb && !this.nb.writing && i !== this.nb.idx) {
+        this.nb.idx = i;
+        audio.sfx('move');
+      }
+      return null;
+    }
+    // While a list or the notebook is open, the menu buttons below step back to the menu (like B).
+    if (kind === 'm' && this.mode !== 'menu') return 'cancel';
+    return hit.id;
+  }
+
   private updateMenu(): void {
     const n = 4;
+    const tap = this.pointer();
+    if (tap?.startsWith('m:')) this.menuIdx = Number(tap.slice(2));
     if (input.repeat('left')) {
       this.menuIdx = (this.menuIdx + n - 1) % n;
       audio.sfx('move');
@@ -916,7 +952,7 @@ export class Battle implements Scene {
       this.menuIdx = (this.menuIdx + 1) % n;
       audio.sfx('move');
     }
-    if (input.pressed('a')) {
+    if (input.pressed('a') || tap?.startsWith('m:')) {
       if (this.menuDisabled[this.menuIdx]) {
         audio.sfx('cancel');
         return;
@@ -934,6 +970,22 @@ export class Battle implements Scene {
     const l = this.list!;
     const n = l.items.length;
     const cols = 2;
+    const tap = this.pointer();
+    if (tap === 'l:page') {
+      l.idx = (Math.floor(l.idx / 6) + 1) * 6 < n ? (Math.floor(l.idx / 6) + 1) * 6 : 0;
+      audio.sfx('move');
+      return;
+    }
+    if (tap === 'cancel') {
+      if (!l.cancel) return;
+      audio.sfx('cancel');
+      return this.closeList(-1);
+    }
+    if (tap?.startsWith('l:')) {
+      l.idx = Number(tap.slice(2));
+      audio.sfx('select');
+      return this.closeList(l.idx);
+    }
     if (input.repeat('up') && l.idx - cols >= 0) {
       l.idx -= cols;
       audio.sfx('move');
@@ -984,6 +1036,9 @@ export class Battle implements Scene {
     }
     // idx 0 = observe, 1..6 = words (2 columns x 3 rows)
     const nWords = nb.words.length;
+    // Touch / mouse: a tap on a word writes it at once, on « Observer » observes; outside the page closes it.
+    const tap = this.pointer();
+    if (tap?.startsWith('nb:')) nb.idx = Number(tap.slice(3));
     if (input.repeat('up')) {
       if (nb.idx <= 2) nb.idx = 0;
       else nb.idx -= 2;
@@ -1002,7 +1057,7 @@ export class Battle implements Scene {
       nb.idx++;
       audio.sfx('move');
     }
-    if (input.pressed('a')) {
+    if (input.pressed('a') || tap?.startsWith('nb:')) {
       audio.sfx('select');
       if (nb.idx === 0) {
         this.nb = null;
@@ -1012,7 +1067,7 @@ export class Battle implements Scene {
         return;
       }
       nb.writing = { word: nb.words[nb.idx - 1]!, t: 0 };
-    } else if (input.pressed('b')) {
+    } else if (input.pressed('b') || tap === 'cancel') {
       audio.sfx('cancel');
       this.nb = null;
       this.mode = 'idle';
@@ -1027,7 +1082,8 @@ export class Battle implements Scene {
     const w = TEXT_BOX.w - 16;
     if (!a.done) {
       a.x += a.speed;
-      if (input.pressed('a')) {
+      // A tap anywhere strikes, like A.
+      if (input.pressed('a') || input.tap) {
         a.done = true;
         const center = w / 2;
         a.acc = clamp(1 - Math.abs(a.x - center) / center, 0, 1);
@@ -1339,12 +1395,16 @@ export class Battle implements Scene {
     const perPage = 6;
     const page = Math.floor(l.idx / perPage);
     const start = page * perPage;
+    // Touch: outside the rows steps back (when allowed); the box itself is neutral.
+    hits.add(this, 'cancel', 0, 0, W, H);
+    hits.add(this, 'box', x - 2, y - 2, TEXT_BOX.w + 4, TEXT_BOX.h + 4);
     for (let i = start; i < Math.min(l.items.length, start + perPage); i++) {
       const col = i % 2;
       const row = Math.floor((i - start) / 2);
       const ix = x + 22 + col * 140;
       const iy = y + 6 + row * 14;
       const sel = i === l.idx;
+      hits.add(this, `l:${i}`, ix - 16, iy - 3, 140, 14);
       if (sel) soulHeart(g, ix - 12, iy + 3, ...this.soulColors());
       const label = l.items[i]!.replace('{c:g}', '');
       drawText(g, `* ${label}`, ix, iy, { color: l.colors[i] ?? (sel ? '#fffaf2' : '#d8cfe0') });
@@ -1352,7 +1412,10 @@ export class Battle implements Scene {
       const enemy = this.alive.find((e) => e.name === l.items[i]);
       if (enemy) this.drawCalm(g, ix + measure(`* ${label}`) + 6, iy + 3, enemy);
     }
-    if (l.items.length > perPage) drawText(g, `${page + 1}/${Math.ceil(l.items.length / perPage)}`, x + TEXT_BOX.w - 30, y + TEXT_BOX.h - 13, { color: '#8a7f96' });
+    if (l.items.length > perPage) {
+      drawText(g, `${page + 1}/${Math.ceil(l.items.length / perPage)}`, x + TEXT_BOX.w - 30, y + TEXT_BOX.h - 13, { color: '#8a7f96' });
+      hits.add(this, 'l:page', x + TEXT_BOX.w - 36, y + TEXT_BOX.h - 16, 36, 16);
+    }
   }
 
   private drawCalm(g: CanvasRenderingContext2D, x: number, y: number, e: EnemyRuntime): void {
@@ -1419,6 +1482,7 @@ export class Battle implements Scene {
       const x = 10 + i * 76;
       const sel = this.menuIdx === i && (this.mode === 'menu' || this.mode === 'list' || this.mode === 'notebook' || this.mode === 'bar');
       const disabled = this.menuDisabled[i];
+      if (this.mode === 'menu' || this.mode === 'list' || this.mode === 'notebook') hits.add(this, `m:${i}`, x, y - 2, 72, 22);
       const color = disabled ? '#4e4359' : sel ? '#ffd84a' : '#f09a4a';
       g.fillStyle = color;
       g.fillRect(x, y, 72, 18);
@@ -1482,6 +1546,10 @@ export class Battle implements Scene {
       g.fillRect(px + 1, y + 60, 1, 2);
       return;
     }
+    // Touch: outside the page closes the notebook; the page itself is neutral.
+    hits.add(this, 'cancel', 0, 0, W, H);
+    hits.add(this, 'paper', x - 4, y - 2, w + 6, h + 4);
+    hits.add(this, 'nb:0', x + 20, y + 19, 100, 16);
     // Observe
     const obsSel = nb.idx === 0;
     if (obsSel) this.drawPencil(g, x + 22, y + 26);
@@ -1493,6 +1561,7 @@ export class Battle implements Scene {
       const wx = x + 34 + col * 100;
       const wy = y + 51 + row * 25;
       const sel = nb.idx === i + 1;
+      hits.add(this, `nb:${i + 1}`, wx - 18, wy - 7, 98, 23);
       let label = wd.text;
       if (nb.scramble) label = scramble(label, this.t + i);
       if (!nb.scramble) this.drawWordMark(g, wd, wx, wy, label);
