@@ -96,7 +96,7 @@ export const STORY_CHAPTER1: Record<string, string> = {
   'Merci, merci ! Mon ballon ne s\'envolera plus jamais. Je l\'ai attaché à ma laine !': 'Thank you, thank you! My balloon will never fly away again. I tied it to my wool!',
   'Mon ballon !! Tu l\'as retrouvé !': 'My balloon!! You found it!',
   'Tiens, je te donne mon plus beau crayon. Il est rouge comme mon ballon !': 'Here, you can have my best crayon. It\'s red like my balloon!',
-  'Tu obtiens : {c:y}Crayon de cire{/c}. Tu le gardes à la main. {c:g}(ATQ +3){/c}': 'You got: {c:y}Wax crayon{/c}. You keep it in hand. {c:g}(ATK +3){/c}',
+  'Tu obtiens : {c:y}Crayon de cire{/c}. Tu le gardes à la main. {c:g}(ATQ +3){/c}': 'You got the {c:y}Wax Crayon{/c}. You keep it in hand. {c:g}(ATK +3){/c}',
   'C\'est mon rouge préféré ! Enfin… c\'était. Je crois.': 'That\'s my favorite red! Well… it was. I think.',
   '*snif*… Mon ballon rouge…': '*sniff*… My red balloon…',
   'Le vent l\'a emporté. Il est coincé dans un arbre de la prairie, je l\'ai vu…': 'The wind took it. It\'s stuck in a tree in the meadow, I saw it…',

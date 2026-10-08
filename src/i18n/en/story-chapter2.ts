@@ -207,7 +207,7 @@ export const STORY_CHAPTER2: Record<string, string> = {
   'Un chemin apparaît, bordé de petites lumières.': 'A path appears, lined with little lights.',
   'Au pied de la lanterne bleue, quelque chose est plié avec soin.': 'At the foot of the blue lantern, something lies neatly folded.',
   'Un plaid. Doux, un peu bouloché. Il sent la lessive de Maman.': 'A blanket. Soft, a little fuzzy. It smells like Mom\'s laundry.',
-  'Tu obtiens : {c:y}Plaid tout doux{/c}. Tu le poses sur tes épaules. {c:g}(DÉF +2){/c}': 'You got: {c:y}Soft blanket{/c}. You wrap it around your shoulders. {c:g}(DEF +2){/c}',
+  'Tu obtiens : {c:y}Plaid tout doux{/c}. Tu le poses sur tes épaules. {c:g}(DÉF +2){/c}': 'You got the {c:y}Soft Blanket{/c}. You wrap it around your shoulders. {c:g}(DEF +2){/c}',
   'C\'est le plaid du canapé ! Celui de la cabane !': 'It\'s the couch blanket! The one from our fort!',
   'On se mettait dessous pour regarder les dessins animés. Toi, tu t\'endormais toujours avant la fin.': 'We\'d hide under it to watch cartoons. You always fell asleep before the end.',
   'Un panneau. Dessus, un arc-en-ciel dessiné au crayon de cire.': 'A sign. On it, a rainbow drawn in crayon.',
