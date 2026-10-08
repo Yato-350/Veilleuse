@@ -144,7 +144,7 @@ Chaque scène clé possède un script de débogage (`c1_boss`, `c2_lanterns`, `c
 
 Documentation : [Conception](docs/GAME_DESIGN.md) · [Scénario](docs/SCENARIO.md) ·
 [Architecture](docs/ARCHITECTURE.md) · [Contrat de contenu](docs/CONTENT_CONTRACT.md) ·
-[Feuille de route](docs/ROADMAP.md) · [Contribuer](CONTRIBUTING.md)
+[Feuille de route](docs/ROADMAP.md) · [Traduction](docs/I18N.md) · [Contribuer](CONTRIBUTING.md)
 
 ### Publier sur GitHub Pages
 
