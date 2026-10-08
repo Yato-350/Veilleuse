@@ -23,6 +23,7 @@
  * Prints a state line after each step; exits non-zero on page errors.
  */
 import { chromium } from 'playwright';
+import { existsSync } from 'node:fs';
 import { createServer } from 'vite';
 import { resolve } from 'node:path';
 
@@ -43,7 +44,13 @@ const canvasOnly = args.includes('--canvas');
 const server = await createServer({ server: { port: 0, host: '127.0.0.1', hmr: false, watch: null }, logLevel: 'error' });
 await server.listen();
 const addr = server.httpServer.address();
-const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || undefined });
+// The bundled browser may be missing (e.g. a sandbox with a preinstalled Chromium): fall back to PW_CHROMIUM or
+// /opt/pw-browsers/chromium.
+const launch = (executablePath) => chromium.launch({ executablePath });
+const browser = await launch(process.env.PW_CHROMIUM || undefined).catch((e) => {
+  if (existsSync('/opt/pw-browsers/chromium')) return launch('/opt/pw-browsers/chromium');
+  throw e;
+});
 const touch = args.includes('--touch');
 const page = await browser.newPage({ viewport: { width: vw, height: vh }, deviceScaleFactor: touch ? 2 : 1, hasTouch: touch, isMobile: touch });
 const errors = [];
