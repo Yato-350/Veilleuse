@@ -184,6 +184,13 @@ export const UI: Record<string, string> = {
   'Touche l\'écran quand un mouton passe la barrière.': 'Tap the screen when a sheep clears the fence.',
   'Appuie sur A quand un mouton passe la barrière.': 'Press A when a sheep clears the fence.',
   'Espace ou Entrée quand un mouton passe la barrière.': 'Space or Enter when a sheep clears the fence.',
+  // v2 title variants and scripted credits.
+  'Ça fait {0} jour, {1}. Il est toujours dans sa chambre.': 'It\'s been {0} day, {1}. He\'s still in his room.',
+  'Ça fait {0} jours, {1}. Il est toujours dans sa chambre.': 'It\'s been {0} days, {1}. He\'s still in his room.',
+  'L\'été, au parc.': 'Summer, at the park.',
+  'Si tu as des idées noires, tu peux appeler le 3114 (gratuit, 24 h/24). Tu n\'es pas seul·e.': 'If you\'re having dark thoughts, you can call or text 988 (US & Canada) or Samaritans on 116 123 (UK & Ireland), free, day and night. You\'re not alone.',
+  'Laisser défiler': 'Let it roll',
+  'Regarder': 'Look',
   // v2 phone: contact list, call log, incoming call.
   '↑↓ · B : retour': '↑↓ · B: back',
   '↑↓ · B : poser': '↑↓ · B: put down',

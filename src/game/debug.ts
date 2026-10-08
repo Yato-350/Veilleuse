@@ -1,4 +1,3 @@
-import { audio } from '../engine/audio';
 import { H, W } from '../engine/constants';
 import { drawText } from '../engine/font';
 import { fx } from '../engine/fx';
@@ -14,7 +13,7 @@ import { world } from './overworld/world';
 import type { MapDef } from './overworld/types';
 import { MAPS } from '../data/maps';
 import { G, maxHp, newState } from './state';
-import { TitleScene } from './scenes/title';
+import { TitleScene, TITLE_VARIANTS, type TitleVariant } from './scenes/title';
 import { ImageScene } from './scenes/image';
 import { DEBUG_SCRIPTS } from './story';
 import { CreditsScene } from './scenes/credits';
@@ -31,6 +30,9 @@ import { composePoem } from './scenes/poem';
  *   ?debug=image&key=souvenir_fenetre
  *   ?debug=script&name=chapter1_intro&map=prairie
  *   ?debug=title | ?debug=credits
+ *   ?debug=title&variant=point_de_croix|continuer_seul|soleil_blanc|silence_v2|veilleuse|night|dawn|dream (&days=23)
+ *   ?debug=credits&mode=faux   the fake credits of the false dawn (stop, choice, rewind / let roll, cross-stitch)
+ *   ?debug=credits&mode=aide   the credits followed by the help card
  *   ?debug=gallery&seen=some|all|none&poems=3&open=1   title screen + « Carnet de souvenirs » with sample memories
  */
 export function startDebug(p: URLSearchParams): void {
@@ -119,14 +121,24 @@ export function startDebug(p: URLSearchParams): void {
       if (p.get('open') !== '0') game.push(new GalleryScene());
       return;
     }
-    case 'credits':
+    case 'credits': {
       game.replace(new BlackScene());
-      void CreditsScene.play();
+      const m = p.get('mode');
+      if (m === 'faux') {
+        game.replace(world);
+        void runScript(async (d) => {
+          await DEBUG_SCRIPTS.faux_generique!(d);
+        });
+      } else void CreditsScene.play({ helpCard: m === 'aide' });
       return;
+    }
     case 'title':
-    default:
-      audio.unlock();
-      game.replace(new TitleScene());
+    default: {
+      // (No audio.unlock() here: without a user gesture the browser refuses it; the first key press unlocks audio.)
+      const v = p.get('variant');
+      if (p.get('days')) G.meta.beauxRevesAt = Date.now() - Number(p.get('days')) * 86400000;
+      game.replace(new TitleScene(v && (TITLE_VARIANTS as string[]).includes(v) ? { variant: v as TitleVariant } : {}));
+    }
   }
 }
 

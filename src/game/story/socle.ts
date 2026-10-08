@@ -3,6 +3,10 @@ import type { Script } from '../overworld/types';
 import { G } from '../state';
 import { dialogue, nightNarratorVoice } from '../ui/dialogue';
 import { CountingScene, type CountSkin } from '../scenes/sheepcount';
+import { CREDIT_LINES, CreditsScene, type CreditLine } from '../scenes/credits';
+import { TitleScene } from '../scenes/title';
+import { game } from '../../engine/game';
+import { world } from '../overworld/world';
 import { dateLabel, PhoneScene, type PhoneCall, type PhoneContact, type PhoneMessage, type PhoneTab } from '../scenes/phone';
 
 /*
@@ -16,6 +20,9 @@ import { dateLabel, PhoneScene, type PhoneCall, type PhoneContact, type PhoneMes
  *                   history, the call log
  *   phone_log       the same phone, opened on the « Journal d'appels » tab
  *   phone_ring      an incoming call that cannot be answered, which becomes a missed call
+ *   faux_generique  the fake credits (§3.9) with the credits / title blocks: stop on a line, choice, rewind, let roll
+ *                   to « Merci d'avoir joué ! — Dodo », cross-stitched title with one « Continuer », three passes at
+ *                   most (also ?debug=credits&mode=faux)
  *
  * Nothing here is part of the story: the chapters and interludes use these blocks with their own text.
  */
@@ -167,7 +174,53 @@ async function phoneRing(d: Director): Promise<void> {
   await ph.close();
 }
 
+// ---------------------------------------------------------------------------
+// Fake credits (sample: the false dawn, lot 5, writes its own)
+// ---------------------------------------------------------------------------
+
+/** The real credits' layout with a cast list, where Mina cannot be found (one more « introuvable » each pass). */
+function fauxLines(pass: number): { lines: CreditLine[]; stop: number } {
+  const cast: CreditLine[] = [
+    ['— Distribution —', '#8a7f96'],
+    ['Noa ……… Noa'],
+    ['Maman ……… Maman'],
+    ['Dodo ……… Dodo'],
+    ['Chaussette ……… Chaussette'],
+    ['Madame Lune ……… Madame Lune'],
+    [['Mina ………', ...Array.from({ length: pass }, () => 'introuvable')].join(' ')],
+    [''],
+  ];
+  const lines = [...CREDIT_LINES.slice(0, 4), ...cast, ...CREDIT_LINES.slice(4)];
+  return { lines, stop: 4 + 6 };
+}
+
+async function fauxGenerique(d: Director): Promise<void> {
+  for (let pass = 1; pass <= 3; pass++) {
+    await d.fadeOut(30);
+    const { lines, stop } = fauxLines(pass);
+    const c = CreditsScene.open({ lines, signature: 'Merci d\'avoir joué ! — Dodo' });
+    const choices = pass >= 3 ? ['Regarder'] : ['Laisser défiler', 'Regarder'];
+    const whisper = pass >= 3 ? () => d.say('Noa. Regarde.', 'minavoix') : undefined;
+    const i = await c.stopAt(stop, choices, whisper);
+    if (choices[i] === 'Regarder') {
+      await c.rewind();
+      c.close();
+      game.replace(world);
+      d.load('chambre', 'bed');
+      await d.fadeIn(30);
+      await d.say('Non.', 'noa:sad');
+      await d.say('C\'est pas tout.', 'noa');
+      return;
+    }
+    // « Fin heureuse »: never recorded as an ending. The title has one entry, and it leads back to the stuck line.
+    await c.resume();
+    await TitleScene.single('point_de_croix');
+    game.replace(world);
+  }
+}
+
 export const DEBUG: Record<string, Script> = {
+  faux_generique: fauxGenerique,
   phone_home: (d) => phoneDemo(d, 'messages'),
   phone_log: (d) => phoneDemo(d, 'calls'),
   phone_ring: phoneRing,
