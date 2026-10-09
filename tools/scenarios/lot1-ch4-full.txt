@@ -7,6 +7,9 @@
 query: debug=script&name=chapter4&sheep=auto&lang=fr
 god
 wait:2000
+# The wandering monsters would interrupt the remote interactions of the bot: mark them beaten (the regular fights
+# have their own scenarios, lot1-battle-*).
+eval: window.__veilleuse.G.state.cleared.push('c4_de_1', 'c4_brouillon_1', 'c4_pate_1', 'c4_pate_2', 'c4_pate_3', 'c4_mot_1', 'c4_brouillon_2', 'c4_de_2', 'c4_brouillon_3')
 auto
 assert: window.__veilleuse.G.state.party.includes('mina366')
 go:21/17
