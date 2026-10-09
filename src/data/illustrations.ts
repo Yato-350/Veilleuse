@@ -17,6 +17,7 @@ import { PAL } from '../engine/palette';
 import { ctx2d, makeCanvas, parseRows } from '../engine/sprite';
 import { BONUS_ILLUSTRATIONS } from './illustrations-bonus';
 import { CH4_ILLUSTRATIONS } from './illustrations-ch4';
+import { NUIT_ILLUSTRATIONS } from './illustrations-nuit';
 
 export type Illustration = (g: CanvasRenderingContext2D, t: number) => void;
 
@@ -1690,6 +1691,26 @@ function paintPhoto(g: Ctx): void {
   withAlpha(g, 0.1, () => fillP(g, inter(poly([ix + 30, iy, ix + 50, iy, ix + 14, iy + ih, ix - 6, iy + ih]), boxP(ix, iy, iw, ih)), [ix, iy, ix + iw, iy + ih], '#ffffff'));
 }
 
+/**
+ * The same summer photo, Noa's own copy (Interlude III, `photo_decoupee`): where his face was, a neat hole with
+ * straight edges, cut with scissors. The cardboard back of the frame shows through; the white core of the photo
+ * paper catches the light on two edges.
+ */
+function paintPhotoCut(g: Ctx): void {
+  paintPhoto(g);
+  const x = 128;
+  const y = 82;
+  const w = 17;
+  const h = 19;
+  rect(g, x, y, w, h, '#2e2420');
+  field(g, x, y, w, h, (px2, py2) => (hash(px2, py2, 31) < 0.12 ? '#382c26' : null));
+  rect(g, x, y, w, 2, '#1a1412');
+  rect(g, x, y, 2, h, '#1a1412');
+  rect(g, x, y + h - 1, w, 1, '#f1e9da');
+  rect(g, x + w - 1, y, 1, h, '#f1e9da');
+  px(g, x + w - 1, y, '#c9bfae');
+}
+
 // --- TV : vidéo de famille ----------------------------------------------------------------------------------------
 
 const TV = { x: 70, y: 20, w: 180, h: 124 };
@@ -2049,6 +2070,12 @@ export const ILLUSTRATIONS: Record<string, Illustration> = {
     const gx = 70 + k * 200;
     withAlpha(g, 0.18 * Math.sin(k * Math.PI), () => fillP(g, poly([gx, 28, gx + 10, 28, gx - 24, 138, gx - 34, 138]), [gx - 36, 26, gx + 12, 140], '#ffffff'));
   },
+  photo_decoupee: (g, t) => {
+    g.drawImage(layer('photo_decoupee', paintPhotoCut), 0, 0);
+    const k = (t % 300) / 300;
+    const gx = 70 + k * 200;
+    withAlpha(g, 0.14 * Math.sin(k * Math.PI), () => fillP(g, poly([gx, 28, gx + 10, 28, gx - 24, 138, gx - 34, 138]), [gx - 36, 26, gx + 12, 140], '#ffffff'));
+  },
   tv_mina: (g, t) => drawTv(g, t),
   fin_aube: (g, t) => {
     g.drawImage(layer('fin_aube', paintAube), 0, 0);
@@ -2083,6 +2110,7 @@ export const ILLUSTRATIONS: Record<string, Illustration> = {
   // Bonus chapter « Les rêves des autres » (see illustrations-bonus.ts).
   ...BONUS_ILLUSTRATIONS,
   ...CH4_ILLUSTRATIONS,
+  ...NUIT_ILLUSTRATIONS,
 };
 
 export interface Souvenir {

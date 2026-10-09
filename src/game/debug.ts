@@ -22,7 +22,7 @@ import { composePoem } from './scenes/poem';
 
 /**
  * Developer entry points, driven by URL parameters (used by tools/shot.mjs for visual checks):
- *   ?debug=sheet&filter=b_&scale=3      sprite sheet (all sprites whose key starts with `filter`)
+ *   ?debug=sheet&filter=b_&scale=3      sprite sheet (all sprites whose key starts with `filter`; several prefixes: a,b; &base: no @variants)
  *   ?debug=map&map=prairie&spawn=default&chapter=1&party=mina&flags=a,b=2
  *   ?debug=map&map=chambre&world=feutre   any map seen in another world material (feutre, stylo, blanc, ouate, faux…)
  *   ?debug=battle&enemies=nuage,pissenlit&chapter=1&emotion=joie
@@ -50,7 +50,7 @@ export function startDebug(p: URLSearchParams): void {
   fx.setFade(0);
   switch (mode) {
     case 'sheet':
-      return showSheet(p.get('filter') ?? '', Number(p.get('scale') ?? 3), p.get('chars') !== null);
+      return showSheet(p.get('filter') ?? '', Number(p.get('scale') ?? 3), p.get('chars') !== null, p.get('base') !== null);
     case 'map': {
       const id = p.get('map') ?? 'chambre';
       const w = p.get('world');
@@ -164,10 +164,12 @@ function showError(msg: string): void {
 }
 
 /** Renders a large sprite sheet into the page (outside the game canvas) for visual review. */
-function showSheet(filter: string, scale: number, includeChars: boolean): void {
+function showSheet(filter: string, scale: number, includeChars: boolean, baseOnly = false): void {
   const entries: Array<[string, HTMLCanvasElement, number, number]> = [];
+  const prefixes = filter.split(',');
   for (const [k, s] of Object.entries(SPR)) {
-    if (k.startsWith(filter)) entries.push([k, s.img, s.w, s.h]);
+    if (baseOnly && k.includes('@')) continue;
+    if (prefixes.some((f) => k.startsWith(f))) entries.push([k, s.img, s.w, s.h]);
   }
   if (includeChars) {
     for (const [id, set] of Object.entries(CHARS)) {

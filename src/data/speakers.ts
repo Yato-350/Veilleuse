@@ -14,6 +14,8 @@ export const SPEAKERS: Record<string, Speaker> = {
   mina: { name: 'Mina', voice: 'mina', portrait: 'mina', color: '#f09a4a' },
   dodo: { name: 'Dodo', voice: 'dodo', portrait: 'dodo', color: '#fffaf2' },
   dododark: { name: 'Dodo', voice: 'dododark', portrait: 'dodo', color: '#b06aff' },
+  /** Dodo heard in the real world at night (interludes III and IV): his blip and his name, no portrait. */
+  dodoreel: { name: 'Dodo', voice: 'dodo', color: '#fffaf2' },
   maman: { name: 'Maman', voice: 'maman', portrait: 'maman', color: '#f8b6cf' },
   chaussette: { name: 'Chaussette', voice: 'sock', portrait: 'chaussette', color: '#a7c7f0' },
   lune: { name: 'Madame Lune', voice: 'moon', portrait: 'lune', color: '#ffe991' },

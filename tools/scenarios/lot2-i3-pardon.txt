@@ -1,0 +1,85 @@
+# Lot 2 (Interlude III « Le sac », 4:06): the whole interlude, Noa answers the stranger « Pardon. C'était ma sœur. ».
+# The narrator gets Dodo wrong (« Ton mouton. » … « …Le mouton de Mina. ») and the belly crackles; the pinned
+# « Mina 🐑 » thread is unlocked (a year of « bonne nuit », the stranger), the reply, the call log (3:14, 0:41); the
+# photo turned over on the third try (`photo_decoupee`); the door opens by itself; the hall cupboard, the bag of
+# Pédiatrie 3e, its four objects and the polaroid (T2, `polaroid_dodo`); back to bed, « Tu vois ? Tu reviens
+# toujours. », and chapter 4 begins.
+query: debug=script&name=interlude3&lang=fr
+wait:1500
+auto
+shot:wake
+interact:dodo_plush
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.i3_dodo === true && window.__veilleuse.G.state.flags.i3_ventre === 1
+interact:phone
+zuntil: window.__veilleuse.game.top.constructor.name === 'PhoneScene' && window.__veilleuse.game.top.mode === 'browse'
+KeyZ
+zuntil: window.__veilleuse.dialogue.choices
+choose:0
+zuntil: window.__veilleuse.game.top.mode === 'choose'
+choose:0
+zuntil: window.__veilleuse.game.top.mode === 'browse'
+shot:thread
+ArrowLeft
+wait:300
+ArrowRight
+zuntil: window.__veilleuse.game.top.mode === 'browse'
+shot:calls
+KeyZ
+zuntil: window.__veilleuse.game.top.mode === 'browse'
+KeyX
+auto
+assert: window.__veilleuse.G.state.flags.i3_reply === 'pardon' && window.__veilleuse.G.state.flags.i3_appel === true && !window.__veilleuse.G.state.flags.i3_porte
+interact:n_photo
+auto
+interact:n_photo
+auto
+interact:n_photo
+zuntil: window.__veilleuse.scene() === 'ImageScene'
+wait:800
+shot:photo
+auto
+assert: window.__veilleuse.G.state.flags.i3_photo === true && window.__veilleuse.G.state.flags.i3_porte === true
+shot:door
+interact:n_porte
+wait:1500
+auto
+assert: window.__veilleuse.G.state.map === 'appartement_tard'
+shot:hall
+interact:t_placard
+auto
+choose:0
+auto
+choose:0
+auto
+choose:0
+auto
+choose:0
+auto
+choose:0
+auto
+choose:0
+auto
+shot:bag
+choose:0
+zuntil: window.__veilleuse.scene() === 'ImageScene'
+wait:1200
+shot:polaroid
+auto
+assert: window.__veilleuse.G.state.flags.i3_sac === true && window.__veilleuse.G.state.flags.i3_sac_couronne && window.__veilleuse.G.state.flags.i3_sac_telephone
+go:6/3
+ArrowUp:120
+KeyZ
+wait:1500
+auto
+assert: window.__veilleuse.G.state.map === 'chambre'
+interact:dodo_plush
+auto
+shot:dodo
+choose:0
+zuntil: window.__veilleuse.G.state.chapter === 4 && window.__veilleuse.G.state.map === 'maison_feutre'
+wait:1500
+shot:ch4
+assert: window.__veilleuse.G.state.flags.i3_fin === true && window.__veilleuse.G.state.flags.interlude === 0

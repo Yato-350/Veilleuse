@@ -4,6 +4,7 @@ import { world } from '../overworld/world';
 import { G } from '../state';
 import { tr } from '../../i18n';
 import * as real from './real';
+import * as realNuit from './real-nuit';
 import * as chapter1 from './chapter1';
 import * as chapter2 from './chapter2';
 import * as chapter3 from './chapter3';
@@ -28,11 +29,13 @@ world.followerTalk = async (d) => {
 STORY.dream[1] = chapter1.start;
 STORY.dream[2] = chapter2.start;
 STORY.dream[3] = chapter3.start;
-// Chapter 4 is reached by debug only until production lot 2 wires Interlude III (STORY.wake[3] stays the v1.1 finale).
+// Interlude III (real-nuit.ts) enters chapter 4, whose end wakes up into Interlude IV. Until production lot 5 wires
+// the false dawn, chapter 3 still wakes up into the v1.1 finale, so III, chapter 4 and IV are reached by debug only.
 STORY.dream[4] = chapter4.start;
 STORY.wake[1] = real.interlude1;
 STORY.wake[2] = real.interlude2;
 STORY.wake[3] = real.finale;
+STORY.wake[4] = realNuit.interlude4;
 
 /** Entry point of a new game. */
 export const startPrologue: Script = real.prologue;
@@ -49,6 +52,7 @@ export const DEBUG_SCRIPTS: Record<string, Script> = {
   chapter4: chapter4.start,
   bonus: bonus.start,
   ...real.DEBUG,
+  ...realNuit.DEBUG,
   ...chapter1.DEBUG,
   ...chapter2.DEBUG,
   ...chapter3.DEBUG,

@@ -26,8 +26,8 @@ const flag = (k: string): boolean => !!G.state.flags[k];
 // Small helpers
 // ---------------------------------------------------------------------------
 
-/** Noa lies in bed (hidden player, sleeping bed sprite). */
-function inBed(d: Director, sleeping: boolean): void {
+/** Noa lies in bed (hidden player, sleeping bed sprite). Also used by the night interludes (real-nuit.ts). */
+export function inBed(d: Director, sleeping: boolean): void {
   const bed = d.find('bed');
   if (bed) bed.sprite = sleeping ? 'prop_bed_sleeping' : 'prop_bed';
   d.show('player', !sleeping);
@@ -136,6 +136,9 @@ function thread(upTo: number, withReply: boolean): PhoneMessage[] {
   }
   return out;
 }
+
+/** Maman's thread as it stands after interlude II (read by the night interludes III and IV, real-nuit.ts). */
+export const mamanThread = (): PhoneMessage[] => thread(REAL.i2, true);
 
 /** Opens the phone at moment n: Noa may answer (once — or again later if he chose silence). */
 async function answerMaman(d: Director, n: 0 | 1 | 2): Promise<void> {

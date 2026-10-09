@@ -692,6 +692,12 @@ export const DATA: Record<string, string> = {
   'Moi je serai': 'I\'ll be',
   'ta veilleuse.': 'your nightlight.',
   'Noa et moi': 'Noa and me',
+  // night interludes (illustrations-nuit.ts): Maman's ballpoint under the polaroid, Mina's drawing on the mirror
+  'Noa prête Dodo à Mina.': 'Noa lends Dodo to Mina.',
+  '"Il veillera sur toi."': '"He\'ll watch over you."',
+  'TU DIS PAS': 'DONT TELL',
+  'A NOA.': 'NOA.',
+  'PROMIS.': 'PROMISE.',
 
   // --- Memories (Memory Book) -------------------------------------------------------------------------------------
   'La fenêtre': 'The Window',

@@ -2207,6 +2207,311 @@ const VOID_PROPS: Record<string, SpriteDef> = {
 };
 
 // ---------------------------------------------------------------------------
+// Real world — the long night (Interludes III « Le sac », 4:06, and IV « Le placard », 4:44)
+// ---------------------------------------------------------------------------
+
+/** Headphones left on the desk, the cord wound round the headband so tight it split the plastic. */
+const CASQUE = `
+  ..kkkkkkkk..
+  .kdwdwdwdwk.
+  kdkkkkkkkkdk
+  kGk......kGk
+  kGGk....kGGk
+  kdGk....kGdk
+  .kk......kkw
+  ..........kw
+`;
+
+/** Noa's desk with the right-hand drawer pulled out a finger's width: scraps of glossy paper in the gap. */
+const DESK_DRAWER = (() => {
+  const p = pix(DESK);
+  p.rect(18, 16, 12, 2, 'i').hl(18, 16, 12, 'K');
+  p.px(20, 17, 'w').px(21, 17, 'q').px(24, 17, 's').px(25, 17, 'w').px(27, 17, 'Q');
+  p.rect(17, 18, 14, 4, 'C').frame(17, 18, 14, 4, 'x').hl(18, 18, 12, 'c').hl(22, 19, 4, 'Q');
+  return p.toString();
+})();
+
+/** The wall above the bed, worn paler at pillow height: a round patch, as if someone had knocked there. Often. */
+const MUR_USE = (() => {
+  const p = pix([12, 10]);
+  p.oval(5.5, 4.5, 5, 4, '3').oval(5.5, 4.5, 3.4, 2.6, '4');
+  p.sprinkle('4', '3', 0.3, 7).sprinkle('3', '1', 0.25, 9);
+  p.px(5, 4, 'g').px(6, 5, 'g').px(4, 5, '3');
+  return p.toString();
+})();
+
+/** Grey tufts of stuffing on the floor (Dodo's back seam gave way in the night). */
+const COTON = `
+  ..kkk...
+  .kwWgk..
+  kWwwWgkk
+  kgWWggGk
+  .kkkkkk.
+`;
+const COTON_2 = `
+  .kk.kk..
+  kwWkwgk.
+  kgWwWgGk
+  .kkkkkk.
+`;
+
+/** Dodo with his back seam open: grey stuffing puffs out behind him, a loose red thread hangs down. */
+const DODO_PLUSH_DECOUSU = (() => {
+  const p = pix([16, 14]);
+  p.stamp(DODO_PLUSH, 1, 2);
+  // stuffing bulging from the back, on the right and over the top
+  p.stamp(`
+    ..kkk.
+    .kwWgk
+    kWwwgGk
+    kgWWGk.
+    .kkkk..
+  `, 9, 6);
+  p.stamp(`
+    .kk..
+    kwgk.
+    kWwGk
+    .kkk.
+  `, 10, 0);
+  p.px(13, 11, 'r').px(13, 12, 'r').px(14, 13, 'R');
+  return p.toString();
+})();
+
+/** The nightlight cracked from one edge of the moon to the other (chapter 4, the Petit Homme beaten). */
+const VEILLEUSE_FELE = (() => {
+  const p = pix(VEILLEUSE);
+  p.px(4, 1, 'd').px(3, 2, 'G').px(3, 3, 'd').px(2, 4, 'G').px(3, 5, 'd').px(4, 6, 'G').px(5, 6, 'd');
+  return p.toString();
+})();
+
+/** A shoe box, lid off: little papers inside, flattened and stacked by date (the forty-one fridge notes). */
+const BOITE_CHAUSSURES = (() => {
+  const p = box(16, 10, { top: 'x', hi: 'C', lip: 'Q', front: 'c', shade: 'C', depth: 4 });
+  for (let i = 0; i < 7; i++) p.rect(2 + i * 2, 1 + (i % 2), 2, 4 - (i % 2), i % 3 === 1 ? 'y' : i % 3 === 2 ? 'q' : 'w');
+  p.vl(3, 1, 4, 'W').vl(9, 2, 3, 'Q').px(6, 2, 'r');
+  p.hl(4, 7, 8, 'C').px(5, 7, 'x').px(9, 7, 'x');
+  return p.toString();
+})();
+
+/** The nightlight's original box, worn at the corners, a moon printed on the front. */
+const BOITE_VEILLEUSE = (() => {
+  const p = box(12, 12, { top: 'q', hi: 'w', lip: 'Q', front: 'c', shade: 'C', depth: 2 });
+  p.disc(5.5, 7, 2.6, 'y').disc(6.6, 6.2, 2, 'c').px(4, 6, 'q').px(3, 8, 'Y');
+  p.px(8, 5, 'w').px(9, 9, 'q');
+  p.px(1, 1, '.').px(10, 10, 'C');
+  return p.toString();
+})();
+
+/** A digital thermometer that fell out of a coat pocket. */
+const THERMOMETRE = `
+  .kkkkkkkk.
+  kwwkdadkwkk
+  kWWkkkkkWWk
+  .kkkkkkkk..
+`;
+
+/** The entrance cupboard, painted like the walls. `open` = ajar on the dark, a coat sleeve and a bag strap. */
+function placardEntree(open: boolean): string {
+  const p = box(24, 32, { top: 'W', hi: 'w', lip: 'G', front: 'g', shade: 'G', depth: 2 });
+  p.hl(1, 4, 22, 'W').hl(1, 5, 22, 'G');
+  p.frame(3, 7, 18, 23, 'G').frame(5, 9, 14, 8, 'G').frame(5, 19, 14, 9, 'G');
+  p.hl(6, 10, 12, 'W').vl(6, 10, 6, 'W').hl(6, 20, 12, 'W').vl(6, 20, 7, 'W');
+  p.rect(17, 17, 2, 2, 'Y').px(17, 17, 'y');
+  if (open) {
+    p.rect(9, 7, 12, 23, 'i').hl(9, 7, 12, 'K');
+    // the door swung out to the right, seen edge-on
+    p.rect(19, 6, 4, 25, 'g').vl(19, 6, 25, 'W').vl(22, 6, 25, 'G').vl(23, 6, 25, 'k');
+    // a winter coat sleeve, and the strap of a bag with a white tag
+    p.poly([[9, 8], [13, 8], [12.5, 20], [9, 20]], 'd').vl(10, 9, 10, 'G').px(11, 20, 'G');
+    p.line(14, 9, 15, 22, 'n').line(15, 9, 16, 22, 'B');
+    p.rect(14, 22, 4, 3, 'w').px(17, 24, 'W').px(15, 23, 'G');
+    p.px(17, 12, 'G').hl(15, 11, 3, 'G');
+  }
+  return p.toString();
+}
+
+/** A navy sports bag. `open`: unzipped, a paper crown and pink slippers inside; a hospital tag on the handle. */
+function sacHopital(open: boolean): string {
+  const p = pix([24, 14]);
+  p.oval(12, 8.5, 11, 5, 'n').oval(11, 7.5, 9.5, 3.6, 'B').oval(12, 9.5, 10.5, 3.5, 'n');
+  p.hl(3, 12, 18, 'z').hl(5, 13, 14, 'z');
+  // handle and tag
+  p.line(8, 4, 10, 1, 'z').hl(10, 1, 5, 'z').line(15, 1, 17, 4, 'z');
+  p.rect(16, 1, 5, 4, 'w').px(20, 4, 'W').hl(17, 2, 3, 'G').px(17, 3, 'G');
+  if (open) {
+    p.oval(12, 7, 7.5, 2.2, 'i').hl(5, 6, 15, 'G');
+    // crown and slippers poking out
+    p.hl(7, 6, 5, 'Y').px(7, 5, 'y').px(9, 5, 'y').px(11, 5, 'y').px(8, 6, 'r');
+    p.oval(15.5, 6.5, 2.2, 1.2, 'p').px(16, 6, 'w').px(14, 5, 'P');
+  } else {
+    p.hl(4, 7, 16, 'z').px(19, 7, 'g').px(20, 8, 'g');
+  }
+  p.contour();
+  return p.toString();
+}
+
+/** A small framed photo on the hallway wall: a little boy hugging a white sheep bigger than him. */
+const PHOTO_BEBE = (() => {
+  const p = pix([12, 14]);
+  p.rect(1, 1, 10, 12, 'c').hl(1, 1, 10, 'Q').vl(1, 1, 12, 'Q').vl(10, 2, 11, 'C').hl(1, 12, 10, 'x');
+  p.rect(2, 2, 8, 10, 'q').rect(2, 2, 8, 6, 'b').rect(2, 9, 8, 3, 'l');
+  // the sheep (big, white) and the boy behind it, arms around it
+  p.oval(5, 7.5, 3.2, 2.6, 'w').px(3, 6, 'W').px(2, 7, 'd').px(3, 10, 'd').px(6, 10, 'd');
+  p.rect(7, 4, 2, 2, 'h').rect(7, 6, 2, 1, 's').px(8, 6, 'S').rect(7, 7, 2, 3, 'V').hl(6, 8, 2, 's');
+  p.contour();
+  return p.toString();
+})();
+
+/** Maman's bed, unmade (she sleeps in the day now): two pillows, a little folded pyjama on the second one. */
+const LIT_MAMAN = (() => {
+  const p = pix([32, 32]);
+  // headboard
+  p.rect(0, 0, 32, 7, 'k').rect(1, 1, 30, 5, 'c').hl(1, 1, 30, 'Q').hl(1, 5, 30, 'x').vl(30, 2, 4, 'C');
+  for (const x of [5, 15, 25]) p.rect(x, 2, 2, 3, 'C');
+  // mattress and sheet
+  p.rect(0, 6, 32, 24, 'k').rect(1, 7, 30, 22, 'W');
+  // pillows
+  p.rect(2, 7, 12, 6, 'w').hl(2, 12, 12, 'g').vl(13, 8, 5, 'g').px(4, 8, 'f');
+  p.rect(17, 7, 12, 6, 'w').hl(17, 12, 12, 'g').vl(28, 8, 5, 'g');
+  p.rect(20, 8, 6, 4, 'b').hl(20, 11, 6, 'B').px(21, 9, 'y').px(24, 10, 'y').px(23, 8, 'q');
+  // duvet thrown back to one side, crumpled (folds)
+  p.poly([[1, 15], [12, 13], [31, 16], [31, 29], [1, 29]], 'p');
+  p.poly([[1, 15], [12, 13], [14, 15], [3, 18]], 'P');
+  p.line(4, 20, 14, 18, 'P').line(10, 24, 22, 21, 'P').line(18, 27, 29, 24, 'P').line(22, 18, 30, 19, 'P');
+  p.line(5, 21, 13, 19, 'q').line(11, 25, 20, 22, 'q');
+  p.vl(30, 17, 12, 'P').hl(1, 28, 30, 'P');
+  // footboard
+  p.rect(0, 29, 32, 3, 'k').rect(1, 29, 30, 2, 'C').hl(1, 29, 30, 'c');
+  p.px(0, 0, '.').px(31, 0, '.').px(0, 31, '.').px(31, 31, '.');
+  return p.toString();
+})();
+
+/** Maman's old wind-up alarm clock: two bells, the hands at a quarter to five. `tick` moves the seconds hand. */
+function reveilVieux(tick: boolean): string {
+  const p = pix([11, 12]);
+  p.disc(2, 2, 1.8, 'R').disc(8, 2, 1.8, 'R').px(1, 1, 'r').px(7, 1, 'r');
+  p.hl(4, 1, 3, 'G');
+  p.disc(5, 6.5, 4.6, 'k').disc(5, 6.5, 3.6, 'w').px(3, 4, 'f');
+  p.vl(5, 3, 4, 'd').line(5, 6, 3, 8, 'd');
+  p.px(7, 4, 'r').px(6, 5, 'r');
+  if (tick) p.px(8, 7, 'R');
+  else p.px(5, 9, 'R');
+  p.px(2, 11, 'k').px(8, 11, 'k');
+  p.contour();
+  return p.toString();
+}
+
+/** The yellow post-it: « 5h — veilleuse (chambre de Noa) », in Maman's hurried handwriting. */
+const POSTIT = `
+  kkkkkkk
+  kyyyyYk
+  kydydYk
+  kyddyYk
+  kydyyYk
+  kYYYYQk
+  kkkkkk.
+`;
+
+/** Maman's sewing box, open: spools of red thread, a tomato pincushion bristling with pins, a seam ripper. */
+const BOITE_COUTURE = (() => {
+  const p = box(16, 11, { top: 'x', hi: 'C', lip: 'c', front: 'C', shade: 'x', depth: 5 });
+  for (const x of [2, 5, 8]) p.rect(x, 1, 2, 4, 'r').hl(x, 1, 2, 'p').vl(x + 1, 2, 3, 'R');
+  p.disc(12, 3, 2, 'r').px(11, 2, 'p').px(12, 0, 'g').px(13, 1, 'g').px(10, 1, 'g').px(14, 3, 'g').px(12, 1, 'w');
+  p.line(3, 6, 7, 6, 'g').px(8, 5, 'g').px(8, 7, 'g');
+  p.hl(5, 8, 6, 'c');
+  return p.toString();
+})();
+
+/** « Mon doudou qui parle ! — 2 pistes »: a small cardboard box, a sheep and a speech bubble printed on it. */
+const KIT_VOCAL = (() => {
+  const p = box(14, 12, { top: 'w', hi: 'f', lip: 'W', front: 'b', shade: 'B', depth: 2 });
+  p.oval(5, 7.5, 2.5, 2, 'w').px(3, 7, 'd').px(4, 9, 'd').px(6, 9, 'd');
+  p.rect(8, 4, 4, 3, 'w').px(9, 7, 'w').px(9, 5, 'r').px(10, 5, 'r');
+  p.hl(2, 4, 4, 'y');
+  return p.toString();
+})();
+
+/** A little mouse-shaped box: « Dents de Noa ». */
+const BOITE_DENTS = `
+  ..kk......
+  .kgGk.....
+  .kGkkkkk..
+  kpgggggGk.
+  kkgWgggGkk
+  .kGGGGGk.k
+  ..kkkkk...
+`;
+
+/** Maman's chest of drawers, the top drawer ajar on folded papers and envelopes. */
+const COMMODE = (() => {
+  const p = box(32, 24, { top: 'c', hi: 'Q', lip: 'Q', front: 'C', shade: 'x', depth: 4, legs: 2, legW: 3 });
+  for (const y of [7, 12, 17]) p.frame(2, y, 28, 5, 'x').hl(13, y + 2, 6, 'c');
+  p.rect(2, 6, 28, 2, 'i').px(5, 6, 'w').px(6, 6, 'w').px(9, 7, 'q').px(14, 6, 'w').px(15, 6, 'W').px(22, 6, 'b').px(26, 7, 'w');
+  return p.toString();
+})();
+
+/** The mirror of Maman's room with a child's drawing taped in the corner: a little girl, a finger to her lips. */
+const MIROIR_DESSIN = (() => {
+  const p = pix(MIRROR);
+  p.rect(1, 9, 8, 10, 'k').rect(2, 10, 6, 8, 'f').vl(7, 11, 7, 'W');
+  p.rect(3, 11, 3, 2, 'm').px(4, 13, 's').px(3, 13, 's').px(5, 13, 's').rect(3, 14, 3, 3, 'r');
+  p.px(4, 13, 'k').px(4, 12, 's');
+  p.hl(2, 17, 5, 'd');
+  p.px(2, 10, 'Q').px(7, 10, 'Q');
+  return p.toString();
+})();
+
+/** A laundry basket: Maman's work blouse, and a small sock that has no pair. */
+const PANIER = (() => {
+  const p = box(14, 11, { top: 'w', hi: 'f', lip: 'Q', front: 'c', shade: 'C', depth: 3 });
+  for (let y = 5; y < 9; y += 2) for (let x = 2; x < 12; x += 2) p.px(x + ((y >> 1) % 2), y, 'C');
+  p.rect(2, 1, 6, 2, 'a').px(9, 1, 'p').px(10, 2, 'p').px(10, 1, 'P');
+  return p.toString();
+})();
+
+/** The old cast-iron radiator, painted cream; its pipe climbs into the wall towards Mina's room. It knocks as it cools. */
+const RADIATEUR = (() => {
+  const p = pix([16, 20]);
+  p.rect(12, 0, 2, 6, 'g').vl(12, 0, 6, 'W').vl(13, 0, 6, 'G').hl(11, 5, 4, 'G');
+  p.rect(1, 6, 14, 12, 'Q');
+  for (let x = 2; x < 14; x += 3) p.rect(x, 6, 2, 12, 'q').vl(x + 1, 7, 10, 'c').px(x, 6, 'w');
+  p.hl(1, 6, 14, 'w').hl(1, 17, 14, 'c').hl(1, 12, 14, 'c');
+  p.rect(2, 18, 2, 2, 'C').rect(12, 18, 2, 2, 'C');
+  p.px(14, 8, 'O').px(13, 9, 'x');
+  p.contour();
+  return p.toString();
+})();
+
+const NIGHT: Record<string, SpriteDef> = {
+  prop_radiateur: RADIATEUR,
+  prop_casque: CASQUE,
+  prop_desk_tiroir: DESK_DRAWER,
+  prop_mur_use: MUR_USE,
+  prop_coton: COTON,
+  prop_coton_2: COTON_2,
+  prop_dodo_plush_decousu: DODO_PLUSH_DECOUSU,
+  prop_veilleuse_fele: VEILLEUSE_FELE,
+  prop_boite_chaussures: BOITE_CHAUSSURES,
+  prop_boite_veilleuse: BOITE_VEILLEUSE,
+  prop_thermometre: THERMOMETRE,
+  prop_placard_entree: placardEntree(false),
+  prop_placard_entree_ouvert: placardEntree(true),
+  prop_sac_hopital: sacHopital(false),
+  prop_sac_hopital_ouvert: sacHopital(true),
+  prop_photo_bebe: PHOTO_BEBE,
+  prop_lit_maman: LIT_MAMAN,
+  prop_reveil_vieux: reveilVieux(false),
+  prop_reveil_vieux_2: reveilVieux(true),
+  prop_postit: POSTIT,
+  prop_boite_couture: BOITE_COUTURE,
+  prop_kit_vocal: KIT_VOCAL,
+  prop_boite_dents: BOITE_DENTS,
+  prop_commode: COMMODE,
+  prop_miroir_dessin: MIROIR_DESSIN,
+  prop_panier: PANIER,
+};
+
+// ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 
@@ -2217,6 +2522,7 @@ export const ART: Record<string, SpriteDef> = {
   ...FOREST,
   ...HOSPITAL,
   ...VOID_PROPS,
+  ...NIGHT,
 };
 
 export const VARIANTS: string[] = ['real', 'ink'];

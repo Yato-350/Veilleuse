@@ -228,6 +228,13 @@ export class PhoneScene implements Scene {
     this.sel = Math.min(this.sel, Math.max(0, this.calls.length - 1));
   }
 
+  /** Shows the call log with line `index` selected and scrolled to the top (the story points at one call). */
+  focusCall(index: number): void {
+    this.showCalls();
+    this.sel = Math.max(0, Math.min(index, this.calls.length - 1));
+    this.listScroll = Number.MAX_SAFE_INTEGER;
+  }
+
   /** Locks or unlocks a contact (the padlock in the list). */
   setLocked(id: string, locked: boolean): void {
     const c = this.contacts.find((x) => x.id === id);
@@ -820,9 +827,10 @@ export class PhoneScene implements Scene {
   private drawCard(g: CanvasRenderingContext2D, k: number): void {
     const n = this.replies.length;
     const h = 24 + n * OPT_H + 4;
-    const x = CARD.x + Math.round((1 - k) * 160);
+    // A long reply widens the page (it may then overlap the edge of the phone a little).
+    const w = Math.min(W - 6, Math.max(CARD.w, ...this.replies.map((r) => measure(r.text) + 40)));
+    const x = Math.min(CARD.x, W - 3 - w) + Math.round((1 - k) * 160);
     const y = Math.round((H - h) / 2);
-    const w = CARD.w;
     g.fillStyle = '#4e3528';
     g.fillRect(x - 1, y - 1, w + 2, h + 2);
     g.fillStyle = '#fff6e0';
