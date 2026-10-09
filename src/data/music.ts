@@ -185,6 +185,12 @@ const LULLABY_44_B = [
 ].join(' | ');
 
 const ch = (inst: Channel['inst'], pattern: string, o: Omit<Channel, 'inst' | 'pattern'> = {}): Channel => ({ inst, pattern, ...o });
+/** Replaces whole bars of a pattern with rests (a voice that cuts out, like a bad phone line). */
+const dropBars = (p: string, bars: number[]): string =>
+  p
+    .split(' | ')
+    .map((b, i) => (bars.includes(i) ? rest(b.split(/\s+/).filter(Boolean).length) : b))
+    .join(' | ');
 
 // ---------------------------------------------------------------------------
 // Tracks
@@ -690,6 +696,41 @@ export const TRACKS: Record<string, Track> = {
   // -------------------------------------------------------------------------------------------------------------------
   // Chapter 4 « La Maison Cousue »
   // -------------------------------------------------------------------------------------------------------------------
+
+  /**
+   * La Maison Cousue (the felt layer) — the lullaby on a music box that has been mended: two combs out of tune with
+   * each other (one flat, one sharp, so every note beats), a felt-muffled waltz bass, the cuckoo clock ticking once a
+   * bar. At the very end the tune lands one semitone off, and starts again as if nothing happened. 16 bars 3/4.
+   */
+  maison: {
+    bpm: 62,
+    stepsPerBeat: 2,
+    vol: 0.8,
+    channels: [
+      ch('musicbox', LULLABY.replace(/C5 - - - - -$/, 'C#5 - - - - -'), { vol: 0.5, reverb: 0.6, detune: -24 }),
+      ch('musicbox', transpose(LULLABY, 12), { vol: 0.07, reverb: 0.8, detune: 33 }),
+      ch('pad', padLine(CH_LULLABY, 3, 6), { vol: 0.12, reverb: 0.7, detune: 16 }),
+      ch('triangle', figure(CH_LULLABY, 2, 'R - - 5 - -'), { vol: 0.28 }),
+      ch('bell', rep('G6 . . . . .', 16), { vol: 0.035, reverb: 0.3 }),
+    ],
+  },
+
+  /**
+   * La Maison Cousue, the ballpoint nights — the same lullaby as if heard through a phone held at arm's length: thin
+   * and nasal, an octave up, cutting out for whole bars (a bad line), a hiss under it, the fridge humming. 16 bars 3/4.
+   */
+  maison_nuit: {
+    bpm: 54,
+    stepsPerBeat: 2,
+    vol: 0.7,
+    channels: [
+      ch('pulse12', dropBars(transpose(LULLABY, 12), [3, 6, 7, 11, 14]), { vol: 0.07, detune: -14 }),
+      ch('pulse12', dropBars(transpose(LULLABY, 12), [0, 1, 2, 4, 5, 8, 9, 10, 12, 13, 15]), { vol: 0.035, detune: 22 }),
+      ch('hat', rep('x x x x x x', 16), { vol: 0.012 }),
+      ch('sine', rep('C3 - - - - -', 16), { vol: 0.07 }),
+      ch('pad', padLine(CH_LULLABY.map(() => 'Am'), 2, 6), { vol: 0.05, detune: -8 }),
+    ],
+  },
 
   /**
    * La Couseuse — a sewing machine that never stops: needle ticks in sixteenths with a stutter, the pedal on the kick,

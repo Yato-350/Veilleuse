@@ -1,6 +1,7 @@
 import type { CharDef, SpriteDef } from '../../game/assets';
 import { CHARS as BASE_CHARS } from './characters';
 import { Pix, rows } from './enemies';
+import { ART as CH4_ENEMY_ART } from './enemies-ch4';
 
 /*
  * Chapter 4 « La Maison Cousue » — the world (docs/HISTOIRE.md § 3.11, § 4 « Ch. 4 »).
@@ -55,6 +56,21 @@ const floor = (joints: number[], seed: number): string =>
 const FLOOR_1 = floor([5, 12, 2, 9], 1);
 const FLOOR_2 = floor([10, 3, 14, 6], 2);
 const FLOOR_3 = over(floor([1, 8, 11, 4], 3), 'w', 6, 9);
+
+/**
+ * The ballpoint floor (nights): white paper, the boards drawn with a single ink stroke, a little hatching under each
+ * stroke. The paper grid is added by the ballpoint material.
+ */
+const penFloor = (joints: number[], seed: number): string =>
+  paint((x, y) => {
+    if (y === 7) return hash(x, y, seed) < 0.12 ? 'w' : 'x';
+    if (y === 8 && x % 3 === 0) return 'C';
+    const j = y < 7 ? joints[0]! : joints[1]!;
+    if (x === j && y !== 0 && hash(x, y, seed + 3) > 0.2) return 'x';
+    return 'w';
+  });
+const PEN_FLOOR_1 = penFloor([5, 12], 71);
+const PEN_FLOOR_2 = penFloor([10, 2], 72);
 
 /** Wallpaper of the felt house: small hearts in a cream lattice. */
 const heartPaper = (x: number, y: number): string => {
@@ -852,6 +868,93 @@ const NOTE = `
   kkkkkk
 `;
 
+/**
+ * The front door sewing itself shut (an overlay on the door and its top, 16×32): white thread, big crosses over the
+ * gap, from the top down; `k` = 1…4 quarters done. Until the last quarter, the needle is still in the felt.
+ */
+function doorStitches(k: number): string {
+  const p = new Pix(16, 32);
+  const lim = k * 8;
+  for (let y = 2; y < 30; y += 4) if (y < lim) SEWN_X(p, 0, y, 3, 'w').set(1, y + 1, 'W');
+  for (let y = 4; y < 30; y += 4) if (y < lim) SEWN_X(p, 13, y, 3, 'w').set(14, y + 1, 'W');
+  // The knob of light is sewn over too, and a long running stitch closes the gap down the middle.
+  if (k >= 2) SEWN_X(p, 5, 5, 3, 'w').set(6, 6, 'W');
+  if (k >= 3) SEWN_X(p, 9, 21, 3, 'w');
+  for (let y = 3; y < Math.min(lim, 29); y += 3) p.set(7, y, 'w').set(8, y + 1, 'W');
+  if (k < 4) {
+    // The needle, half in the felt, its thread trailing up to where it came from.
+    const ny = Math.min(28, lim + 1);
+    p.line(9, ny - 6, 11, ny, 'g').set(9, ny - 6, 'W').set(10, ny - 4, 'W');
+    p.line(9, ny - 6, 4, ny - 9, 'w');
+  }
+  return p.toString();
+}
+
+/** Stairs cut through the floor of the dollhouse: pale treads going down, a dark riser under each, wooden sides. */
+const STAIRS_TILE = paint((x, y) => {
+  if (x === 0 || x === 15) return 'x';
+  if (x === 1 || x === 14) return 'C';
+  const r = y % 4;
+  if (r === 3) return 'x';
+  if (r === 2) return 'C';
+  if (r === 0 && hash(x, y, 51) < 0.15) return 'q';
+  return 'c';
+});
+
+/** The shadow of a hand laid flat on a door, fingers up (Night 42). */
+const HAND_SHADOW = `
+  ...d.d.d....
+  ..dd.d.dd...
+  ..dd.d.dd...
+  ..dddddddd..
+  ..dddddddd.d
+  ..dddddddddd
+  ..ddddddddd.
+  ..dddddddd..
+  ...dddddd...
+  ...dddddd...
+  ...dddddd...
+`;
+const HAND_SHADOW_ART = rows(HAND_SHADOW)
+  .map((l) => l.replace(/d/g, 'K'))
+  .join('\n');
+
+/** A thin line of yellow light under a door. Drawn in colour even in the ballpoint layer. */
+const LIGHT_UNDER_DOOR = `
+  .yyyyyyyyyyyy.
+  yfffffffffffyy
+  .yYyyyyyyyyYy.
+`;
+
+/** La Couseuse on the overworld: a little black sewing machine with gold flowers, a sheep's head for a presser foot. */
+function couseuseSmall(f: number, broken = false): string {
+  const p = new Pix(28, 26);
+  // The table (felt top, wooden legs).
+  p.rect(1, 17, 26, 3, 'C').rect(1, 17, 26, 1, 'c').rect(1, 19, 26, 1, 'x');
+  p.rect(3, 20, 2, 6, 'x').rect(23, 20, 2, 6, 'x');
+  // The machine: bed, pillar, arm.
+  p.rect(4, 14, 20, 3, 'K').rect(17, 4, 5, 10, 'K').rect(6, 3, 16, 4, 'K');
+  p.rect(6, 3, 16, 1, 'd').rect(17, 4, 1, 10, 'd');
+  for (const [x, y] of [[9, 4], [12, 5], [15, 4], [19, 7], [20, 10], [18, 11]] as const) p.set(x, y, 'Y');
+  // Handwheel.
+  p.ellipse(23, 7, 2.5, 2.5, 'g').set(23, 7, f ? 'G' : 'W');
+  // Spool, almost empty.
+  p.rect(12, 0, 4, 3, 'C').rect(13, 1, 2, 1, 'r');
+  // The sheep's head where the presser foot should be: dirty wool, two odd buttons, a mouth sewn in a cross.
+  p.ellipse(8, 9, 4, 3.5, 'W').ellipse(7, 8, 3, 2.5, 'w');
+  p.set(6, 9, 'K').set(10, 9, 'B').set(8, 11, 'R').set(7, 10, 'R').set(9, 10, 'R').set(7, 12, 'R').set(9, 12, 'R');
+  p.set(4, 7, 'g').set(12, 7, 'g');
+  // Needle (frame 2: down in the pink felt) or broken, hanging from its thread.
+  if (broken) {
+    p.rect(8, 13, 1, 1, 'g').line(8, 14, 6, 21, 'r').set(6, 22, 'g').set(5, 23, 'W');
+  } else {
+    p.rect(13, 7, 1, f ? 8 : 5, 'g').set(13, f ? 15 : 12, 'W');
+  }
+  p.poly([[10, 15], [20, 15], [21, 17], [11, 17]], 'p');
+  for (let x = 12; x < 19; x += 2) p.set(x, 16, 'R');
+  return p.contour('k').toString();
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------------------------------------------------
@@ -865,6 +968,8 @@ export const ART: Record<string, SpriteDef> = {
   t_c4_floor_1: FLOOR_1,
   t_c4_floor_2: FLOOR_2,
   t_c4_floor_3: FLOOR_3,
+  t_c4_floor_pen_1: PEN_FLOOR_1,
+  t_c4_floor_pen_2: PEN_FLOOR_2,
   t_c4_wall: WALL,
   t_c4_wall_base: WALL_BASE,
   t_c4_wall_top_1: WALL_TOP_1,
@@ -975,6 +1080,22 @@ export const ART: Record<string, SpriteDef> = {
   prop_c4_bouche: MOUTH,
   prop_c4_rideau: THREADS,
   prop_c4_bobine: SPOOL,
+
+  // The entrance, the stairs, Night 42, the seamstress on the overworld
+  prop_c4_coutures_1: doorStitches(1),
+  prop_c4_coutures_2: doorStitches(2),
+  prop_c4_coutures_3: doorStitches(3),
+  prop_c4_coutures_4: doorStitches(4),
+  t_c4_stairs: STAIRS_TILE,
+  prop_c4_main: HAND_SHADOW_ART,
+  prop_c4_lumiere: LIGHT_UNDER_DOOR,
+  // In the ballpoint layer, the light stays the only colour: the light under the door, the fallen nightlight.
+  'prop_c4_lumiere@stylo': LIGHT_UNDER_DOOR,
+  'b_c4_veilleuse@stylo': CH4_ENEMY_ART.b_c4_veilleuse!,
+  'b_c4_veilleuse_fele@stylo': CH4_ENEMY_ART.b_c4_veilleuse_fele!,
+  npc_couseuse: couseuseSmall(0),
+  npc_couseuse_2: couseuseSmall(1),
+  npc_couseuse_cassee: couseuseSmall(0, true),
 };
 
 export const VARIANTS: string[] = [];

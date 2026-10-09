@@ -71,7 +71,7 @@ async function mina(d: Director, text: string | string[], expr = 'neutral', stil
 }
 
 /** An inspection: lines, then Mina n°366's remark when she is there. */
-const look =
+export const look =
   (lines: string | string[], minaLine?: string | string[], expr = 'neutral'): Script =>
   async (d) => {
     await d.say(lines);
@@ -79,7 +79,7 @@ const look =
   };
 
 /** An inspection in the ballpoint layer whose text depends on the night (the latest key ≤ current night). */
-const byNight =
+export const byNight =
   (texts: Record<number, string | string[]>): Script =>
   async (d) => {
     const keys = Object.keys(texts)
@@ -182,7 +182,7 @@ async function entrance(d: Director): Promise<void> {
   await d.say(['Mais tout est en feutre.', 'Et tout est trop grand. Ou c\'est toi qui es devenu tout petit.']);
   // The door sews itself shut behind him.
   d.face('player', 'up');
-  const seam = d.spawn({ id: 'coutures_anim', sprite: 'prop_c4_coutures_1', x: 5, y: 13, solid: false, shadow: false });
+  const seam = d.spawn({ id: 'coutures', sprite: 'prop_c4_coutures_1', x: 5, y: 13, solid: false, shadow: false, script: frontDoorFelt });
   seam.oy = 2;
   for (let i = 1; i <= 4; i++) {
     seam.sprite = `prop_c4_coutures_${i}`;
@@ -194,11 +194,14 @@ async function entrance(d: Director): Promise<void> {
     await d.wait(12);
   }
   await d.say(['Derrière toi, une aiguille passe et repasse dans le cadre de la porte.', 'Tac. Tac. Tac.', 'La porte se coud toute seule. Du haut jusqu\'en bas.']);
-  d.remove('coutures_anim');
-  // Thin Dodo floats down the stairs.
-  d.spawn({ id: 'dodo', sprite: 'npc_dodo_thin', frames: ['npc_dodo_thin', 'npc_dodo_thin_2'], frameSpeed: 26, x: 8, y: 15, float: true, shadow: false, solid: false });
-  d.face('player', 'right');
   await d.wait(30);
+  // Thin Dodo floats down the stairs.
+  d.spawn({ id: 'dodo', sprite: 'npc_dodo_thin', frames: ['npc_dodo_thin', 'npc_dodo_thin_2'], frameSpeed: 26, x: 3, y: 10, float: true, shadow: false, solid: false, script: dodoFelt });
+  d.sfx('step', { pitch: 0.6, vol: 0.3 });
+  await d.walkTo('dodo', 3, 14, 0.5);
+  d.face('player', 'left');
+  await d.walkTo('dodo', 4, 15, 0.5);
+  await d.wait(20);
   await d.say('Regarde. Je l\'ai réparée.', 'dodo:happy');
   await d.say(['La maison. Tu te souviens ? Elle était toute abîmée.', 'Alors je l\'ai recousue. Point par point.', 'En mieux.'], 'dodo');
   await d.say('…Dodo ?', 'noa:surprised');
@@ -206,8 +209,9 @@ async function entrance(d: Director): Promise<void> {
   await d.say(['Ne fais pas attention.', 'Je perds un peu mes moyens.'], 'dodo');
   // Mina n°366 comes running.
   d.sfx('step', { pitch: 1.6 });
-  d.spawn({ id: 'mina366_intro', char: 'mina366', x: 9, y: 18, dir: 'up' });
-  await d.walkTo('mina366_intro', 6, 16, 1.8);
+  d.spawn({ id: 'mina366_intro', char: 'mina366', x: 12, y: 17, dir: 'left' });
+  await d.walkTo('mina366_intro', 6, 17, 1.8);
+  await d.walkTo('mina366_intro', 5, 16, 1.8);
   d.face('mina366_intro', 'up');
   d.face('player', 'down');
   await d.say('Noa ! On est chez nous ! En mieux !', 'mina366:happy');
@@ -226,8 +230,11 @@ async function entrance(d: Director): Promise<void> {
   d.remove('mina366_intro');
   d.follower('mina366');
   world.resetFollower();
-  await d.walkTo('dodo', 12, 16, 0.6);
-  d.remove('dodo');
+  await d.walkTo('dodo', 8, 16, 0.6);
+  await d.walkTo('dodo', 11, 16, 0.6);
+  const dodo = d.find('dodo');
+  if (dodo) dodo.solid = true;
+  await d.say('Mina te tire par la manche, vers le salon. Ça sent les pâtes. Ça sent les pâtes depuis le début.');
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -252,7 +259,9 @@ async function dinner(d: Director): Promise<void> {
     d.follower(null);
     d.spawn({ id: 'mina_table', char: 'mina366', x: 29, y: 15, dir: 'down' });
   }
+  d.show('dodo', false);
   d.spawn({ id: 'dodo_table', sprite: 'npc_dodo_thin', frames: ['npc_dodo_thin', 'npc_dodo_thin_2'], frameSpeed: 26, x: 32, y: 17, float: true, shadow: false, solid: false });
+  await d.walkTo('player', 26, 18);
   await d.walkTo('player', 29, 18);
   d.face('player', 'up');
   await d.wait(20);
@@ -324,6 +333,7 @@ async function dinner(d: Director): Promise<void> {
     await mina(d, 'Je sais pas pourquoi j\'ai dit « d\'habitude ».', 'sad');
   }
   d.remove('dodo_table');
+  d.show('dodo', true);
   await clockStrikes(d, hadMina);
 }
 
@@ -655,6 +665,160 @@ export const minaNightstandFelt: Script = async (d) => {
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
+// The felt house, room by room: what Dodo mended « en mieux »
+// ---------------------------------------------------------------------------------------------------------------------
+
+/** Counts how many times something was looked at (returns the count before this look). */
+const bump = (k: string): number => {
+  const n = num(k);
+  G.state.flags[k] = n + 1;
+  return n;
+};
+
+export const bedFelt: Script = async (d) => {
+  await d.say(['Ton lit. Le drap est cousu au matelas, tout autour, bien tendu. Sans un pli.', 'On ne peut pas se glisser dedans.']);
+  await mina(d, ['Ici, on dort pas. On attend que tu reviennes.', '{p:30}…On attend qui ?'], 'neutral');
+};
+
+export const deskFelt: Script = async (d) => {
+  if (bump('c4_bureau') === 0) {
+    await d.say(['Ton bureau. Un cahier de maths ouvert. Les exercices sont faits, de ton écriture.', 'Tu ne te souviens pas de les avoir faits. Ils sont tous justes.']);
+    return;
+  }
+  await d.say(['Le tiroir du bureau est cousu.', 'À travers le feutre, tu sens quelque chose de petit et de dur. Une clé.', 'Et des petits ronds de papier. Beaucoup de petits ronds.']);
+  await mina(d, 'Faut pas ouvrir le tiroir de quelqu\'un. C\'est la règle. C\'est toi qui l\'as dit.', 'neutral');
+};
+
+export const drawingsFelt: Script = async (d) => {
+  await d.say(['Des dessins de Mina, encadrés. Brodés au point de croix, pas dessinés.', 'Sur chacun : une maison, un mouton, trois personnes qui se tiennent la main.']);
+  await d.say(['Sur le dernier, l\'une des trois n\'a pas de visage.', 'L\'aiguille est encore plantée dedans, avec un bout de fil beige.']);
+  await mina(d, ['C\'est pas moi qui les ai faits. Moi, je dessine au crayon.', '{p:40}Je dessinais.'], 'sad');
+};
+
+export const familyPicture: Script = async (d) => {
+  await d.say(['Une photo de famille, brodée au point de croix.', 'Maman. Mina, avec Dodo dans les bras. Et toi.']);
+  await d.say(['Ton visage a été recouvert, point par point, avec du fil couleur peau.', 'À ta place, il n\'y a plus qu\'un rond lisse.']);
+  await mina(d, ['Dodo a dit que t\'étais pas content, sur cette photo.', 'Alors il l\'a réparée.'], 'neutral');
+};
+
+export const tvFelt: Script = async (d) => {
+  const n = bump('c4_tele');
+  if (n === 0) {
+    await d.say(['La télé. Elle montre ce salon, filmé d\'en haut.', 'Le canapé. La lampe. Un garçon debout devant la télé, de dos.']);
+    await d.say(['Tu lèves la main.', '{p:30}Sur l\'écran, le garçon ne lève pas la main.']);
+    await mina(d, 'C\'est mon émission préférée. Il se passe jamais rien. C\'est reposant.', 'happy');
+  } else if (n === 1) {
+    await d.say(['Sur l\'écran, le garçon est toujours de dos.', 'Il est un peu plus près de la télé que tout à l\'heure.']);
+  } else {
+    d.sfx('static', { vol: 0.3 });
+    await d.say(['Sur l\'écran, le salon est vide.', 'Tu ne te retournes pas.']);
+  }
+};
+
+export const tableFelt: Script = async (d) => {
+  if (!flag('c4_diner_fait')) {
+    await d.say(['La table, mise pour quatre.', 'Une assiette « à personne ». Tu ne sais pas qui est personne.']);
+    return;
+  }
+  if (G.state.flags.c4_maman === 'reste') {
+    await d.say(['La table. La Poupée-Maman y sert l\'air, encore et encore.', 'L\'assiette « à personne » déborde de fil gris.']);
+  } else {
+    await d.say(['La table. Les pâtes en laine ont refroidi. Pour la première fois.', 'Le téléphone est posé sur la nappe, l\'écran contre le tissu.']);
+  }
+};
+
+/** The Poupée-Maman, after the dinner. */
+export const mamanDollFelt: Script = async (d) => {
+  if (!flag('c4_diner_fait')) {
+    await d.say('Il y a des pâtes.', 'poupeemaman');
+    await d.say('Elle te sourit. Elle ne peut pas faire autrement : c\'est cousu.');
+    return;
+  }
+  if (G.state.flags.c4_maman === 'reste') {
+    await d.say(['Il y a des pâtes.', 'Il y a des pâtes.'], 'poupeemaman');
+    await d.say(['Elle ne te regarde plus. Elle regarde l\'assiette « à personne ».', 'Elle restera là. C\'est le mot que tu as écrit.']);
+    return;
+  }
+  await d.say(['La Poupée-Maman a posé ses mains à plat sur la nappe.', 'Les points de sa bouche ont un peu lâché. Juste un peu.']);
+  await d.say('{spd:0.6}Merci…{p:30} mon grand.{/spd}', 'poupeemaman');
+  await mina(d, 'Elle t\'a appelé « mon grand ». Elle m\'appelle jamais « ma grande », moi.', 'neutral');
+};
+
+/** The domestic sheep: they do not talk; they keep the house. */
+export const sheepBroom: Script = async (d) => {
+  const lines = [
+    ['Un mouton-domestique. Il balaie.', 'Il pousse un petit tas de coton sous le paillasson. Puis il recommence, au même endroit.'],
+    ['Tu lui dis bonjour.', 'Il continue de balayer. Ses yeux-boutons ne te suivent pas : il balaie l\'endroit où tu étais.'],
+    ['Sous le paillasson, il y a une bosse de coton, longue comme un enfant couché.', 'Le mouton tape dessus avec son balai, pour l\'aplatir. Pour que ça ne se voie pas.'],
+  ];
+  const n = bump('c4_mouton_balai');
+  await d.say(lines[Math.min(n, lines.length - 1)]!);
+  if (n === 0) await mina(d, 'Les moutons d\'ici, ils parlent pas. Ils font juste le ménage. C\'est mieux, non ?', 'neutral');
+};
+
+export const sheepIron: Script = async (d) => {
+  const lines = [
+    ['Un mouton-domestique repasse un pyjama d\'enfant, avec des petites lunes.', 'Il le repasse. Le plie. Le déplie. Le repasse.'],
+    ['Le fer ne chauffe pas : il est en feutre.', 'Le pyjama est usé jusqu\'à la trame, à force d\'être repassé.'],
+    ['Tu poses la main sur le fer.', 'Le mouton se fige, la patte en l\'air. Il attend que tu l\'enlèves. Il attendra aussi longtemps qu\'il faudra.'],
+  ];
+  const n = bump('c4_mouton_fer');
+  await d.say(lines[Math.min(n, lines.length - 1)]!);
+  if (n === 0) await mina(d, ['C\'est mon pyjama. Je le mets plus.', 'Je mets plus rien. Je suis cousue dans ma robe.'], 'neutral');
+};
+
+export const sheepTray: Script = async (d) => {
+  const lines = [
+    ['Un mouton-domestique porte un plateau : un verre de lait, une compote, une cuillère.', 'Il le pose sur le lit de Mina. Il attend. Personne ne mange.'],
+    ['Il reprend le plateau. Il ressort. Il revient. Il le repose.', 'Le lait a une peau, dessus. Il est là depuis très longtemps.'],
+    ['Sur le plateau, une petite carte : « Chambre 304 ».', 'Le mouton la retourne, face contre le plateau, quand il voit que tu lis.'],
+  ];
+  const n = bump('c4_mouton_plateau');
+  await d.say(lines[Math.min(n, lines.length - 1)]!);
+  if (n === 2) await mina(d, 'C\'est quoi, la chambre 304 ? …Je connais pas. Je connais pas.', 'sad');
+};
+
+// ---------------------------------------------------------------------------------------------------------------------
+// The ballpoint house: more of the forty-one nights
+// ---------------------------------------------------------------------------------------------------------------------
+
+export const deskPen: Script = async (d) => {
+  const n = night();
+  await d.say(['Ton bureau. Ton téléphone, posé à l\'envers.', 'Tu le retournes. Pas de nouveau message.']);
+  if (n >= 22) await d.say(['Tu relis les anciens. Tu les connais par cœur.', '« Elle te réclame. » « Tu viens demain ? » « Elle te réclame. »']);
+  else await d.say('Tu relis les anciens. Il n\'y en a pas beaucoup. Tu les relis quand même.');
+  if (n >= 9) await d.say(['Ton cahier de maths, ouvert à la page du jour.', 'Elle est vide. Celle d\'hier aussi. Celle d\'avant-hier aussi.']);
+};
+
+export const knockWallPen: Script = async (d) => {
+  await d.say(['Le mur entre ta chambre et celle de Mina.', 'Tu poses la main dessus. Le papier est froid.']);
+  const i = await d.ask('Frapper ?', ['Frapper une fois', 'Ne pas frapper'], undefined, { cancelIndex: 1 });
+  if (i !== 0) return;
+  d.sfx('knock1', { vol: 0.7 });
+  await d.wait(100);
+  if (night() >= 9) {
+    d.sfx('pipe', { vol: 0.6 });
+    await d.wait(26);
+    d.sfx('pipe', { vol: 0.5 });
+    await d.say(['Toc. Toc.', 'Deux coups. « Je suis là. »', 'C\'est le radiateur. Tu le sais. Tu attends quand même la suite.']);
+  } else {
+    await d.say(['Rien.', 'Il n\'y a personne, de l\'autre côté. Elle est là-bas.']);
+  }
+};
+
+export const platesPen: Script = byNight({
+  1: ['Une assiette sale, sur le plan de travail.', 'Une seule. Tu ne cuisines que pour toi.'],
+  9: ['Une pile d\'assiettes sales.', 'Tu les laves quand il n\'y en a plus de propres. Pas avant.'],
+  22: ['La pile monte. Tu as arrêté de compter.', 'Il y a une odeur. Tu ne la sens plus.'],
+  35: ['La pile d\'assiettes touche presque le placard du haut.', 'Sur celle du dessus pousse une moisissure bleue, en forme de fleur.', 'Tu la trouves jolie. Ça te fait peur, de la trouver jolie.'],
+});
+
+export const chairPen: Script = async (d) => {
+  await d.say(['La chaise de Maman. Tournée vers le mur.', 'Personne ne l\'a tournée. Elle s\'est tournée une nuit où tu ne regardais pas.']);
+  if (night() >= 22) await d.say('Tu ne la retournes pas. Tu n\'as pas envie de voir qui est assis dessus.');
+};
+
+// ---------------------------------------------------------------------------------------------------------------------
 // The ballpoint nights: the phone, the Noa-doll, the shoe box, the fridge, the front door, the nightlight
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -947,7 +1111,17 @@ const LABELS: Record<string, [string, string | string[] | undefined]> = {
 /** The mannequins turn to look at Noa, one more each time he reads a label (persisted by count). */
 const TURN_ORDER = ['mq_301', 'mq_88', 'mq_200', 'mq_31', 'mq_251', 'mq_12', 'mq_140', 'mq_364'];
 
+let atticToken = 0;
+
 export const grenierEnter: Script = async (d) => {
+  const token = ++atticToken;
+  // Behind the curtain, the machine never stops (until the seamstress is spared or beaten).
+  void (async () => {
+    while (token === atticToken && world.map?.id === 'grenier' && !G.state.flags.c4_couseuse) {
+      if (game.top === world) d.sfx('stitch', { vol: 0.12, pitch: 0.9 + rng.next() * 0.2 });
+      await d.wait(9 + Math.floor(rng.next() * 4));
+    }
+  })();
   const turned = num('c4_etiquettes');
   TURN_ORDER.forEach((id, i) => {
     const e = d.find(id);
@@ -957,7 +1131,7 @@ export const grenierEnter: Script = async (d) => {
   d.set('c4_grenier');
   await d.wait(20);
   await d.say(['Le grenier. Sous les poutres, ça sent le coton chaud et l\'huile de machine.', 'Quelque part derrière un rideau de fils, une machine pique, pique, pique.', 'Il y a des Mina partout.']);
-  await mina(d, ['C\'est quoi, ici ?', 'On a un grenier, nous ?'], 'surprised' in {} ? 'neutral' : 'neutral');
+  await mina(d, ['C\'est quoi, ici ?', 'On a un grenier, nous ?'], 'neutral');
 };
 
 /** A mannequin of the attic: its tailor's label. */
@@ -1009,11 +1183,11 @@ export const mannequin365: Script = async (d) => {
   await d.say(['Tu la soulèves. Elle est légère. Plus légère qu\'une poupée devrait l\'être.', 'Sa cape traîne sur le plancher.']);
   await d.fadeOut(30);
   d.remove('mq_365');
-  for (const id of ['rideau_1', 'rideau_2', 'rideau_3']) d.remove(id);
-  d.spawn({ id: 'mq_365_pose', sprite: 'prop_c4_mannequin_cape', x: 20, y: 7, solid: true, shadow: false });
-  d.player.x = 19 * TILE + 8;
+  for (let k = 1; k <= 6; k++) d.remove(`rideau_${k}`);
+  d.spawn({ id: 'mq_365_pose', sprite: 'prop_c4_mannequin_cape', x: 21, y: 5, solid: true, shadow: false, script: mannequin365 });
+  d.player.x = 23 * TILE + 8;
   d.player.y = 7 * TILE + 14;
-  d.face('player', 'right');
+  d.face('player', 'up');
   world.resetFollower();
   await d.fadeIn(30);
   d.sfx('thread');
@@ -1066,7 +1240,7 @@ async function t3(d: Director): Promise<void> {
   }
   // Dodo comes up through the hatch, losing cotton.
   d.spawn({ id: 'dodo_t3', sprite: 'npc_dodo_thin', frames: ['npc_dodo_thin', 'npc_dodo_thin_2'], frameSpeed: 22, x: 12, y: 11, float: true, shadow: false, solid: false });
-  await d.walkTo('dodo_t3', 17, 8, 0.7);
+  await d.walkTo('dodo_t3', 21, 8, 0.7);
   await d.say('Tu n\'aurais pas dû compter.', 'dodo:creepy');
   await d.wait(30);
   await d.say(['Toi, par contre.', 'Toi, tu es nouveau.', 'Trois cent soixante-quatre nuits que je couds, et jamais personne ne lui tenait la main.'], 'couseuse');
@@ -1082,7 +1256,7 @@ async function t3Beaten(d: Director): Promise<void> {
   await d.say(['La machine ne bouge plus. L\'aiguille cassée pend au bout de son fil.', 'Sur le socle, une étiquette :']);
   await d.paper(['Une par nuit.', 'N°364 : hier.', 'N°365 : ce soir.', 'N°366 : ce soir aussi.', 'Plus de coton.'], 'La Couseuse');
   d.spawn({ id: 'dodo_t3', sprite: 'npc_dodo_thin', frames: ['npc_dodo_thin', 'npc_dodo_thin_2'], frameSpeed: 22, x: 12, y: 11, float: true, shadow: false, solid: false });
-  await d.walkTo('dodo_t3', 17, 8, 0.7);
+  await d.walkTo('dodo_t3', 21, 8, 0.7);
   await d.say('Tu n\'aurais pas dû compter.', 'dodo:creepy');
   await d.say(['Maintenant, personne ne la recoudra.', 'Ni demain. Ni après.'], 'dodo');
   d.remove('dodo_t3');
@@ -1099,6 +1273,14 @@ export const tallyMarks: Script = async (d) => {
 export const crownsPile: Script = async (d) => {
   await d.say(['Des couronnes de papier, en tas. Des centaines.', 'Toutes pliées pareil. Toutes un peu écrasées sur le côté gauche, là où une tête s\'appuie sur l\'oreiller.', 'Trois cent soixante-quatre. Tu n\'as pas besoin de compter. Tu le sais.']);
   await mina(d, 'C\'est des déguisements.{p:40} …Hein ?', 'neutral', '…');
+};
+
+/** The curtain of threads before the seamstress's corner. */
+export const curtain: Script = async (d) => {
+  if (flag('c4_rideau')) return;
+  await d.say(['Un rideau de fils rouges, tendu des poutres jusqu\'au plancher.', 'Derrière, une machine pique, pique, pique. Elle ne s\'arrête jamais.']);
+  await d.say('Une épingle tient un papier : « Rapporte-moi celle de ce soir. »');
+  await mina(d, 'Celle de ce soir… C\'est laquelle ?', 'neutral', '…');
 };
 
 /** Back down through the hatch. */
@@ -1135,6 +1317,10 @@ let corridorToken = 0;
 
 export const corridorEnter: Script = (d) => {
   const token = ++corridorToken;
+  if (!flag('c4_nuit42')) {
+    d.show('lumiere_porte', false);
+    d.show('main_porte', false);
+  }
   // The nightlight in Noa's hands: a small warm light that follows him.
   const lamp = d.spawn({ id: 'lampe', sprite: '', x: 0, y: 0, solid: false, shadow: false });
   lamp.light = { r: 54, color: '#ffe991', flicker: true, dy: -10 };
@@ -1280,6 +1466,21 @@ export const corridorClock: Script = async (d) => {
   await d.say(['Une horloge, dessinée au stylo sur le mur.', 'Elle affiche : « 42/41 ».', 'Il n\'y a pas de quarante-deuxième nuit. Il y en a eu une quand même.']);
 };
 
+/** The wall phone at the end of the corridor. */
+export const corridorPhone: Script = async (d) => {
+  if (flag('c4_nuit42')) {
+    await d.say(['Le combiné pend au bout de son fil.', 'Il tourne doucement sur lui-même. Dedans, une tonalité, très loin.']);
+    return;
+  }
+  await d.say(['Un téléphone mural, dessiné au stylo, à la règle.', 'Le combiné attend. Tu attends aussi.']);
+};
+
+/** Noa's own door, at the end of the corridor (before Night 42 has been played). */
+export const noaDoor: Script = async (d) => {
+  await d.say(['La porte de ta chambre.', 'Ta vraie porte. Tu reconnais l\'autocollant à moitié arraché, à hauteur d\'enfant.']);
+  if (!flag('c4_nuit42')) await d.say('Elle ne s\'ouvre pas. Pas encore. Il faut que la nuit arrive jusqu\'ici.');
+};
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Night 42 out of 41: T4 « La lumière sous la porte », Le Petit Homme, Mina n°366 unravels
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1319,7 +1520,11 @@ export const nuit42: Script = async (d) => {
   await d.wait(50);
   await d.say(['Tes mains sont vides.', 'La lumière est derrière la porte. Sous la porte, un trait jaune, très fin.']);
   const glow = d.find('lumiere_porte');
-  if (glow) glow.visible = true;
+  if (glow) {
+    glow.visible = true;
+    glow.light = { r: 26, color: '#ffe991', flicker: false, dy: -2 };
+  }
+  d.sfx('chime', { pitch: 0.5, vol: 0.3 });
   await d.wait(80);
   // The shadow of a hand, laid flat on the door, then gone.
   const hand = d.find('main_porte');
@@ -1345,13 +1550,16 @@ export const nuit42: Script = async (d) => {
   // Mina n°366, in the doorframe behind him.
   d.sfx('step', { pitch: 1.4, vol: 0.4 });
   const mx = tile(d.player.x) - 3;
-  d.spawn({ id: 'mina_cadre', char: 'mina366', x: mx, y: 4, dir: 'right' });
+  const framed = d.spawn({ id: 'mina_cadre', char: 'mina366', x: mx, y: 4, dir: 'right' });
+  framed.variant = 'feutre';
   d.face('player', 'left');
   await d.say('Derrière toi, sur le papier déchiré, des petits pas de feutre.');
   await d.say(still() ? '…Noa…{p:40} elle est où…{p:40} ma veilleuse ?' : 'Noa… elle est où, ma veilleuse ?', still() ? 'mina366:still' : 'mina366:sad');
   d.remove('mina_cadre');
   d.follower('mina366');
   world.resetFollower();
+  // She is felt, in a world of ink: she keeps her colours.
+  if (world.follower) world.follower.variant = 'feutre';
   d.face('player', 'right');
   await d.say('La porte de ta chambre s\'ouvre toute seule.');
   await petitHommeBattle(d);
@@ -1378,7 +1586,7 @@ async function aftermath(d: Director, spared: boolean): Promise<void> {
   const lampKey = spared ? 'b_c4_veilleuse' : 'b_c4_veilleuse_fele';
   const lamp = d.spawn({ id: 'veilleuse_sol', sprite: lampKey, x: 15, y: 7, solid: false, shadow: false });
   lamp.light = { r: 40, color: '#ffe991', flicker: !spared };
-  d.spawn({ id: 'mina_fin', char: 'mina366', x: 17, y: 8, dir: 'left' });
+  d.spawn({ id: 'mina_fin', char: 'mina366', x: 17, y: 8, dir: 'left' }).variant = 'feutre';
   await d.fadeIn(40);
   if (spared) {
     await d.say(['Le Petit Homme s\'est assis par terre, à côté de la lumière.', 'Il ne la reprend pas. Les points de sa bouche ont sauté. Il ne dit plus rien.']);
@@ -1408,6 +1616,7 @@ async function aftermath(d: Director, spared: boolean): Promise<void> {
   // She comes undone, stitch after stitch, without tearing: one long red thread on the floor.
   d.remove('mina_fin');
   const u = d.spawn({ id: 'mina_defait', sprite: 'pose_mina366_defait_1', x: 16, y: 7, solid: false, shadow: false });
+  u.variant = 'feutre';
   for (let s = 1; s <= 4; s++) {
     u.sprite = `pose_mina366_defait_${s}`;
     for (let k = 0; k < 4; k++) {
@@ -1419,8 +1628,8 @@ async function aftermath(d: Director, spared: boolean): Promise<void> {
   d.remove('veilleuse_main');
   const l2 = d.spawn({ id: 'veilleuse_sol2', sprite: lampKey, x: 16, y: 8, solid: false, shadow: false });
   l2.light = { r: 40, color: '#ffe991', flicker: !spared };
-  d.spawn({ id: 'fil', sprite: 'prop_c4_fil', x: 16, y: 7, solid: false, shadow: false });
-  d.spawn({ id: 'couronne', sprite: 'prop_c4_couronne_feutre', x: 17, y: 7, solid: false, shadow: false });
+  d.spawn({ id: 'fil', sprite: 'prop_c4_fil', x: 16, y: 7, solid: false, shadow: false }).variant = 'feutre';
+  d.spawn({ id: 'couronne', sprite: 'prop_c4_couronne_feutre', x: 17, y: 7, solid: false, shadow: false }).variant = 'feutre';
   await d.say(
     spared
       ? ['Elle se défait doucement, maille après maille. Sans déchirure. Sans un bruit.', 'Il ne reste d\'elle qu\'un long fil rouge, par terre.', 'La couronne de feutre tombe à côté.']

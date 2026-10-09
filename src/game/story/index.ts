@@ -7,6 +7,7 @@ import * as real from './real';
 import * as chapter1 from './chapter1';
 import * as chapter2 from './chapter2';
 import * as chapter3 from './chapter3';
+import * as chapter4 from './chapter4';
 import * as bonus from './bonus';
 import * as socle from './socle';
 import * as battleDebug from '../battle/debug-battles';
@@ -14,6 +15,7 @@ import * as battleDebug from '../battle/debug-battles';
 /** Talking to Mina while she follows Noa: a line depending on where you are. */
 const MINA_LINES: Record<string, string[]> = { ...chapter1.MINA_LINES, ...chapter2.MINA_LINES, ...chapter3.MINA_LINES, ...bonus.MINA_LINES };
 world.followerTalk = async (d) => {
+  if (G.state.party.includes('mina366')) return chapter4.mina366Talk(d);
   const lines = MINA_LINES[G.state.map] ?? ['Quoi ? J\'ai quelque chose sur la figure ?'];
   const n = Number(G.state.flags[`mina_talk_${G.state.map}`] ?? 0);
   G.state.flags[`mina_talk_${G.state.map}`] = n + 1;
@@ -26,6 +28,8 @@ world.followerTalk = async (d) => {
 STORY.dream[1] = chapter1.start;
 STORY.dream[2] = chapter2.start;
 STORY.dream[3] = chapter3.start;
+// Chapter 4 is reached by debug only until production lot 2 wires Interlude III (STORY.wake[3] stays the v1.1 finale).
+STORY.dream[4] = chapter4.start;
 STORY.wake[1] = real.interlude1;
 STORY.wake[2] = real.interlude2;
 STORY.wake[3] = real.finale;
@@ -42,11 +46,13 @@ export const DEBUG_SCRIPTS: Record<string, Script> = {
   chapter1: chapter1.start,
   chapter2: chapter2.start,
   chapter3: chapter3.start,
+  chapter4: chapter4.start,
   bonus: bonus.start,
   ...real.DEBUG,
   ...chapter1.DEBUG,
   ...chapter2.DEBUG,
   ...chapter3.DEBUG,
+  ...chapter4.DEBUG,
   ...bonus.DEBUG,
   ...socle.DEBUG,
   ...battleDebug.DEBUG,

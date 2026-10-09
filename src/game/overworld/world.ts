@@ -97,9 +97,11 @@ export class WorldScene implements Scene {
 
     // Follower
     this.follower = null;
-    if (G.state.party.includes('mina') && !map.noFollower) {
-      const f = new Entity('mina', 'follower', p.x, p.y - 1);
-      f.char = 'mina';
+    // The party follower: Mina, or the felt Mina n°366 of chapter 4.
+    const fc = G.state.party.find((c) => c === 'mina' || c === 'mina366');
+    if (fc && !map.noFollower) {
+      const f = new Entity(fc, 'follower', p.x, p.y - 1);
+      f.char = fc;
       f.variant = variant;
       f.dir = p.dir;
       f.solid = false;

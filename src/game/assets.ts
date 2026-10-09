@@ -78,7 +78,9 @@ export function register(defs: Record<string, SpriteDef>, variants: string[] = [
     for (const v of variants) {
       SPR[`${key}@${v}`] = buildSprite(art, { ...opts, transform: VARIANT_TRANSFORMS[v] });
     }
-    for (const w of worlds) LAZY[`${key}@${w}`] = () => buildSprite(art, { ...opts, ...worldOpts(w, tile) });
+    // Map tiles (`t_*`, also those of the chapter modules) take the tile material: seams and grids, not borders.
+    const isTile = tile || key.startsWith('t_');
+    for (const w of worlds) LAZY[`${key}@${w}`] = () => buildSprite(art, { ...opts, ...worldOpts(w, isTile) });
   }
 }
 

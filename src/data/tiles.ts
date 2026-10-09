@@ -114,9 +114,12 @@ export const TILES: Record<string, TileDef> = {
   c4_page: { art: v('c4_page', 4), solid: true },
   c4_page_margin: { art: 't_c4_page_margin', solid: true },
   c4_sheet: { art: v('c4_sheet', 2), solid: true },
-  c4_noir: { art: v('c4_noir', 3), solid: true },
+  c4_noir: { art: ['t_c4_noir_1', 't_c4_noir_3'], solid: true },
+  c4_noir_tear: { art: 't_c4_noir_2', solid: true },
   c4_blank: { art: v('c4_blank', 2), solid: true },
   c4_beam: { art: v('c4_beam', 3), solid: true },
   c4_beam_base: { art: 't_c4_beam_base', solid: true },
   c4_attic_floor: { art: v('c4_attic_floor', 2), surface: 'wood' },
+  c4_stairs: { art: 't_c4_stairs', surface: 'wood' },
+  c4_floor_pen: { art: v('c4_floor_pen', 2), surface: 'paper' },
 };

@@ -38,5 +38,9 @@ export const SPEAKERS: Record<string, Speaker> = {
   albert: { name: 'M. Albert', voice: 'moon', color: '#c8bfa8' },
   nadia: { name: 'Nadia', voice: 'narrator', color: '#b0f0e6' },
   messagerie: { name: 'Messagerie de Noa', voice: 'noa', color: '#8a8fb0' },
+  // Chapter 4 « La Maison Cousue »: the felt Mina, the doll at the table, the seamstress in the attic.
+  mina366: { name: 'Mina', voice: 'mina366', portrait: 'mina366', color: '#e07b6a' },
+  poupeemaman: { name: 'Poupée-Maman', voice: 'maman', color: '#d49a88' },
+  couseuse: { name: 'La Couseuse', voice: 'eraser', color: '#c8bfa8' },
   system: { name: '', voice: 'none' },
 };
