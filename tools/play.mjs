@@ -3,6 +3,10 @@
  * Playtest bot: drives the game in a headless browser with high-level steps and saves screenshots.
  *
  *   node tools/play.mjs "debug=script&name=c1_start" out.png --steps "auto,shot:menu,write:soleil,auto,shot:end"
+ *   node tools/play.mjs --scenario tools/scenarios/v11-sheep.txt [out.png] [--quiet]
+ *
+ * A scenario file (tools/scenarios/README.md) holds the query and one step per line, so proof runs can be saved and
+ * replayed (steps may then contain commas). `assert:<js>` fails the run when the expression is falsy.
  *
  * Steps (comma-separated):
  *   auto[:ms]        advance dialogue / battle text until something needs a decision (choice, battle menu, free roam)
@@ -20,26 +24,58 @@
  *   swipe:x/y/x2/y2  quick pointer flick between two game pixels (mouse drag)
  *   tap:x/y          tap (touch with --touch, else mouse click) at game pixel (x, y) of the 320×180 screen
  *   Code[:ms]        press (or hold) a key; wait:ms; shot:name; log (prints state); eval:js
+ *   assert:js        evaluate js in the page; a falsy result fails the run (exit code 1)
+ *   waitfor:js       wait (up to 20 s, pressing nothing) until js is truthy; fails the run on timeout
+ *   zuntil:js        press Z (advance text) every 250 ms until js is truthy (up to 30 s); fails the run on timeout
  * Prints a state line after each step; exits non-zero on page errors.
  */
 import { chromium } from 'playwright';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { createServer } from 'vite';
-import { resolve } from 'node:path';
+import { basename, resolve } from 'node:path';
 
 const args = process.argv.slice(2);
-const query = args[0] ?? 'debug=title';
-const out = resolve(args[1] ?? 'play.png');
 const opt = (name, def) => {
   const i = args.indexOf(`--${name}`);
   return i >= 0 ? args[i + 1] : def;
 };
+/** Positional arguments (options and their values removed). */
+const VALUED = new Set(['--steps', '--sep', '--size', '--scenario']);
+const positional = args.filter((a, i) => !a.startsWith('--') && !VALUED.has(args[i - 1] ?? ''));
+
+/**
+ * Scenario file: `#` comments, `query: …`, optional `size: WxH`, `touch: true`, `canvas: true`, `lang: en`,
+ * then one step per line (a line `steps:` before them is allowed).
+ */
+function readScenario(file) {
+  const sc = { query: 'debug=title', steps: [], size: null, touch: false, canvas: false };
+  for (const raw of readFileSync(file, 'utf8').split('\n')) {
+    const line = raw.trim();
+    if (!line || line.startsWith('#') || line === 'steps:') continue;
+    const m = /^(query|size|touch|canvas|lang):\s*(.*)$/.exec(line);
+    if (m) {
+      const [, k, v] = m;
+      if (k === 'query') sc.query = v;
+      else if (k === 'size') sc.size = v;
+      else if (k === 'lang') sc.query += `&lang=${v}`;
+      else sc[k] = v === 'true';
+    } else sc.steps.push(line);
+  }
+  return sc;
+}
+const scenarioFile = opt('scenario', null);
+const scenario = scenarioFile ? readScenario(scenarioFile) : null;
+const query = scenario ? scenario.query : (positional[0] ?? 'debug=title');
+const out = resolve(
+  (scenario ? positional[0] : positional[1]) ?? (scenario ? `play-${basename(scenarioFile).replace(/\.[^.]+$/, '')}.png` : 'play.png'),
+);
 // --sep ";" lets eval steps contain commas.
-const steps = opt('steps', 'auto').split(opt('sep', ',')).filter(Boolean);
-const [vw, vh] = opt('size', '640x360').split('x').map(Number);
+const steps = scenario ? scenario.steps : opt('steps', 'auto').split(opt('sep', ',')).filter(Boolean);
+const [vw, vh] = (scenario?.size ?? opt('size', '640x360')).split('x').map(Number);
 const quiet = args.includes('--quiet');
 /** --canvas: screenshots show only the game screen (handy with --touch / phone sizes). */
-const canvasOnly = args.includes('--canvas');
+const canvasOnly = args.includes('--canvas') || !!scenario?.canvas;
+if (scenario) console.log(`scenario ${scenarioFile}: ${query} (${steps.length} steps)`);
 
 const server = await createServer({ server: { port: 0, host: '127.0.0.1', hmr: false, watch: null }, logLevel: 'error' });
 await server.listen();
@@ -51,7 +87,7 @@ const browser = await launch(process.env.PW_CHROMIUM || undefined).catch((e) => 
   if (existsSync('/opt/pw-browsers/chromium')) return launch('/opt/pw-browsers/chromium');
   throw e;
 });
-const touch = args.includes('--touch');
+const touch = args.includes('--touch') || !!scenario?.touch;
 const page = await browser.newPage({ viewport: { width: vw, height: vh }, deviceScaleFactor: touch ? 2 : 1, hasTouch: touch, isMobile: touch });
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.stack ?? e)));
@@ -230,6 +266,7 @@ async function swipe(arg) {
 }
 
 const shotPath = (name) => out.replace(/\.png$/, `-${name}.png`);
+const failures = [];
 for (const step of steps) {
   const colon = step.indexOf(':');
   const cmd = colon < 0 ? step : step.slice(0, colon);
@@ -295,6 +332,28 @@ for (const step of steps) {
       return `${x},${y}`;
     }, arg);
   else if (cmd === 'eval') res = String(await page.evaluate(arg));
+  else if (cmd === 'waitfor' || cmd === 'zuntil') {
+    const t0 = Date.now();
+    let v = false;
+    while (Date.now() - t0 < (cmd === 'zuntil' ? 30000 : 20000)) {
+      v = await page.evaluate(arg).catch(() => false);
+      if (v) break;
+      if (cmd === 'zuntil') await press('KeyZ');
+      await page.waitForTimeout(cmd === 'zuntil' ? 190 : 100);
+    }
+    res = v ? `ok after ${Date.now() - t0} ms` : 'TIMEOUT';
+    if (!v) {
+      failures.push(`${step} → timeout`);
+      console.log(`${step.padEnd(18)} → ${res}`);
+    }
+  } else if (cmd === 'assert') {
+    const v = await page.evaluate(arg).catch((e) => `error: ${e.message}`);
+    res = v && !String(v).startsWith('error:') ? `ok (${String(v).slice(0, 40)})` : `FAILED (${String(v)})`;
+    if (res.startsWith('FAILED')) {
+      failures.push(`${step} → ${String(v)}`);
+      console.log(`${step.padEnd(18)} → ${res}`);
+    }
+  }
   else if (cmd === 'tap') res = await tapAt(arg);
   else if (cmd === 'swipe') await swipe(arg);
   else await press(cmd, arg ? Number(arg) : 0);
@@ -305,9 +364,13 @@ await snap(out);
 const untranslated = await page.evaluate(() => window.__veilleuse.i18nMissing?.() ?? []).catch(() => []);
 if (untranslated.length)
   console.log(`i18n: ${untranslated.length} untranslated string(s) shown:\n  ${untranslated.slice(0, 40).map((s) => JSON.stringify(s)).join('\n  ')}`);
+if (failures.length) {
+  console.log(`ASSERTIONS FAILED:\n${failures.join('\n')}`);
+  process.exitCode = 1;
+}
 if (errors.length) {
   console.log('PAGE ERRORS/WARNINGS:\n' + [...new Set(errors)].slice(0, 30).join('\n'));
   process.exitCode = 1;
-} else console.log('ok, no page errors');
+} else console.log(failures.length ? 'no page errors, but assertions failed' : 'ok, no page errors');
 await browser.close();
 await server.close();

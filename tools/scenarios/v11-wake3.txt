@@ -1,0 +1,7 @@
+# v1.1 path: the end of chapter 3 still wakes up into the v1.1 finale (until lot 5 wires the new acts).
+# wakeUp(3) → the finale sets the real-world moment to 9 (REAL.finale), Noa in bed, Dodo turned toward the door.
+query: debug=script&name=wake_3&lang=fr
+auto:30000
+shot:finale
+assert: window.__veilleuse.G.state.flags.interlude === 9 && window.__veilleuse.G.state.map === 'chambre'
+assert: window.__veilleuse.scene() === 'WorldScene' && !window.__veilleuse.dialogue.busy

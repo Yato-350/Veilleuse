@@ -1,0 +1,15 @@
+# v1.1 title and credits, unchanged: the night title (first run), its « Crédits » entry scrolls the real credits
+# (3114 help lines, « Merci d'avoir joué, {player}. »), B leaves them back to the title.
+query: debug=title&lang=fr
+wait:1500
+shot:title
+assert: window.__veilleuse.scene() === 'TitleScene' && window.__veilleuse.game.top.items.map((i) => i.label).join() === 'Nouvelle partie,Options,Crédits'
+ArrowDown
+ArrowDown
+KeyZ
+waitfor: window.__veilleuse.game.top.constructor.name === 'CreditsScene'
+KeyZ:12000
+shot:credits
+assert: window.__veilleuse.game.top.lines.some(([t]) => t.includes('3114')) && window.__veilleuse.game.top.lines.at(-1)[0] === 'Merci d\'avoir joué, {player}.'
+KeyX
+waitfor: window.__veilleuse.game.top.constructor.name === 'TitleScene'

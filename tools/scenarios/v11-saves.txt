@@ -1,0 +1,24 @@
+# v1.1 saves load in v2. A v1.1 memory (two endings) is migrated on boot (endingsV1, one night per ending); v1.1
+# saves taken during interlude I and in chapter 2 resume as is; a v1.1 save taken in the finale (interlude 3) resumes
+# as the finale (9). (tests/engine.test.ts loads one v1.1 save per step of a run.)
+query: debug=title&lang=fr
+eval: (() => { localStorage.setItem('veilleuse.meta.v1', JSON.stringify({ launches: 3, deaths: 4, endings: ['aube', 'silence'], names: ['Sacha'], seen: [], poems: [] })); return 1; })()
+assert: (() => { const m = window.__veilleuse.readMeta(); return m.endingsV1.join() === 'aube,silence' && m.nuits === 367 && m.metaVersion === 2; })()
+eval: (() => { const sp = window.__veilleuse.MAPS.appartement.spawns.noa; localStorage.setItem('veilleuse.save.v1', JSON.stringify({ version: 1, playerName: 'Sacha', chapter: 1, map: 'appartement', x: sp.x * 16 + 8, y: sp.y * 16 + 14, dir: 'down', hp: 20, etoiles: 2, encre: 0, items: [], keyItems: [], souvenirs: [], flags: { interlude: 1, p_reply: 'aime', world: 'real' }, kills: {}, spares: {}, cleared: [], party: [], playtime: 600, savedAt: 1, weapon: 'crayon', armor: 'pyjama' })); return 1; })()
+eval: window.__veilleuse.flow.continueGame().then(() => 1)
+wait:1500
+shot:interlude1
+assert: window.__veilleuse.scene() === 'WorldScene' && window.__veilleuse.G.state.map === 'appartement' && window.__veilleuse.G.state.flags.interlude === 1 && window.__veilleuse.G.state.version === 2
+auto
+# A v1.1 save taken in chapter 2 (dream) resumes in the forest.
+eval: (() => { const sp = Object.values(window.__veilleuse.MAPS.foret.spawns)[0]; localStorage.setItem('veilleuse.save.v1', JSON.stringify({ version: 1, playerName: 'Sacha', chapter: 2, map: 'foret', x: sp.x * 16 + 8, y: sp.y * 16 + 14, dir: 'down', hp: 22, etoiles: 4, encre: 0, items: ['biscuit'], keyItems: [], souvenirs: [], flags: { interlude: 0, world: 'dream' }, kills: {}, spares: {}, cleared: [], party: ['mina'], playtime: 1800, savedAt: 1, weapon: 'crayon', armor: 'pyjama' })); return 1; })()
+eval: window.__veilleuse.flow.continueGame().then(() => 1)
+wait:1500
+shot:chapter2
+assert: window.__veilleuse.G.state.map === 'foret' && window.__veilleuse.G.state.chapter === 2 && window.__veilleuse.G.state.flags.interlude === 0
+auto
+eval: (() => { const sp = window.__veilleuse.MAPS.chambre_mina.spawns.door; localStorage.setItem('veilleuse.save.v1', JSON.stringify({ version: 1, playerName: 'Sacha', chapter: 3, map: 'chambre_mina', x: sp.x * 16 + 8, y: sp.y * 16 + 14, dir: 'up', hp: 24, etoiles: 9, encre: 1, items: [], keyItems: [], souvenirs: ['souvenir_fenetre'], flags: { interlude: 3, fin_room: true, world: 'real' }, kills: {}, spares: {}, cleared: [], party: [], playtime: 3600, savedAt: 1, weapon: 'cire', armor: 'cape', playerChar: 'noa' })); return 1; })()
+eval: window.__veilleuse.flow.continueGame().then(() => 1)
+wait:1500
+shot:finale
+assert: window.__veilleuse.G.state.map === 'chambre_mina' && window.__veilleuse.G.state.flags.interlude === 9 && window.__veilleuse.G.state.flags.fin_room === true

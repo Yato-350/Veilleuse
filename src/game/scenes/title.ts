@@ -311,8 +311,8 @@ export class TitleScene implements Scene {
     // A bare wall, a nail, the photo hanging slightly crooked.
     g.fillStyle = '#1c1724';
     for (let x = 0; x < W; x += 16) g.fillRect(x, 0, 1, H);
-    const px = 22;
-    const py = 70;
+    const px = 12;
+    const py = 60;
     const pw = 90;
     const ph = 96;
     g.fillStyle = '#5c6080';
@@ -481,12 +481,12 @@ export class TitleScene implements Scene {
       // No Dodo. The nightlight is plugged in: its cord runs down the wall to the socket.
       g.fillStyle = '#3a2c4c';
       g.fillRect(56, 147, 2, 3);
-      g.fillRect(57, 150, 1, 18);
+      g.fillRect(57, 150, 1, 8);
       g.fillStyle = '#e8e2f0';
-      g.fillRect(52, 166, 10, 8);
+      g.fillRect(52, 157, 10, 8);
       g.fillStyle = '#5c4a6a';
-      g.fillRect(55, 168, 1, 3);
-      g.fillRect(58, 168, 1, 3);
+      g.fillRect(55, 159, 1, 3);
+      g.fillRect(58, 159, 1, 3);
     } else if (hasSpr('prop_dodo_plush')) drawSprite(g, spr(this.mood === 'dream' && hasSpr('prop_dodo_plush_dark') ? 'prop_dodo_plush_dark' : 'prop_dodo_plush'), 262, 147);
     // Nightlight glow
     const flick = 0.85 + 0.15 * Math.sin(t * 0.07) + (hash2(t >> 3, 5) < 0.03 ? -0.4 : 0);
@@ -505,7 +505,8 @@ export class TitleScene implements Scene {
     const y = 34 + Math.round(Math.sin(t * 0.03) * 2);
     if (this.variant === 'point_de_croix') {
       this.drawStitchedLogo(g, title, y);
-      drawText(g, tr('Fais de beaux rêves.'), W / 2, y + 30, { color: '#f8b6cf', align: 'center', shadow: '#0b0710' });
+      // Below the strip of canvas (its accents would vanish on the cloth).
+      drawText(g, tr('Fais de beaux rêves.'), W / 2, y + 38, { color: '#f8b6cf', align: 'center', shadow: '#0b0710' });
       g.globalAlpha = 1;
       return;
     }

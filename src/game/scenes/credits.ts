@@ -316,8 +316,9 @@ export class CreditsScene implements Scene {
     const total = widths.reduce((a, b) => a + b, 0) + gap * (labels.length - 1);
     let x = Math.round((W - total) / 2);
     const y = H - 30;
-    g.fillStyle = 'rgba(5,3,10,0.92)';
-    g.fillRect(0, y - 6, W, 22);
+    // A dark band to the bottom of the screen: the lines still below the stop do not run through the choice.
+    g.fillStyle = 'rgba(5,3,10,0.94)';
+    g.fillRect(0, y - 6, W, H - y + 6);
     labels.forEach((l, i) => {
       const sel = i === this.choiceIdx;
       hits.add(this, i, x - 2, y - 3, widths[i]! + 4, 16);

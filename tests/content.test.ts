@@ -13,6 +13,18 @@ import { SPEAKERS } from '../src/data/speakers';
 import { PATTERNS } from '../src/game/battle/patterns';
 import { WORD_POOLS } from '../src/data/words';
 import { ACCENTS, GLYPHS } from '../src/engine/font-data';
+import { V2_WORLDS, WORLD_BG, WORLD_MATERIALS, WORLD_TRANSFORMS } from '../src/engine/palette';
+import { VARIANT_TRANSFORMS } from '../src/game/assets';
+import type { World } from '../src/game/overworld/types';
+import { COUNT_ROUNDS, KNOCK_ROUNDS, SHEEP_ROUNDS, TOOTH_ROUNDS, validCount } from '../src/game/scenes/sheepcount';
+import { dateLabel } from '../src/game/scenes/phone';
+import { CREDIT_LINES, HELP_CARD } from '../src/game/scenes/credits';
+import { daysSince, defaultTitleVariant, TITLE_VARIANTS } from '../src/game/scenes/title';
+import { parseRich, plainText } from '../src/game/ui/richtext';
+import { nightNarratorVoice } from '../src/game/ui/dialogue';
+import { DEBUG_SCRIPTS } from '../src/game/story';
+import { fallInto, REAL, STORY } from '../src/game/story/common';
+import { PHONE_CLOCK } from '../src/game/story/real';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -247,5 +259,182 @@ describe('font', () => {
       }
     }
     expect([...missing].map(([ch, f]) => `${ch} (${f})`)).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Version 2 groundwork (docs/HISTOIRE.md §7, lot 0): the new worlds and the new scenes.
+// ---------------------------------------------------------------------------
+
+const HEX = /^#[0-9a-f]{6}$/i;
+const rgbOf = (hex: string): [number, number, number] => {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
+const lum = (hex: string): number => {
+  const [r, g, b] = rgbOf(hex);
+  return (0.3 * r + 0.59 * g + 0.11 * b) / 255;
+};
+const chroma = (hex: string): number => {
+  const c = rgbOf(hex);
+  return Math.max(...c) - Math.min(...c);
+};
+const PAL_HEX = Object.values(PAL).filter((h) => HEX.test(h));
+
+describe('v2 worlds', () => {
+  it('has the five materials of the bible, each with a transform, a background and sprite variants', () => {
+    expect([...V2_WORLDS]).toEqual(['feutre', 'stylo', 'blanc', 'ouate', 'faux']);
+    for (const w of V2_WORLDS) {
+      expect(typeof WORLD_TRANSFORMS[w], w).toBe('function');
+      expect(VARIANT_TRANSFORMS[w], w).toBe(WORLD_TRANSFORMS[w]);
+      expect(WORLD_BG[w], w).toMatch(HEX);
+    }
+  });
+
+  it('maps every palette color to a valid color, and every material pixel too', () => {
+    const bad: string[] = [];
+    for (const w of V2_WORLDS) {
+      const mat = WORLD_MATERIALS[w];
+      for (const hex of PAL_HEX) {
+        const out = WORLD_TRANSFORMS[w](hex);
+        if (!HEX.test(out)) bad.push(`${w}: ${hex} → ${out}`);
+        if (!mat) continue;
+        for (let y = 0; y < 16; y++)
+          for (let x = 0; x < 16; x++)
+            for (const [edge, tile] of [
+              [false, false],
+              [true, false],
+              [false, true],
+            ] as const) {
+              const px = mat(x, y, out, edge, tile);
+              if (!HEX.test(px)) bad.push(`${w} material: (${x},${y}) ${out} → ${px}`);
+            }
+      }
+    }
+    expect([...new Set(bad)].slice(0, 10)).toEqual([]);
+  });
+
+  it('gives each world its own look', () => {
+    const avg = (f: (h: string) => number, xs: string[]) => xs.reduce((a, h) => a + f(h), 0) / xs.length;
+    const T = WORLD_TRANSFORMS;
+    // feutre: warm (more red than blue on average than the source palette), a little desaturated.
+    const warmth = (h: string) => rgbOf(h)[0] - rgbOf(h)[2];
+    expect(avg(warmth, PAL_HEX.map(T.feutre))).toBeGreaterThan(avg(warmth, PAL_HEX));
+    expect(avg(chroma, PAL_HEX.map(T.feutre))).toBeLessThan(avg(chroma, PAL_HEX));
+    // stylo: three levels only (paper, hatching grey, ink), and the darkest is a near-black ink.
+    const pen = new Set(PAL_HEX.map(T.stylo));
+    expect(pen.size).toBe(3);
+    expect(Math.min(...[...pen].map(lum))).toBeLessThan(0.2);
+    // blanc: white on white; only the dark lines survive, as blue pen.
+    const white = PAL_HEX.map(T.blanc);
+    for (const h of white) {
+      const [r, , b] = rgbOf(h);
+      expect(lum(h) > 0.85 || b > r + 80, h).toBe(true);
+    }
+    expect(white.some((h) => lum(h) < 0.5)).toBe(true);
+    // ouate: yellowed cotton, red ≥ green ≥ blue on (almost) every color.
+    const sepia = PAL_HEX.map(T.ouate).filter((h) => {
+      const [r, g, b] = rgbOf(h);
+      return r + 8 >= g && g + 8 >= b;
+    });
+    expect(sepia.length / PAL_HEX.length).toBeGreaterThan(0.9);
+    // faux: too beautiful, more saturated than the dream.
+    expect(avg(chroma, PAL_HEX.map(T.faux))).toBeGreaterThan(avg(chroma, PAL_HEX) * 1.2);
+  });
+
+  it('is accepted as a map world, and every map uses a known world', () => {
+    const known = new Set(['dream', 'real', 'ink', 'void', ...V2_WORLDS]);
+    const worlds: World[] = [...V2_WORLDS];
+    expect(worlds.length).toBe(5);
+    const bad = Object.values(MAPS)
+      .filter((m) => !known.has(m.world))
+      .map((m) => `${m.id}: ${m.world}`);
+    expect(bad).toEqual([]);
+  });
+});
+
+describe('v2 scenes', () => {
+  it('counting: three skins of three rounds, the v1.1 sheep unchanged', () => {
+    expect(Object.keys(COUNT_ROUNDS)).toEqual(['moutons', 'coups', 'dents']);
+    expect(COUNT_ROUNDS.moutons).toBe(SHEEP_ROUNDS);
+    // The v1.1 rounds (titles and sheep to count) must not move: chapter 1 plays exactly as before.
+    expect(SHEEP_ROUNDS.map((r) => [r.title, r.blind, r.tolerance, ...r.seqs.map(validCount)])).toEqual([
+      ['Doucement', false, 2, 6],
+      ['Le mouton noir', false, 2, 8],
+      ['Les yeux fermés', true, 99, 9, 10, 9],
+    ]);
+    for (const [skin, rounds] of Object.entries(COUNT_ROUNDS)) {
+      expect(rounds.length, skin).toBe(3);
+      for (const r of rounds) {
+        expect(r.interval > 20 && r.window > 0 && r.seqs.length > 0, `${skin} ${r.title}`).toBe(true);
+        for (const s of r.seqs) expect(validCount(s), `${skin} ${r.title}`).toBeGreaterThan(3);
+      }
+    }
+    // Knocks: the radiator answers too (decoys), and the last round is counted in the dark.
+    expect(KNOCK_ROUNDS.slice(1).every((r) => r.seqs.every((s) => s.includes('B')))).toBe(true);
+    expect(KNOCK_ROUNDS[2]!.blind).toBe(true);
+    // Teeth: sewing pins among the teeth.
+    expect(TOOTH_ROUNDS.slice(1).every((r) => r.seqs.every((s) => s.includes('B')))).toBe(true);
+  });
+
+  it('phone: dates a year back, in the real calendar', () => {
+    const now = new Date(2026, 9, 9);
+    expect(dateLabel(0, now)).toBe('Aujourd\'hui');
+    expect(dateLabel(1, now)).toBe('Hier');
+    expect(dateLabel(2, now)).toBe('7 oct. 2026');
+    expect(dateLabel(365, now)).toBe('9 oct. 2025');
+    expect(dateLabel(40, now)).toBe('30 août 2026');
+  });
+
+  it('credits: the help line stays, the help card says what the bible says', () => {
+    expect(HELP_CARD).toBe('Si tu as des idées noires, tu peux appeler le 3114 (gratuit, 24 h/24). Tu n\'es pas seul·e.');
+    expect(CREDIT_LINES.some(([t]) => t.includes('3114'))).toBe(true);
+    expect(CREDIT_LINES[CREDIT_LINES.length - 1]![0]).toContain('{player}');
+  });
+
+  it('title: the v1.1 looks plus the five v2 variants, and the real days of Beaux rêves', () => {
+    for (const v of ['night', 'dawn', 'dream', 'point_de_croix', 'continuer_seul', 'soleil_blanc', 'silence_v2', 'veilleuse']) {
+      expect(TITLE_VARIANTS, v).toContain(v);
+    }
+    expect(defaultTitleVariant([])).toBe('night');
+    expect(defaultTitleVariant(['beaux_reves'])).toBe('dream');
+    expect(defaultTitleVariant(['silence', 'aube'])).toBe('dawn');
+    const day = 86400000;
+    expect(daysSince(0)).toBe(0);
+    expect(daysSince(1000, 1000 + 23 * day + 5)).toBe(23);
+  });
+
+  it('dialogue: {as:…} switches the speaker mid-box, {voice:…} only the blip, {static} crackles', () => {
+    const chars = parseRich('Dodo veille sur t{static}—ch—t…{/static}{as:noa}…sur toi.{as:noa:sad} Tu ne dors pas ?{voice:dodo}');
+    expect(chars.filter((c) => c.as !== undefined).map((c) => c.as)).toEqual(['noa', 'noa:sad']);
+    expect(chars.filter((c) => c.voice !== undefined).map((c) => c.voice)).toEqual(['dodo']);
+    // Markers take no room and print nothing.
+    expect(chars.filter((c) => c.as !== undefined || c.voice !== undefined).every((c) => c.ch === '')).toBe(true);
+    expect(chars.filter((c) => c.fx === 'static').map((c) => c.ch).join('')).toBe('—ch—t…');
+    expect(plainText('a{as:noa}b{static}c{/static}')).toBe('abc');
+    // {as:noa} needs Noa's name, face and blip.
+    expect(SPEAKERS.noa).toMatchObject({ name: 'Noa', voice: 'noa', portrait: 'noa' });
+    // The narrator takes Dodo's blip between midnight and 5 a.m., never once Dodo is silent for good.
+    expect(nightNarratorVoice(3, false)).toBe('dodo');
+    expect(nightNarratorVoice(0, false)).toBe('dodo');
+    expect(nightNarratorVoice(5, false)).toBeNull();
+    expect(nightNarratorVoice(23, false)).toBeNull();
+    expect(nightNarratorVoice(3, true)).toBeNull();
+  });
+
+  it('story wiring: six dreams, the real-world phases and their clocks', () => {
+    expect(REAL).toEqual({ prologue: 0, i1: 1, i2: 2, i3: 3, i4: 4, finale: 9 });
+    expect(PHONE_CLOCK[REAL.i3]).toBe('4:06');
+    expect(PHONE_CLOCK[REAL.i4]).toBe('4:44');
+    expect(PHONE_CLOCK[REAL.finale]).toBe('5:52');
+    expect(typeof fallInto).toBe('function');
+    // Until lot 5 wires the new acts, chapter 3 still wakes up into the v1.1 finale.
+    expect(STORY.dream[1] && STORY.dream[2] && STORY.dream[3] && STORY.wake[1] && STORY.wake[2] && STORY.wake[3]).toBeTruthy();
+  });
+
+  it('debug: every lot 0 demo can be replayed', () => {
+    for (const name of ['phone_log', 'phone_home', 'phone_ring', 'faux_generique', 'dialogue_tags', 'count_coups', 'count_dents']) {
+      expect(typeof DEBUG_SCRIPTS[name], name).toBe('function');
+    }
   });
 });

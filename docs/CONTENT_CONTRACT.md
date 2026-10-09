@@ -37,6 +37,10 @@ Exemple : `node tools/shot.mjs "debug=map&map=village" /tmp/v.png --keys "ArrowU
 
 Les captures font 1280×720 (le jeu ×4). Mettre les captures dans le scratchpad, **jamais** dans le dépôt.
 
+Bot de test (`tools/play.mjs`, étapes de haut niveau : `auto`, `choose:N`, `write:mot`, `interact:id`…) et scénarios
+rejouables : `node tools/play.mjs --scenario tools/scenarios/<fichier>.txt` ou `node tools/run-scenarios.mjs [filtres]`
+(format dans `tools/scenarios/README.md` ; chaque lot y range ses preuves, `v11-…` vérifient que la 1.1 joue encore).
+
 ---
 
 ## 1. Pixel art — format et style
@@ -521,6 +525,10 @@ export const CHAPTER1_MAPS: Record<string, MapDef> = {
   sprite est centré horizontalement sur l'empreinte et posé sur son bord bas (`ox`/`oy` pour ajuster).
   `solid: false` pour les décors traversables, `under: true` pour les tapis, `over: true` pour ce qui passe devant.
 - `world` : `'dream'` | `'real'` (variantes réelles + obscurité) | `'ink'` (tuiles et sprites corrompus) | `'void'`.
+  Version 2 (`V2_WORLDS`, `src/engine/palette.ts`) : `'feutre'` (ch. 4, feutre chaud, contours cousus),
+  `'stylo'` (nuits du ch. 4, stylo bille sur papier quadrillé), `'blanc'` (ch. 5, blanc sur blanc, trait bleu),
+  `'ouate'` (ch. 6, coton jauni), `'faux'` (fausse aube, sursaturé). Les variantes `clé@monde` de chaque sprite et
+  personnage sont construites à la demande (`?debug=map&map=village&world=feutre` pour essayer une carte existante).
 - `darkness` (0–1) + `light` sur props/PNJ (`{ r, color, flicker }`) + `playerLight` pour l'éclairage.
 - `ambience` : `'rain' | 'static' | 'wind' | 'hum' | 'none'` ; `particles` : `'fireflies' | 'cotton' | 'dust' |
   'rain' | 'ink' | 'petals' | 'stars' | 'snow'`.
@@ -575,6 +583,10 @@ de poche pour le Placard), `onWord`, `words` (remplacer le carnet), `menuLabels`
 
 - Balises : `{c:y}jaune{/c}` (couleurs `y r b p v g o l a`), `{wave}…{/wave}`, `{shake}…{/shake}`,
   `{glitch}…{/glitch}`, `{p:30}` (pause), `{spd:0.5}` (vitesse), `{player}` (nom du joueur), `{time}` (heure réelle).
+- Version 2 : `{static}…{/static}` (friture : lettres qui sautent, bip remplacé par du grésillement) ;
+  `{as:noa}` / `{as:noa:sad}` (à partir de là, la boîte appartient à un autre personnage : nom, portrait et bip
+  changent au milieu de la boîte, T7) ; `{voice:noa}` (seul le bip change). `dialogue.narratorVoice` donne un bip au
+  narrateur (`nightNarratorVoice(heure, G.meta.dodoSilent)` : le bip de Dodo entre minuit et 5 h).
 - Une boîte = 3 lignes ≈ 42 caractères chacune (avec portrait) : couper les répliques longues en plusieurs boîtes.
 - **Noa** parle très peu (phrases courtes, souvent « … »). **Mina** : énergique, imaginative, invente des titres
   (« Princesse-Chevalière »), tutoie tout le monde, fautes d'enfant mignonnes occasionnelles. **Dodo** : doux,

@@ -1,0 +1,21 @@
+# Lot 0 proof: the counting scene, « coups » skin. Three rounds (knocks in the wall, radiator decoys, the blind
+# round in the dark), the total asked, then the answer mode: Noa knocks back twice.
+query: debug=script&name=count_coups&sheep=auto&lang=fr
+auto:90000
+shot:blind
+choose:1
+wait:300
+KeyZ
+wait:200
+KeyZ
+wait:200
+KeyZ
+wait:400
+shot:answer
+ArrowRight
+wait:150
+KeyZ
+wait:2500
+assert: window.__veilleuse.G.state.flags.socle_knock_answer === 2
+auto
+assert: window.__veilleuse.scene() === 'WorldScene'

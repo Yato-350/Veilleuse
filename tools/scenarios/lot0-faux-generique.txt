@@ -1,0 +1,26 @@
+# Lot 0 proof: the scripted credits as the false dawn will use them (§3.9). Pass 1: the credits stop on
+# « Mina ……… introuvable », the music holds, the line blinks; [Laisser défiler] rolls to « Merci d'avoir joué ! —
+# Dodo », then the cross-stitched title has one « Continuer ». Pass 2 (one more « introuvable »): [Regarder] rewinds
+# the credits (names un-write, music backwards) and Noa says « Non. ».
+query: debug=credits&mode=faux&lang=fr
+waitfor: window.__veilleuse.game.top.phase === 'stopped' && window.__veilleuse.game.top.stopT > 80
+shot:stop1
+KeyZ
+KeyZ:9000
+waitfor: window.__veilleuse.game.top.phase === 'end'
+shot:signature
+KeyZ
+waitfor: window.__veilleuse.scene() === 'TitleScene'
+wait:1200
+shot:crossstitch
+KeyZ
+waitfor: window.__veilleuse.game.top.phase === 'stopped' && window.__veilleuse.game.top.stopT > 80
+assert: window.__veilleuse.game.top.lines.some(([t]) => t === 'Mina ……… introuvable introuvable')
+ArrowRight
+KeyZ
+wait:1500
+shot:rewind
+waitfor: window.__veilleuse.scene() === 'WorldScene' && window.__veilleuse.dialogue.busy
+shot:non
+auto
+assert: window.__veilleuse.scene() === 'WorldScene'

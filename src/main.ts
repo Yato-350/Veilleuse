@@ -144,6 +144,10 @@ function boot(): void {
     fx,
     scene,
     i18nMissing,
+    // Navigation and save/meta readers, for bot scenarios (e.g. loading a v1.1 save: tools/scenarios/).
+    flow,
+    readSave,
+    readMeta,
   };
 }
 

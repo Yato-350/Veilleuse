@@ -8,6 +8,7 @@ import { TitleScene } from '../scenes/title';
 import { game } from '../../engine/game';
 import { world } from '../overworld/world';
 import { dateLabel, PhoneScene, type PhoneCall, type PhoneContact, type PhoneMessage, type PhoneTab } from '../scenes/phone';
+import { wakeUp } from './common';
 
 /*
  * Version 2 groundwork (production lot 0, docs/HISTOIRE.md §7): replayable demos of the new building blocks, so that
@@ -23,6 +24,7 @@ import { dateLabel, PhoneScene, type PhoneCall, type PhoneContact, type PhoneMes
  *   faux_generique  the fake credits (§3.9) with the credits / title blocks: stop on a line, choice, rewind, let roll
  *                   to « Merci d'avoir joué ! — Dodo », cross-stitched title with one « Continuer », three passes at
  *                   most (also ?debug=credits&mode=faux)
+ *   wake_3          the end of chapter 3 as wired today: wakeUp(3) still leads to the v1.1 finale (until lot 5)
  *
  * Nothing here is part of the story: the chapters and interludes use these blocks with their own text.
  */
@@ -227,4 +229,10 @@ export const DEBUG: Record<string, Script> = {
   dialogue_tags: dialogueTags,
   count_coups: (d) => countingDemo(d, 'coups'),
   count_dents: (d) => countingDemo(d, 'dents'),
+  wake_3: async (d) => {
+    G.state.chapter = 3;
+    d.load('vide', 'center');
+    await d.fadeIn(10);
+    await wakeUp(d, 3);
+  },
 };
