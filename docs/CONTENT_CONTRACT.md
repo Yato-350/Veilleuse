@@ -282,6 +282,16 @@ conseillée en tuiles (largeur×hauteur, alignée en bas). Les objets muraux («
 | `prop_clock` | 12×12 | mur | horloge |
 | `prop_picture` | 16×12 | mur | tableau encadré |
 
+**Monde réel, la longue nuit** (Interludes III et IV, v2 — `NIGHT` dans `props.ts`) : `prop_casque` (casque au fil
+enroulé), `prop_desk_tiroir` (bureau, tiroir entrouvert), `prop_mur_use` (mur, peinture usée à hauteur d'oreiller),
+`prop_radiateur` (radiateur et son tuyau), `prop_coton` / `prop_coton_2` (flocons de rembourrage gris),
+`prop_dodo_plush_decousu` (Dodo, couture du dos ouverte), `prop_veilleuse_fele` (veilleuse fêlée, `c4_fele`),
+`prop_boite_chaussures` (les 41 mots du frigo), `prop_boite_veilleuse` (« Pour Noa, 4 ans »), `prop_thermometre`,
+`prop_placard_entree` / `_ouvert` (placard de l'entrée, 2×1), `prop_sac_hopital` / `_ouvert` (sac de Pédiatrie),
+`prop_photo_bebe` (mur), `prop_lit_maman` (2×2, défait), `prop_reveil_vieux` / `_2` (réveil à cloches, tic),
+`prop_postit`, `prop_boite_couture`, `prop_kit_vocal`, `prop_boite_dents`, `prop_commode` (2×1), `prop_miroir_dessin`
+(mur), `prop_panier`. Planche : `?debug=sheet&filter=prop_casque,prop_lit_maman,…&base`.
+
 **Rêve — Pays de Coton**
 
 | Clé | Taille | Empreinte | Description |
@@ -494,6 +504,9 @@ v2 : une illustration par fichier de chapitre, autonome (ses propres petites pri
 par décomposition comme `illustrations-bonus.ts`. Chapitre 4 : `src/data/illustrations-ch4.ts` →
 `souvenir_lumiere` (le couloir la nuit, le trait de lumière sous la porte, l'ombre d'une main posée à plat, le
 radiateur). Toute nouvelle illustration va aussi dans `CATALOG` de `src/game/scenes/gallery.ts`.
+Interludes III et IV : `src/data/illustrations-nuit.ts` → `polaroid_dodo` (T2, le polaroïd au fond du sac) et
+`dessin_chut` (T5, le dessin du miroir de Maman) ; `photo_decoupee` (la photo de l'été, le visage de Noa découpé) est
+dessinée à côté de `photo_famille` dans `illustrations.ts`, dont elle reprend la peinture.
 
 ---
 
@@ -506,6 +519,7 @@ radiateur). Toute nouvelle illustration va aussi dans `CATALOG` de `src/game/sce
 | Équipe | Cartes (`src/data/maps/…`) | Scénario (`src/game/story/…`) |
 |---|---|---|
 | RÉEL | `real.ts` → `REAL_MAPS` : `chambre`, `appartement`, `appartement_nuit`, `chambre_mina` | `real.ts` : `prologue`, `interlude1`, `interlude2`, `finale`, `DEBUG` |
+| RÉEL (v2) | `real.ts` : accessoires de nuit de `chambre` (`isNuit()`), `appartement_tard`, `chambre_maman` | `real-nuit.ts` : `interlude3`, `interlude4`, `DEBUG` |
 | CH1 | `chapter1.ts` → `CHAPTER1_MAPS` : `prairie`, `village`, `boutique`, `maison_mouton`, `colline` | `chapter1.ts` : `start`, `DEBUG` |
 | CH2 | `chapter2.ts` → `CHAPTER2_MAPS` : `lisiere`, `foret`, `clairiere`, `bibliotheque`, `atelier` | `chapter2.ts` : `start`, `DEBUG` |
 | CH3 | `chapter3.ts` → `CHAPTER3_MAPS` : `ruines`, `hopital`, `chambre_304`, `vide` | `chapter3.ts` : `start`, `DEBUG` |
@@ -640,6 +654,13 @@ sont documentés en tête du module. Lus par les lots suivants : `c4_maman` (`me
 `maison_stylo` (monde `stylo`, même plan, accessoires selon `c4_nuit` ∈ 1, 9, 22, 35, 42) ; l'horloge du salon
 passe de l'une à l'autre. Aides de script : `look(lignes, répliqueMina?)`, `byNight({1: …, 22: …})`.
 Mina n°366 suit Noa par `d.follower('mina366')` (ses répliques : `MINA_LINES`, `mina366Talk`).
+
+**v2, Interludes III et IV** (`src/game/story/real-nuit.ts`) : drapeaux `i3_*` et `i4_*` documentés en tête du module.
+Lus par les lots suivants : `i3_reply` (`pardon` | `bonnenuit` | `rien`), `i3_photo`, `i3_sac` (le polaroïd vu),
+`i4_knock` (`deux` | `trois` | `rien` | `un`), `i4_pile` (la pile du réveil prise), `i4_dessin`, `i4_reveil`,
+`i4_lettre`, `i4_mot`. Pendant ces interludes, `chambre` montre ses accessoires de nuit (cartes `real.ts` : `DAY()` /
+`NIGHT()`), le couloir est `appartement_tard` (nom selon l'heure) et la chambre de Maman `chambre_maman` (IV).
+`STORY.wake[4]` = Interlude IV ; l'Interlude III est branché sur la fausse aube au lot 5 (`STORY.wake[3]`).
 
 ### 8.6 Objets
 

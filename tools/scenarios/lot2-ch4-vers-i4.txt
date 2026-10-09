@@ -1,0 +1,21 @@
+# Lot 2 wiring: the end of chapter 4 (Mina n°366 unravels, souvenir « La lumière sous la porte ») wakes up into
+# Interlude IV (STORY.wake[4]) at 4:44: the bedroom at night, the wardrobe open, the trail of grey stuffing. With
+# c4_fele (the Petit Homme beaten), the nightlight on the bedside table is cracked from one edge of the moon to the other.
+# (c4_coups_intro: the corridor's entrance lines were said earlier in a real run; the debug entry skips them.)
+query: debug=script&name=chapter4_fin&flags=c4_fele=true,c4_coups_intro=true&sheep=auto&lang=fr
+wait:1500
+zuntil: window.__veilleuse.game.top.constructor.name === 'ImageScene'
+wait:1500
+auto
+waitfor: window.__veilleuse.G.state.flags.interlude === 4 && window.__veilleuse.G.state.map === 'chambre'
+shot:i4
+assert: window.__veilleuse.world.busy === 0
+assert: window.__veilleuse.world.get('veilleuse').sprite === 'prop_veilleuse_fele' && window.__veilleuse.world.get('n_armoire').sprite === 'prop_closet_open'
+interact:n_chevet
+auto
+shot:fele
+choose:1
+auto
+interact:n_boite_veilleuse
+auto
+assert: window.__veilleuse.G.state.flags.i4_boite === true

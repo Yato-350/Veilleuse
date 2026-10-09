@@ -1,0 +1,41 @@
+# Lot 2: saving at the nightlight during the night interludes and continuing. In III (4:06) the bedroom comes back
+# with its night props and the phone thread already answered; in Maman's room (IV, 4:44) the alarm clock stays
+# stopped once its battery was taken.
+query: debug=script&name=phone_mina&lang=fr
+wait:1200
+zuntil: window.__veilleuse.game.top.constructor.name === 'PhoneScene' && window.__veilleuse.game.top.mode === 'browse'
+KeyZ
+zuntil: window.__veilleuse.dialogue.choices
+choose:0
+zuntil: window.__veilleuse.game.top.mode === 'choose'
+choose:1
+zuntil: window.__veilleuse.game.top.mode === 'browse'
+KeyX
+auto
+interact:n_chevet
+auto
+choose:0
+auto
+assert: window.__veilleuse.readSave().map === 'chambre' && window.__veilleuse.readSave().flags.interlude === 3 && window.__veilleuse.readSave().flags.i3_reply === 'bonnenuit'
+eval: window.__veilleuse.flow.continueGame().then(() => 1)
+wait:1500
+auto
+shot:iii
+assert: window.__veilleuse.G.state.map === 'chambre' && window.__veilleuse.world.get('n_photo') && window.__veilleuse.world.get('n_radiateur') && window.__veilleuse.G.state.flags.i3_tel === true
+flag:interlude=4
+eval: window.__veilleuse.world.load('chambre_maman', 'door') || 1
+wait:800
+auto
+interact:reveil
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.i4_pile === true
+eval: (window.__veilleuse.world.player.x = 6 * 16 + 8, window.__veilleuse.world.player.y = 5 * 16 + 14, 1)
+eval: window.__veilleuse.world.hooks.run((d) => d.save()) && 1
+wait:300
+eval: window.__veilleuse.flow.continueGame().then(() => 1)
+wait:1500
+auto
+shot:iv
+assert: window.__veilleuse.G.state.map === 'chambre_maman' && window.__veilleuse.world.get('reveil').frames === undefined && window.__veilleuse.G.state.flags.interlude === 4

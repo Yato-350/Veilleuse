@@ -27,7 +27,7 @@ import { inBed, mamanThread, PHONE_CLOCK } from './real';
  *   i3_appel         the call log was seen (« Mina 🐑 — entrant — 3:14 — 0:41 »); i3_appel_n: taps on that line
  *   i3_leo           Léo's thread (the sheep he sends every week)
  *   i3_photo         the photo was turned over (`photo_decoupee`); i3_photo_essais: tries (the narrator gives in)
- *   i3_porte         the bedroom door opened by itself (after the call log and the photo)
+ *   i3_porte         the bedroom door opened by itself (after the « Mina 🐑 » thread, the call log and the photo)
  *   i3_placard       the hall cupboard; i3_sac_ouvert: the bag unzipped; i3_sac_<objet>: couronne, chaussons,
  *                    bracelet, telephone; i3_sac: the polaroid (T2) at the bottom of the bag
  *   i3_fin           « Tu vois ? Tu reviens toujours. » — Noa went back to sleep (chapter 4)
@@ -171,7 +171,7 @@ export async function interlude3(d: Director): Promise<void> {
 
 /** Chambre at night (both interludes): darker than the prologue, the rain, the radiator. */
 export const chambreEnter: Script = async (d) => {
-  world.extraDarkness = iv() ? 0.32 : 0.26;
+  world.extraDarkness = iv() ? 0.24 : 0.18;
   d.music(null);
   audio.setAmbience('rain', iv() ? 0.35 : 0.6);
   startAmbient('chambre', roomSounds);
@@ -226,6 +226,7 @@ async function lastWordIII(d: Director): Promise<void> {
     return;
   }
   d.set('i3_fin');
+  setPageTitle(null);
   inBed(d, true);
   await d.say(['Tu remontes la couette jusqu\'au menton.', 'Le coton de l\'oreiller sent la lessive. Et autre chose. Le désinfectant.']);
   await enterDream(d, 4);
@@ -418,7 +419,8 @@ export const phone: Script = async (d) => {
     else if (ev.kind === 'call') await callTapped(d, ev.index);
   }
   await ph.close();
-  if (!iv() && flag('i3_reply') && !flag('i3_appel')) await d.say('Tu poses le téléphone. Il reste un onglet que tu n\'as pas regardé.');
+  if (!iv() && !flag('i3_tel')) await d.say(['Tu poses le téléphone, écran contre le bureau.', 'La conversation épinglée, avec son petit cadenas. Tu ne l\'as pas ouverte.']);
+  else if (!iv() && !flag('i3_appel')) await d.say('Tu poses le téléphone. Il reste un onglet que tu n\'as pas regardé.');
   await maybeOpenDoor(d);
 };
 
@@ -499,6 +501,7 @@ async function callLogSeen(d: Director, ph: PhoneScene): Promise<void> {
   await d.say(['Mina 🐑. Entrant. 3h14. 0:41.', 'Il y a un an. Cette nuit-là.']);
   await d.wait(20);
   await d.say('Tu ne te souviens pas de cet appel.');
+  setPageTitle('0:41');
 }
 
 async function callTapped(d: Director, index: number): Promise<void> {
@@ -528,13 +531,13 @@ export const photo: Script = async (d) => {
     return;
   }
   if (flag('i3_photo')) {
-    await d.say('Le cadre, face contre le sol. Tu sais ce qu\'il y a dessous, maintenant.');
+    await d.say('La photo, face contre le sol. Tu sais ce qu\'il y a dessous, maintenant.');
     return;
   }
   const n = num('i3_photo_essais');
   d.set('i3_photo_essais', n + 1);
   if (n === 0) {
-    await d.say(['Un cadre photo, posé face contre le sol.', 'Tu ne le retournes pas.']);
+    await d.say(['Une photo dans son cadre, posée face contre le sol.', 'Tu ne la retournes pas.']);
     return;
   }
   if (n === 1) {
@@ -542,7 +545,7 @@ export const photo: Script = async (d) => {
     return;
   }
   d.set('i3_photo');
-  await d.say('Tu le retournes.');
+  await d.say('Tu la retournes.');
   d.sfx('glitch', { vol: 0.3 });
   fx.pulseGlitch(8);
   await d.wait(20);
@@ -554,9 +557,9 @@ export const photo: Script = async (d) => {
   await maybeOpenDoor(d);
 };
 
-/** After the call log and the photo, the bedroom door opens on the dark hallway. A draught. Surely. */
+/** After the « Mina 🐑 » thread, the call log and the photo, the bedroom door opens on the dark hallway. A draught. */
 async function maybeOpenDoor(d: Director): Promise<void> {
-  if (iv() || flag('i3_porte') || !flag('i3_appel') || !flag('i3_photo')) return;
+  if (iv() || flag('i3_porte') || !flag('i3_tel') || !flag('i3_appel') || !flag('i3_photo')) return;
   d.set('i3_porte');
   await d.wait(50);
   d.sfx('door', { pitch: 0.55, vol: 0.5 });
@@ -750,7 +753,7 @@ export const wall: Script = async (d) => {
 // ---------------------------------------------------------------------------------------------------------------------
 
 export const appartEnter: Script = async (d) => {
-  world.extraDarkness = 0.05;
+  world.extraDarkness = 0;
   d.music(null);
   d.ambience('hum');
   startAmbient('appartement_tard', flatSounds, 500, 1300);
@@ -1237,6 +1240,7 @@ async function dodoIV(d: Director): Promise<void> {
     return;
   }
   d.set('i4_fin');
+  setPageTitle(null);
   inBed(d, true);
   await d.say(['Tu serres Dodo contre toi. Il est plus léger qu\'avant.', 'Il se vide un peu chaque nuit.']);
   // Chapter 5 « La Marée Blanche » (production lot 3) registers STORY.dream[5]; until then, the night stops here.
@@ -1253,7 +1257,7 @@ async function dodoIV(d: Director): Promise<void> {
 // ---------------------------------------------------------------------------------------------------------------------
 
 export const mamanRoomEnter: Script = async (d) => {
-  world.extraDarkness = 0.12;
+  world.extraDarkness = 0;
   d.music(null);
   d.ambience('none');
   startAmbient('chambre_maman', () => {
@@ -1282,6 +1286,7 @@ export const alarmClock: Script = async (d) => {
     await d.wait(20);
     await d.say(['Cinq heures. Elle allait venir la chercher.', 'Dans ta chambre.']);
     await d.say('Elle savait où elle était.');
+    setPageTitle('5h — veilleuse');
     await d.say('…', 'noa:sad');
   } else if (flag('i4_pile')) {
     await d.say(['Le réveil arrêté. 5h, pour toujours.', 'Le post-it : « 5h — veilleuse (chambre de Noa) ».']);
@@ -1398,6 +1403,13 @@ export const laundry = look('panier', [
 export const mamanPhoto = look('photo_maman', [
   ['Sur sa table de nuit, un cadre. Posé face contre le bois.', 'Comme le tien.'],
   'Elle aussi.',
+]);
+
+export const mamanLamp = look('liseuse', [['Sa liseuse. L\'ampoule a grillé il y a des mois.', 'Elle ne l\'a pas changée. Elle ne lit plus, le soir. Elle n\'a plus de soir.']]);
+
+export const mamanShoes = look('chaussures_maman', [
+  ['Ses chaussures de travail, rangées l\'une contre l\'autre.', 'Les talons sont usés du même côté que les tiens.'],
+  'Tu marches comme elle. Tu ne l\'avais jamais remarqué.',
 ]);
 
 export const mamanWindow = look('volets', [['Les volets sont fermés. Entre les lattes, la lumière orange du lampadaire de la rue.', 'Elle dort le jour. Toi, tu ne dors plus.']]);

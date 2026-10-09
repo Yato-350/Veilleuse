@@ -25,6 +25,8 @@ import { nightNarratorVoice } from '../src/game/ui/dialogue';
 import { DEBUG_SCRIPTS } from '../src/game/story';
 import { fallInto, REAL, STORY } from '../src/game/story/common';
 import { PHONE_CLOCK } from '../src/game/story/real';
+import { interlude3, interlude4, isNuit } from '../src/game/story/real-nuit';
+import { G } from '../src/game/state';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -436,5 +438,57 @@ describe('v2 scenes', () => {
     for (const name of ['phone_log', 'phone_home', 'phone_ring', 'faux_generique', 'dialogue_tags', 'count_coups', 'count_dents']) {
       expect(typeof DEBUG_SCRIPTS[name], name).toBe('function');
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Production lot 2: the night interludes III « Le sac » (4:06) and IV « Le placard » (4:44).
+// ---------------------------------------------------------------------------
+
+describe('night interludes (lot 2)', () => {
+  it('chapter 4 wakes up into Interlude IV; chapter 3 still wakes up into the v1.1 finale until lot 5', () => {
+    expect(STORY.wake[4]).toBe(interlude4);
+    expect(STORY.wake[3]).not.toBe(interlude3);
+    expect(STORY.dream[4]).toBeTruthy();
+  });
+
+  it('can replay every scene by debug', () => {
+    for (const name of ['interlude3', 'interlude4', 'phone_mina', 'interlude3_sac', 'interlude3_fin', 'interlude4_maman', 'interlude4_coups']) {
+      expect(typeof DEBUG_SCRIPTS[name], name).toBe('function');
+    }
+  });
+
+  it('shows the bedroom night props only at 4:06 and 4:44, and names the hallway by the hour', () => {
+    const shown = (phase: number): string[] => {
+      G.state.flags.interlude = phase;
+      return (MAPS.chambre!.props ?? []).filter((p) => !p.cond || p.cond()).map((p) => p.id ?? p.sprite);
+    };
+    const before = { ...G.state.flags };
+    try {
+      for (const phase of [REAL.prologue, REAL.i1, REAL.i2, REAL.finale]) {
+        expect(isNuit()).toBe(false);
+        expect(shown(phase).filter((id) => id.startsWith('n_'))).toEqual([]);
+      }
+      for (const phase of [REAL.i3, REAL.i4]) {
+        const ids = shown(phase);
+        expect(isNuit()).toBe(true);
+        expect(ids).toContain('n_photo');
+        expect(ids).toContain('n_radiateur');
+        // One of each by night: the bed, the plush, the nightlight, the phone.
+        for (const id of ['bed', 'dodo_plush', 'veilleuse', 'phone']) expect(ids.filter((x) => x === id).length, `${id} at ${phase}`).toBe(1);
+      }
+      G.state.flags.interlude = REAL.i3;
+      expect(MAPS.appartement_tard!.name).toBe('Appartement — 4h06');
+      G.state.flags.interlude = REAL.i4;
+      expect(MAPS.appartement_tard!.name).toBe('Appartement — 4h44');
+      expect(MAPS.chambre_maman!.warps?.[0]?.to).toBe('appartement_tard');
+    } finally {
+      G.state.flags = before;
+    }
+  });
+
+  it('keeps the rule of the 41 seconds: no line says which version of the call is the true one', () => {
+    const src = readFileSync(join('src', 'game', 'story', 'real-nuit.ts'), 'utf8');
+    expect(src).not.toMatch(/vraie version|version vraie|true version|la vraie|callVersion/i);
   });
 });

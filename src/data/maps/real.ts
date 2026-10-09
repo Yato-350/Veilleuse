@@ -365,8 +365,8 @@ const APPARTEMENT_TARD: MapDef = {
   world: 'real',
   music: null,
   ambience: 'hum',
-  darkness: 0.8,
-  playerLight: 40,
+  darkness: 0.72,
+  playerLight: 46,
   particles: 'dust',
   banner: true,
   grain: 0.35,
@@ -426,8 +426,8 @@ const CHAMBRE_MAMAN: MapDef = {
   world: 'real',
   music: null,
   ambience: 'none',
-  darkness: 0.8,
-  playerLight: 42,
+  darkness: 0.64,
+  playerLight: 48,
   particles: 'dust',
   banner: true,
   grain: 0.3,
@@ -440,14 +440,13 @@ const CHAMBRE_MAMAN: MapDef = {
     TFCCCCCCCCCFT
     TFCCCCCCCCCFT
     TFFFFFFFFFFFT
-    TFFFFFFFFFFFT
     TTTTTTFTTTTTT
     TTTTTTFTTTTTT
   `,
   legend: REAL_LEGEND,
   spawns: {
-    default: { x: 6, y: 7, dir: 'up' },
-    door: { x: 6, y: 7, dir: 'up' },
+    default: { x: 6, y: 6, dir: 'up' },
+    door: { x: 6, y: 6, dir: 'up' },
   },
   onEnter: N.mamanRoomEnter,
   props: [
@@ -474,10 +473,12 @@ const CHAMBRE_MAMAN: MapDef = {
     P('prop_chair', 9, 3, { id: 'm_chaise', script: N.blouse }),
     P('prop_nightstand', 10, 3, { id: 'm_table', script: N.teethBox }),
     ON('prop_boite_dents', 10, 3, -10, { id: 'm_dents', script: N.teethBox }),
-    DOOR_AT('m_volets', 11, N.mamanWindow),
-    P('prop_panier', 11, 6, { id: 'm_panier', script: N.laundry }),
+    { ...DOOR_AT('m_volets', 11, N.mamanWindow), light: { r: 30, color: '#ffb070', dy: -10 } },
+    P('prop_panier', 11, 5, { id: 'm_panier', script: N.laundry }),
+    P('prop_lamp', 1, 5, { id: 'm_liseuse', script: N.mamanLamp }),
+    P('prop_shoes', 4, 5, { id: 'm_chaussures', solid: false, script: N.mamanShoes }),
   ],
-  warps: [{ x: 6, y: 9, to: 'appartement_tard', spawn: 'maman' }],
+  warps: [{ x: 6, y: 8, to: 'appartement_tard', spawn: 'maman' }],
 };
 
 export const REAL_MAPS: Record<string, MapDef> = {

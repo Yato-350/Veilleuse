@@ -1,0 +1,107 @@
+# Lot 2 (Interlude IV « Le placard », 4:44): the whole interlude, Noa knocks twice (« Je suis là. »).
+# The wardrobe is open (the forty-one fridge notes in a shoe box, the nightlight's box « Pour Noa, 4 ans », the
+# thermometer « MEM 38,4 »), the drawer ajar (an eye cut out of a photo), the back of the fridge note under the hood
+# light (« Je sais que t— »); Maman's room: the alarm clock set on 5h and its post-it (T5), its battery taken, the
+# drawing on the mirror (`dessin_chut`), the voice kit and Nadia's note, the sewing box, the teeth box, the letter
+# of the phone company. Back in the bedroom: one knock in Mina's wall (counting scene « coups », answer mode), then
+# Dodo, his back seam open, and Noa goes back to sleep (chapter 5 when it exists).
+query: debug=script&name=interlude4&sheep=auto&lang=fr
+wait:1500
+auto
+shot:wake
+interact:n_armoire
+auto
+interact:n_boite_mots
+auto
+interact:n_boite_veilleuse
+auto
+interact:n_thermometre
+auto
+choose:0
+auto
+interact:n_bureau
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.i4_armoire && window.__veilleuse.G.state.flags.i4_mots && window.__veilleuse.G.state.flags.i4_boite && window.__veilleuse.G.state.flags.i4_thermo
+shot:room
+interact:n_porte
+wait:1500
+auto
+assert: window.__veilleuse.G.state.map === 'appartement_tard'
+shot:hall
+interact:t_frigo
+auto
+choose:0
+auto
+interact:gaziniere
+zuntil: window.__veilleuse.scene() === 'PaperScene'
+wait:1500
+shot:mot
+auto
+assert: window.__veilleuse.G.state.flags.i4_mot === true
+interact:t_porte_maman
+auto
+choose:0
+wait:1500
+auto
+assert: window.__veilleuse.G.state.map === 'chambre_maman'
+shot:maman
+interact:reveil
+zuntil: window.__veilleuse.scene() === 'PaperScene'
+wait:1200
+shot:postit
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.i4_reveil && window.__veilleuse.G.state.flags.i4_pile
+interact:m_miroir
+zuntil: window.__veilleuse.scene() === 'ImageScene'
+wait:1200
+shot:chut
+auto
+interact:m_kit
+auto
+interact:m_couture
+auto
+interact:m_dents
+auto
+choose:0
+auto
+interact:m_commode
+auto
+choose:0
+auto
+interact:m_chaise
+auto
+interact:m_planning
+auto
+shot:maman2
+assert: window.__veilleuse.G.state.flags.i4_dessin && window.__veilleuse.G.state.flags.i4_kit && window.__veilleuse.G.state.flags.i4_dents && window.__veilleuse.G.state.flags.i4_lettre && window.__veilleuse.G.state.items.includes('bonbon')
+go:6/8
+ArrowDown:500
+wait:1500
+auto
+assert: window.__veilleuse.G.state.map === 'appartement_tard'
+go:6/3
+ArrowUp:120
+KeyZ
+wait:1200
+zuntil: window.__veilleuse.dialogue.choices
+shot:knock
+choose:0
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+shot:answer
+ArrowRight
+KeyZ
+auto
+assert: window.__veilleuse.G.state.flags.i4_knock === 'deux'
+shot:after
+interact:dodo_plush
+auto
+choose:0
+auto
+shot:dodo
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.i4_fin === true
