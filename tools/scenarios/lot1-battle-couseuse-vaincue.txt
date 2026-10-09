@@ -1,0 +1,9 @@
+# Lot 1 (chapter 4 battles): La Couseuse, beaten (HP lowered to keep the run short): the needle breaks
+# (« Alors personne ne la recoudra. »). Z is pressed until the fight is over: FRAPPER stays selected.
+query: debug=script&name=couseuse&lang=fr
+god
+wait:1500
+auto
+eval: window.__veilleuse.game.top.enemies[0].hp = 3
+hit
+zuntil: window.__veilleuse.G.state.flags.debug_battle === 'win:couseuse'

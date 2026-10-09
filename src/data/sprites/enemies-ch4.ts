@@ -15,7 +15,6 @@ const C4_COLORS = {
   '9': '#6f9c8a', // paper mould
 };
 
-const PASTA: Ramp = ['q', 'Q', 'c', 'C'];
 const FELT_WHITE: Ramp = ['w', 'W', 'g', 'G'];
 const METAL: Ramp = ['w', 'g', 'G', 'd'];
 
@@ -68,7 +67,7 @@ function pateFroide(f: number): string {
   p.ellipse(23, 28, 21, 5, 'w');
   p.ellipse(23, 28, 16, 3.5, 'W');
   p.rect(5, 30, 36, 1, 'G');
-  // The heap of cold noodles.
+  // The heap: a dark core, then a tangle of cold strands wandering over it.
   p.blob(
     [
       [23, 19, 12],
@@ -76,19 +75,24 @@ function pateFroide(f: number): string {
       [32, 23, 7],
       [21, 12, 7],
     ],
-    PASTA,
+    ['c', 'C', 'C', 'x'],
     [23, 18, 17, 12],
   );
-  // Strands: wavy lines over the heap.
-  const rnd = seeded(41 + f);
-  for (let k = 0; k < 9; k++) {
-    const y0 = 9 + k * 2.2;
-    const ph = rnd() * 6;
-    for (let x = 6; x < 41; x++) {
-      const y = Math.round(y0 + Math.sin(x * 0.45 + ph + f * 0.6) * 1.4);
-      const c = p.get(x, y);
-      if (c === 'q' || c === 'Q') p.set(x, y, k % 2 ? 'c' : 'Q');
-      else if (c === 'c') p.set(x, y, 'C');
+  const rnd = seeded(41);
+  for (let k = 0; k < 30; k++) {
+    let x = 8 + rnd() * 30;
+    let y = 8 + rnd() * 18;
+    let a = rnd() * Math.PI * 2;
+    const slide = f && k % 3 === 0 ? 1 : 0;
+    for (let i = 0; i < 16; i++) {
+      x += Math.cos(a);
+      y += Math.sin(a) * 0.7;
+      a += (rnd() - 0.5) * 1.1;
+      const px = Math.round(x);
+      const py = Math.round(y) + slide;
+      if (!'cCxqQ'.includes(p.get(px, py)) || py > 27) continue;
+      p.set(px, py, py < 14 || px < 16 ? 'q' : 'Q');
+      if (p.get(px, py + 1) === 'C' || p.get(px, py + 1) === 'c') p.set(px, py + 1, 'x');
     }
   }
   // Paper mould: fuzzy blue-green blotches.
@@ -105,9 +109,10 @@ function pateFroide(f: number): string {
         else if (d < r + (rnd() > 0.5 ? 1 : 0)) p.set(x, y, '8');
       }
   }
-  // Two sunken eyes, without a glint of life.
-  p.stamp('kkkk...kkkk\nkiik...kiik\n.kk.....kk.', 17, 15);
-  p.set(18, 16, 'G').set(26, 16, 'G');
+  // Two sunken eyes, looking two different ways; a strand hangs over one of them.
+  p.stamp('.kkk.....kkk.\nkiiik...kiiik\n.kkk.....kkk.', 16, 15);
+  p.set(f ? 17 : 18, 16, 'g').set(f ? 28 : 26, 16, 'g');
+  for (let y = 12; y < 19; y++) p.set(26 + (y % 2), y, 'q');
   // A strand hanging down over the rim of the plate, all the way to the floor.
   for (let y = 26; y < 40; y++) p.set(39 + Math.round(Math.sin(y * 0.5 + f) * 1), y, y < 31 ? 'Q' : 'c');
   // The fork planted in the heap (it leans in frame 2).
@@ -237,8 +242,15 @@ function poupeeBrouillon(f: number): string {
   p.rect(30, 28 + ay, 2, 2, 'y');
   p.line(26, 33, 31, 36 + ay, 'g');
   p.rect(31, 35 + ay, 2, 2, 'B');
+  // The side seam was never closed: a dark slit, hollow inside, the thread hanging out.
+  for (let y = 29; y < 40; y++) {
+    const w = y < 31 || y > 37 ? 1 : 2;
+    p.rect(22, y, w, 1, 'i');
+    if (w === 2) p.set(24, y, 'g');
+  }
+  p.set(21, 30, 'G').set(21, 33, 'G').set(21, 36, 'G').set(24, 31, 'G').set(24, 34, 'G');
   // Unfinished seams: dashed, the thread hanging.
-  stitchLine(p, 18, 24, 18, 44, 'G');
+  stitchLine(p, 18, 24, 18, 28, 'G');
   stitchLine(p, 10, 30, 10, 44, 'G', 1);
   for (let y = 44; y < 51; y++) p.set(18 + Math.round(Math.sin(y * 0.6 + f) * 1), y, 'g');
   // Head: blank felt, a little lopsided.
@@ -280,6 +292,15 @@ function cle(f: number): string {
     [33, 41],
   ] as const)
     p.stamp('xx\nxO', sx, sy);
+  // Scratches all around the keyhole: someone missed it, again and again.
+  const scr = seeded(9);
+  for (let i = 0; i < 16; i++) {
+    const a = scr() * Math.PI * 2;
+    const r0 = 9 + scr() * 4;
+    const x0 = 22 + Math.cos(a) * r0;
+    const y0 = 24 + Math.sin(a) * r0 * 1.4;
+    p.line(Math.round(x0), Math.round(y0), Math.round(x0 + Math.cos(a) * 3), Math.round(y0 + Math.sin(a) * 3), 'O');
+  }
   // The huge keyhole.
   p.ellipse(22, 17, 7, 7, 'i');
   p.poly([[17, 20], [27, 20], [30, 39], [14, 39]], 'i');
@@ -428,7 +449,12 @@ function couseuse(f: number): string {
   // Wooden base.
   p.rect(2, 56, 76, 8, 'C');
   p.rect(2, 56, 76, 1, 'c').rect(2, 63, 76, 1, 'x').rect(2, 57, 1, 6, 'c').rect(77, 57, 1, 6, 'x');
-  for (let x = 6; x < 76; x += 9) p.set(x, 59, 'x').set(x + 1, 59, 'x');
+  // Tally marks carved into the base: bundles of five, a lot of them.
+  for (let g = 0; g < 9; g++) {
+    const x0 = 5 + g * 8;
+    for (let i = 0; i < 4; i++) p.rect(x0 + i, 58, 1, 4, 'x');
+    p.line(x0 - 1, 61, x0 + 4, 58, 'x');
+  }
   // The bed of the machine.
   const m = new Pix(80, 66);
   m.rect(6, 48, 68, 8, 'K');
@@ -495,8 +521,9 @@ function couseuse(f: number): string {
   // Felt face.
   p.ball(14, 20, 7, 8, ['q', 'q', 'Q', 'c']);
   // Floppy ears.
-  p.poly([[5, 15], [1, 22], [3, 24], [7, 18]], 'Q');
-  p.poly([[23, 15], [27, 22], [25, 24], [21, 18]], 'Q');
+  p.poly([[5, 15], [0, 23], [3, 25], [7, 18]], 'C');
+  p.poly([[23, 15], [28, 23], [25, 25], [21, 18]], 'C');
+  p.line(4, 17, 2, 22, 'c').line(24, 17, 26, 22, 'x');
   // A seam across the forehead.
   stitchLine(p, 8, 14, 20, 13, 'R');
   // Mismatched button eyes: a big black one, a small red one.

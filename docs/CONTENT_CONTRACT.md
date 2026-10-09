@@ -391,6 +391,25 @@ Motifs d'attaque disponibles (`src/game/battle/patterns.ts`) : `ink_drops`, `ink
 `horns`, `horns_charge`, `seeds`, `seeds_wind`, `yarn`, `hangers`, `closet_doors`, `shavings`, `planes`, `sparks`,
 `eraser_sweep`, `eraser_shrink`, `ecg`, `drip`, `sheep_count`, `lullaby`, `dodo_rings`, `dodo_storm`, `calm`.
 
+**Chapitre 4 — La Maison Cousue** (`src/data/enemies-ch4.ts`, sprites `src/data/sprites/enemies-ch4.ts`, motifs
+`src/game/battle/patterns-ch4.ts`, fonds `feutre` / `stylo` / `noir`) :
+
+| id | Émotion | Besoin | Motifs | Particularité |
+|---|---|---|---|---|
+| `pate_froide` (fém.) | tristesse | tristesse ×2, déteste joie | `noodle_rain`, `mold_spores` | nouilles blanches, pattes de fourchette |
+| `mot_aimante` | colère | colère, puis joie ×2 | `magnet_letters`, `chatter_teeth` | lettres attirées par le cœur |
+| `de_chevalier` | colère | tristesse ×3 | `pin_rain`, `pin_lance` | |
+| `poupee_brouillon` (fém.) | peur | tristesse ×2, déteste joie | `scribble_box`, `chalk_lines` | inflige la peur ; la boîte se redessine |
+| `cle` (fém.) | peur | tristesse, puis « ouvrir » | `tumblers`, `key_turn` | verrouille un bouton du menu par tour |
+| `poupee_maman` (fém.) | neutre | tristesse puis « merci », ou « reste » | `slow_plates`, `four_plates` | ne tombe jamais ; drapeaux `c4_maman`, `c4_reste` |
+| `couseuse` (boss, fém.) | colère → peur | tristesse ×2, puis « découdre » | `stitch_walls`, `needle_pin`, `stitch_cage` | coud les boutons du menu ; chaque mot écrit en découd un |
+| `petit_homme` (boss) | colère → peur | peur, tristesse ×2, puis « rendre » | `doors_slam`, `noodle_rain`, `dark_noodles`, `dark_doors`, `dark_knocks` | phase 2 : arène noire, seul le cône de la veilleuse montre les projectiles |
+
+Alliée : Mina n°366 (`G.state.party` contient `'mina366'`, chapitre 4), figée si `c4_couseuse === 'vaincue'`. Les
+boss lui donnent une aide propre (hook `onAlly`). Moteur : `Bullet.draw` (`shape: 'custom'`, `data.hw/hh` = boîte de
+collision, `data.pierce`), `BulletWorld.pre/post/dark/liveBox`, `soul.pin`, `Battle.backdrop`, `allySay`,
+`prepareDodge`, `detune`.
+
 ---
 
 ## 6. Musique — `src/data/music.ts` (équipe AMBIANCE)

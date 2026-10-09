@@ -617,7 +617,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     emotion: 'peur',
     needs: [{ emotion: 'joie', count: 3 }],
     hates: ['colere'],
-    check: 'Quelqu\'un, quelque part, a appuyé. Elle sonne pour ne pas rester seule. Les mots doux la calment, pas les cris.',
+    check: 'Elle sonne pour ne pas rester seule. Les mots doux la calment, pas les cris.',
     flavor: [
       '* Driiing. Driiing.',
       '* La petite lumière rouge clignote au-dessus d\'une porte.',
@@ -652,7 +652,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     emotion: 'colere',
     needs: [{ emotion: 'tristesse', count: 3 }],
     hates: ['colere'],
-    check: 'Le quatrième de la nuit. Il te fait tenir debout. Il tremble d\'impatience : il attend que tu avoues que tu es fatiguée.',
+    check: 'Le quatrième de la nuit. Il tremble : il attend que tu avoues que tu es fatiguée.',
     flavor: [
       '* Café Serré tremble dans sa tasse.',
       '* Ça sent le café brûlé de trois heures du matin.',
@@ -690,7 +690,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
       { text: 'plier', emotion: 'tristesse' },
       { text: 'garder', emotion: 'joie' },
     ],
-    check: 'Le linge d\'il y a un an. Tout au fond, un pyjama à étoiles qu\'on ne lave pas : il sent encore. Il faudrait le plier, doucement.',
+    check: 'Un pyjama à étoiles qu\'on ne lave pas : il sent encore. Il faudrait le plier, doucement.',
     flavor: [
       '* Le Panier soupire. Une chaussette dépasse.',
       '* Tout au fond, ça sent encore un peu la petite fille.',

@@ -93,7 +93,6 @@ export const BATTLE: Record<string, string> = {
   'Je te couds un rond de feutre sur le cœur. Ça tient chaud.': 'I\'ll sew a felt circle over your heart. It keeps you warm.',
   'Bisou magique. {p:40}Bisou… magique.': 'Magic kiss. {p:40}Magic… kiss.',
   '* Un dé à coudre protège ton cœur (3 coups).': '* A thimble protects your heart (3 hits).',
-  '* Elle brode : les attaques blanches prennent ta couleur.': '* She embroiders: the white attacks take your color.',
   '* Tu attends le dé à coudre de Mina n°366.\n* Elle est assise, les mains sur les genoux. Elle ne bouge plus.': '* You wait for Mina No. 366\'s thimble.\n* She sits with her hands on her knees. She doesn\'t move anymore.',
   '* Le fil de son sourire pend un peu plus bas qu\'avant.': '* The thread of her smile hangs a little lower than before.',
   '* « Vas-y, chevalier. » Personne ne l\'a dit. Tu l\'as entendu quand même.': '* "Go, Sir Knight." Nobody said it. You heard it anyway.',

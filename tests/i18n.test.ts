@@ -8,6 +8,7 @@ import { ACCENTS, GLYPHS } from '../src/engine/font-data';
 import { measure } from '../src/engine/font';
 import { DODO_WORDS, MINA_WORDS, POEM_WORDS, WORD_POOLS } from '../src/data/words';
 import { ENEMIES } from '../src/data/enemies';
+import { layoutRich, parseRich } from '../src/game/ui/richtext';
 
 type Missing = { file: string; line: number; value: string; dynamic: boolean };
 
@@ -137,5 +138,34 @@ describe('i18n API', () => {
     expect(missing.has('Distribué')).toBe(true);
     expect(missing.has('Delivered')).toBe(false);
     expect(missing.has('Options')).toBe(false);
+  });
+});
+
+describe('battle texts fit their box', () => {
+  afterEach(() => bindLanguage(() => 'fr'));
+  it('« Observer »: every enemy\'s description wraps into two lines under the stats line, in French and English', () => {
+    const bad: string[] = [];
+    for (const lang of ['fr', 'en'] as const) {
+      bindLanguage(() => lang);
+      for (const e of Object.values(ENEMIES)) {
+        // Battle text box: 296 px wide, 10 px margins (see TEXT_BOX in src/game/battle/battle.ts).
+        const lines = layoutRich(parseRich(`* ${tr(e.check)}`), 276).length;
+        if (lines > 2) bad.push(`${lang} ${e.id}: ${lines} lines`);
+      }
+    }
+    expect(bad).toEqual([]);
+  });
+  it('box texts (flavor, spare, kill) hold in three lines, and speech bubbles in six, in French and English', () => {
+    const bad: string[] = [];
+    for (const lang of ['fr', 'en'] as const) {
+      bindLanguage(() => lang);
+      for (const e of Object.values(ENEMIES)) {
+        const box = [...e.flavor, e.flavorCalm, e.spareText, e.killText].filter((x): x is string => !!x);
+        for (const t of box) if (layoutRich(parseRich(tr(t)), 276).length > 3) bad.push(`${lang} ${e.id} box: ${t}`);
+        const bubbles = [...e.talk, ...e.reactGood, ...e.reactBad, ...e.reactNeutral, ...Object.values(e.reactSpecial ?? {})];
+        for (const t of bubbles) if (layoutRich(parseRich(tr(t)), 92).length > 6) bad.push(`${lang} ${e.id} bubble: ${t}`);
+      }
+    }
+    expect(bad).toEqual([]);
   });
 });

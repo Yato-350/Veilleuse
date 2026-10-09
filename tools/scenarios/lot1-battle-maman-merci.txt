@@ -1,0 +1,21 @@
+# Lot 1 (chapter 4 battles): the Poupée-Maman, « merci » path. Struck, red thread comes out of her chest and she sews
+# herself back (full HP, « Il y a des pâtes. »); she walks into the box between the plates. Tristesse, then « merci ».
+query: debug=script&name=poupee_maman&lang=fr
+god
+wait:1500
+auto
+hit
+until:dodge
+assert: window.__veilleuse.game.top.enemies[0].hidden === true
+auto
+assert: window.__veilleuse.game.top.enemies[0].hp === window.__veilleuse.game.top.enemies[0].maxHp
+write:tristesse
+auto
+write:merci
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c4_maman === 'merci'
+assert: window.__veilleuse.G.state.flags.debug_battle === 'spare:poupee_maman'

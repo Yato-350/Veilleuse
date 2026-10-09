@@ -215,7 +215,7 @@ export class BulletWorld {
         continue;
       }
       const s = this.soul;
-      if (s.inv <= 0 && !this.passes(z.emo) && s.x + s.hit > z.x && s.x - s.hit < z.x + z.w && s.y + s.hit > z.y && s.y - s.hit < z.y + z.h) {
+      if (s.inv <= 0 && z.dmg > 0 && !this.passes(z.emo) && s.x + s.hit > z.x && s.x - s.hit < z.x + z.w && s.y + s.hit > z.y && s.y - s.hit < z.y + z.h) {
         this.strike({ dmg: z.dmg, emo: z.emo } as Bullet);
       }
     }

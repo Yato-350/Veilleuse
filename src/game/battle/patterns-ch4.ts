@@ -265,7 +265,32 @@ function forkStomp(w: BulletWorld, x: number, emo: Emotion): void {
   }
 }
 
-/** A door slams in from one side: a warned zone, then a heavy panel. */
+/** A door panel: wood-like planks in the bullet's color, two recessed panels and a knob. */
+function drawDoor(g: CanvasRenderingContext2D, b: Bullet, color: string): void {
+  const hw = b.data.hw ?? 10;
+  const hh = b.data.hh ?? 10;
+  const x = Math.round(b.x - hw);
+  const y = Math.round(b.y - hh);
+  const w = Math.round(hw * 2);
+  const h = Math.round(hh * 2);
+  g.fillRect(x, y, w, h);
+  const a = g.globalAlpha;
+  g.globalAlpha = a * 0.35;
+  g.fillStyle = '#0b0710';
+  const vertical = h >= w;
+  if (vertical) {
+    g.fillRect(x + 3, y + 3, w - 6, Math.floor(h / 2) - 5);
+    g.fillRect(x + 3, y + Math.floor(h / 2) + 2, w - 6, Math.floor(h / 2) - 5);
+  } else {
+    g.fillRect(x + 3, y + 3, Math.floor(w / 2) - 5, h - 6);
+    g.fillRect(x + Math.floor(w / 2) + 2, y + 3, Math.floor(w / 2) - 5, h - 6);
+  }
+  g.globalAlpha = a;
+  g.fillRect(vertical ? x + w - 5 : x + Math.floor(w / 2) - 1, vertical ? y + Math.floor(h / 2) - 1 : y + h - 5, 3, 3);
+  g.fillStyle = color;
+}
+
+/** A door slams in from one side: a warning, then a heavy door panel for a moment. */
 function slamDoor(w: BulletWorld, side: 'left' | 'right' | 'top', depth: number, emo: Emotion, warn = 28): void {
   const b = w.box;
   const r =
@@ -274,23 +299,25 @@ function slamDoor(w: BulletWorld, side: 'left' | 'right' | 'top', depth: number,
       : side === 'right'
         ? { x: b.x + b.w - depth, y: b.y, w: depth, h: b.h }
         : { x: b.x, y: b.y, w: b.w, h: depth };
-  w.zones.push({ ...r, emo, dmg: 4, warn, life: warn + 22 });
-  const at = w.t + warn;
+  // The warning only (harmless): where the door will be.
+  w.zones.push({ ...r, emo, dmg: 0, warn, life: warn });
   w.spawn({
-    x: -100,
-    y: -100,
-    shape: 'dot',
-    r: 0,
-    dmg: 0,
-    alpha: 0,
+    x: r.x + r.w / 2,
+    y: r.y + r.h / 2,
+    shape: 'custom',
+    draw: drawDoor,
+    dmg: 4,
+    emo,
+    warn,
     clip: false,
-    maxLife: warn + 2,
+    // (A bullet's life also counts its warning frames.)
+    maxLife: warn + 22,
+    data: { hw: r.w / 2, hh: r.h / 2, pierce: 1 },
     update: (bl) => {
-      if (w.t === at) {
+      if (bl.life === warn + 1) {
         audio.sfx('door', { pitch: 0.7, vol: 0.8 });
         fx.shake(2, 6);
       }
-      bl.x = -100;
     },
   });
 }

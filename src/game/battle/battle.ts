@@ -115,7 +115,7 @@ const ALLY_LINES_366: Record<AllyEffect, string[]> = {
 };
 const ALLY_AFTER_366: Record<AllyEffect, string> = {
   shield: '* Un dé à coudre protège ton cœur (3 coups).',
-  color: '* Elle brode : les attaques blanches prennent ta couleur.',
+  color: '* Les attaques blanches prennent ta couleur.',
   heal: '',
 };
 /** Red thread: the pips of Mina n°366. */
@@ -206,6 +206,8 @@ export class Battle implements Scene {
   private moodSaved: { tempo: number; wobble: number } | null = null;
   /** Last mood applied to the music (debug / tests). */
   mood = '';
+  /** Extra detune of the track set by a battle's scripts (see `detune`), kept whatever the soul's mood. */
+  private wobble = 0;
 
   constructor(defs: EnemyDef[], opts: BattleOptions = {}) {
     this.enemies = defs.map((d) => new EnemyRuntime(d));
@@ -313,7 +315,7 @@ export class Battle implements Scene {
     if (!this.moodSaved) this.moodSaved = { tempo: audio.tempoScale, wobble: audio.corruption };
     audio.setMuffle((a.muffle + b.muffle) / 2, 1.5);
     audio.tempoScale = this.moodSaved.tempo * ((a.tempo + b.tempo) / 2);
-    audio.corruption = Math.max(this.moodSaved.wobble, (a.wobble + b.wobble) / 2);
+    audio.corruption = Math.max(this.moodSaved.wobble, (a.wobble + b.wobble) / 2, this.wobble);
     this.mood = this.soulEmo2 ? `${this.soulEmo}+${this.soulEmo2}` : this.soulEmo;
   }
 
@@ -493,6 +495,13 @@ export class Battle implements Scene {
     this.allyTalking = true;
     await this.say(translated(after ? `${head}\n${after}` : head), false, true, felt ? 'mina366' : 'mina');
     this.allyTalking = false;
+  }
+
+  /** Detunes the battle track (0..1) until the end of the battle: the music box going out of tune. */
+  detune(amount: number): void {
+    this.wobble = amount;
+    if (this.moodMusic) this.applyMood();
+    else audio.corruption = Math.max(audio.corruption, amount);
   }
 
   /** Help for the next dodge (from an `onAlly` hook): a shield, a recoloring, or data for the pattern (`ctx.mem`). */

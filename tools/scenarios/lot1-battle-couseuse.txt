@@ -1,0 +1,22 @@
+# Lot 1 (chapter 4 battles): La Couseuse, spared. She sews OBJET shut on turn 2; every written word pulls a thread and
+# unsews the last button; Tristesse ×2 makes her afraid (phase 2: the cage), then « découdre ». Mina n°366 is at Noa's
+# side. The outcome is kept in flags.debug_battle by the debug script.
+query: debug=script&name=couseuse&lang=fr
+god
+wait:1500
+auto
+write:tristesse
+auto
+assert: window.__veilleuse.game.top.menuDisabled[2] === true
+assert: window.__veilleuse.game.top.ally === 'mina366'
+shot:sewn
+write:tristesse
+auto
+assert: window.__veilleuse.game.top.enemies[0].emotion === 'peur'
+write:découdre
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.debug_battle === 'spare:couseuse'

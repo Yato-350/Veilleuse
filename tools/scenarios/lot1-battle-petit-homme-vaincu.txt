@@ -1,0 +1,14 @@
+# Lot 1 (chapter 4 battles): Le Petit Homme, beaten: half his HP sends him into the dark (phase 2), then he bursts into
+# ink and stuffing and the nightlight rolls away, cracked. Z is pressed (FRAPPER stays selected) until each step.
+query: debug=script&name=petit_homme&lang=fr
+god
+wait:1500
+auto
+eval: window.__veilleuse.game.top.enemies[0].hp = 90
+hit
+zuntil: window.__veilleuse.game.top.bgKind === 'noir'
+eval: window.__veilleuse.game.top.enemies[0].hp = 3
+zuntil: window.__veilleuse.game.top.enemies[0].dead === true
+wait:1500
+shot:cracked
+zuntil: window.__veilleuse.G.state.flags.debug_battle === 'win:petit_homme'

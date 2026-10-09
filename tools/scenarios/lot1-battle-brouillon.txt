@@ -1,0 +1,17 @@
+# Lot 1 (chapter 4 battles): Poupée Brouillon (inflicts fear; her scribbles redraw the box), without Mina n°366.
+query: debug=script&name=bt_ch4_seul&lang=fr
+god
+wait:1500
+assert: window.__veilleuse.game.top.ally === 'none' && window.__veilleuse.game.top.soulEmo === 'peur'
+auto
+write:tristesse
+until:dodge
+wait:1500
+shot:scribbles
+auto
+write:tristesse
+auto
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.debug_battle === 'spare:poupee_brouillon'

@@ -1,0 +1,18 @@
+# Lot 1 (chapter 4 battles): Clé locks one menu button every turn (never the same twice); Tristesse, then « ouvrir ».
+query: debug=script&name=bt_cle&lang=fr
+god
+wait:1500
+auto
+assert: window.__veilleuse.game.top.menuDisabled.filter(Boolean).length === 1
+write:tristesse
+auto
+assert: window.__veilleuse.game.top.menuDisabled.filter(Boolean).length === 1
+eval: window.__veilleuse.game.top.menuDisabled = [false, false, false, false]
+write:ouvrir
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable
+assert: window.__veilleuse.game.top.menuDisabled.filter(Boolean).length === 0
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.debug_battle === 'spare:cle'

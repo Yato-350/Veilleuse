@@ -565,7 +565,7 @@ export const DATA: Record<string, string> = {
 
   // Sonnette — Call Bell
   'Sonnette': 'Call Bell',
-  'Quelqu\'un, quelque part, a appuyé. Elle sonne pour ne pas rester seule. Les mots doux la calment, pas les cris.': 'Someone, somewhere, pressed the button. She rings so she won\'t be alone. Soft words calm her, not shouting.',
+  'Elle sonne pour ne pas rester seule. Les mots doux la calment, pas les cris.': 'She rings so she won\'t be alone. Soft words calm her, not shouting.',
   '* Driiing. Driiing.': '* Riiing. Riiing.',
   '* La petite lumière rouge clignote au-dessus d\'une porte.': '* The little red light blinks above a door.',
   '* Quelque part, quelqu\'un attend.': '* Somewhere, someone is waiting.',
@@ -594,7 +594,7 @@ export const DATA: Record<string, string> = {
 
   // Café Serré — Strong Coffee
   'Café Serré': 'Strong Coffee',
-  'Le quatrième de la nuit. Il te fait tenir debout. Il tremble d\'impatience : il attend que tu avoues que tu es fatiguée.': 'The fourth of the night. He keeps you on your feet. He shakes with impatience: he\'s waiting for you to admit you\'re tired.',
+  'Le quatrième de la nuit. Il tremble : il attend que tu avoues que tu es fatiguée.': 'The fourth of the night. He shakes: he\'s waiting for you to admit you\'re tired.',
   '* Café Serré tremble dans sa tasse.': '* Strong Coffee trembles in his cup.',
   '* Ça sent le café brûlé de trois heures du matin.': '* It smells like burnt three a.m. coffee.',
   '* Café Serré fait des ronds de vapeur nerveux.': '* Strong Coffee puffs nervous rings of steam.',
@@ -623,7 +623,7 @@ export const DATA: Record<string, string> = {
 
   // Le Panier — The Basket
   'Le Panier': 'The Basket',
-  'Le linge d\'il y a un an. Tout au fond, un pyjama à étoiles qu\'on ne lave pas : il sent encore. Il faudrait le plier, doucement.': 'Laundry from a year ago. At the very bottom, star pajamas nobody washes: they still smell of her. They need folding, gently.',
+  'Un pyjama à étoiles qu\'on ne lave pas : il sent encore. Il faudrait le plier, doucement.': 'Star pajamas nobody washes: they still smell of her. They need folding, gently.',
   '* Le Panier soupire. Une chaussette dépasse.': '* The Basket sighs. A sock pokes out.',
   '* Tout au fond, ça sent encore un peu la petite fille.': '* At the very bottom, it still smells a little like a little girl.',
   '* Le Panier n\'a pas bougé depuis un an.': '* The Basket hasn\'t moved in a year.',

@@ -1,0 +1,20 @@
+# Lot 1 (chapter 4 battles): after La Couseuse was beaten, Mina n°366 does not help any more: her slot shows the still
+# doll, and on turn 3 a line about her (once per battle).
+query: debug=script&name=bt_mina366_still&lang=fr
+god
+wait:1500
+assert: window.__veilleuse.game.top.ally === 'still'
+auto
+write:tristesse
+auto
+write:tristesse
+auto
+write:tristesse
+until:dodge
+assert: window.__veilleuse.G.state.flags.c4_mina366_still_felt === true
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.debug_battle === 'spare:de_chevalier'

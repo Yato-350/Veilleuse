@@ -16,7 +16,7 @@ import { G } from '../game/state';
  * Chapter 4 « La Maison Cousue » — the enemies (docs/HISTOIRE.md § 3.11). Spread into ENEMIES by src/data/enemies.ts.
  *
  * Balance (act II peak; the player has chapter 3 stats, often the « Plume dorée » and the « Cape de Mina »):
- * regular PV 38–46 / ATQ 5, Poupée-Maman cannot fall, La Couseuse PV 150 / ATQ 6, Le Petit Homme PV 200 / ATQ 7.
+ * regular PV 38–42 / ATQ 5, Poupée-Maman cannot fall, La Couseuse PV 150 / ATQ 6, Le Petit Homme PV 200 / ATQ 6.
  *
  * What the story reads after each fight (BattleResult + flags):
  *   - poupee_maman  « merci »: outcome 'spare', and the battle sets flags c4_maman = 'merci'.
@@ -159,7 +159,7 @@ const CLE_HOOKS: Partial<BattleHooks> = {
     b.menuDisabled[i] = false;
     s.locked = -1;
     audio.sfx('knock1', { pitch: 1.6, vol: 0.6 });
-    await b.allySay('C\'est moi qui ai la clé ! {p:30}…Non. C\'est toi.', tf('* Mina n°366 décroche le cadenas. {0} est libre.', tr(b.menuLabels[i] ?? '')));
+    await b.allySay('C\'est moi qui ai la clé ! {p:30}…Non. C\'est toi.', tf('* Elle décroche le cadenas : {0} est libre.', tr(b.menuLabels[i] ?? '')));
     return true;
   },
 };
@@ -290,7 +290,7 @@ const MAMAN_HOOKS: Partial<BattleHooks> = {
     s.allyOnce = true;
     b.prepareDodge({ shield: 3 });
     audio.sfx('stitch', { pitch: 1.3 });
-    await b.allySay('Mange, sinon elle recommence. {p:30}…Elle recommence.', tr('* Mina n°366 pose un dé à coudre sur ton cœur (3 coups).'));
+    await b.allySay('Mange, sinon elle recommence. {p:30}…Elle recommence.', tr('* Un dé à coudre protège ton cœur (3 coups).'));
     return true;
   },
 };
@@ -334,8 +334,9 @@ const COUSEUSE_HOOKS: Partial<BattleHooks> = {
     if (!s.afraid && e.step >= 1) {
       s.afraid = true;
       if (!e.spareable) e.emotion = 'peur';
+      b.detune(0.3);
       audio.sfx('stitch', { pitch: 0.5 });
-      await b.say('* La Couseuse s\'arrête de piquer. Ses yeux-boutons tremblent.\n* Pour la première fois, elle a peur de ce que tu vas défaire.');
+      await b.say('* La Couseuse s\'arrête. Ses yeux-boutons tremblent.\n* Elle a peur de ce que tu vas défaire.');
     }
     if (turn >= 2 && !e.spareable && s.sewn.length < SEW_ORDER.length) {
       const i = SEW_ORDER.find((k) => !s.sewn.includes(k))!;
@@ -378,10 +379,7 @@ const COUSEUSE_HOOKS: Partial<BattleHooks> = {
     const s = couseuseState(b);
     if (!s.sewn.length) return false;
     const i = await unsew(b, s);
-    await b.allySay(
-      'Attends, je découds. Je sais faire. {p:30}…Je sais faire.',
-      tf('* Mina n°366 tire le fil avec ses doigts de feutre. Le bouton {0} se découd.', tr(b.menuLabels[i] ?? '')),
-    );
+    await b.allySay('Je découds. Je sais faire. {p:30}…Je sais faire.', tf('* Le bouton {0} se découd.', tr(b.menuLabels[i] ?? '')));
     return true;
   },
   async onDeath() {
@@ -492,6 +490,8 @@ async function toDark(b: Battle, e: EnemyRuntime, s: HommeState): Promise<void> 
   s.darkTarget = 1;
   await b.say('* La veilleuse vacille. Une à une, toutes les lumières de la maison s\'éteignent.\n* Il ne reste que la sienne.');
   b.bgKind = 'noir';
+  b.detune(0.45);
+  audio.setMuffle(0.6, 2);
   if (!e.spareable) e.emotion = 'peur';
   e.def = { ...e.def, flavor: HOMME_DARK_FLAVOR };
 }
@@ -531,10 +531,7 @@ const HOMME_HOOKS: Partial<BattleHooks> = {
     if (s.phase !== 2) return false;
     b.prepareDodge({ mem: { light: 1 } });
     audio.sfx('chime', { pitch: 1.4, vol: 0.5 });
-    await b.allySay(
-      'Je te brode un fil de lumière. Comme ça, tu vois où tu marches. {p:30}…Où tu marches.',
-      tr('* Un fil doré s\'allume dans le noir : le cône de la veilleuse s\'élargit.'),
-    );
+    await b.allySay('Je te brode un fil de lumière. {p:30}…De lumière.', tr('* Le cône de la veilleuse s\'élargit.'));
     return true;
   },
   async onSpare(b, e) {
@@ -592,7 +589,7 @@ export const CH4_ENEMIES: Record<string, EnemyDef> = {
     emotion: 'tristesse',
     needs: [{ emotion: 'tristesse', count: 2 }],
     hates: ['joie'],
-    check: 'Une assiette oubliée sur la table depuis des nuits. Ne lui souris pas. Assieds-toi avec elle, c\'est tout.',
+    check: 'Une assiette oubliée depuis des nuits. Ne lui souris pas : assieds-toi avec elle.',
     flavor: [
       '* Pâte Froide avance sur ses pattes de fourchette. Tic. Tic. Tic.',
       '* Une moisissure de papier bleuit sur ses bords.',
@@ -634,7 +631,7 @@ export const CH4_ENEMIES: Record<string, EnemyDef> = {
     def: 1,
     emotion: 'colere',
     needs: [{ emotion: 'colere' }, { emotion: 'joie', count: 2 }],
-    check: 'Un dentier de farces et attrapes, aimanté au frigo. Il mâche les mots. Grince des dents avec lui d\'abord. Ensuite, parle-lui de quelque chose de doux.',
+    check: 'Un dentier qui mâche les mots du frigo. Grince des dents avec lui, puis sois doux.',
     flavor: [
       '* Mot Aimanté claque des dents. Clac-clac-clac.',
       '* Entre ses dents, des lettres en plastique : un T, un A, un I…',
@@ -677,7 +674,7 @@ export const CH4_ENEMIES: Record<string, EnemyDef> = {
     def: 2,
     emotion: 'colere',
     needs: [{ emotion: 'tristesse', count: 3 }],
-    check: 'Un dé à coudre en armure, une épingle pour lance. Il protège un doigt et rien d\'autre, et il le sait. Sous le métal, du chagrin.',
+    check: 'Un dé à coudre en armure. Il protège un doigt, rien d\'autre. Sous le métal, du chagrin.',
     flavor: [
       '* Dé-Chevalier brandit son épingle. Elle tremble.',
       '* « Je protège le doigt. » Il le répète pour s\'en convaincre.',
@@ -719,7 +716,7 @@ export const CH4_ENEMIES: Record<string, EnemyDef> = {
     emotion: 'peur',
     needs: [{ emotion: 'tristesse', count: 2 }],
     hates: ['joie'],
-    check: 'Une poupée pas finie, en feutre blanc. Pas de visage, pas de nom. Elle ne supporte pas les sourires. Sois triste avec elle.',
+    check: 'Une poupée pas finie, sans visage. Les sourires lui font peur. Sois triste avec elle.',
     flavor: [
       '* Poupée Brouillon n\'a pas de visage. Elle te regarde quand même.',
       '* Des épingles tiennent encore ses bras en place.',
@@ -762,7 +759,7 @@ export const CH4_ENEMIES: Record<string, EnemyDef> = {
     emotion: 'peur',
     needs: [{ emotion: 'tristesse' }, { word: 'ouvrir' }],
     specialWords: [{ text: 'ouvrir', emotion: 'joie' }],
-    check: 'Une clé qui tremble dans une serrure bien trop grande pour elle. Elle verrouille tout ce qu\'elle touche. Avant de lui demander d\'ouvrir, dis-lui que tu comprends.',
+    check: 'Une clé trop petite pour sa serrure. Comprends sa peur, puis demande-lui d\'ouvrir.',
     flavor: [
       '* Clé tremble. Cling-cling-cling contre la serrure.',
       '* Elle tourne d\'un quart de tour. Elle revient. Elle n\'ose pas.',
@@ -808,7 +805,7 @@ export const CH4_ENEMIES: Record<string, EnemyDef> = {
       { text: 'merci', emotion: 'joie' },
       { text: 'reste', emotion: 'neutre' },
     ],
-    check: 'Maman, en feutre : un sourire cousu, un téléphone cousu dans la main. Elle sert, elle ressert. Sous les points, il reste sa vraie phrase. Il y a aussi un mot plus facile, qui ne demande rien.',
+    check: 'Un sourire cousu. Sous les points, sa vraie phrase. Il y a aussi un mot plus facile.',
     flavor: [
       '* La Poupée-Maman sert. Elle ressert. Les assiettes ne se vident pas.',
       '* Le téléphone cousu dans sa main ne sonne pas. Elle le regarde quand même.',
@@ -841,7 +838,7 @@ export const CH4_ENEMIES: Record<string, EnemyDef> = {
     emotion: 'colere',
     needs: [{ emotion: 'tristesse', count: 2 }, { word: 'découdre' }],
     specialWords: [{ text: 'découdre', emotion: 'colere' }],
-    check: 'Une machine à coudre à tête de mouton. Elle recoud quelqu\'un tous les soirs, au même endroit. Sa colère, c\'est de la peur. Pleure avec elle, puis demande-lui de défaire.',
+    check: 'Sa colère, c\'est de la peur. Pleure avec elle, puis demande-lui de défaire.',
     flavor: [
       '* La Couseuse pique, pique, pique. Le bruit ne s\'arrête jamais.',
       '* Sa tête de mouton fixe tes coutures de ses yeux-boutons dépareillés.',
@@ -882,12 +879,12 @@ export const CH4_ENEMIES: Record<string, EnemyDef> = {
     name: 'Le Petit Homme',
     sprite: 'b_petit_homme',
     hp: 200,
-    atk: 7,
+    atk: 6,
     def: 4,
     emotion: 'colere',
     needs: [{ emotion: 'peur' }, { emotion: 'tristesse', count: 2 }, { word: 'rendre' }],
     specialWords: [{ text: 'rendre', emotion: 'tristesse' }],
-    check: 'Une poupée-Noa géante, en tablier de Maman, la bouche cousue. Ses bras sont cousus à sa poitrine, autour de la veilleuse allumée. Il crie parce qu\'il ne peut pas dire de quoi il a peur.',
+    check: 'Ses bras sont cousus autour de la lumière. Il crie parce qu\'il ne peut pas dire sa peur.',
     flavor: [
       '* Le Petit Homme serre la veilleuse. Ses bras sont cousus autour.',
       '* Les portes de la maison claquent toutes seules. Il ne sursaute même plus.',
