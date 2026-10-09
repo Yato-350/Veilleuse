@@ -257,11 +257,22 @@ const SHEET_2 = over(SHEET_1, 'r\nr\nr\nr', 13, 9);
 
 /** Mina's room, at night (ballpoint): blackened so hard that the paper tore. */
 const noir = (seed: number, tear: boolean): string => {
-  const p = Pix.of(paint((x, y) => ((x * 3 + y * 5 + Math.floor(hash(x, y, seed) * 3)) % 7 === 0 ? 'K' : 'i')));
+  // Ballpoint pressed hard, again and again: diagonal strokes, a few gaps where the ink skipped.
+  const p = Pix.of(
+    paint((x, y) => {
+      const band = (x + y * 2 + Math.floor(hash(x >> 2, y, seed) * 2)) % 4;
+      return band === 0 && hash(x, y, seed + 1) < 0.55 ? 'K' : 'i';
+    }),
+  );
   if (tear) {
-    // A tear: curled white paper edges around a hole onto nothing.
-    p.ellipse(8 + (seed % 3), 8, 4.5, 3.2, 'w').ellipse(8 + (seed % 3), 8.5, 3.4, 2.2, '0');
-    p.set(4 + (seed % 3), 6, 'W').set(12 + (seed % 3), 10, 'W').set(7, 5, 'g');
+    // A rip across the tile: the paper gave way under the pen. Black underneath, white torn fibres on both lips.
+    for (let i = 0; i <= 12; i++) {
+      const x = 2 + i;
+      const y = Math.round(12 - i * 0.75 + (hash(i, 0, seed) - 0.5) * 2);
+      p.set(x, y, '0').set(x, y + 1, '0');
+      p.set(x, y - 1, 'w').set(x, y + 2, i % 2 ? 'W' : 'w');
+      if (i % 4 === 1) p.set(x, y - 2, 'g');
+    }
   }
   return p.toString();
 };
@@ -866,6 +877,19 @@ const TEAR = (() => {
   return p.toString();
 })();
 
+/** What is left of Le Petit Homme when he is beaten: a puddle of ink, tufts of stuffing, ends of red thread. */
+const INK_PUDDLE = (() => {
+  const p = new Pix(28, 12);
+  p.ellipse(13, 7, 12, 4, 'i').ellipse(20, 5, 6, 3, 'i').ellipse(6, 8, 5, 3, 'i');
+  p.set(9, 6, 'z').set(10, 6, 'z').set(18, 4, 'z').set(19, 4, 'J');
+  for (const [x, y] of [[3, 3], [22, 9], [15, 2], [26, 6], [1, 9]] as Array<[number, number]>) {
+    p.set(x, y, 'W').set(x + 1, y, 'w').set(x, y - 1, 'w');
+  }
+  for (let x = 16; x < 25; x++) p.set(x, 10 + (x % 3 === 0 ? 1 : 0), 'r');
+  p.set(4, 5, 'r').set(5, 4, 'R');
+  return p.toString();
+})();
+
 /** The fridge-note on the floor of the dark corridor / the post-it in the hand of the shadow. */
 const NOTE = `
   kkkkkk
@@ -1022,6 +1046,7 @@ export const ART: Record<string, SpriteDef> = {
   pose_mina366_defait_4: withFelt(unravel(4)),
   prop_c4_couronne_feutre: CROWN_FELT,
   prop_c4_fil: THREAD,
+  prop_c4_flaque: INK_PUDDLE,
 
   // Dolls
   npc_maman_poupee: withFelt(poupeeMaman(false)),

@@ -1,0 +1,20 @@
+# Lot 1 (chapter 4 world): the looping dinner, other outcome. Noa does not eat, then stands up; the Poupée-Maman
+# is given « reste » at once (complicity: c4_reste); she stays at the table for ever, Dodo said « Tu vois ? Tout le
+# monde peut rester. » in battle. The cuckoo strikes, Mina n°366 goes to sit on her chair, the felt peels off: Night 1.
+query: debug=script&name=chapter4_diner&lang=fr
+god
+wait:1500
+auto
+go:21/17
+ArrowRight:700
+auto
+choose:1
+auto
+choose:2
+auto
+write:reste
+auto
+assert: window.__veilleuse.G.state.flags.c4_maman === 'reste' && window.__veilleuse.G.state.flags.c4_reste === true
+assert: window.__veilleuse.G.state.flags.c4_diner_fait === true
+assert: window.__veilleuse.G.state.map === 'maison_stylo'
+assert: window.__veilleuse.G.state.flags.c4_nuit === 1

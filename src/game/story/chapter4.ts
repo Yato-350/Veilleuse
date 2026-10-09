@@ -13,7 +13,7 @@ import type { Script } from '../overworld/types';
 import { world } from '../overworld/world';
 import { CountingScene, type SheepKind, type SheepRound } from '../scenes/sheepcount';
 import { G, maxHp } from '../state';
-import { STORY, wakeUp } from './common';
+import { REAL, STORY, wakeUp } from './common';
 
 /**
  * Chapter 4 — « La Maison Cousue » (docs/HISTOIRE.md § 3.11, T3 § 2.4, T4 § 2.5).
@@ -319,7 +319,10 @@ async function dinner(d: Director): Promise<void> {
     await d.fadeIn(16);
   }
   await d.say(['Tu te lèves. Ta chaise racle le plancher de feutre.', 'La Poupée-Maman se tourne vers toi. Tout son corps d\'un coup. Le sourire d\'abord.']);
+  // Mina n°366 jumps off her chair to stand by him (she helps in the fight), then sits back down.
+  if (hadMina) d.follower('mina366');
   await d.battle(['poupee_maman']);
+  if (hadMina) d.follower(null);
   audio.tempoScale = 1;
   d.set('c4_diner_fait');
   const tableE = d.find('table');
@@ -1533,6 +1536,10 @@ export const nuit42: Script = async (d) => {
   d.set('c4_nuit', 42);
   d.face('player', 'right');
   await d.wait(30);
+  // The clock of the corridor has moved on by itself: there is no forty-second night, and here it is.
+  d.sfx('chime', { pitch: 0.45, vol: 0.4 });
+  fx.pulseGlitch(10);
+  await d.narrate('Nuit 42/41.');
   // The phone rings in the corridor, one last time.
   const tel = d.find('tel_couloir');
   for (let k = 0; k < 2; k++) {
@@ -1625,8 +1632,9 @@ async function aftermath(d: Director, spared: boolean): Promise<void> {
   await d.fadeOut(30);
   d.load('maison_stylo', 'nuit42');
   d.music(null);
-  const doll = d.spawn({ id: 'petit', sprite: 'npc_poupee_noa', x: 13, y: 7, solid: true });
-  doll.dir = 'down';
+  // Spared, he sits on the floor, a doll again; beaten, there is only a puddle left.
+  if (spared) d.spawn({ id: 'petit', sprite: 'npc_poupee_noa_cote', x: 14, y: 7, solid: true, shadow: false });
+  else d.spawn({ id: 'petit', sprite: 'prop_c4_flaque', x: 14, y: 7, solid: false, shadow: false });
   const lampKey = spared ? 'b_c4_veilleuse' : 'b_c4_veilleuse_fele';
   const lamp = d.spawn({ id: 'veilleuse_sol', sprite: lampKey, x: 15, y: 7, solid: false, shadow: false });
   lamp.light = { r: 40, color: '#ffe991', flicker: !spared };
@@ -1643,7 +1651,8 @@ async function aftermath(d: Director, spared: boolean): Promise<void> {
   await d.wait(30);
   d.remove('veilleuse_sol');
   const held = d.spawn({ id: 'veilleuse_main', sprite: lampKey, x: 16, y: 7, solid: false, shadow: false });
-  held.oy = -10;
+  held.oy = -5;
+  held.y += 2;
   held.light = { r: 46, color: '#ffe991', flicker: !spared };
   d.sfx('chime', { pitch: 1.2, vol: 0.5 });
   await d.say(spared ? 'La veilleuse tombe dans les mains de Mina.' : 'Mina ramasse la veilleuse fêlée. Elle la tient contre elle.');
@@ -1690,7 +1699,6 @@ async function endChapter(d: Director): Promise<void> {
   // « Coton chaud » lasted one night.
   d.set('c4_coton_chaud', 0);
   d.ambience('none');
-  await d.fadeOut(60);
   d.souvenir('lumiere');
   await d.image('souvenir_lumiere', SOUVENIRS.lumiere?.captions ?? []);
   await d.wait(40);
@@ -1700,7 +1708,8 @@ async function endChapter(d: Director): Promise<void> {
     return;
   }
   await d.fadeOut(60, '#ffffff');
-  G.state.flags.interlude = 4;
+  G.state.flags.interlude = REAL.i4;
+  G.state.party = [];
   await d.narrate('…');
 }
 
@@ -1792,6 +1801,13 @@ export const DEBUG: Record<string, Script> = {
     setup(d, { ...AFTER_DINNER, c4_nuit: 1, c4_nuit_fait: 1, c4_tel_1: true, c4_mina_dort: true }, false);
     d.load('maison_feutre', 'horloge');
     await d.fadeIn(10);
+  },
+  /** The giant button eye looks in through the open front of the felt house (normally every 15 to 50 seconds). */
+  chapter4_oeil: async (d) => {
+    setup(d, { ...AFTER_DINNER, c4_nuit: 1, c4_nuit_fait: 1, c4_tel_1: true }, true);
+    d.load('maison_feutre', 'horloge');
+    await d.fadeIn(10);
+    await eyePass(d, eyeToken);
   },
   /** Night 22, just answered: the Noa-doll at the front door, Clé. */
   chapter4_nuit22: async (d) => {

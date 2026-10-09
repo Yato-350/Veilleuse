@@ -1,0 +1,24 @@
+# Lot 1 (chapter 4 world): Night 42 out of 41 with La Couseuse beaten (Mina n°366 frozen: « … ») and Le Petit
+# Homme beaten: he bursts into ink and stuffing, the nightlight is cracked (c4_fele), Mina n°366 picks it up and
+# unravels without a word (c4_mina366 = 'silence'); souvenir 4.
+query: debug=script&name=chapter4_nuit42&lang=fr
+god
+wait:1500
+eval: window.__veilleuse.G.state.flags.c4_couseuse = 'vaincue'
+zuntil: window.__veilleuse.game.top.constructor.name === 'Battle'
+assert: window.__veilleuse.game.top.ally === 'still'
+auto
+eval: window.__veilleuse.game.top.enemies[0].hp = 90
+hit
+zuntil: window.__veilleuse.game.top.bgKind === 'noir'
+eval: window.__veilleuse.game.top.enemies[0].hp = 3
+zuntil: window.__veilleuse.game.top.enemies[0].dead === true
+zuntil: window.__veilleuse.game.top.constructor.name === 'WorldScene' && window.__veilleuse.G.state.flags.c4_petit_homme
+assert: window.__veilleuse.G.state.flags.c4_fele === true
+assert: window.__veilleuse.G.state.flags.c4_petit_homme === 'vaincu'
+wait:1500
+shot:puddle
+zuntil: window.__veilleuse.game.top.constructor.name === 'ImageScene'
+auto
+assert: window.__veilleuse.G.state.flags.c4_mina366 === 'silence'
+assert: window.__veilleuse.G.state.flags.c4_fin === true

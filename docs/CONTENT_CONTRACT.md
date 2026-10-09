@@ -487,7 +487,13 @@ hachures, couleurs vives sur papier), style pixel sombre pour les souvenirs rée
 | `tv_mina` | image de vidéo familiale à la télé : Mina qui montre un dessin, lignes de balayage |
 
 `SOUVENIRS` : `fenetre` (titre « La fenêtre », image `souvenir_fenetre`), `dessin` (« Le dessin inachevé »),
-`veilleuse` (« La veilleuse »), chacun avec 2–4 légendes poignantes (`captions`).
+`veilleuse` (« La veilleuse »), `lumiere` (« La lumière sous la porte », chapitre 4), chacun avec 2–5 légendes
+poignantes (`captions`).
+
+v2 : une illustration par fichier de chapitre, autonome (ses propres petites primitives), ajoutée à `ILLUSTRATIONS`
+par décomposition comme `illustrations-bonus.ts`. Chapitre 4 : `src/data/illustrations-ch4.ts` →
+`souvenir_lumiere` (le couloir la nuit, le trait de lumière sous la porte, l'ombre d'une main posée à plat, le
+radiateur). Toute nouvelle illustration va aussi dans `CATALOG` de `src/game/scenes/gallery.ts`.
 
 ---
 
@@ -626,6 +632,14 @@ Drapeaux partagés :
 | `c2_gomme_spared` | CH2 | CH3 / RÉEL | Gomme a été apaisée |
 | `c1_chaussette_paire` | CH1 | CH2 | la Chaussette Perdue a retrouvé sa paire (Chaussette marchande heureuse) |
 | `fin_route` | CH3 | RÉEL | `'aube'` quand Noa choisit de se réveiller |
+
+**v2, chapitre 4** (`src/game/story/chapter4.ts`, cartes `src/data/maps/chapter4.ts`) : tous les drapeaux `c4_*`
+sont documentés en tête du module. Lus par les lots suivants : `c4_maman` (`merci`|`reste`), `c4_reste`, `c4_coton`
+(0–4, les Bourres du ch. 6), `c4_couseuse` (`epargnee`|`vaincue`), `c4_petit_homme` (`epargne`|`vaincu`), `c4_fele`
+(veilleuse fêlée), `c4_mina366` (`merci`|`silence`), `c4_fin`. Couches : `maison_feutre` (monde `feutre`) et
+`maison_stylo` (monde `stylo`, même plan, accessoires selon `c4_nuit` ∈ 1, 9, 22, 35, 42) ; l'horloge du salon
+passe de l'une à l'autre. Aides de script : `look(lignes, répliqueMina?)`, `byNight({1: …, 22: …})`.
+Mina n°366 suit Noa par `d.follower('mina366')` (ses répliques : `MINA_LINES`, `mina366Talk`).
 
 ### 8.6 Objets
 

@@ -7,6 +7,7 @@ query: debug=script&name=chapter4_coups&sheep=auto&lang=fr
 god
 wait:1500
 auto
+shot:lamp
 go:14/4
 ArrowRight:300
 zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
@@ -52,6 +53,9 @@ menu:3
 choose:0
 auto:8000
 shot:after
+zuntil: window.__veilleuse.game.top.constructor.name === 'ImageScene'
+wait:2500
+shot:souvenir
 auto
 assert: window.__veilleuse.G.state.flags.c4_petit_homme === 'epargne'
 assert: window.__veilleuse.G.state.flags.c4_mina366 === 'merci'

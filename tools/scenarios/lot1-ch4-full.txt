@@ -1,0 +1,199 @@
+# Lot 1 (chapter 4 world), the whole chapter from ?debug=script&name=chapter4 to souvenir 4 (« Fini quand »):
+# the pen-written chapter card, the door that sews itself shut, thin Dodo, Mina n°366; the looping dinner (eat twice,
+# stand up) and the Poupée-Maman (« merci »); the cuckoo, Night 1; back to the felt (Mina woken, Dodo fed with two
+# sheep, the pillow fort); Night 9 (Mot Aimanté), Night 22 (Clé, the hatch); the attic (labels, n°365 carried to the
+# curtain, La Couseuse spared with Mina's help, T3); Night 35 (the nightlight); the knocking corridor; Night 42 (T4),
+# Le Petit Homme spared with Mina's help; she unravels; souvenir « La lumière sous la porte ».
+query: debug=script&name=chapter4&sheep=auto&lang=fr
+god
+wait:2000
+auto
+assert: window.__veilleuse.G.state.party.includes('mina366')
+go:21/17
+ArrowRight:700
+auto
+choose:0
+auto
+choose:0
+auto
+choose:1
+auto
+assert: window.__veilleuse.game.top.ally === 'mina366'
+shot:maman
+write:tristesse
+auto
+write:merci
+auto
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c4_maman === 'merci'
+assert: window.__veilleuse.G.state.flags.c4_diner === 2
+assert: window.__veilleuse.G.state.flags.c4_nuit === 1
+interact:tel
+auto
+interact:poupee_noa
+auto
+interact:horloge
+auto
+choose:0
+auto
+interact:mina_chaise
+auto
+interact:dodo
+auto
+choose:1
+auto
+interact:mouton_1
+auto
+choose:0
+auto
+interact:mouton_2
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c4_coton === 2
+go:24/8
+interact:mouton_plateau
+auto
+interact:coussin
+auto
+choose:2
+auto
+assert: window.__veilleuse.G.state.flags.c4_cabane === true
+interact:horloge
+auto
+choose:0
+auto
+interact:tel
+auto
+choose:0
+auto
+interact:frigo
+auto
+write:colere
+auto
+write:joie
+auto
+write:joie
+auto
+menu:3
+choose:0
+auto
+interact:boite
+auto
+interact:horloge
+auto
+choose:0
+auto
+interact:mina_chaise
+auto
+interact:horloge
+auto
+choose:0
+auto
+interact:tel
+auto
+interact:porte
+auto
+write:tristesse
+auto
+eval: window.__veilleuse.game.top.menuDisabled = [false, false, false, false]
+write:ouvrir
+auto
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c4_trappe === true
+interact:horloge
+auto
+choose:0
+auto
+interact:mina_chaise
+auto
+interact:echelle
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.map === 'grenier'
+interact:mq_31
+auto
+interact:mq_364
+auto
+interact:couronnes
+auto
+interact:mq_365
+auto
+choose:0
+auto
+write:tristesse
+auto
+write:tristesse
+auto
+write:découdre
+auto
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c4_t3 === true
+interact:trappe
+auto
+interact:horloge
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c4_nuit === 35
+interact:tel
+auto
+interact:veilleuse
+auto
+choose:0
+auto
+go:10/8
+ArrowLeft:400
+auto
+assert: window.__veilleuse.G.state.map === 'couloir_coups'
+go:14/4
+ArrowRight:300
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+ArrowRight
+KeyZ
+auto
+go:32/4
+ArrowRight:300
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+ArrowRight
+ArrowRight
+KeyZ
+auto
+go:50/4
+ArrowRight:300
+zuntil: window.__veilleuse.dialogue.choices
+choose:0
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+ArrowRight
+KeyZ
+auto
+assert: window.__veilleuse.G.state.flags.c4_coups === 3
+go:62/4
+ArrowRight:400
+zuntil: window.__veilleuse.game.top.constructor.name === 'Battle'
+assert: window.__veilleuse.game.top.ally === 'mina366'
+auto
+write:peur
+auto
+write:tristesse
+auto
+write:tristesse
+auto
+write:rendre
+auto
+menu:3
+choose:0
+zuntil: window.__veilleuse.game.top.constructor.name === 'ImageScene'
+wait:2500
+shot:souvenir
+auto
+assert: window.__veilleuse.G.state.souvenirs.includes('lumiere')
+assert: window.__veilleuse.G.state.flags.c4_mina366 === 'merci'
+assert: window.__veilleuse.G.state.flags.c4_fin === true
