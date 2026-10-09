@@ -116,8 +116,8 @@ const MAISON_FEUTRE: MapDef = {
   props: [
     // --- Upstairs: the landing.
     WALL('prop_mirror', 4, 3, -2, { script: C4.mirrorFelt }),
-    WALL('prop_c4_trappe', 7, 2, -6, { cond: nf('c4_trappe'), script: C4.ladderFelt }),
-    P('prop_c4_echelle', 7, 4, { solid: true, cond: f('c4_trappe'), script: C4.ladderFelt }),
+    WALL('prop_c4_trappe', 7, 2, -6, { id: 'trappe', cond: nf('c4_trappe'), script: C4.ladderFelt }),
+    P('prop_c4_echelle', 7, 4, { id: 'echelle', solid: true, cond: f('c4_trappe'), script: C4.ladderFelt }),
     P('prop_plant', 2, 4, { script: C4.look(['Une plante verte en feutre.', 'Quelqu\'un l\'arrose : la terre est trempée. La plante, elle, n\'a jamais poussé d\'un point.']) }),
     P('prop_c4_bobine', 5, 6, { solid: false, oy: -2, script: C4.look(['Une bobine de fil rouge, tombée par terre. Presque vide.', 'Le fil part sous la porte du grenier, au plafond.'], 'C\'est pas à moi. Moi, j\'ai pas le droit de toucher aux aiguilles.') }),
     // --- Noa's room.
@@ -127,7 +127,7 @@ const MAISON_FEUTRE: MapDef = {
     P('prop_chair', 13, 5, { solid: false, oy: -2 }),
     WALL('prop_poster', 16, 3, -4, { script: C4.look(['Un poster de l\'espace, cousu au mur.', 'Les planètes sont des boutons. La Lune aussi. Elle est cousue en croix.']) }),
     P('prop_closet', 16, 4, { w: 2, script: C4.look(['Ton placard. Fermé par une fermeture éclair, du haut jusqu\'en bas.', 'De l\'intérieur, on entend une petite respiration. Elle s\'arrête quand tu écoutes.'], 'Le monstre du placard, il habite plus ici. Il a déménagé. Je crois.') }),
-    SPOT(18, 5, C4.knockWallFelt, { h: 2 }),
+    SPOT(18, 5, C4.knockWallFelt, { id: 'mur', h: 2 }),
     P('prop_c4_mot', 12, 8, { solid: false, oy: -2, script: C4.look(['Un petit papier plié en quatre, sous le lit.', 'Dessus, de ton écriture : « Bonne nuit ». C\'est tout. Il n\'a jamais été donné.']) }),
     // --- Mina's room: pink, perfect.
     P('prop_bed_mina', 26, 4, { h: 2, script: C4.look(['Le lit de Mina. La couette est tirée, les oreillers gonflés.', 'Personne n\'y a jamais dormi. Il est trop parfait pour qu\'on y dorme.'], ['Mon lit ! …Il sent pas comme mon lit.', 'Il sent le neuf.']) }),
@@ -137,9 +137,9 @@ const MAISON_FEUTRE: MapDef = {
     SPOT(23, 3, C4.look(['La fenêtre de Mina. Une lune de feutre est cousue dans le ciel.', 'Elle ne bouge pas. Elle ne bougera jamais. Ici, la nuit ne passe pas.'], 'C\'est ma lune. Elle me regarde dormir. Quand je dors.'), { oy: -2 }),
     P('prop_pillow_big', 24, 7, { solid: false, script: C4.look(['Un gros coussin, au milieu du tapis.', 'Dessus, une marque ronde, comme quand on y pose une couronne. Et trois cheveux roux, en fil.']) }),
     // --- Maman's room: sewn shut under a sheet.
-    SPOT(29, 7, C4.mamanSheet, { w: 9 }),
+    SPOT(29, 7, C4.mamanSheet, { id: 'drap', w: 9 }),
     // --- Downstairs: the entrance.
-    P('', 5, 13, { cond: nf('c4_intro'), script: C4.frontDoorFelt }),
+    P('', 5, 13, { id: 'porte', cond: nf('c4_intro'), script: C4.frontDoorFelt }),
     P('prop_c4_coutures_4', 5, 13, { id: 'coutures', cond: f('c4_intro'), script: C4.frontDoorFelt }),
     WALL('prop_coat', 7, 13, -2, { script: C4.look(['Le manteau de Maman, sur sa patère.', 'Les poches sont cousues. Dedans, quelque chose de plat et de rectangulaire. Qui vibre, parfois.']) }),
     P('prop_shoes', 6, 14, { solid: false, oy: 2, script: C4.look(['Quatre paires de chaussures, bien rangées par taille.', 'Les petites bottes de Mina sont cousues au paillasson. Pour qu\'elles ne repartent pas.'], 'Mes bottes ! Je peux plus les mettre. C\'est pas grave, je sors plus.') }),
@@ -181,7 +181,7 @@ const MAISON_FEUTRE: MapDef = {
   ],
   enemies: [
     { id: 'c4_de_1', enemies: ['de_chevalier'], x: 24, y: 8, wander: 2, cond: fromNight(1) },
-    { id: 'c4_brouillon_1', enemies: ['poupee_brouillon'], x: 6, y: 8, wander: 2, cond: fromNight(9) },
+    { id: 'c4_brouillon_1', enemies: ['poupee_brouillon'], x: 3, y: 8, wander: 2, cond: fromNight(9) },
     { id: 'c4_pate_1', enemies: ['pate_froide'], x: 33, y: 16, wander: 1, cond: fromNight(9) },
   ],
   triggers: [{ x: 23, y: 16, w: 1, h: 3, script: C4.kitchenEnter }],
@@ -233,14 +233,14 @@ const MAISON_STYLO: MapDef = {
     P('prop_desk', 13, 4, { w: 2, script: C4.deskPen }),
     P('prop_chair', 13, 5, { solid: false, oy: -2 }),
     P('prop_closet', 16, 4, { w: 2, script: C4.look(['Ton placard. Fermé. Bien fermé.', 'La nuit, tu vérifies deux fois. Puis une troisième, pour être sûr.']) }),
-    SPOT(18, 5, C4.knockWallPen, { h: 2 }),
-    P('prop_c4_boite', 12, 7, { script: C4.shoebox }),
-    { sprite: 'npc_poupee_noa_cote', x: 13, y: 7, cond: atNight(9), script: C4.dollShoebox },
+    SPOT(18, 5, C4.knockWallPen, { id: 'mur', h: 2 }),
+    P('prop_c4_boite', 12, 7, { id: 'boite', script: C4.shoebox }),
+    { id: 'poupee_boite', sprite: 'npc_poupee_noa_cote', x: 13, y: 7, cond: atNight(9), script: C4.dollShoebox },
     // --- Mina's room (blackened), Maman's room (not drawn).
-    SPOT(20, 7, C4.minaRoomPen, { w: 8 }),
-    SPOT(29, 7, C4.mamanRoomPen, { w: 9 }),
+    SPOT(20, 7, C4.minaRoomPen, { id: 'chambre_mina', w: 8 }),
+    SPOT(29, 7, C4.mamanRoomPen, { id: 'chambre_maman', w: 9 }),
     // --- Downstairs: the entrance.
-    SPOT(5, 13, C4.frontDoorPen, { solid: true }),
+    SPOT(5, 13, C4.frontDoorPen, { id: 'porte', solid: true }),
     P('prop_shoes', 7, 14, { solid: false, oy: 2, script: C4.look(['Tes chaussures. Les lacets sont faits.', 'Tu ne les défais plus. Comme ça, tu es prêt. Au cas où.']) }),
     WALL('prop_picture', 4, 13, -4, { script: C4.look(['Une photo, dessinée au stylo.', 'Tu as repassé le contour de Mina tant de fois que le papier brille.', 'Le tien, tu ne l\'as pas dessiné. Il y a un trou rond, à la place.']) }),
     // --- The living room.
@@ -270,7 +270,7 @@ const MAISON_STYLO: MapDef = {
   enemies: [
     { id: 'c4_pate_2', enemies: ['pate_froide'], x: 34, y: 17, wander: 1, cond: fromNight(1) },
     { id: 'c4_pate_3', enemies: ['pate_froide', 'pate_froide'], x: 26, y: 16, wander: 1, cond: fromNight(22) },
-    { id: 'c4_mot_1', enemies: ['mot_aimante'], x: 17, y: 16, wander: 2, cond: fromNight(22) },
+    { id: 'c4_mot_1', enemies: ['mot_aimante'], x: 10, y: 18, wander: 1, cond: fromNight(22) },
     { id: 'c4_brouillon_2', enemies: ['poupee_brouillon'], x: 24, y: 9, wander: 2, cond: fromNight(9) },
   ],
   triggers: [
@@ -333,7 +333,7 @@ const GRENIER: MapDef = {
   },
   onEnter: C4.grenierEnter,
   props: [
-    P('prop_c4_trappe', 12, 11, { under: true, solid: false, oy: -4, script: C4.hatchDown }),
+    P('prop_c4_trappe', 12, 11, { id: 'trappe', under: true, solid: false, oy: -4, script: C4.hatchDown }),
     // The mannequins (they turn to look at Noa, one more for each label read).
     ...MANNEQUINS.map(([id, x, y]) => P('prop_c4_mannequin_tourne', x, y, { id, script: C4.mannequin(id) })),
     P('prop_c4_mannequin_sansbouche', 17, 4, { id: 'mq_bouche', script: C4.mannequinNoMouth }),
@@ -342,7 +342,7 @@ const GRENIER: MapDef = {
     P('prop_c4_mannequin_cape', 21, 5, { id: 'mq_365_pose', cond: f('c4_rideau'), script: C4.mannequin365 }),
     P('prop_c4_mannequin_vide', 18, 9, { id: 'mq_vide', script: C4.mannequinEmpty }),
     // The crowns, the tally marks, the patterns, the dormer.
-    P('prop_c4_couronnes', 3, 10, { w: 3, script: C4.crownsPile }),
+    P('prop_c4_couronnes', 3, 10, { id: 'couronnes', w: 3, script: C4.crownsPile }),
     P('prop_c4_couronne', 6, 11, { solid: false, script: C4.crownsPile }),
     SPOT(5, 2, C4.tallyMarks, { w: 4, h: 2 }),
     SPOT(13, 2, C4.tallyMarks, { w: 4, h: 2 }),
@@ -405,7 +405,7 @@ const COULOIR: MapDef = {
     WALL('prop_c4_tel', 64, 2, -2, { id: 'tel_couloir', script: C4.corridorPhone }),
     P('prop_c4_mot', 28, 5, { solid: false, script: C4.look(['Un mot du frigo, par terre.', '« Tu viens demain ? »', 'Tu ne l\'avais pas jeté. Tu ne jettes rien.']) }),
     P('prop_c4_mot', 46, 3, { solid: false, script: C4.look(['Un autre mot.', '« Elle va un peu mieux ❤ »', 'Le cœur est dessiné à la main. Il a bavé.']) }),
-    SPOT(67, 2, C4.noaDoor, { solid: true }),
+    SPOT(67, 2, C4.noaDoor, { id: 'porte_noa', solid: true }),
     P('prop_c4_lumiere', 67, 2, { id: 'lumiere_porte', solid: false, oy: 1 }),
     P('prop_c4_main', 67, 2, { id: 'main_porte', solid: false, oy: -3 }),
   ],

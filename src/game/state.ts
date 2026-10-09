@@ -69,7 +69,8 @@ export const MAX_ITEMS = 8;
 
 /** Stats derived from progression. Étoiles (sparing) raise max HP, Encre (defeating) raises attack. */
 export function maxHp(s: GameState): number {
-  return 20 + Math.floor(s.etoiles / 4) * 4;
+  // Chapter 4: « Coton chaud », the cotton taken from the felt sheep for Dodo, until the end of that night.
+  return 20 + Math.floor(s.etoiles / 4) * 4 + Number(s.flags.c4_coton_chaud ?? 0);
 }
 
 export function level(s: GameState): number {
