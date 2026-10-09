@@ -1,5 +1,6 @@
 import type { BattleHooks, EnemyDef } from '../game/battle/types';
 import { DEV_ENEMIES } from './enemies-dev';
+import { CH4_ENEMIES } from './enemies-ch4';
 
 /**
  * Enemy registry. See docs/CONTENT_CONTRACT.md § 5.
@@ -534,6 +535,12 @@ export const ENEMIES: Record<string, EnemyDef> = {
     rewards: { boutons: 12 },
     bg: 'hospital',
   },
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Chapitre 4 — La Maison Cousue (src/data/enemies-ch4.ts)
+  // -------------------------------------------------------------------------------------------------------------------
+
+  ...CH4_ENEMIES,
 
   // -------------------------------------------------------------------------------------------------------------------
   // Final — Dodo (scénarisé par le chapitre 3 via des hooks ; valeurs par défaut ici)

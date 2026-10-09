@@ -157,7 +157,10 @@ export type Sfx =
   | 'pipe'
   | 'tooth'
   | 'scratch'
-  | 'buzz';
+  | 'buzz'
+  // v2 chapter 4: a sewing-machine needle punching through felt, a long thread pulled out of stuffing.
+  | 'stitch'
+  | 'thread';
 
 export type Ambience = 'rain' | 'static' | 'wind' | 'hum' | 'none';
 
@@ -175,6 +178,8 @@ export const VOICES: Record<string, Voice> = {
   noa: { wave: 'triangle', pitch: 260, vary: 0.04, len: 0.05, vol: 0.22 },
   mina: { wave: 'square', pitch: 740, vary: 0.12, len: 0.035, vol: 0.09 },
   dodo: { wave: 'sine', pitch: 520, vary: 0.08, len: 0.06, vol: 0.25 },
+  /** Mina n°366, the felt Mina (chapter 4): Mina's voice, flattened, a little lower, as if replayed. */
+  mina366: { wave: 'square', pitch: 680, vary: 0.02, len: 0.045, vol: 0.08 },
   dododark: { wave: 'sawtooth', pitch: 110, vary: 0.15, len: 0.08, vol: 0.12 },
   maman: { wave: 'triangle', pitch: 360, vary: 0.03, len: 0.05, vol: 0.22 },
   monster: { wave: 'sawtooth', pitch: 140, vary: 0.2, len: 0.06, vol: 0.08 },
@@ -846,6 +851,15 @@ export class AudioEngine {
       case 'scratch':
         this.noiseBurst(0.45, 0.07 * v, 'bandpass', 3200 * p);
         this.noiseBurst(0.3, 0.05 * v, 'bandpass', 2100 * p, t + 0.2);
+        break;
+      case 'stitch':
+        this.tone('square', 1900 * p, 900 * p, 0.025, 0.06 * v);
+        this.tone('triangle', 150 * p, 70 * p, 0.06, 0.25 * v, t + 0.01);
+        this.noiseBurst(0.03, 0.12 * v, 'highpass', 3500, t + 0.005);
+        break;
+      case 'thread':
+        this.tone('sawtooth', 260 * p, 820 * p, 0.38, 0.035 * v);
+        this.noiseBurst(0.38, 0.09 * v, 'bandpass', 2600 * p);
         break;
       case 'buzz':
         // A phone vibrating on a wooden desk.

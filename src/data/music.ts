@@ -686,6 +686,69 @@ export const TRACKS: Record<string, Track> = {
       ch('hat', drums('x . x . x . x . x . x . x . x .', 8), { vol: 0.08 }),
     ],
   },
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Chapter 4 « La Maison Cousue »
+  // -------------------------------------------------------------------------------------------------------------------
+
+  /**
+   * La Couseuse — a sewing machine that never stops: needle ticks in sixteenths with a stutter, the pedal on the kick,
+   * and over it the lullaby in C minor on a detuned music box that skips like a stuck record (the same bar, again,
+   * again — one night after another). 8 bars 4/4.
+   */
+  couseuse: {
+    bpm: 132,
+    stepsPerBeat: 4,
+    vol: 0.72,
+    channels: [
+      ch(
+        'musicbox',
+        join(
+          'Eb5 - - - . . D5 - C5 - - - . . . .',
+          'Eb5 - - - . . D5 - C5 - - - . . . .',
+          'Eb5 - - - . . D5 - C5 - - - D5 - Eb5 -',
+          'G5 - - - - - - - . . . . . . . .',
+          'Ab5 - - - G5 - Eb5 - - - - - D5 - - -',
+          'Ab5 - - - G5 - Eb5 - - - - - D5 - - -',
+          'C5 - - - Bb4 - C5 - D5 - - - Eb5 - D5 -',
+          'C5 - - - - - - - . . . . B4 - - -',
+        ),
+        { vol: 0.32, reverb: 0.55, detune: -38 },
+      ),
+      ch('musicbox', transpose(rep('Eb6 . . . . . . . . . . . D6 . . .', 8), 0), { vol: 0.07, reverb: 0.8, detune: 30 }),
+      ch('pulse12', rep('G6 . G6 G6 G6 . G6 G6 G6 . G6 G6 G6 . G6 .', 8), { vol: 0.035 }),
+      ch('organ', padLine(['Cm', 'Cm', 'Ab', 'Ab', 'Fm', 'Fm', 'G', 'G'].map(fixFlat), 3, 16), { vol: 0.07, detune: 14 }),
+      ch('bass', figure(['Cm', 'Cm', 'Ab', 'Ab', 'Fm', 'Fm', 'G', 'G'].map(fixFlat), 2, 'R . R . R . R . R . R . 8 . R .'), { vol: 0.36 }),
+      ch('kick', drums('X . . . . . x . X . . . . . . .', 8), { vol: 0.42 }),
+      ch('snare', drums('. . . . x . . . . . . . x . . x', 8), { vol: 0.16 }),
+      ch('hat', drums('x . x x x . x x x . x x x . x x', 8), { vol: 0.11 }),
+    ],
+  },
+
+  /**
+   * Le Petit Homme de la Maison — a small man's march in 3/4: the lullaby in C minor, low on the piano; very faint and
+   * out of tune above it, the same lullaby in major on a music box (the nightlight he will not let go of); knocks on
+   * the kick, one, two, three, then nothing; a heartbeat. 16 bars 3/4.
+   */
+  petit_homme: {
+    bpm: 100,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch('piano', transpose(toHarmonicMinor(LULLABY), -12), { vol: 0.34, reverb: 0.4 }),
+      ch('musicbox', transpose(LULLABY, 12), { vol: 0.06, reverb: 0.85, detune: 48 }),
+      ch('organ', padLine(['Cm', 'G', 'Ab', 'G', 'Cm', 'G', 'G7', 'Cm', 'Fm', 'Ab', 'G7', 'Cm', 'Fm', 'Db', 'G7', 'Cm'].map(fixFlat), 3, 6), {
+        vol: 0.08,
+        detune: -12,
+      }),
+      ch('bass', figure(['Cm', 'G', 'Ab', 'G', 'Cm', 'G', 'G7', 'Cm', 'Fm', 'Ab', 'G7', 'Cm', 'Fm', 'Db', 'G7', 'Cm'].map(fixFlat), 2, 'R - - L - -'), {
+        vol: 0.42,
+      }),
+      ch('kick', drums(join('X . . . . .', 'X . X . . .', 'X . X . X .', '. . . . . .'), 4), { vol: 0.5 }),
+      ch('triangle', rep('C2 . C2 . . .', 16), { vol: 0.28 }),
+      ch('snare', drums('. . . . . x', 16), { vol: 0.1 }),
+    ],
+  },
 };
 
 /** Spells flats as sharps so chord() can parse them (Bb → A#). */

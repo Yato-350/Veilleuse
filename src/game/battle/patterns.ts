@@ -3,6 +3,7 @@ import { rng } from '../../engine/math';
 import type { Emotion } from '../../engine/palette';
 import type { BulletWorld } from './bullets';
 import { BONUS_PATTERNS } from './patterns-bonus';
+import { CH4_PATTERNS } from './patterns-ch4';
 
 export interface PatternCtx {
   /** Difficulty modifier: 0 = gentle, grows with agitation and turn count. */
@@ -517,4 +518,6 @@ export const PATTERNS: Record<string, Pattern> = {
   },
   // Bonus chapter (Maman's dream): see patterns-bonus.ts.
   ...BONUS_PATTERNS,
+  // Chapter 4 « La Maison Cousue »: see patterns-ch4.ts.
+  ...CH4_PATTERNS,
 };

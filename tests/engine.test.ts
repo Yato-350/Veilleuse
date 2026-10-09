@@ -25,6 +25,8 @@ import {
 import { soulLabel } from '../src/engine/palette';
 import { WORD_POOLS } from '../src/data/words';
 import { EnemyRuntime } from '../src/game/battle/enemy';
+import { ENEMIES } from '../src/data/enemies';
+import { BulletWorld } from '../src/game/battle/bullets';
 import type { EnemyDef } from '../src/game/battle/types';
 import { attack, defense, level, maxHp, newState, readSave, writeSave, hasSave, deleteSave, readMeta, writeMeta, migrateSave, SAVE_VERSION, type GameState } from '../src/game/state';
 import { MAPS } from '../src/data/maps';
@@ -223,9 +225,9 @@ describe('battle 1.1: bittersweet words', () => {
     // A single-emotion word is still upsetting when hated, whatever the need.
     expect(evaluateWord({ text: 'rire', emotion: 'joie' }, { emotion: 'joie' }, ['joie']).verdict).toBe('bad');
   });
-  it('chapters 2 and 3 have bittersweet words, chapter 1 none; all pool words are unique', () => {
+  it('chapters 2 to 4 have bittersweet words, chapter 1 none; all pool words are unique', () => {
     expect(WORD_POOLS[1]!.some((w) => w.emotion2)).toBe(false);
-    for (const ch of [2, 3]) {
+    for (const ch of [2, 3, 4]) {
       const doux = WORD_POOLS[ch]!.filter((w) => w.emotion2);
       expect(doux.length).toBeGreaterThanOrEqual(3);
       for (const w of doux) expect(wordEmotions(w)).toEqual(['joie', 'tristesse']);
@@ -250,6 +252,16 @@ describe('battle 1.1: Mina the ally', () => {
     expect(allyState(ctx({ flags: { interlude: 1 } }))).toBe('none');
     expect(allyState(ctx({ chapter: 0 }))).toBe('none');
     expect(allyState(ctx({ chapter: 4 }))).toBe('none');
+  });
+  it('chapter 4: Mina n°366 (party « mina366 ») helps, and sits frozen once La Couseuse was beaten', () => {
+    expect(allyState(ctx({ chapter: 4, party: ['mina366'] }))).toBe('mina366');
+    expect(allyState(ctx({ chapter: 4, party: ['mina366'], flags: { c4_couseuse: 'vaincue' } }))).toBe('still');
+    expect(allyState(ctx({ chapter: 4, party: ['mina366'], flags: { c4_couseuse: 'epargnee' } }))).toBe('mina366');
+    expect(allyState(ctx({ chapter: 4, party: [] }))).toBe('none');
+    expect(allyState(ctx({ chapter: 4, party: ['mina366'], noAlly: true }))).toBe('none');
+    expect(allyState(ctx({ chapter: 4, party: ['mina366'], flags: { interlude: 4 } }))).toBe('none');
+    expect(allyState(ctx({ chapter: 3, party: ['mina366'] }))).toBe('none');
+    expect(allyState(ctx({ chapter: 5, party: ['mina366'] }))).toBe('none');
   });
   it('leaves an empty slot in chapter 3 once she was erased', () => {
     expect(allyState(ctx({ chapter: 3, party: [], flags: { c3_mina_erased: true } }))).toBe('absent');
@@ -284,6 +296,35 @@ describe('battle 1.1: Mina the ally', () => {
     // Without Mina at Noa's side, nobody offers anything.
     for (let i = 0; i < 3; i++) s.record('bip', true, false);
     expect(s.offersHelp(false)).toBe(false);
+  });
+});
+
+describe('chapter 4 battles', () => {
+  it('has the special words of its fights in the chapter 4 pool, and fear words for Le Petit Homme', () => {
+    const texts = WORD_POOLS[4]!.map((w) => w.text);
+    for (const w of ['découdre', 'rendre', 'ouvrir', 'merci', 'reste', 'pâtes', 'mot du frigo']) expect(texts).toContain(w);
+    expect(WORD_POOLS[4]!.filter((w) => w.emotion === 'peur').length).toBeGreaterThanOrEqual(4);
+  });
+  it('declares the fights the story calls, with their special words', () => {
+    for (const id of ['pate_froide', 'mot_aimante', 'de_chevalier', 'poupee_brouillon', 'cle', 'poupee_maman', 'couseuse', 'petit_homme']) expect(ENEMIES[id]).toBeTruthy();
+    expect(ENEMIES.poupee_maman!.specialWords!.map((w) => w.text).sort()).toEqual(['merci', 'reste']);
+    expect(ENEMIES.couseuse!.needs.at(-1)!.word).toBe('découdre');
+    expect(ENEMIES.petit_homme!.needs.map((n) => n.emotion ?? n.word)).toEqual(['peur', 'tristesse', 'rendre']);
+    expect(ENEMIES.cle!.needs.at(-1)!.word).toBe('ouvrir');
+  });
+  it('lets harmless projectiles (dmg 0) pass through the soul without using up the shield', () => {
+    const w = new BulletWorld();
+    w.box = { x: 0, y: 0, w: 100, h: 100 };
+    w.soul.x = 50;
+    w.soul.y = 50;
+    w.shield = 2;
+    let hits = 0;
+    w.onHit = () => hits++;
+    const b = w.spawn({ x: 50, y: 50, r: 3, dmg: 0, data: { pierce: 1 } });
+    w.update();
+    expect(hits).toBe(0);
+    expect(w.shield).toBe(2);
+    expect(b.dead).toBe(false);
   });
 });
 

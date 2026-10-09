@@ -1,6 +1,7 @@
 import type { Emotion } from '../../engine/palette';
 import type { Battle } from './battle';
 import type { EnemyRuntime } from './enemy';
+import type { AllyEffect } from './rules';
 
 export interface WordDef {
   text: string;
@@ -48,6 +49,11 @@ export interface BattleHooks {
   onDeath(b: Battle, e: EnemyRuntime): Promise<boolean>;
   /** Called when the player's HP reaches 0 (return true to prevent game over). */
   onPlayerDeath(b: Battle): Promise<boolean>;
+  /**
+   * The ally (Mina, or Mina n°366 in chapter 4) is about to help with `effect`. Return true if handled (the default
+   * help and its line are skipped): bosses give her a help of their own (unsew a button, embroider light…).
+   */
+  onAlly(b: Battle, effect: AllyEffect): Promise<boolean>;
 }
 
 export interface EnemyDef {
@@ -84,7 +90,7 @@ export interface EnemyDef {
   hooks?: Partial<BattleHooks>;
   music?: string;
   /** Battle background. */
-  bg?: 'dream' | 'forest' | 'hospital' | 'void' | 'closet' | 'eraser' | 'real';
+  bg?: 'dream' | 'forest' | 'hospital' | 'void' | 'closet' | 'eraser' | 'real' | 'feutre' | 'stylo' | 'noir';
   /** Pixel offset for the sprite. */
   dy?: number;
   /** Emotion inflicted on the soul at the start of the battle. */

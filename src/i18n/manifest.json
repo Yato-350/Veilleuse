@@ -41,6 +41,7 @@
     "src/main.ts",
     "src/data/enemies-dev.ts",
     "src/data/enemies.ts",
+    "src/data/enemies-ch4.ts",
     "src/data/items.ts",
     "src/data/words.ts",
     "src/data/speakers.ts",

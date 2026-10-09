@@ -5,6 +5,7 @@
 import { UI } from './ui';
 import { BATTLE } from './battle';
 import { DATA } from './data';
+import { DATA_CH4 } from './data-ch4';
 import { MAPS } from './maps';
 import { STORY_REAL } from './story-real';
 import { STORY_EPILOGUE } from './story-epilogue';
@@ -18,6 +19,7 @@ export const CATALOG_PARTS: Record<string, Record<string, string>> = {
   ui: UI,
   battle: BATTLE,
   data: DATA,
+  'data-ch4': DATA_CH4,
   maps: MAPS,
   'story-real': STORY_REAL,
   'story-epilogue': STORY_EPILOGUE,

@@ -28,6 +28,17 @@ export const WORD_POOLS: Record<number, WordDef[]> = {
     ...w('neutre', 'chambre', 'lit', 'blouse', 'horloge', 'numéro'),
     ...doux('souvenir', 'dessin', 'son rire', 'anniversaire'),
   ],
+  // Chapter 4 « La Maison Cousue »: the house, the dinner, the nights alone. « découdre », « rendre », « ouvrir », « merci »
+  // and « reste » are also the special words of La Couseuse, Le Petit Homme, Clé and the Poupée-Maman. Fear words exist
+  // here for the first time: Le Petit Homme needs one.
+  4: [
+    ...w('joie', 'merci', 'ouvrir', 'samedi', 'dehors', 'ensemble', 'chanter', 'goûter', 'rire'),
+    ...w('tristesse', 'rendre', 'seul', 'attendre', 'manteau', 'chaise vide', 'porte close', 'se taire', 'nuit blanche'),
+    ...w('colere', 'découdre', 'arracher', 'claquer', 'menteuse', 'casser', 'hurler', 'assez'),
+    ...w('peur', 'noir', 'cauchemar', 'trembler', 'placard', 'sous la porte', 'coups'),
+    ...w('neutre', 'reste', 'maison', 'horloge', 'téléphone', 'fil', 'aiguille'),
+    ...doux('pâtes', 'mot du frigo', 'dimanche', 'deux coups'),
+  ],
 };
 
 /** Words Dodo forces into the notebook during the final battle. */

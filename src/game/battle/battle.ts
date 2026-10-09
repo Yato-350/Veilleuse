@@ -104,6 +104,31 @@ const ALLY_LINES: Record<AllyEffect, string[]> = {
   heal: ['Tiens, un pansement à paillettes !', 'Bouge pas, je fais un bisou magique !'],
 };
 
+/**
+ * Mina n°366, the felt Mina of chapter 4: the same help, sewn. She repeats chapter 1 lines a beat too late, and her
+ * smile thread twitches.
+ */
+const ALLY_LINES_366: Record<AllyEffect, string[]> = {
+  shield: ['Je te couds un dé à coudre. Bouge pas. {p:30}…Bouge pas.', 'Bouclier de chevalière ! {p:40}…Tadaaa.', 'Un dé, sur ton cœur. Comme ça, l\'aiguille glisse.'],
+  color: ['Je brode tout le blanc en {color}. Point. Point. Point.', 'Hop ! Tout en {color}, comme ton cœur ! {p:40}…Comme ton cœur.'],
+  heal: ['Je te couds un rond de feutre sur le cœur. Ça tient chaud.', 'Bisou magique. {p:40}Bisou… magique.'],
+};
+const ALLY_AFTER_366: Record<AllyEffect, string> = {
+  shield: '* Un dé à coudre protège ton cœur (3 coups).',
+  color: '* Elle brode : les attaques blanches prennent ta couleur.',
+  heal: '',
+};
+/** Red thread: the pips of Mina n°366. */
+const MINA366_RED = '#e8505b';
+
+/** Mina n°366 after La Couseuse was beaten: she sits in her slot, a doll on a chair. */
+const STILL_LINES = [
+  '* Tu attends le dé à coudre de Mina n°366.\n* Elle est assise, les mains sur les genoux. Elle ne bouge plus.',
+  '* Le fil de son sourire pend un peu plus bas qu\'avant.',
+  '* « Vas-y, chevalier. » Personne ne l\'a dit. Tu l\'as entendu quand même.',
+  '* Une maille de Mina n°366 a filé. Personne ne la reprendra.',
+];
+
 const ABSENT_LINES = [
   '* Tu attends le dessin de Mina. Il ne vient pas.',
   '* Tu te tournes vers Mina pour lui dire « à toi ! ».\n* Il n\'y a personne.',
@@ -157,6 +182,8 @@ export class Battle implements Scene {
   fear = 0;
   /** Extra overlay draw (scripted bosses). */
   overlay: ((g: CanvasRenderingContext2D, b: Battle) => void) | null = null;
+  /** Extra draw over the background and the enemies, under the ally, the box and the HUD (darkness, light cones…). */
+  backdrop: ((g: CanvasRenderingContext2D, b: Battle) => void) | null = null;
   ended = false;
   /** Player name label in the HUD. */
   hudName = G.state.playerChar === 'maman' ? 'MAMAN' : 'NOA';
@@ -171,8 +198,8 @@ export class Battle implements Scene {
   /** Mina's line (or the line about her absence) is on screen. */
   private allyTalking = false;
   private absentNoted = false;
-  /** Help prepared by Mina for the next dodge. */
-  private nextDodge: { shield?: number; recolor?: Emotion } | null = null;
+  /** Help prepared by Mina for the next dodge (`mem` is merged into the pattern's scratch data). */
+  private nextDodge: { shield?: number; recolor?: Emotion; mem?: Record<string, number> } | null = null;
   private readonly key: string;
   /** The soul's emotion shapes the track (off when the battle's scripts own the music filter/tempo). */
   private readonly moodMusic: boolean;
@@ -413,24 +440,31 @@ export class Battle implements Scene {
   /** Every 3rd turn, before the enemy attacks: Mina helps — or, after she was erased, her absence is felt. */
   private async allyTurn(): Promise<void> {
     if (this.ally === 'none' || !allyActsOn(this.turn)) return;
-    if (this.ally === 'absent') {
+    if (this.ally === 'absent' || this.ally === 'still') {
       // Sparingly: at most once per battle, always the first time, then one battle in three.
       if (this.absentNoted) return;
       this.absentNoted = true;
-      const first = !G.state.flags.c3_mina_absence_felt;
+      const key = this.ally === 'absent' ? 'c3_mina_absence_felt' : 'c4_mina366_still_felt';
+      const lines = this.ally === 'absent' ? ABSENT_LINES : STILL_LINES;
+      const first = !G.state.flags[key];
       if (!first && !rng.chance(0.35)) return;
-      G.state.flags.c3_mina_absence_felt = true;
+      G.state.flags[key] = true;
       this.allyT = 60;
       this.allyTalking = true;
-      await this.say(first ? ABSENT_LINES[0]! : rng.pick(ABSENT_LINES));
+      await this.say(first ? lines[0]! : rng.pick(lines));
       this.allyTalking = false;
       return;
     }
     const effect = pickAllyEffect(this.hp, this.maxHp, this.soulEmo, this.allyActs);
     this.allyActs++;
     this.allyT = 60;
-    audio.sfx('write', { pitch: 1.3 });
-    let line = tr(rng.pick(ALLY_LINES[effect])).replace('{color}', emotionColorName(this.soulEmo));
+    this.allyTalking = true;
+    const handled = await this.hooks.onAlly?.(this, effect);
+    this.allyTalking = false;
+    if (handled || this.ended) return;
+    const felt = this.ally === 'mina366';
+    audio.sfx(felt ? 'stitch' : 'write', { pitch: 1.3 });
+    let line = tr(rng.pick((felt ? ALLY_LINES_366 : ALLY_LINES)[effect])).replace('{color}', emotionColorName(this.soulEmo));
     let after: string;
     if (effect === 'heal') {
       const before = this.hp;
@@ -438,15 +472,32 @@ export class Battle implements Scene {
       after = tf('* Tu récupères {0} PV.', this.hp - before);
     } else if (effect === 'shield') {
       this.nextDodge = { shield: 3 };
-      after = tr('* Un rond de crayon protège ton cœur (3 coups).');
+      after = tr(felt ? ALLY_AFTER_366.shield : '* Un rond de crayon protège ton cœur (3 coups).');
     } else {
       this.nextDodge = { recolor: this.soulEmo };
-      after = tr('* Les attaques blanches prennent ta couleur.');
+      after = tr(felt ? ALLY_AFTER_366.color : '* Les attaques blanches prennent ta couleur.');
     }
-    line = tf('{c:o}Mina :{/c} {0}\n{1}', line, after);
+    line = felt ? tf('{c:#e07b6a}Mina n°366 :{/c} {0}\n{1}', line, after) : tf('{c:o}Mina :{/c} {0}\n{1}', line, after);
     this.allyTalking = true;
-    await this.say(line, false, true, 'mina');
+    await this.say(line, false, true, felt ? 'mina366' : 'mina');
     this.allyTalking = false;
+  }
+
+  /**
+   * A line of the ally in the box, with her name tag and her voice (for `onAlly` hooks). `text` is French (translated
+   * here); `after` is a narration line (« * … ») shown under it, already translated by the caller (tr / tf).
+   */
+  async allySay(text: string, after = ''): Promise<void> {
+    const felt = this.ally === 'mina366' || this.ally === 'still';
+    const head = felt ? tf('{c:#e07b6a}Mina n°366 :{/c} {0}', tr(text)) : tf('{c:o}Mina :{/c} {0}', tr(text));
+    this.allyTalking = true;
+    await this.say(translated(after ? `${head}\n${after}` : head), false, true, felt ? 'mina366' : 'mina');
+    this.allyTalking = false;
+  }
+
+  /** Help for the next dodge (from an `onAlly` hook): a shield, a recoloring, or data for the pattern (`ctx.mem`). */
+  prepareDodge(help: { shield?: number; recolor?: Emotion; mem?: Record<string, number> }): void {
+    this.nextDodge = { ...this.nextDodge, ...help };
   }
 
   /** Runs one dodge phase. */
@@ -474,12 +525,13 @@ export class Battle implements Scene {
     };
     bw.shield = this.nextDodge?.shield ?? 0;
     bw.recolor = this.nextDodge?.recolor ?? null;
+    const help = this.nextDodge?.mem ?? {};
     this.nextDodge = null;
     bw.onShield = () => {
       audio.sfx('write', { pitch: 0.7 });
       fx.shake(1, 4);
     };
-    const ctx: PatternCtx = { power, turn: this.turn, emo, mem: {} };
+    const ctx: PatternCtx = { power, turn: this.turn, emo, mem: { ...help } };
     pattern.start?.(bw, ctx);
     await new Promise<void>((resolve) => {
       this.dodge = { pattern, ctx, t: 0, resolve };
@@ -759,8 +811,7 @@ export class Battle implements Scene {
   pickWords(e: EnemyRuntime): WordDef[] {
     const custom = this.hooks.words?.(this);
     if (custom) return custom.slice(0, 6);
-    const chapter = clamp(G.state.chapter, 1, 3);
-    const pool = [...(WORD_POOLS[chapter] ?? WORD_POOLS[1]!)];
+    const pool = [...(WORD_POOLS[G.state.chapter] ?? WORD_POOLS[clamp(G.state.chapter, 1, 3)] ?? WORD_POOLS[1]!)];
     const out: WordDef[] = [];
     const need = e.need;
     for (const sw of e.def.specialWords ?? []) if (out.length < 2) out.push(sw);
@@ -1123,9 +1174,18 @@ export class Battle implements Scene {
       dx *= Math.SQRT1_2;
       dy *= Math.SQRT1_2;
     }
-    s.x += dx * speed + input.drag.dx * 0.9;
-    s.y += dy * speed + input.drag.dy * 0.9;
+    if (s.pin > 0) {
+      // Pinned by a needle: the heart cannot move.
+      s.pin--;
+    } else {
+      s.x += dx * speed + input.drag.dx * 0.9;
+      s.y += dy * speed + input.drag.dy * 0.9;
+    }
     const b = bw.box;
+    if (bw.liveBox) {
+      this.box = { ...b };
+      this.boxTarget = { ...b };
+    }
     s.x = clamp(s.x, b.x + 5, b.x + b.w - 5);
     s.y = clamp(s.y, b.y + 5, b.y + b.h - 5);
     s.emo = this.soulEmo;
@@ -1147,6 +1207,7 @@ export class Battle implements Scene {
   draw(g: CanvasRenderingContext2D): void {
     this.drawBackground(g);
     for (const e of this.enemies) this.drawEnemy(g, e);
+    this.backdrop?.(g, this);
     this.drawAlly(g);
     this.drawSlash(g);
     this.drawBox(g);
@@ -1173,6 +1234,10 @@ export class Battle implements Scene {
       closet: ['#120a18', '#1c1028', '#3a2050'],
       eraser: ['#20141c', '#3a2030', '#6a3a50'],
       real: ['#0a0b12', '#15172a', '#2a2c44'],
+      // Chapter 4: the felt house (warm, stitched), the ballpoint layer (graph paper, heavy hatching), the black arena.
+      feutre: ['#22101a', '#321826', '#6e3444'],
+      stylo: ['#0d0f17', '#141826', '#2a3150'],
+      noir: ['#000000', '#030205', '#0b0710'],
     };
     const [c0, c1, c2] = palettes[kind] ?? palettes.dream!;
     g.fillStyle = c0;
@@ -1187,7 +1252,12 @@ export class Battle implements Scene {
     for (let i = 0; i < 24; i++) {
       const x = ((i * 53 + t * (0.15 + (i % 3) * 0.08)) % (W + 20)) - 10;
       const y = (i * 37) % 84;
-      if (kind === 'hospital') {
+      if (kind === 'noir') {
+        if (i % 3) continue;
+        g.globalAlpha = 0.25 + 0.2 * Math.sin(t * 0.02 + i);
+        g.fillRect(Math.round(x), y, 1, 1);
+        g.globalAlpha = 1;
+      } else if (kind === 'hospital' || kind === 'stylo') {
         g.fillRect(Math.round(x), y, 1, 1);
       } else if (kind === 'void') {
         g.globalAlpha = 0.3 + 0.3 * Math.sin(t * 0.03 + i);
@@ -1208,9 +1278,59 @@ export class Battle implements Scene {
       }
       g.globalAlpha = 1;
     }
+    if (kind === 'feutre') this.drawFeltBackground(g, t);
+    else if (kind === 'stylo') this.drawPenBackground(g, t);
     // Ground line under the enemies
     g.fillStyle = c1;
     g.fillRect(0, 83, W, 1);
+  }
+
+  /** Felt house: running stitches along the bands, and now and then a giant button eye sliding past the opening. */
+  private drawFeltBackground(g: CanvasRenderingContext2D, t: number): void {
+    g.fillStyle = '#9a4a52';
+    g.globalAlpha = 0.45;
+    for (let i = 0; i < 6; i++) {
+      const y = 10 + i * 12 + (i % 2 ? 6 : -1);
+      for (let x = (i * 5) % 8; x < W; x += 8) g.fillRect(x, y, 4, 1);
+    }
+    g.globalAlpha = 1;
+    // The button eye: once every 15 s, for 6 s, its lower half crosses the top of the screen.
+    const p = t % 900;
+    if (p < 360) {
+      const cx = Math.round(-40 + (p / 360) * (W + 80));
+      const cy = -4;
+      const r = 26;
+      for (let yy = 0; yy <= cy + r; yy++) {
+        const half = Math.floor(Math.sqrt(Math.max(0, r * r - (yy - cy) * (yy - cy))));
+        g.fillStyle = '#0b0710';
+        g.fillRect(cx - half, yy, half * 2, 1);
+        g.fillStyle = '#2d1a28';
+        g.fillRect(cx - half + 3, yy, Math.max(0, half * 2 - 6), 1);
+      }
+      // Four holes, and a loose thread through two of them.
+      g.fillStyle = '#000000';
+      for (const [hx, hy] of [[-6, 4], [4, 4], [-6, 12], [4, 12]] as const) g.fillRect(cx + hx, cy + hy, 3, 3);
+      g.fillStyle = '#e8505b';
+      g.fillRect(cx - 4, cy + 5, 9, 1);
+      g.fillRect(cx - 5, cy + 6, 1, 7);
+    }
+  }
+
+  /** Ballpoint layer: graph paper in the dark, and a block hatched so hard that the paper gave way. */
+  private drawPenBackground(g: CanvasRenderingContext2D, t: number): void {
+    g.fillStyle = '#1b2034';
+    for (let x = 3; x < W; x += 8) g.fillRect(x, 0, 1, 83);
+    for (let y = 3; y < 83; y += 8) g.fillRect(0, y, W, 1);
+    g.fillStyle = '#05060b';
+    const grow = Math.min(1, (t % 1200) / 600);
+    for (let i = 0; i < 40 * grow; i++) {
+      const x0 = 236 + i * 2;
+      for (let k = 0; k < 30; k++) g.fillRect(x0 - k, 14 + k * 2, 1, 2);
+    }
+    for (let i = 0; i < 30 * grow; i++) {
+      const x0 = 8 + i * 2;
+      for (let k = 0; k < 22; k++) g.fillRect(x0 + k, 30 + k * 2, 1, 1);
+    }
   }
 
   private drawEnemy(g: CanvasRenderingContext2D, e: EnemyRuntime): void {
@@ -1279,7 +1399,7 @@ export class Battle implements Scene {
     if (this.mode === 'dodge' && this.dodge) {
       this.bw.draw(g);
       this.drawSoul(g);
-      if (this.soulEmo === 'peur' || this.soulEmo2 === 'peur' || this.fear > 0) this.drawFear(g, x, y, w, h);
+      if (!this.bw.dark && (this.soulEmo === 'peur' || this.soulEmo2 === 'peur' || this.fear > 0)) this.drawFear(g, x, y, w, h);
     }
     if (this.text) this.drawBoxText(g, x, y);
     if (this.list) this.drawList(g, x, y);
@@ -1352,25 +1472,33 @@ export class Battle implements Scene {
       drawText(g, '…', x + Math.floor((w - measure('…')) / 2), y + 10, { color: flicker ? '#8a7f96' : '#4e4359' });
       return;
     }
-    const acting = this.allyT > 0 || this.allyTalking;
-    const bob = this.allyT > 0 ? -Math.round(Math.abs(Math.sin(this.allyT * 0.25)) * 3) : 0;
-    g.fillStyle = acting ? '#ffd84a' : MINA_ORANGE;
+    const felt = this.ally === 'mina366' || this.ally === 'still';
+    const still = this.ally === 'still';
+    const acting = !still && (this.allyT > 0 || this.allyTalking);
+    const bob = acting && this.allyT > 0 ? -Math.round(Math.abs(Math.sin(this.allyT * 0.25)) * 3) : 0;
+    const tone = felt ? '#e07b6a' : MINA_ORANGE;
+    g.fillStyle = still ? '#4e4359' : acting ? '#ffd84a' : tone;
     g.fillRect(x - 1, y - 1 + bob, w + 2, h + 2);
     g.fillStyle = '#1c1424';
     g.fillRect(x, y + bob, w, h);
-    const expr = acting ? 'happy' : this.hp <= this.maxHp * 0.3 ? 'surprised' : 'neutral';
-    const key = hasSpr(`face_mina_${expr}`) ? `face_mina_${expr}` : 'face_mina_neutral';
+    const low = this.hp <= this.maxHp * 0.3;
+    const expr = felt ? (still ? 'still' : acting ? 'happy' : low ? 'sad' : 'neutral') : acting ? 'happy' : low ? 'surprised' : 'neutral';
+    const base = felt ? 'face_mina366' : 'face_mina';
+    const key = hasSpr(`${base}_${expr}`) ? `${base}_${expr}` : hasSpr(`${base}_neutral`) ? `${base}_neutral` : 'face_mina_neutral';
     if (hasSpr(key)) {
       const face = spr(key);
+      // The felt Mina's smile thread twitches now and then: the whole face jerks by one pixel for two frames.
+      const twitch = felt && !still && this.t % 151 < 2 ? 1 : 0;
       // Crop the 32×32 face into the 28×28 frame (keeps the paper crown).
-      g.drawImage(face.img, 2, 1, w - 2, h - 2, x + 1, y + 1 + bob, w - 2, h - 2);
+      g.drawImage(face.img, 2 - twitch, 1, w - 2, h - 2, x + 1, y + 1 + bob, w - 2, h - 2);
     }
+    if (still) return;
     // Pips: lit as turns pass; all three lit = she acts before the next attack.
     const lit = this.turn > 0 ? ALLY_EVERY - this.allyCharge : 0;
     for (let i = 0; i < ALLY_EVERY; i++) {
       g.fillStyle = '#0b0710';
       g.fillRect(x + 4 + i * 8, y + h + 2, 6, 4);
-      g.fillStyle = i < lit ? (lit === ALLY_EVERY ? '#ffd84a' : MINA_ORANGE) : '#3a2c4c';
+      g.fillStyle = i < lit ? (lit === ALLY_EVERY ? '#ffd84a' : felt ? MINA366_RED : MINA_ORANGE) : '#3a2c4c';
       g.fillRect(x + 5 + i * 8, y + h + 3, 4, 2);
     }
   }

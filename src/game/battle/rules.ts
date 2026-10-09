@@ -118,8 +118,12 @@ export function needTotal(needs: NeedStep[]): number {
 // Mina, the ally (version 1.1)
 // -----------------------------------------------------------------------------
 
-/** 'mina' = she helps every 3rd turn; 'absent' = the empty slot she left (chapter 3, after she was erased). */
-export type AllyState = 'none' | 'mina' | 'absent';
+/**
+ * 'mina' = she helps every 3rd turn; 'absent' = the empty slot she left (chapter 3, after she was erased);
+ * 'mina366' = the felt Mina of chapter 4 helps, in her stitched way; 'still' = the felt Mina sits in her slot and does
+ * not move any more (chapter 4, after La Couseuse was beaten: nobody will sew her again).
+ */
+export type AllyState = 'none' | 'mina' | 'absent' | 'mina366' | 'still';
 export type AllyEffect = 'shield' | 'color' | 'heal';
 
 /** Mina acts every ALLY_EVERY turns (turns 3, 6, 9…), before the enemy's attack. */
@@ -137,11 +141,16 @@ export interface AllyContext {
 
 /**
  * Who stands at Noa's side: Mina when she is in the party during a dream chapter (1–3); her empty slot in chapter 3
- * once she was erased. Never in the tutorial, the final Dodo battle (it has its own design) or the real world.
+ * once she was erased; in chapter 4, Mina n°366 (party member 'mina366'), frozen once La Couseuse was beaten
+ * (`c4_couseuse === 'vaincue'`). Never in the tutorial, the final Dodo battle (it has its own design) or the real world.
  */
 export function allyState(c: AllyContext): AllyState {
   if (c.noAlly || c.tutorial || c.enemyIds.includes('dodo')) return 'none';
   if (c.bg === 'real' || c.flags.interlude) return 'none';
+  if (c.chapter === 4) {
+    if (!c.party.includes('mina366')) return 'none';
+    return c.flags.c4_couseuse === 'vaincue' ? 'still' : 'mina366';
+  }
   if (c.chapter < 1 || c.chapter > 3) return 'none';
   if (c.party.includes('mina')) return 'mina';
   if (c.chapter === 3 && c.flags.c3_mina_erased) return 'absent';
