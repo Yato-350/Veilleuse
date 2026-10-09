@@ -222,7 +222,7 @@ const MAISON_STYLO: MapDef = {
   onEnter: C4.styloEnter,
   props: [
     // --- Upstairs: the landing.
-    WALL('prop_mirror', 4, 3, -2, { script: C4.look(['Le miroir du couloir.', 'Tu évites de passer devant. Quand tu passes devant, tu regardes tes pieds.']) }),
+    WALL('prop_mirror', 4, 3, -2, { script: C4.byNight({ 1: ['Le miroir du couloir.', 'Tu évites de passer devant. Quand tu passes devant, tu regardes tes pieds.'], 22: ['Le miroir du couloir.', 'Tu lèves les yeux, une fois. Le garçon dedans est dessiné plus vite que le reste de la maison.', 'Comme si on n\'avait pas eu le temps de le finir.'] }) }),
     WALL('prop_c4_trappe', 7, 2, -6, { script: C4.ladderPen }),
     P('prop_trash', 2, 4, { script: C4.byNight({ 1: ['Une poubelle.', 'Un emballage de pâtes. Un seul.'], 9: ['La poubelle déborde.', 'Tu ne descends plus les poubelles. Il faudrait sortir.'], 22: ['La poubelle. Tu as mis un sac à côté. Puis un autre.'] }) }),
     // --- Noa's room.
@@ -247,7 +247,7 @@ const MAISON_STYLO: MapDef = {
     P('prop_shelf', 10, 14, { w: 2, script: C4.look(['La bibliothèque.', 'Sur l\'étagère du bas, les albums photo. Tu ne les ouvres plus.', 'Enfin. Tu ne les ouvres plus depuis la dernière fois.']) }),
     P('prop_tv', 13, 14, { w: 2, frames: ['prop_tv', 'prop_tv_2'], frameSpeed: 12, script: C4.look(['La télé est allumée, le son coupé.', 'Tu ne la regardes pas. C\'est pour la lumière. Pour qu\'il y ait quelque chose d\'allumé, en bas.']) }),
     WALL('prop_c4_horloge', 16, 13, -2, { id: 'horloge', script: C4.clockPen }),
-    P('prop_sofa', 13, 17, { w: 2, script: C4.byNight({ 1: ['Le canapé. Ton creux, à gauche.', 'Les deux autres places sont plates, bien gonflées. Personne ne s\'y assoit.'], 22: ['Le canapé. Une couverture, un oreiller.', 'C\'est là que tu dors, maintenant. Près de la porte. Près du téléphone.'] }) }),
+    P('prop_sofa', 13, 17, { w: 2, script: C4.byNight({ 1: ['Le canapé. Ton creux, à gauche.', 'Les deux autres places sont plates, bien gonflées. Personne ne s\'y assoit.'], 22: ['Le canapé. Une couverture, un oreiller.', 'C\'est là que tu dors, maintenant. Près de la porte. Près du téléphone.'], 35: ['Le canapé. Tu as tiré le téléphone jusqu\'ici, avec la rallonge.', 'Il est posé sur l\'accoudoir, contre ton oreiller, la sonnerie au maximum.', 'Il ne sonne que pour dire de ne pas venir.'] }) }),
     P('prop_c4_coffre', 19, 14, { w: 2, script: C4.look(['Le coffre à jouets de Mina. Ouvert. Vide.', 'Ses moutons sont partis avec elle, dans un sac, le premier soir.', 'Tu ne l\'as pas refermé. Tu ne sais pas pourquoi.']) }),
     // --- The kitchen.
     ...FRIDGE.map(([, sprite], i) => P(sprite, 25, 14, { id: 'frigo', cond: fridgeAt(i), script: C4.fridgePen })),
@@ -257,6 +257,14 @@ const MAISON_STYLO: MapDef = {
     P('prop_stove', 29, 14, { script: C4.look(['La plaque. Tu fais chauffer l\'eau des pâtes.', 'Tu oublies le sel. Tu oublies souvent le sel. Personne ne te le dit.']) }),
     WALL('prop_coat', 31, 13, -2, { script: C4.look(['Un manteau, sur un crochet. Celui de Maman.', 'C\'est tout ce qu\'il reste d\'elle, dans cette cuisine.', 'Il garde la forme de ses épaules. Tu ne le touches pas : la forme partirait.']) }),
     WALL('prop_c4_tel', 33, 13, -2, { id: 'tel', script: C4.phonePen }),
+    WALL('prop_calendar', 36, 13, -4, {
+      script: C4.byNight({
+        1: ['Un calendrier. Le soir, avant de ne pas dormir, tu barres le jour.', 'Une croix. Une seule, pour l\'instant.'],
+        9: ['Le calendrier. Neuf croix.', 'Samedi est entouré, au stylo. Tu ne sais plus qui l\'a entouré.'],
+        22: ['Le calendrier. Les croix deviennent des traits, puis des points.', 'Tu appuies de moins en moins fort.'],
+        35: ['Le calendrier. Sur la case d\'aujourd\'hui, de ton écriture, en gros : « elle va mieux !! »', 'Deux points d\'exclamation. Tu y as cru.', 'En le relisant, tu y crois encore un peu.'],
+      }),
+    }),
     P('prop_table', 28, 17, { w: 2, script: C4.byNight({ 1: ['La table de la cuisine.', 'Trois chaises vides. Ta place, ton verre, ta fourchette.'], 22: ['La table. Des miettes, une tache de sauce.', 'Tu as arrêté de mettre ton assiette. Tu manges debout, à côté de l\'évier.'] }) }),
     ON('prop_c4_thermo', 28, 17, -14, { cond: atNight(35), script: C4.look(['Un thermomètre, posé sur la table.', 'Trente-huit et deux.', 'Tu le secoues. Tu le reprends. Trente-huit et un. Ça ne change rien.']) }),
     ON('prop_c4_assiette', 29, 17, -15, { cond: atNight(1), script: C4.look(['Une assiette de pâtes froides.', 'Pas de sauce. Ça ne valait pas la peine, pour une personne.']) }),
