@@ -707,4 +707,10 @@ export const DATA: Record<string, string> = {
   'Le dernier soir, elle l\'avait demandée. Elle avait peur du noir.': 'That last evening, she asked for it. She was afraid of the dark.',
   'Tu devais l\'apporter. Tu ne l\'as pas fait.': 'You were supposed to bring it. You didn\'t.',
   'Elle a attendu la lumière toute la nuit.': 'She waited for the light all night.',
+  'La lumière sous la porte': 'The Light Under the Door',
+  'Le couloir de l\'appartement, la nuit. Au bout, une porte fermée : la tienne.': 'The hallway of the apartment, at night. At the end, a closed door: yours.',
+  'Dessous, un trait de lumière. Ta veilleuse. Allumée.': 'Under it, a line of light. Your nightlight. On.',
+  'Quelqu\'un frappe, tout doucement. Personne ne répond.': 'Someone knocks, very softly. No one answers.',
+  'Une main se pose à plat sur la porte. Elle reste là un long moment.': 'A hand rests flat against the door. It stays there a long while.',
+  'Puis elle s\'en va.': 'Then it goes away.',
 };

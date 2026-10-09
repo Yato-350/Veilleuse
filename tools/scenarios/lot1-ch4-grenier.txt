@@ -1,0 +1,58 @@
+# Lot 1 (chapter 4 world): the attic (from Night 22). Tailor's labels (the mannequins turn to look at Noa), the
+# 364 crowns, the mannequin with no mouth, n°366 « en cours »; carrying n°365 to the curtain opens it: La Couseuse,
+# spared (Mina n°366 helps), then T3 « Trois cent soixante-cinq ». Down the hatch, the clock to Night 35, the phone
+# (« Tu tousses encore ? »), Noa takes the nightlight and the upstairs hall turns into the knocking corridor.
+query: debug=script&name=chapter4_grenier&lang=fr
+god
+wait:1500
+auto
+interact:mq_12
+auto
+interact:mq_88
+auto
+interact:mq_200
+auto
+interact:couronnes
+auto
+interact:mq_bouche
+auto
+interact:mq_vide
+auto
+shot:mannequins
+interact:mq_365
+auto
+choose:0
+auto
+assert: window.__veilleuse.game.top.ally === 'mina366'
+write:tristesse
+auto
+write:tristesse
+auto
+write:découdre
+auto
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c4_couseuse === 'epargnee'
+assert: window.__veilleuse.G.state.flags.c4_t3 === true
+shot:t3
+interact:trappe
+auto
+assert: window.__veilleuse.G.state.map === 'maison_feutre'
+interact:horloge
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c4_nuit === 35
+interact:tel
+auto
+interact:veilleuse
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c4_veilleuse === true
+go:10/8
+ArrowLeft:400
+auto
+assert: window.__veilleuse.G.state.map === 'couloir_coups'
+shot:couloir

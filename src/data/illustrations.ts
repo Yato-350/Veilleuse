@@ -16,6 +16,7 @@ import { lang, tr } from '../i18n';
 import { PAL } from '../engine/palette';
 import { ctx2d, makeCanvas, parseRows } from '../engine/sprite';
 import { BONUS_ILLUSTRATIONS } from './illustrations-bonus';
+import { CH4_ILLUSTRATIONS } from './illustrations-ch4';
 
 export type Illustration = (g: CanvasRenderingContext2D, t: number) => void;
 
@@ -2081,6 +2082,7 @@ export const ILLUSTRATIONS: Record<string, Illustration> = {
   },
   // Bonus chapter « Les rêves des autres » (see illustrations-bonus.ts).
   ...BONUS_ILLUSTRATIONS,
+  ...CH4_ILLUSTRATIONS,
 };
 
 export interface Souvenir {
@@ -2116,6 +2118,17 @@ export const SOUVENIRS: Record<string, Souvenir> = {
       'Le dernier soir, elle l\'avait demandée. Elle avait peur du noir.',
       'Tu devais l\'apporter. Tu ne l\'as pas fait.',
       'Elle a attendu la lumière toute la nuit.',
+    ],
+  },
+  lumiere: {
+    title: 'La lumière sous la porte',
+    image: 'souvenir_lumiere',
+    captions: [
+      'Le couloir de l\'appartement, la nuit. Au bout, une porte fermée : la tienne.',
+      'Dessous, un trait de lumière. Ta veilleuse. Allumée.',
+      'Quelqu\'un frappe, tout doucement. Personne ne répond.',
+      'Une main se pose à plat sur la porte. Elle reste là un long moment.',
+      'Puis elle s\'en va.',
     ],
   },
 };

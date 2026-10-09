@@ -1,0 +1,85 @@
+# Lot 1 (chapter 4 world): the ballpoint nights 1, 9 and 22 and the felt house in between. Night 1: the phone, the
+# Noa-doll eating alone; the clock glues the felt back; Mina n°366 woken on her chair; Dodo asks for cotton and gets
+# it from a sleeping sheep (« Coton chaud »: +4 max HP). Night 9: the phone, the Mot Aimanté chewing the fridge notes
+# (spared: « JE T'AIME »), the shoe box. Night 22: the phone, the Noa-doll at the door, Clé; the attic hatch opens.
+query: debug=script&name=chapter4_nuits&lang=fr
+god
+wait:1500
+auto
+interact:tel
+auto
+assert: window.__veilleuse.G.state.flags.c4_tel_1 === true
+interact:poupee_noa
+auto
+assert: window.__veilleuse.G.state.flags.c4_nuit_fait === 1
+interact:horloge
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.map === 'maison_feutre'
+interact:mina_chaise
+auto
+assert: window.__veilleuse.G.state.party.includes('mina366')
+interact:dodo
+auto
+choose:1
+auto
+interact:mouton_1
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c4_coton === 1
+assert: window.__veilleuse.G.state.hp === 36
+interact:horloge
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c4_nuit === 9
+interact:tel
+auto
+choose:1
+auto
+interact:frigo
+auto
+write:colere
+auto
+write:joie
+auto
+write:joie
+auto
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c4_nuit_fait === 9
+go:13/8
+interact:boite
+auto
+shot:box
+interact:horloge
+auto
+choose:0
+auto
+interact:mina_chaise
+auto
+interact:horloge
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c4_nuit === 22
+interact:tel
+auto
+go:6/16
+interact:poupee_porte
+auto
+interact:porte
+auto
+write:tristesse
+auto
+eval: window.__veilleuse.game.top.menuDisabled = [false, false, false, false]
+write:ouvrir
+auto
+menu:3
+choose:0
+auto
+shot:trappe
+assert: window.__veilleuse.G.state.flags.c4_trappe === true

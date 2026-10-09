@@ -1,0 +1,59 @@
+# Lot 1 (chapter 4 world): the knocking corridor (Night 35 → 42), the nightlight in Noa's hands. Three knock points
+# use the counting scene (« coups » skin, played perfectly with sheep=auto): one knock → Noa knocks twice, three
+# knocks → three times; the third is in the dark. Each right answer tears the paper behind him. Then Night 42 out of
+# 41 (T4: the two messages, the light under the door, the shadow of a hand), Mina n°366 in the doorframe, Le Petit
+# Homme spared with her help, the nightlight falls into her hands, « Merci », she unravels; souvenir 4.
+query: debug=script&name=chapter4_coups&sheep=auto&lang=fr
+god
+wait:1500
+auto
+go:14/4
+ArrowRight:300
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+shot:answer
+ArrowRight
+KeyZ
+auto
+assert: window.__veilleuse.G.state.flags.c4_coups === 1
+go:32/4
+ArrowRight:300
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+ArrowRight
+ArrowRight
+KeyZ
+auto
+assert: window.__veilleuse.G.state.flags.c4_coups === 2
+go:50/4
+ArrowRight:300
+zuntil: window.__veilleuse.dialogue.choices
+shot:blind
+choose:0
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+ArrowRight
+KeyZ
+auto
+assert: window.__veilleuse.G.state.flags.c4_coups === 3
+shot:torn
+go:62/4
+ArrowRight:400
+zuntil: window.__veilleuse.game.top.constructor.name === 'Battle'
+assert: window.__veilleuse.G.state.flags.c4_nuit42 === true
+assert: window.__veilleuse.game.top.ally === 'mina366'
+auto
+write:peur
+auto
+write:tristesse
+auto
+write:tristesse
+auto
+write:rendre
+auto
+menu:3
+choose:0
+auto:8000
+shot:after
+auto
+assert: window.__veilleuse.G.state.flags.c4_petit_homme === 'epargne'
+assert: window.__veilleuse.G.state.flags.c4_mina366 === 'merci'
+assert: window.__veilleuse.G.state.souvenirs.includes('lumiere')
+assert: window.__veilleuse.G.state.flags.c4_fin === true

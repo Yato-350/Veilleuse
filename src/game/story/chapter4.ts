@@ -49,6 +49,7 @@ import { STORY, wakeUp } from './common';
  *   c4_nuit42         the light under the door (T4) has been seen
  *   c4_petit_homme    'epargne' | 'vaincu'; c4_fele: the nightlight is cracked (beaten)
  *   c4_mina366        'merci' (she thanked Noa before unravelling) | 'silence'
+ *   c4_cabane         the pillow fort in Mina's felt room (the tender beat: a joke, Noa laughs)
  *   c4_fin            the chapter is over (souvenir 4 seen)
  */
 
@@ -598,7 +599,7 @@ export const sheepAsleep =
     d.sfx('heal');
     await d.say(['Dodo arrive en flottant. Tu bourres le coton dans sa couture ouverte.', 'Il ferme les yeux.']);
     await d.say(n === 1 ? 'C\'est encore chaud.' : n === 2 ? 'Encore chaud. C\'est le meilleur moment.' : n === 3 ? 'Merci. Merci. Je ne sentais plus mes pattes.' : 'Le dernier. Le dernier, c\'est toujours le plus chaud.', 'dodo:happy');
-    await d.say('{c:y}Coton chaud{/c} : tes PV max augmentent de 4 jusqu\'à la fin de cette nuit.');
+    await d.say('{c:y}Coton chaud{/c} : tes PV max augmentent de 4 jusqu\'au réveil.');
     const lines = ['Il dormait…', 'Noa. Il dormait.', '…', 'Tu vas me prendre le mien aussi ? Quand j\'aurai plus de coton ?'];
     await mina(d, lines[n - 1] ?? '…', n >= 3 ? 'sad' : 'neutral');
   };
@@ -642,6 +643,44 @@ export const knockWallFelt: Script = async (d) => {
   await d.wait(26);
   d.sfx('knock1', { vol: 0.6 });
   await d.say('Elle frappe trois fois contre le mur. Le feutre avale les coups.');
+};
+
+/**
+ * Mina's pillow fort (felt): the tender beat of the chapter. A password, a joke about a sheep that counts boys, and
+ * Noa laughs, a little, through his nose. Then a breath: Noa's HP come back.
+ */
+export const pillowFort: Script = async (d) => {
+  if (!withMina() || still()) {
+    await d.say(['Un gros coussin, au milieu du tapis.', 'Dessus, une marque ronde, comme quand on y pose une couronne. Et trois cheveux roux, en fil.']);
+    return;
+  }
+  if (flag('c4_cabane')) {
+    await d.say('Le gros coussin. Il garde encore la forme de vous deux, l\'un contre l\'autre.');
+    await d.say(['Tu reviens jouer quand tu veux. C\'est ouvert tout le temps.', 'Sauf la nuit.{p:30} …Il fait toujours nuit ?'], 'mina366:neutral');
+    return;
+  }
+  d.set('c4_cabane');
+  await d.say(['Attends ! C\'est ma cabane, ça.', 'Pour rentrer, faut dire le mot de passe.'], 'mina366:happy');
+  await d.ask('Le mot de passe ?', ['Dodo', 'Chevalière', '…']);
+  await d.say(['Faux !', 'Le mot de passe, c\'est « s\'il te plaît ». Tout le monde se trompe. C\'est fait exprès.'], 'mina366:happy');
+  await d.say('…S\'il te plaît.', 'noa:neutral');
+  await d.say('Entrez, monsieur le chevalier. Baissez la tête.', 'mina366:happy');
+  d.sfx('pop', { pitch: 0.8, vol: 0.4 });
+  await d.fadeOut(24, '#3a2430');
+  await d.wait(30);
+  await d.say(['Vous êtes assis sous le gros coussin, les genoux contre le menton.', 'Il fait chaud. Ça sent la lessive. Ici, l\'œil ne peut pas vous voir.']);
+  await d.say(['Tu veux une blague ?', 'C\'est l\'histoire d\'un mouton qui arrive pas à dormir.', 'Alors il compte les garçons.'], 'mina366:happy');
+  await d.say(['Un garçon.{p:30} Un garçon.{p:30} Un garçon…'], 'mina366:neutral');
+  await d.say('…Pourquoi toujours un ?', 'noa:surprised');
+  await d.say(['Parce qu\'il y en a qu\'un, de garçon ! Il arrête pas de revenir !', 'Du coup, le mouton, il dort jamais. Jamais jamais.'], 'mina366:happy');
+  await d.wait(40);
+  await d.say(['Ce n\'est pas drôle.', 'Tu ris quand même. Un tout petit peu, par le nez.']);
+  await d.say(['T\'as ri ! Je t\'ai vu ! Ça compte !', 'Ça fait au moins cent ans que t\'avais pas ri.'], 'mina366:happy');
+  await d.say(['Son sourire brodé ne bouge pas. Mais ses épaules tremblent, de rire.', 'Pendant un moment, tu ne vois plus les boutons. Tu vois juste ta sœur, sous un coussin, très fière d\'elle.']);
+  await d.fadeIn(24);
+  d.heal();
+  await d.say('Tu te sens un peu plus léger. {c:y}Tes PV sont revenus.{/c}');
+  await d.say(['On rejouera, hein ?', 'Demain. Ou ce soir. C\'est pareil, ici.'], 'mina366:happy');
 };
 
 /** The sheet sewn over Maman's room. */
@@ -1321,12 +1360,14 @@ export const corridorEnter: Script = (d) => {
     d.show('lumiere_porte', false);
     d.show('main_porte', false);
   }
-  // The nightlight in Noa's hands: a small warm light that follows him.
-  const lamp = d.spawn({ id: 'lampe', sprite: '', x: 0, y: 0, solid: false, shadow: false });
-  lamp.light = { r: 54, color: '#ffe991', flicker: true, dy: -10 };
+  // The nightlight in Noa's hands: the only warm thing in the corridor, and it follows him.
+  const lamp = d.spawn({ id: 'lampe', sprite: flag('c4_nuit42') ? '' : 'prop_c4_veilleuse', x: 0, y: 0, solid: false, shadow: false });
+  lamp.light = flag('c4_nuit42') ? undefined : { r: 54, color: '#ffc860', flicker: true, dy: -4 };
   lamp.brain = (e: Entity) => {
-    e.x = world.player.x;
-    e.y = world.player.y;
+    const p = world.player;
+    e.x = p.x + (p.dir === 'left' ? -5 : p.dir === 'right' ? 5 : 0);
+    e.y = p.y + (p.dir === 'up' ? -1 : 1);
+    e.oy = -6;
   };
   // Tears behind the segments already passed: no way back.
   const passed = num('c4_coups');
@@ -1515,7 +1556,10 @@ export const nuit42: Script = async (d) => {
   await d.narrate('Tu ne l\'as pas posée dans l\'entrée.');
   // The light goes out of his hands: it was never there. It is behind the door.
   const lamp = d.find('lampe');
-  if (lamp) lamp.light = undefined;
+  if (lamp) {
+    lamp.light = undefined;
+    lamp.visible = false;
+  }
   d.sfx('whoosh', { pitch: 0.4, vol: 0.4 });
   await d.wait(50);
   await d.say(['Tes mains sont vides.', 'La lumière est derrière la porte. Sous la porte, un trait jaune, très fin.']);
@@ -1668,6 +1712,9 @@ async function endChapter(d: Director): Promise<void> {
 export const MINA_LINES: Record<string, string[]> = {
   maison_feutre: [
     'Tu sens ? Ça sent la barbe à papa !{p:40} …Ça sent la barbe à papa.|happy',
+    'Les moutons sont trop mignons. Sauf le noir. Il est grognon.{p:40} …Il est grognon.|happy',
+    'Moi, mon vœu, c\'est un secret. … Bon, d\'accord : c\'est que tu restes.{p:50} C\'est que tu restes.|happy',
+    'Madame Lune dort tout le temps.{p:30} Ici, y a pas de Madame Lune. Y a juste la lune.|neutral',
     'Pourquoi tu me regardes comme ça ?|neutral',
     'Je suis pas cassée. Je suis cousue.|neutral',
     'Ici, quand on tombe, ça fait pas mal. Regarde ! … Bon, je tombe pas.{p:30} Je tombe pas.|happy',
@@ -1677,9 +1724,15 @@ export const MINA_LINES: Record<string, string[]> = {
   ],
   grenier: [
     'Il fait chaud, ici. Comme dans un ventre.|neutral',
+    'Si on trouve l\'étoile, tu feras quel vœu, toi ?{p:40} …Quel vœu, toi ?|neutral',
     'Elles me regardent toutes. Dis-leur d\'arrêter.|sad',
     'Si je finis ma phrase, qu\'est-ce qui se passe ?|neutral',
   ],
+  maison_stylo: [
+    'C\'est tout gris, ici. C\'est toi qui as dessiné ?|sad',
+    'Je touche à rien. Promis. J\'ai peur que ça s\'efface.|neutral',
+  ],
+  couloir_coups: ['Il est long, ce couloir. Il était pas si long, avant.{p:30} Avant quoi ?|sad'],
 };
 
 /** Talking to Mina n°366 while she follows. */

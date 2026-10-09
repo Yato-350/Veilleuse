@@ -849,12 +849,19 @@ const SPOOL = `
 
 /** A torn floor in the knocking corridor: the paper gives way onto nothing. */
 const TEAR = (() => {
+  // A jagged rip through the paper, a few pixels wide: three of them stacked across the corridor join into one rift
+  // (the same width at the top and the bottom row), white torn fibres along both lips.
   const p = new Pix(16, 16);
-  p.ellipse(8, 8, 8, 8, '0');
-  for (let a = 0; a < 40; a++) {
-    const t = (a / 40) * Math.PI * 2;
-    const r = 7 + ((a * 7) % 3) - 1;
-    p.set(Math.round(8 + Math.cos(t) * r), Math.round(8 + Math.sin(t) * r), a % 3 ? 'w' : 'g');
+  const left = [6, 5, 5, 4, 5, 6, 6, 5, 4, 3, 4, 5, 5, 6, 6, 6];
+  const right = [10, 10, 11, 11, 10, 10, 11, 12, 12, 11, 10, 10, 11, 11, 10, 10];
+  for (let y = 0; y < 16; y++) {
+    const l = left[y]!;
+    const r = right[y]!;
+    p.rect(l, y, r - l + 1, 1, '0');
+    p.set(l - 1, y, 'w').set(r + 1, y, 'w');
+    if (y % 3 === 1) p.set(l - 2, y, 'g');
+    if (y % 4 === 2) p.set(r + 2, y, 'g');
+    if (y % 5 === 0) p.set(l, y, 'w');
   }
   return p.toString();
 })();

@@ -135,7 +135,7 @@ const MAISON_FEUTRE: MapDef = {
     P('prop_toybox', 21, 4, { script: C4.look(['Ses jouets. Bien rangés, par taille, par couleur.', 'Mina n\'a jamais rangé ses jouets de sa vie.'], 'C\'est Dodo qui range. Il range tout. Même moi, des fois.') }),
     WALL('prop_drawings', 22, 3, -4, { script: C4.drawingsFelt }),
     SPOT(23, 3, C4.look(['La fenêtre de Mina. Une lune de feutre est cousue dans le ciel.', 'Elle ne bouge pas. Elle ne bougera jamais. Ici, la nuit ne passe pas.'], 'C\'est ma lune. Elle me regarde dormir. Quand je dors.'), { oy: -2 }),
-    P('prop_pillow_big', 24, 7, { solid: false, script: C4.look(['Un gros coussin, au milieu du tapis.', 'Dessus, une marque ronde, comme quand on y pose une couronne. Et trois cheveux roux, en fil.']) }),
+    P('prop_pillow_big', 24, 7, { solid: false, script: C4.pillowFort }),
     // --- Maman's room: sewn shut under a sheet.
     SPOT(29, 7, C4.mamanSheet, { id: 'drap', w: 9 }),
     // --- Downstairs: the entrance.
