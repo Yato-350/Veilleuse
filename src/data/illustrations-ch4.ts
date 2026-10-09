@@ -77,9 +77,12 @@ function layer(name: string, paint: (g: Ctx) => void): HTMLCanvasElement {
 // The corridor in one-point perspective
 // ---------------------------------------------------------------------------------------------------------------------
 
-/** The far wall (x0..x1, y0..y1); the door in it; the light gap at the bottom of the door. */
-const BACK = { x0: 116, x1: 204, y0: 30, y1: 140 };
-const DOOR = { x0: 139, x1: 181, y0: 46, y1: 139 };
+/**
+ * The far wall (x0..x1, y0..y1); the door in it; the light gap at the bottom of the door. Everything that matters
+ * stays above y 120: the captions of a memory cover the bottom of the screen.
+ */
+const BACK = { x0: 116, x1: 204, y0: 10, y1: 118 };
+const DOOR = { x0: 139, x1: 181, y0: 26, y1: 117 };
 /** Floor and ceiling edges of the side walls, as functions of x (left wall: x < BACK.x0). */
 const floorL = (x: number): number => BACK.y1 + (BACK.x0 - x) * 1.21;
 const ceilL = (x: number): number => BACK.y0 - (BACK.x0 - x) * 1.25;
@@ -174,12 +177,12 @@ function paintLumiere(g: Ctx): void {
   panel(DOOR.x0 + 6, DOOR.y0 + 6, DOOR.x1 - DOOR.x0 - 12, 34);
   panel(DOOR.x0 + 6, DOOR.y0 + 48, DOOR.x1 - DOOR.x0 - 12, 36);
   // The lever handle, with a glint of warm light on its underside.
-  rect(g, DOOR.x1 - 9, 93, 7, 2, '#26222e');
-  rect(g, DOOR.x1 - 9, 95, 7, 1, '#5c3f22');
-  rect(g, DOOR.x1 - 4, 92, 2, 5, '#1a1720');
+  rect(g, DOOR.x1 - 9, 71, 7, 2, '#26222e');
+  rect(g, DOOR.x1 - 9, 73, 7, 1, '#5c3f22');
+  rect(g, DOOR.x1 - 4, 70, 2, 5, '#1a1720');
   // A half-torn sticker at a child's height: half a star, and the white of the torn paper.
   const sx = DOOR.x0 + 13;
-  const sy = 116;
+  const sy = 94;
   const star = ['..#..', '.###.', '#####', '.###.', '##.##'];
   star.forEach((row, ry) =>
     [...row].forEach((ch, rx) => {
@@ -195,7 +198,7 @@ function paintLumiere(g: Ctx): void {
   rect(g, DOOR.x1, DOOR.y1, 1, 1, '#b8873f');
 
   // The shadow of a hand laid flat on the door; the forearm fades into the dark, down to the left.
-  paintHand(g, 158, 82);
+  paintHand(g, 158, 60);
 }
 
 /** Distance from (x, y) to the segment (ax, ay)–(bx, by). */
@@ -254,7 +257,7 @@ export const CH4_ILLUSTRATIONS: Record<string, (g: Ctx, t: number) => void> = {
     for (let i = 0; i < 14; i++) {
       const sp = 0.05 + hash(i, 2, 7) * 0.08;
       const x = DOOR.x0 - 10 + Math.floor(hash(i, 1, 7) * (DOOR.x1 - DOOR.x0 + 20) + Math.sin(t * 0.01 + i) * 3);
-      const y = Math.floor(SH - 4 - ((hash(i, 3, 7) * 40 + t * sp) % 40));
+      const y = Math.floor(BACK.y1 + 44 - ((hash(i, 3, 7) * 40 + t * sp) % 40));
       const a = floorLight(x, y) * 0.9 + 0.1;
       withAlpha(g, a, () => rect(g, x, y, 1, 1, '#fff4cf'));
     }
