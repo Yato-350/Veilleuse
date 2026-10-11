@@ -98,6 +98,11 @@ export class BulletWorld {
   dark = false;
   /** The pattern reshapes `box` while it runs: the drawn box follows it. */
   liveBox = false;
+  /**
+   * Damage over time (chapter 5: the Gel's droplets sting after they landed): `n` HP, straight off the heart, outside
+   * the bullets' hit rules (no invincibility frames, not absorbed by a shield). Set by the battle.
+   */
+  onSting: ((n: number) => void) | null = null;
 
   spawn(p: Partial<Bullet>): Bullet {
     const b: Bullet = {

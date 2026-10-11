@@ -1,0 +1,25 @@
+# Lot 3 (chapter 5 battles): the Mouette steals the word written last (then one a turn) and pecks its slot out of the
+# notebook; her « Mine ! » turns toward « Mina ». Colère then Joie calm her: she gives the words back.
+query: debug=script&name=bt_mouette&lang=fr
+god
+wait:1500
+auto
+write:tristesse
+auto
+assert: window.__veilleuse.game.top.stolenWords.length === 1 && window.__veilleuse.game.top.tornSlots === 1
+write:colere
+auto
+assert: window.__veilleuse.game.top.stolenWords.length === 2
+menu:1
+wait:400
+shot:torn
+KeyX
+wait:300
+write:joie
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable
+assert: window.__veilleuse.game.top.stolenWords.length === 0 && window.__veilleuse.game.top.tornSlots === 0
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.debug_battle === 'spare:mouette'

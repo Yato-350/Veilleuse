@@ -83,18 +83,7 @@ export class PoemScene implements Scene {
   }
 
   draw(g: CanvasRenderingContext2D): void {
-    g.fillStyle = '#2a1e18';
-    g.fillRect(0, 0, W, H);
-    const x = 30;
-    const y = 10;
-    const w = W - 60;
-    const h = H - 20;
-    g.fillStyle = '#fff6e0';
-    g.fillRect(x, y, w, h);
-    g.fillStyle = '#d7e6f7';
-    for (let ly = y + 26; ly < y + h - 4; ly += 18) g.fillRect(x + 2, ly, w - 4, 1);
-    g.fillStyle = '#f08a9a';
-    g.fillRect(x + 22, y, 1, h);
+    const { x, y, w, h } = drawPoemPage(g);
     drawText(g, tr(this.title), W / 2, y + 7, { align: 'center', color: '#2b2a5c' });
     drawText(g, `${this.chosen.length}/${PICKS}`, x + w - 8, y + 7, { align: 'right', color: '#8a7f96' });
     this.words.forEach((wd, i) => {
@@ -119,6 +108,21 @@ export class PoemScene implements Scene {
     const preview = this.chosen.map((c) => tr(c.text)).join(', ');
     drawText(g, preview, W / 2, y + h - 14, { align: 'center', color: '#6e4a3a' });
   }
+}
+
+/** The poem's page: the dark desk, a sheet of lined paper, its red margin. Returns the sheet's rectangle. */
+export const POEM_PAGE = { x: 30, y: 10, w: W - 60, h: H - 20 };
+export function drawPoemPage(g: CanvasRenderingContext2D, desk = '#2a1e18'): typeof POEM_PAGE {
+  const { x, y, w, h } = POEM_PAGE;
+  g.fillStyle = desk;
+  g.fillRect(0, 0, W, H);
+  g.fillStyle = '#fff6e0';
+  g.fillRect(x, y, w, h);
+  g.fillStyle = '#d7e6f7';
+  for (let ly = y + 26; ly < y + h - 4; ly += 18) g.fillRect(x + 2, ly, w - 4, 1);
+  g.fillStyle = '#f08a9a';
+  g.fillRect(x + 22, y, 1, h);
+  return POEM_PAGE;
 }
 
 function emoColor(e: Emotion): string {

@@ -19,7 +19,12 @@ export type Instrument =
   | 'kick'
   | 'snare'
   | 'hat'
-  | 'organ';
+  | 'organ'
+  // v2 chapter 5: a gull's cry (the note sets its pitch), a breath (filtered noise swelling in and out over the note's
+  // length, the note sets the hiss), the air of a ventilation duct (steady filtered noise, a slow flutter).
+  | 'gull'
+  | 'breath'
+  | 'air';
 
 export interface Channel {
   inst: Instrument;
@@ -160,7 +165,9 @@ export type Sfx =
   | 'buzz'
   // v2 chapter 4: a sewing-machine needle punching through felt, a long thread pulled out of stuffing.
   | 'stitch'
-  | 'thread';
+  | 'thread'
+  // v2 chapter 5: a cough held back behind a mask.
+  | 'cough';
 
 export type Ambience = 'rain' | 'static' | 'wind' | 'hum' | 'none';
 
@@ -609,6 +616,63 @@ export class AudioEngine {
         env.linearRampToValueAtTime(0, end);
         break;
       }
+      case 'gull': {
+        // « Kyaa »: a quick rise, a long fall, a fast vibrato; two partials, thin.
+        const o1 = add('triangle', freq);
+        const o2 = add('sine', freq * 2.02);
+        for (const [o, k] of [[o1, 1], [o2, 2.02]] as const) {
+          o.frequency.setValueAtTime(freq * k * 0.92, when);
+          o.frequency.linearRampToValueAtTime(freq * k * 1.18, when + 0.06);
+          o.frequency.exponentialRampToValueAtTime(freq * k * 0.74, when + Math.max(0.2, dur));
+        }
+        const lfo = ctx.createOscillator();
+        lfo.frequency.value = 26;
+        const lg = ctx.createGain();
+        lg.gain.value = freq * 0.03;
+        lfo.connect(lg);
+        lg.connect(o1.frequency);
+        lfo.start(when);
+        lfo.stop(when + Math.max(0.2, dur) + 0.1);
+        env.setValueAtTime(0, when);
+        env.linearRampToValueAtTime(vol * 0.5, when + 0.03);
+        env.exponentialRampToValueAtTime(0.001, when + Math.max(0.2, dur));
+        stop = when + Math.max(0.2, dur) + 0.05;
+        break;
+      }
+      case 'breath':
+      case 'air': {
+        // Noise through a band-pass at the note's pitch: a breath swells and fades; the air of a duct just stays.
+        // (A looping source: a duct can blow for longer than the two seconds of the noise buffer.)
+        const n = ctx.createBufferSource();
+        n.buffer = this.noiseBuf;
+        n.loop = true;
+        n.start(when, Math.random() * 1.5);
+        n.stop(end + 0.5);
+        const f = ctx.createBiquadFilter();
+        f.type = 'bandpass';
+        f.frequency.value = Math.min(6000, freq * (inst === 'breath' ? 4 : 1.5));
+        f.Q.value = inst === 'breath' ? 0.7 : 0.4;
+        n.connect(f).connect(g);
+        if (inst === 'breath') {
+          env.setValueAtTime(0, when);
+          env.linearRampToValueAtTime(vol * 1.2, when + dur * 0.55);
+          env.linearRampToValueAtTime(0, when + dur + 0.4);
+        } else {
+          env.setValueAtTime(0, when);
+          env.linearRampToValueAtTime(vol * 0.8, when + 0.3);
+          env.setValueAtTime(vol * 0.8, end);
+          env.linearRampToValueAtTime(0, end + 0.3);
+          const lfo = ctx.createOscillator();
+          lfo.frequency.value = 0.7;
+          const lg = ctx.createGain();
+          lg.gain.value = freq * 0.25;
+          lfo.connect(lg).connect(f.frequency);
+          lfo.start(when);
+          lfo.stop(end + 0.4);
+        }
+        stop = end + 0.5;
+        break;
+      }
       case 'organ': {
         add('organ', freq);
         env.setValueAtTime(0, when);
@@ -856,6 +920,13 @@ export class AudioEngine {
         this.tone('square', 1900 * p, 900 * p, 0.025, 0.06 * v);
         this.tone('triangle', 150 * p, 70 * p, 0.06, 0.25 * v, t + 0.01);
         this.noiseBurst(0.03, 0.12 * v, 'highpass', 3500, t + 0.005);
+        break;
+      case 'cough':
+        // Two dry, muffled bursts: « khh — khh ».
+        this.noiseBurst(0.13, 0.38 * v, 'bandpass', 720 * p);
+        this.tone('sawtooth', 170 * p, 90 * p, 0.11, 0.05 * v);
+        this.noiseBurst(0.18, 0.32 * v, 'bandpass', 560 * p, t + 0.2);
+        this.tone('sawtooth', 150 * p, 80 * p, 0.14, 0.045 * v, t + 0.2);
         break;
       case 'thread':
         this.tone('sawtooth', 260 * p, 820 * p, 0.38, 0.035 * v);

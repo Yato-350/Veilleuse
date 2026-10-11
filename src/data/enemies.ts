@@ -1,11 +1,12 @@
 import type { BattleHooks, EnemyDef } from '../game/battle/types';
 import { DEV_ENEMIES } from './enemies-dev';
 import { CH4_ENEMIES } from './enemies-ch4';
+import { CH5_ENEMIES } from './enemies-ch5';
 
 /**
  * Enemy registry. See docs/CONTENT_CONTRACT.md § 5.
  * Balance (Noa: 20 PV, ATQ 4, DÉF 1): ch1 PV 12–20 / ATQ 0–2, boss 1 PV 60; ch2 PV 20–30 / ATQ 2–3, boss 2 PV 90;
- * ch3 PV 30–40 / ATQ 3–4; Dodo PV 999 (cannot be beaten by force).
+ * ch3 PV 30–40 / ATQ 3–4; ch4 PV 38–42 / ATQ 5; ch5 PV 40–46 / ATQ 5, La Vitre 180; Dodo PV 999 (cannot be beaten by force).
  * The `check` text hints at what the enemy needs (Plume & Cœur) without naming the rule.
  */
 /**
@@ -541,6 +542,12 @@ export const ENEMIES: Record<string, EnemyDef> = {
   // -------------------------------------------------------------------------------------------------------------------
 
   ...CH4_ENEMIES,
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Chapitre 5 — La Marée Blanche (src/data/enemies-ch5.ts)
+  // -------------------------------------------------------------------------------------------------------------------
+
+  ...CH5_ENEMIES,
 
   // -------------------------------------------------------------------------------------------------------------------
   // Final — Dodo (scénarisé par le chapitre 3 via des hooks ; valeurs par défaut ici)

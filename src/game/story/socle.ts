@@ -9,6 +9,7 @@ import { game } from '../../engine/game';
 import { world } from '../overworld/world';
 import { dateLabel, PhoneScene, type PhoneCall, type PhoneContact, type PhoneMessage, type PhoneTab } from '../scenes/phone';
 import { wakeUp } from './common';
+import { DrawTogetherScene } from '../scenes/drawtogether';
 
 /*
  * Version 2 groundwork (production lot 0, docs/HISTOIRE.md §7): replayable demos of the new building blocks, so that
@@ -25,9 +26,51 @@ import { wakeUp } from './common';
  *                   to « Merci d'avoir joué ! — Dodo », cross-stitched title with one « Continuer », three passes at
  *                   most (also ?debug=credits&mode=faux)
  *   wake_3          the end of chapter 3 as wired today: wakeUp(3) still leads to the v1.1 finale (until lot 5)
+ *   dessin_visite   the drawing game of chapter 5 (scenes/drawtogether.ts): the moon (the two pens cross on it), she
+ *                   draws herself, Noa draws himself and coughs at 55 %, the nurse's shadow, the page dissolves into
+ *                   the chapter 2 souvenir (hold A to draw; the arrows pull the pen off the line)
+ *   dessin_corriger the five drawings to correct, one after the other (B before the first line: leave one as it is)
+ *                   (&n=K: only drawing K, 0–4)
  *
  * Nothing here is part of the story: the chapters and interludes use these blocks with their own text.
  */
+
+/** The drawing game of the visit (chapter 5, T6): what lot 3b's chamber of glass plays, with placeholder lines. */
+async function dessinVisite(d: Director): Promise<void> {
+  d.load('chambre', 'bed');
+  await d.fadeOut(1);
+  const dt = DrawTogetherScene.open('visite');
+  await d.fadeIn(20);
+  await d.say('Tu fais la lune ? Moi je la colorie. Mais tu la fais grande, hein.', 'minavoix');
+  await dt.stroke('lune');
+  if (dt.result.crossed) await d.say('Tes crayons et les miens, ils se sont touchés. Ça compte comme un bisou.', 'minavoix');
+  await dt.watch('elle');
+  await d.say('Voilà, c\'est moi. À toi. Fais-toi à côté. Tu me donnes la main.', 'minavoix');
+  await dt.stroke('lui', { cough: 0.55 });
+  await dt.shadow();
+  await d.say('Le grand frère, il tousse ? Dehors, s\'il te plaît.', 'infirmiere');
+  await dt.reveal();
+  await d.say('Ce n\'est pas elle. C\'est ton dessin d\'elle.', 'dodo:creepy');
+  dt.close();
+  G.state.flags.debug_dessin = `${dt.result.crossed ? 'croise' : 'seul'}:${dt.result.coughed ? 'toux' : 'fini'}`;
+}
+
+/** The five drawings to correct (chapter 5, the frozen lake): each one traced in, or left (B). */
+async function dessinCorriger(d: Director): Promise<void> {
+  d.load('chambre', 'bed');
+  await d.fadeIn(10);
+  const only = new URLSearchParams(location.search).get('n');
+  const ids = only !== null ? [DrawTogetherScene.DRAWINGS[Number(only)]!] : DrawTogetherScene.DRAWINGS;
+  let n = 0;
+  for (const id of ids) {
+    const dt = DrawTogetherScene.open('corriger', id);
+    await d.say('Dessine-toi dedans. Personne ne saura.', 'dodo:happy');
+    if (await dt.correct()) n++;
+    await d.say(n ? 'Voilà. Tu y étais.' : '…Comme tu veux.', 'dodo:neutral');
+    dt.close();
+  }
+  G.state.flags.debug_corrige = n;
+}
 
 /** The speaker switch of T7 (§2.8) and the radio static of Dodo's dying battery. */
 async function dialogueTags(d: Director): Promise<void> {
@@ -229,6 +272,8 @@ export const DEBUG: Record<string, Script> = {
   dialogue_tags: dialogueTags,
   count_coups: (d) => countingDemo(d, 'coups'),
   count_dents: (d) => countingDemo(d, 'dents'),
+  dessin_visite: dessinVisite,
+  dessin_corriger: dessinCorriger,
   wake_3: async (d) => {
     G.state.chapter = 3;
     d.load('vide', 'center');

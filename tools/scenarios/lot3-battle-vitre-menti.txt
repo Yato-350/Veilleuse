@@ -1,0 +1,24 @@
+# Lot 3 (chapter 5 battles): La Vitre after « Oui » at the Thermomètre's portal (flags.c5_menti): every word crashes on
+# the glass until « pardon »; then Tristesse ×2 and « je ne sais pas » as usual.
+query: debug=script&name=vitre_menti&lang=fr
+god
+wait:1500
+auto
+assert: window.__veilleuse.game.top.enemies[0].total === 4
+write:colere
+auto
+assert: window.__veilleuse.game.top.enemies[0].step === 0
+write:pardon
+auto
+assert: window.__veilleuse.game.top.enemies[0].step === 1
+write:tristesse
+auto
+write:tristesse
+auto
+write:je ne sais pas
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c5_vitre === 'epargnee'

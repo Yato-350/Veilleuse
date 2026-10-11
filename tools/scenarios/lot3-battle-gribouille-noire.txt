@@ -1,0 +1,24 @@
+# Lot 3 (chapter 5 battles): the Gribouille Noire (noInk). Dodo's dark echo of the tutorial; words slide off it; a blow
+# that would kill it splits it in two instead; « Épargner » does nothing (« Ça ne s'apaise pas. »); fleeing always
+# works and is the only way out. It never counts as Ink.
+query: debug=script&name=bt_gribouille_noire&lang=fr
+god
+wait:1500
+auto
+write:joie
+auto
+assert: window.__veilleuse.game.top.enemies[0].progress === 0
+eval: window.__veilleuse.game.top.enemies[0].hp = 1
+menu:0
+zuntil: window.__veilleuse.game.top.enemies.length === 2
+auto
+shot:split
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.game.top.alive.length === 2
+menu:3
+ArrowRight
+KeyZ
+waitfor: window.__veilleuse.G.state.flags.debug_battle === 'flee:'
+assert: window.__veilleuse.G.state.encre === 3

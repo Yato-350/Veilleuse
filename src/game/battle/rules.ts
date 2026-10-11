@@ -142,7 +142,7 @@ export interface AllyContext {
 /**
  * Who stands at Noa's side: Mina when she is in the party during a dream chapter (1–3); her empty slot in chapter 3
  * once she was erased; in chapter 4, Mina n°366 (party member 'mina366'), frozen once La Couseuse was beaten
- * (`c4_couseuse === 'vaincue'`). Never in the tutorial, the final Dodo battle (it has its own design) or the real world.
+ * (`c4_couseuse === 'vaincue'`); in chapter 5, only her empty frame. Never in the tutorial, the final Dodo battle (it has its own design) or the real world.
  */
 export function allyState(c: AllyContext): AllyState {
   if (c.noAlly || c.tutorial || c.enemyIds.includes('dodo')) return 'none';
@@ -151,6 +151,8 @@ export function allyState(c: AllyContext): AllyState {
     if (!c.party.includes('mina366')) return 'none';
     return c.flags.c4_couseuse === 'vaincue' ? 'still' : 'mina366';
   }
+  // Chapter 5 « La Marée Blanche »: nobody is at Noa's side; her empty frame stays in the HUD, crossed by the red thread.
+  if (c.chapter === 5) return 'absent';
   if (c.chapter < 1 || c.chapter > 3) return 'none';
   if (c.party.includes('mina')) return 'mina';
   if (c.chapter === 3 && c.flags.c3_mina_erased) return 'absent';

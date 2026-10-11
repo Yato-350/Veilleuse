@@ -90,13 +90,18 @@ export interface EnemyDef {
   hooks?: Partial<BattleHooks>;
   music?: string;
   /** Battle background. */
-  bg?: 'dream' | 'forest' | 'hospital' | 'void' | 'closet' | 'eraser' | 'real' | 'feutre' | 'stylo' | 'noir';
+  bg?: 'dream' | 'forest' | 'hospital' | 'void' | 'closet' | 'eraser' | 'real' | 'feutre' | 'stylo' | 'noir' | 'plage' | 'blanc';
   /** Pixel offset for the sprite. */
   dy?: number;
   /** Emotion inflicted on the soul at the start of the battle. */
   inflict?: Emotion;
   /** Sprite scale (1 = native). */
   scale?: number;
+  /**
+   * Not a feeling, only fear drawn in ink (chapter 5, Gribouille Noire): it cannot be calmed (no needs), fleeing from it
+   * always works, and if it dies its death is not Ink — no Encre, no kill recorded, no Boutons.
+   */
+  noInk?: boolean;
 }
 
 export type BattleOutcome = 'win' | 'spare' | 'flee' | 'lose' | 'scripted';

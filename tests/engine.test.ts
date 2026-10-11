@@ -261,7 +261,12 @@ describe('battle 1.1: Mina the ally', () => {
     expect(allyState(ctx({ chapter: 4, party: ['mina366'], noAlly: true }))).toBe('none');
     expect(allyState(ctx({ chapter: 4, party: ['mina366'], flags: { interlude: 4 } }))).toBe('none');
     expect(allyState(ctx({ chapter: 3, party: ['mina366'] }))).toBe('none');
-    expect(allyState(ctx({ chapter: 5, party: ['mina366'] }))).toBe('none');
+  });
+  it('chapter 5: nobody at Noa\'s side, only Mina\'s empty frame (crossed by the red thread)', () => {
+    expect(allyState(ctx({ chapter: 5, party: ['mina366'] }))).toBe('absent');
+    expect(allyState(ctx({ chapter: 5, party: [] }))).toBe('absent');
+    expect(allyState(ctx({ chapter: 5, party: [], noAlly: true }))).toBe('none');
+    expect(allyState(ctx({ chapter: 5, party: [], flags: { interlude: 4 } }))).toBe('none');
   });
   it('leaves an empty slot in chapter 3 once she was erased', () => {
     expect(allyState(ctx({ chapter: 3, party: [], flags: { c3_mina_erased: true } }))).toBe('absent');
@@ -325,6 +330,48 @@ describe('chapter 4 battles', () => {
     expect(hits).toBe(0);
     expect(w.shield).toBe(2);
     expect(b.dead).toBe(false);
+  });
+});
+
+describe('chapter 5 battles', () => {
+  it('has the special words of its fights in the chapter 5 pool: « fièvre », « pardon », « je ne sais pas » (neutral), the bittersweet « coquillage »', () => {
+    const pool = WORD_POOLS[5]!;
+    const texts = pool.map((w) => w.text);
+    for (const w of ['fièvre', 'pardon', 'je ne sais pas', 'coquillage']) expect(texts).toContain(w);
+    expect(pool.find((w) => w.text === 'je ne sais pas')!.emotion).toBe('neutre');
+    expect(wordEmotions(pool.find((w) => w.text === 'coquillage')!)).toEqual(['joie', 'tristesse']);
+  });
+  it('declares the fights the story calls, with their special words', () => {
+    for (const id of ['crabe_bracelet', 'mouette', 'masque', 'gel', 'thermometre', 'gribouille_noire', 'vitre']) expect(ENEMIES[id]).toBeTruthy();
+    expect(ENEMIES.vitre!.needs.map((n) => n.emotion ?? n.word)).toEqual(['tristesse', 'je ne sais pas']);
+    expect(ENEMIES.vitre!.specialWords!.map((w) => w.text).sort()).toEqual(['je ne sais pas', 'pardon']);
+    expect(ENEMIES.vitre!.boss && ENEMIES.vitre!.noFlee).toBe(true);
+    expect(ENEMIES.thermometre!.needs[0]!.word).toBe('fièvre');
+    expect(ENEMIES.gribouille_noire!.noInk).toBe(true);
+  });
+  it('the Gribouille Noire can never be calmed, whatever is written', () => {
+    const e = new EnemyRuntime(ENEMIES.gribouille_noire!);
+    for (const w of WORD_POOLS[5]!) e.applyWord(w);
+    expect(e.spareable).toBe(false);
+  });
+  it('La Vitre: Tristesse ×2 then « je ne sais pas »; « pardon » comes first after « Oui » at the portal', () => {
+    const e = new EnemyRuntime(ENEMIES.vitre!);
+    e.applyWord({ text: 'je ne sais pas', emotion: 'neutre' });
+    expect(e.step).toBe(0);
+    e.applyWord({ text: 'marée', emotion: 'tristesse' });
+    e.applyWord({ text: 'neige', emotion: 'tristesse' });
+    expect(e.step).toBe(1);
+    e.applyWord({ text: 'je ne sais pas', emotion: 'neutre' });
+    expect(e.spareable).toBe(true);
+    // (What the battle does on its first turn when flags.c5_menti is set.)
+    const m = new EnemyRuntime(ENEMIES.vitre!);
+    m.def = { ...m.def, needs: [{ word: 'pardon' }, ...m.def.needs] };
+    m.total = needTotal(m.def.needs);
+    m.applyWord({ text: 'marée', emotion: 'tristesse' });
+    expect(m.step).toBe(0);
+    m.applyWord({ text: 'pardon', emotion: 'tristesse' });
+    expect(m.step).toBe(1);
+    expect(m.total).toBe(4);
   });
 });
 

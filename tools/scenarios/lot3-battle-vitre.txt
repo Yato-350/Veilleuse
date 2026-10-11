@@ -1,0 +1,27 @@
+# Lot 3 (chapter 5 battles): La Vitre, spared. « je ne sais pas » written too early is wiped by the fog; Tristesse ×2
+# makes the fog recede, then « je ne sais pas » calms her. Sparing her: the fog lifts, the two hands meet on the glass,
+# « … », Noa: « Je sais pas ce que tu dis. », she nods. The battle sets flags.c5_vitre = 'epargnee'.
+query: debug=script&name=vitre&lang=fr
+god
+wait:1500
+auto
+assert: window.__veilleuse.game.top.ally === 'absent'
+write:je ne sais pas
+auto
+assert: window.__veilleuse.game.top.enemies[0].step === 0 && !window.__veilleuse.game.top.enemies[0].spareable
+shot:print
+write:tristesse
+auto
+write:tristesse
+auto
+assert: window.__veilleuse.game.top.enemies[0].step === 1
+write:je ne sais pas
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable
+menu:3
+choose:0
+wait:900
+shot:hands
+auto
+assert: window.__veilleuse.G.state.flags.c5_vitre === 'epargnee'
+assert: window.__veilleuse.G.state.flags.debug_battle === 'spare:vitre'

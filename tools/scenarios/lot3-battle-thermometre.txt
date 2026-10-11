@@ -1,0 +1,24 @@
+# Lot 3 (chapter 5 battles): the Thermomètre. The reading goes up 0,7 a turn (anger from 38); « ça va » makes it jump;
+# at 40 it screams (full-width attack). « fièvre » calms it: its screen shows the reading it remembers, 38,4.
+query: debug=script&name=bt_thermometre&lang=fr
+god
+wait:1500
+auto
+write:ça va
+auto
+write:ça va
+auto
+write:ça va
+auto
+assert: window.__veilleuse.game.top.enemies[0].emotion === 'colere'
+shot:hot
+write:colere
+auto
+write:fièvre
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable
+shot:mem
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.debug_battle === 'spare:thermometre'

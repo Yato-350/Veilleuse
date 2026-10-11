@@ -160,6 +160,8 @@ const CH_B = ['F', 'Dm', 'G7', 'C', 'F', 'Dm', 'G7', 'C'];
 const CH_LULLABY = [...CH_A, ...CH_B];
 /** Night shift / Le Réveil (bonus chapter): A minor. */
 const GARDE_CHORDS = ['Am', 'F', 'C', 'G', 'Am', 'F', 'Dm', 'E'];
+/** La Vitre (chapter 5): the lullaby's chords in C minor (harmonic: G major on the dominant), spelled for chord(). */
+const VITRE_CHORDS = ['Cm', 'G', 'G#', 'G', 'Cm', 'G', 'G7', 'Cm', 'Fm', 'Fm', 'G7', 'Cm', 'Fm', 'G#', 'G7', 'Cm'];
 
 /** Same melody in 4/4 (8 eighth-note steps per bar): each 3/4 bar stretched with a dotted feel. */
 const LULLABY_44_A = [
@@ -790,7 +792,106 @@ export const TRACKS: Record<string, Track> = {
       ch('snare', drums('. . . . . x', 16), { vol: 0.1 }),
     ],
   },
+
+  /**
+   * La Marée Blanche, the beach of before — the lullaby in major, too high and too clean, like a photo left in the
+   * sun: a music box an octave up, a thin pad, harp-like arpeggios, and no bass at all (nothing to stand on). The sea
+   * breathes in and out every two bars; gulls cry far away, never on the beat. 16 bars 3/4.
+   */
+  plage: {
+    bpm: 64,
+    stepsPerBeat: 2,
+    vol: 0.72,
+    channels: [
+      ch('musicbox', transpose(LULLABY, 12), { vol: 0.34, reverb: 0.75 }),
+      ch('pluck', figure(CH_LULLABY, 5, '. 3 5 8 5 3'), { vol: 0.06, reverb: 0.6, pan: 0.3 }),
+      ch('pad', padLine(CH_LULLABY, 4, 6), { vol: 0.06, reverb: 0.8, detune: 6 }),
+      ch('breath', rep(join(hold('C4', 6), rest(6)), 8), { vol: 0.07 }),
+      ch(
+        'gull',
+        join(
+          rest(6),
+          '. . . . E6 -',
+          rest(6),
+          rest(6),
+          '. D6 - . . .',
+          rest(6),
+          rest(6),
+          rest(6),
+          rest(6),
+          '. . F6 - . .',
+          rest(6),
+          '. . . . . .',
+          'E6 - . . D6 -',
+          rest(6),
+          rest(6),
+          '. . . . . .',
+        ),
+        { vol: 0.05, reverb: 0.8, pan: -0.4 },
+      ),
+    ],
+  },
+
+  /**
+   * Le sas — almost no music: the air of the ventilation that never stops, a breath that comes too close to the
+   * microphone and sometimes holds (two bars of nothing), a monitor beeping somewhere, and a few notes of the lullaby
+   * left far apart, as if someone tried to remember it through a mask. 16 bars 3/4.
+   */
+  sas: {
+    bpm: 54,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch('air', hold('C3', 96), { vol: 0.16 }),
+      ch('breath', join(hold('A3', 9), rest(3), hold('A3', 9), rest(3), hold('A3', 9), rest(3), rest(12), hold('A3', 9), rest(3), hold('A3', 7), rest(5), rest(12), hold('A3', 9), rest(3)), { vol: 0.09 }),
+      ch('pulse12', rep('A6 . . . . . . . . . . .', 8), { vol: 0.02 }),
+      ch(
+        'musicbox',
+        join(
+          'E5 - - . . .',
+          rest(6),
+          '. . . D5 - -',
+          rest(6),
+          'C5 - - . . .',
+          rest(6),
+          rest(6),
+          '. . . . . G4',
+          'A5 - - . . .',
+          rest(6),
+          '. . . G5 - -',
+          rest(6),
+          'E5 - - . . .',
+          rest(6),
+          rest(6),
+          rest(6),
+        ),
+        { vol: 0.16, reverb: 0.9, detune: -18 },
+      ),
+      ch('pad', padLine(['Am', 'Am', 'F', 'F', 'C', 'C', 'G', 'G', 'Am', 'Am', 'F', 'F', 'Dm', 'Dm', 'E', 'E'], 3, 6), { vol: 0.035, reverb: 0.7, detune: -10 }),
+    ],
+  },
+
+  /**
+   * La Vitre — the lullaby on a piano in C minor, behind glass: muffled in the low register, with glass harmonics high
+   * above, a little out of tune with each other. Noa's breath fogs it every two bars; on the other side, two knocks,
+   * « je suis là », every fourth bar. A slow, heavy waltz bass. 16 bars 3/4.
+   */
+  vitre: {
+    bpm: 80,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch('piano', transpose(toHarmonicMinor(LULLABY), -12), { vol: 0.3, reverb: 0.5 }),
+      ch('bell', transpose(dropBars(toHarmonicMinor(LULLABY), [1, 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15]), 12), { vol: 0.05, reverb: 0.9, detune: 28 }),
+      ch('organ', padLine(VITRE_CHORDS, 3, 6), { vol: 0.07, reverb: 0.6, detune: -8 }),
+      ch('bass', figure(VITRE_CHORDS, 2, 'R - - 5 - -'), { vol: 0.34 }),
+      ch('breath', rep(join(hold('G3', 6), rest(6)), 8), { vol: 0.08 }),
+      ch('kick', drums(join(rest(6), rest(6), rest(6), 'X . X . . .'), 4), { vol: 0.32 }),
+      ch('hat', drums('. . x . x .', 16), { vol: 0.05 }),
+    ],
+  },
 };
+
 
 /** Spells flats as sharps so chord() can parse them (Bb → A#). */
 function fixFlat(sym: string): string {

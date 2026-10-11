@@ -1,0 +1,17 @@
+# Lot 3 (chapter 5 battles): the Gel. Its hand-gel drops stick to the heart and sting three times (damage over time),
+# the text box gets chapped, snowflakes fall in figures. Tristesse ×2.
+query: debug=script&name=bt_gel&lang=fr
+wait:1500
+auto
+write:joie
+auto
+shot:gerce
+write:tristesse
+auto
+write:tristesse
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.debug_battle === 'spare:gel'

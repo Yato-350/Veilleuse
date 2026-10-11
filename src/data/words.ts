@@ -39,6 +39,17 @@ export const WORD_POOLS: Record<number, WordDef[]> = {
     ...w('neutre', 'reste', 'maison', 'horloge', 'téléphone', 'fil', 'aiguille'),
     ...doux('pâtes', 'mot du frigo', 'dimanche', 'deux coups'),
   ],
+  // Chapter 5 « La Marée Blanche »: the beach of before, the white hospital, the visit through the glass. « fièvre »
+  // (Le Thermomètre), « pardon » and « je ne sais pas » (La Vitre) are special words too. « je ne sais pas » is neutral:
+  // it is neither sad nor angry, it is only true.
+  5: [
+    ...w('joie', 'été', 'vacances', 'château', 'vague', 'glace', 'dessiner', 'ensemble', 'samedi'),
+    ...w('tristesse', 'pardon', 'marée', 'visite', 'dormir', 'drap', 'neige', 'derrière la vitre', 'attendre'),
+    ...w('colere', 'interdit', 'injuste', 'crier', 'promis', 'brûlant', 'casser', 'dehors'),
+    ...w('peur', 'fièvre', 'tousser', 'microbe', 'contagieux', 'sas', 'blanc'),
+    ...w('neutre', 'je ne sais pas', 'sable', 'masque', 'bracelet', 'lune', 'crayon rouge'),
+    ...doux('coquillage', 'bonnet', 'deux crayons', 'quarante-deux'),
+  ],
 };
 
 /** Words Dodo forces into the notebook during the final battle. */

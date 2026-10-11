@@ -30,6 +30,14 @@ const douxWords = (chapter: number, n: number) => () => {
  *   bt_ch4_duo        Pâte Froide and Mot Aimanté together
  *   bt_mina366_still  after La Couseuse was beaten: Mina n°366 sits in her slot and does not move any more
  *   bt_ch4_seul       a chapter 4 battle without her
+ *
+ * Chapter 5 « La Marée Blanche » (chapter 4 stats: 20 Étoiles, the Plume dorée, the plaid; nobody at Noa's side, only
+ * Mina's empty frame and the red thread; the outcome is kept in flags.debug_battle):
+ *   vitre             the boss (Tristesse ×2, then « je ne sais pas »); flags.c5_vitre = 'epargnee' | 'brisee'
+ *   vitre_menti       the same after « Oui » at the portal (flags.c5_menti): « pardon » first
+ *   bt_crabe_bracelet, bt_mouette, bt_masque, bt_gel, bt_thermometre   the regular enemies
+ *   bt_gribouille_noire   fear drawn in ink: words slide off, blows split it, only fleeing works (not Ink)
+ *   bt_ch5_duo        Crabe-Bracelet and Mouette together, on the beach
  */
 function setup(d: Director, chapter: number, map: string, spawn: string, mina: boolean, flags: string[] = []): void {
   G.state.chapter = chapter;
@@ -51,6 +59,23 @@ async function ch4(d: Director, ids: string[], opts: { mina?: boolean; flags?: s
   s.hp = maxHp(s);
   s.party = opts.mina === false ? [] : ['mina366'];
   if (opts.vaincue) s.flags.c4_couseuse = 'vaincue';
+  await d.fadeIn(10);
+  const r = await d.battle(ids);
+  s.flags.debug_battle = `${r.outcome}:${[...r.spared, ...r.killed].join('+')}`;
+}
+
+/** Chapter 5 battle: chapter 4 stats, nobody in the party (Mina's frame stays empty). */
+async function ch5(d: Director, ids: string[], flags: string[] = []): Promise<void> {
+  setup(d, 1, 'prairie', 'mina', false, ['c1_tutorial', 'c1_mina', ...flags]);
+  const s = G.state;
+  s.chapter = 5;
+  s.etoiles = 20;
+  s.encre = 3;
+  s.weapon = 'plume';
+  s.armor = 'plaid';
+  s.items = ['chocolat', 'lait', 'biscuit', 'mouchoir', 'pluie'];
+  s.hp = maxHp(s);
+  s.party = [];
   await d.fadeIn(10);
   const r = await d.battle(ids);
   s.flags.debug_battle = `${r.outcome}:${[...r.spared, ...r.killed].join('+')}`;
@@ -108,4 +133,14 @@ export const DEBUG: Record<string, Script> = {
   bt_ch4_duo: (d) => ch4(d, ['pate_froide', 'mot_aimante']),
   bt_mina366_still: (d) => ch4(d, ['de_chevalier'], { vaincue: true }),
   bt_ch4_seul: (d) => ch4(d, ['poupee_brouillon'], { mina: false }),
+  // Chapter 5
+  vitre: (d) => ch5(d, ['vitre']),
+  vitre_menti: (d) => ch5(d, ['vitre'], ['c5_menti']),
+  bt_crabe_bracelet: (d) => ch5(d, ['crabe_bracelet']),
+  bt_mouette: (d) => ch5(d, ['mouette']),
+  bt_masque: (d) => ch5(d, ['masque']),
+  bt_gel: (d) => ch5(d, ['gel']),
+  bt_thermometre: (d) => ch5(d, ['thermometre']),
+  bt_gribouille_noire: (d) => ch5(d, ['gribouille_noire']),
+  bt_ch5_duo: (d) => ch5(d, ['crabe_bracelet', 'mouette']),
 };

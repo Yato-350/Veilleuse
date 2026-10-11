@@ -4,6 +4,7 @@ import type { Emotion } from '../../engine/palette';
 import type { BulletWorld } from './bullets';
 import { BONUS_PATTERNS } from './patterns-bonus';
 import { CH4_PATTERNS } from './patterns-ch4';
+import { CH5_PATTERNS } from './patterns-ch5';
 
 export interface PatternCtx {
   /** Difficulty modifier: 0 = gentle, grows with agitation and turn count. */
@@ -520,4 +521,6 @@ export const PATTERNS: Record<string, Pattern> = {
   ...BONUS_PATTERNS,
   // Chapter 4 « La Maison Cousue »: see patterns-ch4.ts.
   ...CH4_PATTERNS,
+  // Chapter 5 « La Marée Blanche »: see patterns-ch5.ts.
+  ...CH5_PATTERNS,
 };
