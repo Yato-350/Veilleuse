@@ -215,7 +215,7 @@ const MUFFLES = [0, 0.12, 0.22, 0.3];
 /** The mask's cloth over both sides of the text box: pleats, the elastic loops running off to the screen's edges. */
 function drawMaskCloth(g: CanvasRenderingContext2D, b: Battle): void {
   const inset = b.textInset;
-  if (inset <= 0 || b.mode === 'dodge') return;
+  if (inset <= 0 || b.mode === 'dodge' || b.mode === 'notebook') return;
   for (const side of [0, 1]) {
     const x0 = side ? BOX.x + BOX.w - inset : BOX.x - 2;
     const w = inset + 2;
@@ -300,7 +300,7 @@ function drawChaps(g: CanvasRenderingContext2D, b: Battle, n: number): void {
 const GEL_HOOKS: Partial<BattleHooks> = {
   async beforeTurn(b, turn) {
     const e = b.enemies[0];
-    if (turn === 1 && e) b.overlay = (g) => drawChaps(g, b, Math.min(12, (b.turn - 1) * 3));
+    if (turn === 1 && e) b.overlay = (g) => (b.mode === 'notebook' ? undefined : drawChaps(g, b, Math.min(12, (b.turn - 1) * 3)));
     if (turn === 2) await b.say('* Le bord de la boîte se gerce. Ça sent l\'alcool jusqu\'ici.');
   },
 };
@@ -325,7 +325,7 @@ const THERMO_HOOKS: Partial<BattleHooks> = {
     if (!e) return;
     if (turn === 1) {
       CH5.temp = s.temp;
-      b.overlay = (g) => {
+      b.backdrop = (g) => {
         s.t++;
         if (e.dead || e.spareT > 30 || e.hidden) return;
         const [x, y] = at(b, e, 5, 10);
@@ -538,19 +538,20 @@ function drawVitre(g: CanvasRenderingContext2D, b: Battle, e: EnemyRuntime, s: V
   // The two hands meeting on the glass: hers, small, at the center; his, drawn in blue pen, rising to meet it.
   if (s.meeting) {
     s.meetT++;
-    const cx = gx + GLASS.w / 2 - 6;
-    const cy = gy + GLASS.h / 2 - 8;
+    // Where her small hand already was (the second print), to the right of her, on the glass.
+    const cx = gx + 54;
+    const cy = gy + 18;
     // Hers, from the other side: small, grey through the glass, flat.
     g.globalAlpha = Math.min(1, s.meetT / 30);
-    drawHand(g, cx + 1, cy + 2, '#525a76', 1.6);
+    drawHand(g, cx + 4, cy + 5, '#525a76', 1);
     g.globalAlpha = 1;
-    // His, on this side: bigger, pale, outlined in blue pen, rising until it covers hers exactly.
+    // His, on this side: bigger, pale, outlined in blue pen, rising until it covers hers.
     const rise = Math.min(1, s.meetT / 70);
-    const hy = cy - 1 + (1 - rise) * 64;
-    g.globalAlpha = 0.55;
-    drawHand(g, cx - 3, hy, '#f3e6dc', 2.2);
+    const hy = Math.round(cy + (1 - rise) * 64);
+    g.globalAlpha = 0.5;
+    drawHand(g, cx, hy, '#f3e6dc', 2);
     g.globalAlpha = 1;
-    drawHand(g, cx - 3, hy, '#3d4c8f', 2.2, true);
+    drawHand(g, cx, hy, '#3d4c8f', 2, true);
   }
   g.restore();
 }

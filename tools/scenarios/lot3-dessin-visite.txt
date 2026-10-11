@@ -1,0 +1,19 @@
+# Lot 3 (chapter 5 drawing game): the visit. Noa traces the moon (hold Z) while the little hand colours it in red: the
+# two pens cross on it; she draws herself with a crown; Noa draws himself and coughs at 55 %: the screen shakes, ink
+# splashes and runs; the nurse's shadow falls over the page; the page dissolves into the chapter 2 souvenir.
+query: debug=script&name=dessin_visite&lang=fr
+wait:1500
+zuntil: window.__veilleuse.game.top.tracing && !window.__veilleuse.dialogue.busy
+KeyZ:5200
+assert: window.__veilleuse.game.top.result.crossed === true
+shot:lune
+zuntil: window.__veilleuse.game.top.tracing && window.__veilleuse.game.top.tracing.who === 'noa' && !window.__veilleuse.dialogue.busy
+shot:elle
+KeyZ:4500
+waitfor: window.__veilleuse.game.top.result.coughed === true
+wait:1600
+shot:toux
+zuntil: window.__veilleuse.game.top.revealT >= 90
+shot:souvenir
+auto
+assert: window.__veilleuse.G.state.flags.debug_dessin === 'croise:toux'

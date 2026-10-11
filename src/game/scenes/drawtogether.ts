@@ -412,6 +412,8 @@ interface Tracing {
   started: boolean;
   cancellable: boolean;
   cancelled: boolean;
+  /** The A press that closed the last line does not start drawing: the pen waits for A to be let go first. */
+  armed: boolean;
 }
 
 export class DrawTogetherScene implements Scene {
@@ -535,6 +537,7 @@ export class DrawTogetherScene implements Scene {
         started: false,
         cancellable: !!o.cancellable,
         cancelled: false,
+        armed: !!o.auto || !this.pressing,
       };
     });
   }
@@ -569,6 +572,10 @@ export class DrawTogetherScene implements Scene {
       audio.sfx('cancel');
       tc.resolve();
       return;
+    }
+    if (!tc.armed) {
+      if (this.pressing) return;
+      tc.armed = true;
     }
     const drawing = tc.auto || this.pressing;
     const pen = tc.who === 'noa' ? this.penNoa! : this.penElle!;

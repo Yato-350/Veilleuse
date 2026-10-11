@@ -420,6 +420,25 @@ boss lui donnent une aide propre (hook `onAlly`). Moteur : `Bullet.draw` (`shape
 collision, `data.pierce`), `BulletWorld.pre/post/dark/liveBox`, `soul.pin`, `Battle.backdrop`, `allySay`,
 `prepareDodge`, `detune`.
 
+**Chapitre 5 — La Marée Blanche** (`src/data/enemies-ch5.ts`, sprites `src/data/sprites/enemies-ch5.ts`, motifs
+`src/game/battle/patterns-ch5.ts`, fonds `plage` (plage surexposée) / `blanc` (hôpital blanc au stylo bleu)) :
+
+| id | Émotion | Besoin | Motifs | Particularité |
+|---|---|---|---|---|
+| `crabe_bracelet` | colère | tristesse ×2 | `pincer_arcs`, `bracelet_clasp` | coquille = bracelet « MINA — PÉD. 3 — 304 » ; le fermoir se referme autour du cœur |
+| `mouette` (fém.) | joie | colère, puis joie | `gull_dive`, `word_theft` | dès le tour 2 vole un mot par tour (le dernier écrit) et troue le carnet (`Battle.stolenWords`, `tornSlots`) ; les rend une fois apaisée ; « Mine ! » devient « Mina » |
+| `masque` | peur | joie ×2, déteste colère | `mask_pleats`, `mask_elastics` | réduit et étouffe la boîte de texte (`Battle.textInset`, `muffle`) |
+| `gel` | colère | tristesse ×2 | `gel_drops`, `snowflakes` | gouttes collantes qui piquent 3 fois (`BulletWorld.onSting`, dégâts sur la durée) ; boîte gercée ; flocons blancs en figures |
+| `thermometre` | peur → colère (38) | mot « fièvre » | `thermo_digits`, `thermo_mercury`, `thermo_scream` | le chiffre monte de 0,7 par tour ; à 40 il hurle (attaque pleine largeur) ; « ça va » le fait sauter |
+| `gribouille_noire` (fém.) | neutre | aucun (`noInk`) | `black_scribbles` | ne s'apaise pas, les mots glissent, chaque coup la dédouble (3 à l'écran, sans fin) ; fuir réussit toujours ; sa mort ne compte jamais comme Encre |
+| `vitre` (boss, fém.) | tristesse | tristesse ×2, puis « je ne sais pas » ; « pardon » d'abord si `c5_menti` | `vitre_buee`, `vitre_condensation`, `vitre_fissures` | buée (le cœur l'essuie), empreintes de mains, fissures ; pose `c5_vitre = 'epargnee'` (les mains se rejoignent) ou `'brisee'` (lit vide) ; pas de fuite ; musique `vitre` |
+
+`EnemyDef.noInk` : ennemi qui n'est pas un sentiment (pas de besoins, fuite toujours réussie, ni Encre, ni kill, ni
+Boutons). Au chapitre 5, personne à côté de Noa : le cadre de Mina reste vide dans le HUD, traversé par le fil rouge
+(`allyState` → `'absent'`). Combats de debug : `?debug=script&name=vitre|vitre_menti|bt_crabe_bracelet|bt_mouette|
+bt_masque|bt_gel|bt_thermometre|bt_gribouille_noire|bt_ch5_duo`. Le mini-jeu de dessin à deux est
+`src/game/scenes/drawtogether.ts` (démos `dessin_visite`, `dessin_corriger`).
+
 ---
 
 ## 6. Musique — `src/data/music.ts` (équipe AMBIANCE)
@@ -440,7 +459,9 @@ title: {
 Jetons : note (`C4`, `F#3`, `Bb2`), accord (`C4+E4+G4`), `.` silence, `-` tenir la note précédente, `x`/`X` coup
 de batterie (instruments `kick`, `snare`, `hat`). `|` est ignoré (lisibilité). Chaque canal boucle sur sa propre
 longueur. Instruments : `square`, `pulse25`, `pulse12`, `triangle`, `sine`, `saw`, `musicbox`, `piano`, `pad`,
-`bass`, `pluck`, `bell`, `organ`, `kick`, `snare`, `hat`. Options de canal : `vol`, `transpose`, `reverb`, `pan`, `detune`.
+`bass`, `pluck`, `bell`, `organ`, `kick`, `snare`, `hat`, et (v2, chapitre 5) `gull` (cri de mouette), `breath`
+(souffle : bruit filtré qui monte et retombe sur la durée de la note), `air` (ventilation continue). Options de canal :
+`vol`, `transpose`, `reverb`, `pan`, `detune`.
 
 **Leitmotiv — « La Berceuse de la Veilleuse »** (do majeur, 3/4, croches, 6 pas par mesure) — à décliner partout :
 
@@ -471,6 +492,9 @@ Accords : C G Am G | C G G7 C | F Dm G C | F Dm G C
 | `void` | vide : drones, notes isolées, silence pesant |
 | `ending` | fin : arrangement émouvant de la berceuse (piano + cordes/pad), lumineux |
 | `gameover` | game over : courte phrase triste, boucle lente |
+| `plage` | ch. 5, la plage d'avant : berceuse en majeur, trop aiguë, sans basse ; la mer respire, des mouettes au loin |
+| `sas` | ch. 5, le sas : ventilation, un souffle qui retient parfois, un bip, quelques notes de la berceuse très espacées |
+| `vitre` | ch. 5, boss La Vitre : berceuse au piano en do mineur, harmoniques de verre, buée, deux coups « je suis là » |
 
 ---
 
