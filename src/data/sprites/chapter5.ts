@@ -27,7 +27,6 @@ const hash = (x: number, y: number, seed: number): number => {
   h = Math.imul(h ^ (h >>> 13), 1274126177);
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 };
-const over = (base: string, art: string, x = 0, y = 0): string => Pix.of(base).stamp(art, x, y).toString();
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Colours
@@ -837,6 +836,9 @@ const SUN = (() => {
     }
   return p.toString();
 })();
+
+/** The white veil over the beach (pinned to the screen; its alpha grows while Mina sleeps). */
+const VEIL = new Pix(320, 180).rect(0, 0, 320, 180, 'f').toString();
 
 /** The Thermomètre's portal: a giant digital thermometer stuck in the ice, a doorway of white light in its body. */
 function portal(state: 'q' | 'ok' | 'fievre' | 'off'): string {
@@ -1828,6 +1830,7 @@ export const ART: Record<string, SpriteDef> = keep({
   prop_c5_flaque: sprite(tidePool(0), BEACH),
   prop_c5_flaque_2: sprite(tidePool(1), BEACH),
   c5_soleil: SUN,
+  c5_voile: VEIL,
   prop_c5_portail: sprite(portal('q'), ALL),
   prop_c5_portail_2: sprite(portal('off'), ALL),
   prop_c5_portail_ok: sprite(portal('ok'), ALL),

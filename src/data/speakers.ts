@@ -44,5 +44,8 @@ export const SPEAKERS: Record<string, Speaker> = {
   mina366: { name: 'Mina', voice: 'mina366', portrait: 'mina366', color: '#e07b6a' },
   poupeemaman: { name: 'Poupée-Maman', voice: 'maman', color: '#d49a88' },
   couseuse: { name: 'La Couseuse', voice: 'eraser', color: '#c8bfa8' },
+  // Chapter 5 « La Marée Blanche »: voices heard through a partition or a shell.
+  mamanvoix: { name: 'Maman', voice: 'maman', color: '#f8b6cf' },
+  medecin: { name: 'Le médecin', voice: 'owl', color: '#a7c7f0' },
   system: { name: '', voice: 'none' },
 };

@@ -63,20 +63,6 @@ const BEACH_LEGEND: Record<string, string> = {
   H: 'c5_brume',
 };
 
-/** The ten clusters of shells: [x, y, how many, sprite variant]. 41 in all; the 42nd is hidden (C5.shell42). */
-export const SHELL_CLUSTERS: Array<[number, number, number, number]> = [
-  [5, 5, 3, 1],
-  [11, 15, 4, 2],
-  [19, 8, 5, 3],
-  [31, 16, 4, 1],
-  [35, 14, 6, 3],
-  [41, 9, 3, 2],
-  [5, 16, 5, 1],
-  [30, 6, 4, 2],
-  [15, 5, 3, 3],
-  [37, 12, 4, 2],
-];
-
 const PLAGE: MapDef = {
   id: 'plage',
   name: 'La Plage d\'avant',
@@ -143,7 +129,7 @@ const PLAGE: MapDef = {
     P('prop_c5_portail_ok', 21, 26, { w: 3, cond: both(after, f('c5_menti')), script: C5.portalAgain }),
     P('prop_c5_portail_fievre', 21, 26, { w: 3, cond: both(after, f('c5_fievre')), script: C5.portalAgain }),
     // --- Shells (before the tide).
-    ...SHELL_CLUSTERS.map(([x, y, , v], i) =>
+    ...C5.SHELL_CLUSTERS.map(([x, y, , v], i) =>
       P(`prop_c5_coquillages_${v}`, x, y, { id: `coquillages_${i}`, solid: false, oy: -2, cond: both(before, nf(`c5_coq_${i}`)), script: C5.shells(i) }),
     ),
   ],
@@ -167,7 +153,6 @@ const PLAGE: MapDef = {
 
 /** x of the partitions; airlock doors at DOOR_X (D1…D5). The gap of every partition is at rows 6–7. */
 const PARTS = [0, 13, 22, 30, 38, 46, 56, 65];
-export const DOOR_X = [30, 38, 46, 56, 65];
 
 function sasTiles(): string {
   const g = new Grid(66, 11, 'T');
@@ -261,7 +246,7 @@ const SAS: MapDef = {
     WALL('prop_c5_avis', 59, 2, -4, { w: 2, script: C5.lakeNotice }),
     P('prop_c5_chariot', 62, 4, { w: 2, script: C5.frozenTrolley }),
     // --- The airlock doors (sprite and collision are set by C5.syncDoors from the flags).
-    ...DOOR_X.map((x, i) => P('prop_c5_porte_rouge', x, 6, { id: `porte_${i + 1}`, h: 2, script: C5.airlockDoor(i + 1) })),
+    ...C5.DOOR_X.map((x, i) => P('prop_c5_porte_rouge', x, 6, { id: `porte_${i + 1}`, h: 2, script: C5.airlockDoor(i + 1) })),
   ],
   npcs: [
     { id: 'thermometre', sprite: 'ow_thermometre', frames: ['ow_thermometre', 'ow_thermometre_2'], frameSpeed: 20, x: 12, y: 6, shadow: false, cond: both(nf('c5_menti'), nf('c5_thermo_fait')), script: C5.thermoBlock },
@@ -287,15 +272,6 @@ const SAS: MapDef = {
 // ---------------------------------------------------------------------------------------------------------------------
 // lac_blanc — the frozen lake inside the hospital
 // ---------------------------------------------------------------------------------------------------------------------
-
-/** The five drawings along the shore: x on the tarp wall, drawing id. */
-export const DRAWINGS: Array<[number, 'maman' | 'nadia' | 'mina' | 'chaise' | 'plage']> = [
-  [8, 'maman'],
-  [14, 'nadia'],
-  [20, 'mina'],
-  [26, 'chaise'],
-  [32, 'plage'],
-];
 
 /** The red thread across the lake (tile positions, in order): from the airlock door to the glass box, a branch to the hut. */
 const THREAD_MAIN: Array<[number, number]> = [
@@ -460,7 +436,7 @@ const LAC_BLANC: MapDef = {
   onEnter: C5.lakeEnter,
   props: [
     // --- The five drawings along the shore, taped on the tarps.
-    ...DRAWINGS.flatMap(([x, id]) => [
+    ...C5.DRAWINGS.flatMap(([x, id]) => [
       WALL(`prop_c5_dessin_${id}`, x, 2, -2, { id: `dessin_${id}`, cond: nf(`c5_corrige_${id}`), script: C5.drawing(id) }),
       WALL(`prop_c5_dessin_${id}_corrige`, x, 2, -2, { cond: f(`c5_corrige_${id}`), script: C5.drawing(id) }),
     ]),

@@ -6,6 +6,7 @@ import { CHAPTER1_MAPS } from './chapter1';
 import { CHAPTER2_MAPS } from './chapter2';
 import { CHAPTER3_MAPS } from './chapter3';
 import { CHAPTER4_MAPS } from './chapter4';
+import { CHAPTER5_MAPS } from './chapter5';
 import { BONUS_MAPS } from './bonus';
 import { SHOWCASE_TILES_MAPS } from './showcase_tiles';
 import { SHOWCASE_PROPS_MAPS } from './showcase_props';
@@ -19,6 +20,7 @@ export const MAPS: Record<string, MapDef> = {
   ...CHAPTER2_MAPS,
   ...CHAPTER3_MAPS,
   ...CHAPTER4_MAPS,
+  ...CHAPTER5_MAPS,
   ...BONUS_MAPS,
   ...SHOWCASE_TILES_MAPS,
   ...SHOWCASE_PROPS_MAPS,

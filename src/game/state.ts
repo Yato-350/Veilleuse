@@ -198,6 +198,8 @@ export interface Settings {
   reduceFlashes: boolean;
   crt: boolean;
   storyMode: boolean;
+  /** Accessibility: real-time waits (the 30 seconds on the towel, chapter 5) are cut short. */
+  shortWaits: boolean;
   touch: 'auto' | 'on' | 'off';
   touchOpacity: number;
   touchSize: number;
@@ -218,6 +220,7 @@ export function defaultSettings(): Settings {
     reduceFlashes: false,
     crt: false,
     storyMode: false,
+    shortWaits: false,
     touch: 'auto',
     touchOpacity: 0.55,
     touchSize: 1,

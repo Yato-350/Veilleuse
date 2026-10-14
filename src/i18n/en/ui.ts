@@ -271,6 +271,7 @@ export const UI: Record<string, string> = {
   'Mode Histoire': 'Story Mode',
   'Secousses': 'Screen shake',
   'Réduire les flashs': 'Reduce flashes',
+  'Réduire les attentes': 'Shorter waits',
   'Formes des émotions': 'Emotion shapes',
   'Filtre CRT': 'CRT filter',
   'Contrôles tactiles': 'Touch controls',

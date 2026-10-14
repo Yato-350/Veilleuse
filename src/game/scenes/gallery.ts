@@ -36,6 +36,8 @@ const CATALOG: Array<[key: string, kind: string, title: string, captions: string
   ['souvenir_dessin', KIND_SOUVENIR, '', []],
   ['souvenir_veilleuse', KIND_SOUVENIR, '', []],
   ['souvenir_lumiere', KIND_SOUVENIR, '', []],
+  ['souvenir_vitre', KIND_SOUVENIR, '', []],
+  ['souvenir_vitre_brisee', KIND_SOUVENIR, '', []],
   ['photo_famille', KIND_REAL, 'La photo de l\'été', ['Maman, toi, et Mina avec sa couronne en papier.', 'Tu avais oublié que tu souriais comme ça.']],
   [
     'tv_mina',

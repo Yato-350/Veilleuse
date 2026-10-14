@@ -17,6 +17,7 @@ import { PAL } from '../engine/palette';
 import { ctx2d, makeCanvas, parseRows } from '../engine/sprite';
 import { BONUS_ILLUSTRATIONS } from './illustrations-bonus';
 import { CH4_ILLUSTRATIONS } from './illustrations-ch4';
+import { CH5_ILLUSTRATIONS } from './illustrations-ch5';
 import { NUIT_ILLUSTRATIONS } from './illustrations-nuit';
 
 export type Illustration = (g: CanvasRenderingContext2D, t: number) => void;
@@ -2111,6 +2112,7 @@ export const ILLUSTRATIONS: Record<string, Illustration> = {
   ...BONUS_ILLUSTRATIONS,
   ...CH4_ILLUSTRATIONS,
   ...NUIT_ILLUSTRATIONS,
+  ...CH5_ILLUSTRATIONS,
 };
 
 export interface Souvenir {
@@ -2157,6 +2159,26 @@ export const SOUVENIRS: Record<string, Souvenir> = {
       'Quelqu\'un frappe, tout doucement. Personne ne répond.',
       'Une main se pose à plat sur la porte. Elle reste là un long moment.',
       'Puis elle s\'en va.',
+    ],
+  },
+  vitre: {
+    title: 'La vitre',
+    image: 'souvenir_vitre',
+    captions: [
+      'Le sas de la chambre 304. Une vitre, et de la buée.',
+      'De l\'autre côté, un bonnet à oreilles de mouton. Une petite main, à plat contre le verre.',
+      'Ce jour-là, tu n\'as pas posé la tienne.',
+      'Cette nuit, si.',
+    ],
+  },
+  vitre_brisee: {
+    title: 'La vitre fendue',
+    image: 'souvenir_vitre_brisee',
+    captions: [
+      'Le sas de la chambre 304. Une vitre fendue de haut en bas.',
+      'Une petite main, à plat contre le verre. Derrière, il n\'y a plus personne. Le lit est plat.',
+      'L\'encre coule dans les fissures. Elle ne s\'arrête pas.',
+      'Ce jour-là non plus, tu n\'as pas posé la tienne.',
     ],
   },
 };

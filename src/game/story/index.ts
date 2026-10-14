@@ -9,6 +9,7 @@ import * as chapter1 from './chapter1';
 import * as chapter2 from './chapter2';
 import * as chapter3 from './chapter3';
 import * as chapter4 from './chapter4';
+import * as chapter5 from './chapter5';
 import * as bonus from './bonus';
 import * as socle from './socle';
 import * as battleDebug from '../battle/debug-battles';
@@ -32,6 +33,8 @@ STORY.dream[3] = chapter3.start;
 // Interlude III (real-nuit.ts) enters chapter 4, whose end wakes up into Interlude IV. Until production lot 5 wires
 // the false dawn, chapter 3 still wakes up into the v1.1 finale, so III, chapter 4 and IV are reached by debug only.
 STORY.dream[4] = chapter4.start;
+// Interlude IV ends by entering chapter 5, which falls into chapter 6 (fallInto) without waking up.
+STORY.dream[5] = chapter5.start;
 STORY.wake[1] = real.interlude1;
 STORY.wake[2] = real.interlude2;
 STORY.wake[3] = real.finale;
@@ -57,6 +60,7 @@ export const DEBUG_SCRIPTS: Record<string, Script> = {
   ...chapter2.DEBUG,
   ...chapter3.DEBUG,
   ...chapter4.DEBUG,
+  ...chapter5.DEBUG,
   ...bonus.DEBUG,
   ...socle.DEBUG,
   ...battleDebug.DEBUG,
