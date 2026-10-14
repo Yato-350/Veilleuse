@@ -193,6 +193,11 @@ export class WorldScene implements Scene {
     return this.entities.find((e) => e.id === id);
   }
 
+  /** Hides the map name banner (a map reloaded in the middle of a scene). */
+  hideBanner(): void {
+    this.bannerT = 0;
+  }
+
   addEntity(e: Entity): Entity {
     this.entities.push(e);
     return e;

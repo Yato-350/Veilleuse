@@ -1,0 +1,118 @@
+# Lot 4 (chapter 6 world): the whole chapter, from the card to the final battle. The card (« Il fait toujours nuit. »,
+# ballpoint and red thread); the landing under the seam; the walls replay the prologue; T7 in the hollow; down into the
+# wadding: the riddle of night 0 opens the seam; the music box (sheep=auto plays the counting scene « dents »), the
+# lullaby whole; the corridor (here the doors are skipped: door 41 of each branch, see lot4-ch6-appel for the doors);
+# « Laquelle est vraie ? » (la dure, recorded in G.meta.callVersion); 3:38 through the button eyes; the Pile spared;
+# the voice chamber; « regarder »; Dodo comes down and the final battle starts.
+query: debug=script&name=chapter6&sheep=auto&lang=fr
+god
+wait:2500
+shot:carte
+waitfor: window.__veilleuse.scene() === 'WorldScene' && window.__veilleuse.dialogue.busy
+auto
+assert: window.__veilleuse.G.state.flags.c6_intro && window.__veilleuse.world.map.id === 'couture'
+eval: window.T = () => (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ')
+go:9/6
+wait:400
+auto
+go:12/6
+wait:400
+auto
+go:15/7
+wait:400
+auto
+go:18/7
+wait:400
+auto
+assert: window.__veilleuse.G.state.flags.c6_mur_4
+go:19/7
+waitfor: window.__veilleuse.dialogue.busy
+zuntil: window.__veilleuse.G.state.flags.c6_t7 === true
+auto
+assert: window.__veilleuse.world.map.id === 'couture'
+go:24/15
+wait:200
+ArrowDown:500
+waitfor: window.__veilleuse.world.map.id === 'ouate'
+auto
+eval: window.__veilleuse.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => window.__veilleuse.world.removeEntity(e))
+go:39/14
+interact:couture
+auto
+go:10/17
+interact:nuit1
+auto
+choose:0
+auto
+go:39/14
+interact:couture
+auto
+assert: window.__veilleuse.G.state.flags.c6_couture
+go:31/18
+interact:sauvegarde
+auto
+choose:0
+auto
+go:39/13
+ArrowUp:400
+waitfor: window.__veilleuse.world.map.id === 'boite_a_musique'
+auto
+eval: window.__veilleuse.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => window.__veilleuse.world.removeEntity(e))
+go:15/6
+interact:dent_1
+auto
+interact:dent_2
+auto
+interact:dent_3
+auto
+interact:manivelle
+auto
+choose:0
+zuntil: window.__veilleuse.game.top.roundNo === 2
+zuntil: window.__veilleuse.game.top.roundNo === 3
+zuntil: window.__veilleuse.G.state.flags.c6_boite === true
+auto:60000
+go:14/18
+ArrowDown:600
+waitfor: window.__veilleuse.world.map.id === 'couloir_41'
+auto
+go:89/3
+interact:porte41_haut
+auto
+go:89/17
+interact:porte41_bas
+zuntil: window.__veilleuse.dialogue.choices
+choose:1
+zuntil: window.__veilleuse.world.map.id === 'chambre'
+zuntil: window.__veilleuse.G.state.flags.c6_fenetres === true
+auto
+assert: window.__veilleuse.G.meta.callVersion === 'dure' && window.__veilleuse.world.map.id === 'couloir_41'
+go:20/27
+interact:pile
+auto
+write:joie
+auto
+write:garder
+auto
+menu:3
+choose:0
+auto
+go:25/24
+ArrowUp:500
+waitfor: window.__veilleuse.world.map.id === 'voix'
+zuntil: !window.__veilleuse.dialogue.busy && window.__veilleuse.G.state.flags.c6_voix_vue
+auto
+go:11/21
+interact:sauvegarde
+auto
+choose:0
+auto
+assert: window.__veilleuse.readSave().map === 'voix' && window.__veilleuse.readSave().chapter === 6
+go:15/18
+ArrowUp:400
+zuntil: window.__veilleuse.game.top.constructor.name === 'NotebookPick'
+wait:600
+shot:regarder
+KeyZ
+zuntil: window.__veilleuse.scene() === 'Battle'
+assert: window.__veilleuse.G.state.flags.c6_regarder && window.__veilleuse.G.state.flags.c6_pile && window.__veilleuse.G.state.keyItems.includes('pile_chargee')

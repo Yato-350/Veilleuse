@@ -728,6 +728,19 @@ Les sprites du chapitre gardent leurs couleurs dans le monde `blanc` (`keep()` :
 de sauvegarde aussi (seule lumière jaune de l'hôpital). Souvenir 5 : `souvenir_vitre` (épargnée) ou
 `souvenir_vitre_brisee` (`src/data/illustrations-ch5.ts`).
 
+**v2, chapitre 6** (`src/game/story/chapter6.ts`, cartes `src/data/maps/chapter6.ts` : `couture`, `ouate`,
+`boite_a_musique`, `couloir_41`, `voix`, toutes en monde `ouate`) : drapeaux `c6_*` documentés en tête du module. Lus
+par les lots suivants : `c6_t7` (dès T7, la boîte blanche parle avec le bip de Noa : `tell()`), `c6_bocal0`,
+`c6_boite`, `c6_appel` (la réponse est dans `G.meta.callVersion` : `douce` | `dure` | `sais_pas`), `c6_fenetres`,
+`c6_pile` / `c6_pile_morte` (posés par le combat), `c6_regarder`, `c6_seuil`, `c6_final`, et `fin_route` (posé par le
+combat final : `aube` | `beaux_reves` | `silence`). `STORY.dream[6]` = `chapter6.start` (le chapitre 5 y tombe par
+`fallInto(d, 6)`) ; le seuil lance `runFinalBattleV2(d)` puis `afterFinalBattle(d, route)` (`endings.ts`). Dans le
+couloir, quelle branche porte quelle version de l'appel est tirée une fois par partie (`c6_haut`) ; le jeu ne dit
+jamais laquelle est la vraie (règle des 41 secondes, bible § 1.5). Les sprites du chapitre gardent leurs couleurs
+dans la peluche (`keep()` : `clé@ouate`). Aides de script : `tell()` (narrateur, bip de Noa après T7), `look`,
+`looks`, `voice()` (Dodo sans portrait), `murmur()` (une phrase qui flotte hors des murs), `reload()` (carte rechargée
+en pleine scène, sans bandeau).
+
 ### 8.6 Objets
 
 Voir `src/data/items.ts` (`bonbon`, `lait`, `biscuit`, `chocolat`, `gateau`, `mouchoir`, `bulles`, `pluie`,
@@ -742,4 +755,6 @@ Voir `src/data/items.ts` (`bonbon`, `lait`, `biscuit`, `chocolat`, `gateau`, `mo
 `bibliotheque` → `village` (calme) ; `atelier` → `boss` pendant le combat ; `ruines` → `dodo` ; `hopital` /
 `chambre_304` → `hospital` + `hum` ; `vide` → `void` puis `dodo_battle` ; finale → `ending`. Chapitre 5 : `plage` →
 `plage` + `wind` (après la marée : plus lente, désaccordée) ; `sas` → `sas` + `hum` ; `lac_blanc` et
-`chambre_verre` → silence (`wind` / `hum`) ; la Vitre → `vitre`.
+`chambre_verre` → silence (`wind` / `hum`) ; la Vitre → `vitre`. Chapitre 6 : `couture`, `ouate`, `boite_a_musique` → `ventre` (la
+boîte se tait une fois la berceuse jouée en entier, `hum`) ; `couloir_41` → `appel` ; `voix` → silence + `hum` ; le
+combat final → `dodo_v2`.

@@ -5,7 +5,7 @@
 query: debug=script&name=chapter6_t7&lang=fr
 god
 waitfor: window.__veilleuse.dialogue.busy
-eval: window.T = () => (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines || []).flat().map((c) => c.ch).join('')
+eval: window.T = () => (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ')
 shot:dodo
 zuntil: window.T().includes('Dis-le avec moi')
 zuntil: window.__veilleuse.dialogue.asKey !== ''

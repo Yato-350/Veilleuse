@@ -220,8 +220,18 @@ const OUATE: MapDef = {
     P('prop_c6_fil_pendu_2', 35, 19, { solid: false, oy: -12, frames: ['prop_c6_fil_pendu_2', 'prop_c6_fil_pendu_1'], frameSpeed: 40, script: C6.ouateThread }),
     WALL('prop_c6_touffe_1', 13, 15, 4, { frames: ['prop_c6_touffe_1', 'prop_c6_touffe_2'], frameSpeed: 60, script: C6.coutureTuft }),
     P('prop_c6_epingle', 28, 18, { script: C6.pinFloor }),
+    // --- The forest of needles.
+    ...([
+      [36, 19, 0],
+      [37, 20, -4],
+      [38, 18, 2],
+      [40, 19, -2],
+      [39, 21, 0],
+      [41, 17, 3],
+      [36, 21, 1],
+    ] as const).map(([x, y, ox]) => P('prop_c6_epingle', x, y, { ox, script: C6.pinForest })),
     // --- Chaussette's corner: the save point.
-    savePoint(31, 17, 'Une petite lumière, au fond du coton. Elle a la chaleur d\'une main.'),
+    { ...savePoint(31, 17, 'Une petite lumière, au fond du coton. Elle a la chaleur d\'une main.'), id: 'sauvegarde' },
     // --- The sealed seam, in the east wall of the low cave.
     P('prop_c6_couture', 39, 12, { id: 'couture', h: 2, solid: true, script: C6.sealedSeam, cond: nf('c6_couture') }),
     P('prop_c6_couture_ouverte', 39, 12, { h: 2, solid: false, cond: f('c6_couture') }),
@@ -383,8 +393,8 @@ const COULOIR_41: MapDef = {
     SPOT(58, haut.base, C6.corridorWall),
     SPOT(70, bas.base, C6.corridorWall),
     // --- Door 41, at the end of each branch.
-    SPOT(doorX(41), haut.base, C6.door41('haut'), { solid: true }),
-    SPOT(doorX(41), bas.base, C6.door41('bas'), { solid: true }),
+    SPOT(doorX(41), haut.base, C6.door41('haut'), { id: 'porte41_haut', solid: true }),
+    SPOT(doorX(41), bas.base, C6.door41('bas'), { id: 'porte41_bas', solid: true }),
     // --- The end room: Dodo's button eyes, the headphones, the seam that opens after the Pile.
     P('prop_c6_oeil', 11, 24, { id: 'oeil_g', w: 3, solid: true, script: C6.eyesLook }),
     P('prop_c6_oeil', 17, 24, { id: 'oeil_d', w: 3, solid: true, script: C6.eyesLook }),
@@ -455,12 +465,16 @@ const VOIX: MapDef = {
     WALL('prop_c6_epingles_1', 3, 6, 4, { script: C6.pinsCeiling }),
     WALL('prop_c6_epingles_2', 27, 6, 4, { script: C6.pinsCeiling }),
     // --- The route of the ink: nobody there, a pool of ink, a hat.
-    FLAT('prop_c6_encre', 14, 13, { w: 2, ox: 8, cond: isSilenceRoute, script: C6.inkPool }),
+    FLAT('prop_c6_encre', 14, 13, { id: 'flaque_encre', w: 2, ox: 8, cond: isSilenceRoute, script: C6.inkPool }),
     P('prop_c6_bonnet_plat', 15, 13, { solid: false, oy: -2, cond: isSilenceRoute, script: C6.inkPool }),
     // --- The save point, by the way in.
-    savePoint(11, 20, 'Une petite lumière, au bord de la croûte. Elle tient bon.'),
+    { ...savePoint(11, 20, 'Une petite lumière, au bord de la croûte. Elle tient bon.'), id: 'sauvegarde' },
   ],
-  npcs: [{ id: 'petite', char: 'bonnet', x: 15, y: 13, dir: 'up', shadow: true, cond: both(() => !isSilenceRoute(), nf('c6_final')), script: C6.petiteTalk }],
+  npcs: [
+    // The little girl in the knitted hat: from behind, faceless; once looked at, her face drawn in pencil, turned to Noa.
+    { id: 'petite', char: 'bonnet', x: 15, y: 13, dir: 'up', cond: both(() => !isSilenceRoute(), both(nf('c6_final'), nf('c6_regarder'))), script: C6.petiteTalk },
+    { id: 'petite', char: 'bonnet_drawn', x: 15, y: 13, dir: 'down', cond: both(() => !isSilenceRoute(), f('c6_regarder')), script: C6.petiteTalk },
+  ],
   triggers: [{ x: 1, y: 16, w: 29, h: 1, script: C6.threshold, cond: nf('c6_seuil') }],
   warps: [{ x: 14, y: 25, w: 3, h: 1, to: 'voix', spawn: 'entree', sfx: 'none' }],
 };

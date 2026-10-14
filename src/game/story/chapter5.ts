@@ -1997,8 +1997,8 @@ async function theFall(d: Director): Promise<void> {
   p.oy = 0;
   p.alpha = 1;
   d.cameraFollow();
-  // Chapter 6 « Le Ventre de Dodo » (production lot 4) registers STORY.dream[6] = chapter6.start: Noa falls into it
-  // without waking up. Until then (debug runs only) the fall ends on black.
+  // Chapter 6 « Le Ventre de Dodo » is STORY.dream[6] (story/index.ts): Noa falls into it without waking up. Without
+  // it the fall would end on black.
   if (STORY.dream[6]) {
     await fallInto(d, 6);
     return;

@@ -1,0 +1,47 @@
+# Lot 4 (chapter 6 world): the route of the ink. At the threshold nobody is there, only a pool of ink and the hat lying
+# flat; the notebook's three words are drowned. Dodo comes down; nobody knocks (only the radiator); her words are
+# drowned in ink: fin_route 'silence', and afterFinalBattle plays the Silence ending.
+query: debug=script&name=chapter6_bonnet&silence=1&lang=fr
+god
+wait:1500
+auto
+assert: !window.__veilleuse.world.get('petite')
+go:15/14
+interact:flaque_encre
+auto
+go:15/18
+wait:200
+ArrowUp:400
+zuntil: window.__veilleuse.game.top.constructor.name === 'NotebookPick'
+wait:600
+shot:carnet_noye
+KeyZ
+wait:1500
+zuntil: window.__veilleuse.scene() === 'Battle'
+assert: window.__veilleuse.G.state.flags.c6_seuil && !window.__veilleuse.G.state.flags.c6_regarder
+auto
+write:joie
+auto
+write:tristesse
+auto
+write:colere
+auto
+write:Dors.
+auto
+write:Arrête d'appeler.
+auto
+write:Demain.
+auto
+menu:0
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+ArrowRight
+KeyZ
+wait:2500
+auto
+shot:encre
+write:observe
+menu:1
+wait:400
+KeyZ
+zuntil: window.__veilleuse.G.meta.endings.includes('silence')
+assert: window.__veilleuse.G.state.flags.fin_route === 'silence'

@@ -1,0 +1,21 @@
+# Lot 4 (chapter 6 world): at the threshold, « fermer les yeux ». The screen goes black; she answers without turning
+# around (« D'accord. Tu regarderas quand tu pourras. ») and « On a le droit. »; she is not looked at (no c6_regarder,
+# she stays faceless in the battle), and the final battle starts.
+query: debug=script&name=chapter6_bonnet&lang=fr
+god
+wait:1500
+zuntil: !window.__veilleuse.dialogue.busy && window.__veilleuse.G.state.flags.c6_voix_vue && window.__veilleuse.world.busy === 0
+go:15/18
+wait:200
+ArrowUp:400
+zuntil: window.__veilleuse.game.top.constructor.name === 'NotebookPick'
+wait:600
+ArrowDown
+wait:100
+KeyZ
+wait:1500
+zuntil: window.__veilleuse.dialogue.busy && window.__veilleuse.dialogue.speaker.name === 'La Petite au Bonnet'
+wait:800
+shot:yeux_fermes
+zuntil: window.__veilleuse.scene() === 'Battle'
+assert: window.__veilleuse.G.state.flags.c6_seuil && !window.__veilleuse.G.state.flags.c6_regarder

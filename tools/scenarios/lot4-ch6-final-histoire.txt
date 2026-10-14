@@ -1,0 +1,21 @@
+# Lot 4 (chapter 6 world): the knock counting is accessible. Story mode (&histoire=1: slower knocks, no false knocks)
+# and Noa knocked back twice in Interlude IV (&coups=deux: only round B, « bonne nuit », is played); the little girl
+# closed her eyes at the threshold (« fermer les yeux » is the debug default here: not looked at, no face).
+query: debug=script&name=chapter6_final&phase=3&histoire=1&coups=deux&lang=fr
+god
+wait:1500
+zuntil: window.__veilleuse.scene() === 'Battle'
+auto
+menu:0
+zuntil: window.__veilleuse.game.top.skin === 'coups' && window.__veilleuse.game.top.queue.length > 0
+assert: window.__veilleuse.game.top.queue.every((q) => q.kind !== 'B')
+wait:1500
+shot:mur
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+ArrowRight
+ArrowRight
+KeyZ
+wait:2500
+auto
+assert: window.__veilleuse.game.top.menuLabels[1] === 'ÉCRIRE'
+shot:p4

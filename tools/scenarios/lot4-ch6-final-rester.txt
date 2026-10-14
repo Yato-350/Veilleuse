@@ -1,0 +1,18 @@
+# Lot 4 (chapter 6 world): from the threshold, the final battle straight at its last phase (&phase=4), then « Rester »
+# (after two of her words, DORMIR becomes RESTER): fin_route 'beaux_reves', and afterFinalBattle plays Beaux rêves
+# (the version 1.1 ending until production lot 9).
+query: debug=script&name=chapter6_final&phase=4&bouton=1&pile=1&lang=fr
+god
+wait:1500
+zuntil: window.__veilleuse.scene() === 'Battle'
+auto
+write:je suis là
+auto
+write:bonne nuit
+auto
+assert: window.__veilleuse.game.top.menuLabels[0] === 'RESTER'
+menu:0
+auto
+choose:0
+zuntil: window.__veilleuse.G.meta.endings.includes('beaux_reves')
+assert: window.__veilleuse.G.state.flags.fin_route === 'beaux_reves'

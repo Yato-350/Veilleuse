@@ -27,6 +27,7 @@ import { fallInto, REAL, STORY } from '../src/game/story/common';
 import { PHONE_CLOCK } from '../src/game/story/real';
 import { interlude3, interlude4, isNuit } from '../src/game/story/real-nuit';
 import * as chapter5 from '../src/game/story/chapter5';
+import * as chapter6 from '../src/game/story/chapter6';
 import { G } from '../src/game/state';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -554,3 +555,49 @@ describe('chapter 5 (lot 3)', () => {
     expect(src).not.toMatch(/vraie version|version vraie|true version|la vraie|callVersion/i);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Production lot 4: chapter 6 « Le Ventre de Dodo » (the world and the story).
+// ---------------------------------------------------------------------------
+
+describe('chapter 6 (lot 4)', () => {
+  it('is fallen into from chapter 5 and replayable by debug', () => {
+    expect(STORY.dream[6]).toBe(chapter6.start);
+    for (const name of ['chapter6', 'chapter6_t7', 'chapter6_bocaux', 'chapter6_boite', 'chapter6_appel', 'chapter6_fenetres', 'chapter6_pile', 'chapter6_bonnet', 'chapter6_final']) {
+      expect(typeof DEBUG_SCRIPTS[name], name).toBe('function');
+    }
+    for (const id of ['couture', 'ouate', 'boite_a_musique', 'couloir_41', 'voix']) {
+      expect(MAPS[id], id).toBeTruthy();
+      expect(MAPS[id]!.world, id).toBe('ouate');
+    }
+  });
+
+  it('puts forty-one numbered doors on the corridor: 1–14 on the trunk, then 15–41 on each branch', () => {
+    const map = MAPS.couloir_41!;
+    const rows = parseRows(map.tiles);
+    const { trunk, haut, bas, doorX } = chapter6.CORRIDOR;
+    const door = (x: number, wall: number): boolean => map.legend[rows[wall]![x]!] === 'r_door_top' && map.legend[rows[wall + 1]![x]!] === 'r_door';
+    for (let n = 1; n <= 14; n++) expect(door(doorX(n), trunk.wall), `door ${n}`).toBe(true);
+    for (const b of [haut, bas]) for (let n = 15; n <= 41; n++) expect(door(doorX(n), b.wall), `door ${n}`).toBe(true);
+    const plates = (map.props ?? []).filter((p) => p.sprite.startsWith('prop_c6_num_'));
+    expect(plates.length).toBe(14 + 27 * 2);
+  });
+
+  it('keeps the rule of the 41 seconds: both versions say « Dors », at the same doors, and nothing says which is true', () => {
+    const { douce, dure } = chapter6.CALL;
+    expect(Object.keys(douce)).toEqual(Object.keys(dure));
+    for (const v of [douce, dure]) expect(Object.values(v).some(([, line]) => line.includes('Dors'))).toBe(true);
+    const src = ['src/game/story/chapter6.ts', 'src/data/maps/chapter6.ts'].map((f) => readFileSync(f, 'utf8')).join('\n');
+    expect(src).not.toMatch(/vraie version|version vraie|true version|la vraie|real version|true call/i);
+    // « vraie » only ever appears in the question itself.
+    for (const line of src.split('\n').filter((l) => /\bvraie\b/.test(l))) expect(line).toContain('Laquelle est vraie');
+  });
+
+  it('keeps the music box passage closed until the lullaby has played', () => {
+    const map = MAPS.boite_a_musique!;
+    const rows = parseRows(map.tiles);
+    for (const [x, y] of chapter6.FOAM_PASSAGE) expect(TILES[map.legend[rows[y]![x]!]!]!.solid, `${x},${y}`).toBe(true);
+    expect(map.warps?.[0]?.to).toBe('couloir_41');
+  });
+});
+

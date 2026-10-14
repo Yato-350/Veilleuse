@@ -50,7 +50,7 @@ import { inBed } from './real';
  *   c6_boite_vue      the music box chamber has been entered; c6_peigne: the comb was looked at
  *   c6_dent_<1–3>     baby tooth found; c6_dents: how many
  *   c6_boite          the music box played the lullaby whole (the counting scene « dents »)
- *   c6_couloir        the corridor has been entered; c6_porte_<n>: door n opened (trunk 1–14)
+ *   c6_couloir        the corridor has been entered; c6_porte_<n>: door n opened (trunk 1–14); c6_fourche: the fork
  *   c6_haut           'douce' | 'dure': which version plays behind the doors of the upper branch (drawn once)
  *   c6_haut_<n>, c6_bas_<n>   door n of that branch opened; c6_ecoute_haut, c6_ecoute_bas: branch heard to door 41
  *   c6_appel          « Laquelle est vraie ? » has been answered (the answer is G.meta.callVersion)
@@ -61,7 +61,9 @@ import { inBed } from './real';
  *   c6_partir         « partir » was chosen at the threshold (the room loops; the word is crossed out)
  *   c6_regarder       « regarder »: her face drawn in pencil (the final battle reads it); c6_seuil: the threshold is
  *                     crossed (« regarder » or « fermer les yeux »)
+ *   c6_final          Dodo came down from the ceiling: the final battle has started (the little girl leaves the map)
  *   fin_route         set by the final battle: 'aube' | 'beaux_reves' | 'silence'
+ *   c6_n_<key>        how many times an inspection with changing text was read (looks())
  */
 
 const flag = (k: string): boolean => !!G.state.flags[k];
@@ -117,6 +119,12 @@ function retile(cells: Array<[number, number, string]>): void {
     tm.defs[y]![x] = TILES[id] ?? null;
   }
   tm.render();
+}
+
+/** Loads a map in the middle of a scene (the screen is black): no name banner. */
+function reload(d: Director, map: string, spawn: string, keepMusic = true): void {
+  d.load(map, spawn, keepMusic);
+  world.hideBanner();
 }
 
 /** Dodo, floating, as thin as in chapter 5 (his side seam open), inside himself. */
@@ -394,7 +402,7 @@ export const t7: Script = async (d) => {
 async function flashback(d: Director): Promise<void> {
   await d.fadeOut(50, '#000000');
   const back = { map: G.state.map, x: world.player.x, y: world.player.y };
-  d.load('chambre', 'bed', true);
+  reload(d, 'chambre', 'bed');
   d.remove('dodo');
   d.remove('dodo_plush');
   inBed(d, false);
@@ -424,7 +432,7 @@ async function flashback(d: Director): Promise<void> {
   await d.fadeOut(50, '#000000');
   d.remove('noa_assis');
   d.remove('plush');
-  d.load(back.map, 'creux', true);
+  reload(d, back.map, 'creux');
   world.player.x = back.x;
   world.player.y = back.y;
   world.player.dir = 'right';
@@ -561,7 +569,7 @@ export const shelfSealed: Script = async (d) => {
 const LOOSE: Array<[string, string]> = [
   ['« Nuit 9 : il a demandé à Dodo s\'il pouvait rentrer. Dodo a dit : bientôt. »', 'Dedans, une clé de porte, avec un petit mouton en plastique au bout. Tu sais quelle porte elle ferme.'],
   ['« Nuit 64 : il a tenu la main de Mina jusqu\'au matin. Le matin n\'est pas venu. »', 'Dedans, une pelote de fil rouge, emmêlée, serrée, comme si on avait tiré dessus de toutes ses forces.'],
-  ['« Nuit 190 : il a perdu une dent dans le rêve. Au réveil, il les avait toutes. »', 'Dedans, une dent en plastique, de celles des pochettes-surprises. Quelqu\'un a essayé de la faire passer pour une vraie.'],
+  ['« Nuit 190 : il a perdu une dent dans le rêve. Au réveil, il les avait toutes. »', 'Dedans, une dent en plastique, de celles des pochettes-surprises. Quelqu\'un a essayé de la faire passer pour une des tiennes.'],
 ];
 
 export const looseJar =
@@ -688,6 +696,12 @@ export const pinsCeiling: Script = looks('epingles', [
   ['Des épingles plantées à l\'envers dans le plafond de coton. Des têtes de toutes les couleurs.', 'Elles gouttent. Ce n\'est pas de l\'eau, c\'est de la rouille.'],
   'Tu comptes les épingles. Tu t\'arrêtes à quarante et une. Il y en a d\'autres.',
 ]);
+/** The forest of needles, in the east of the low cave. */
+export const pinForest: Script = looks('foret', [
+  ['Une forêt d\'aiguilles. Plantées dans le coton, droites, serrées, de toutes les tailles.', 'Certaines ont encore un bout de fil rouge dans le chas. Quelqu\'un a cousu ici. Beaucoup. Longtemps.'],
+  'Tu passes entre elles de profil, en retenant ton souffle. Elles ne bougent pas. Elles attendent que tu trébuches.',
+  'Sur une aiguille, à hauteur d\'enfant, un petit morceau de laine crème est resté accroché. Tu ne le décroches pas.',
+]);
 export const pinFloor: Script = look(['Une épingle aussi grande que toi, plantée de biais.', 'Quelqu\'un a essayé de la retirer : le coton autour est griffé en rond. Les griffures ont la largeur de tes ongles.']);
 export const ouateStain: Script = looks('tache', [
   'Une tache humide. Elle a la forme de quelqu\'un qui a dormi là très longtemps, sans bouger.',
@@ -714,8 +728,6 @@ export const bourresMurmur: Script = async () => {
 
 /** The passage down out of the music box chamber: cotton until the lullaby has played whole. */
 export const FOAM_PASSAGE: Array<[number, number]> = [
-  [14, 18],
-  [15, 18],
   [14, 19],
   [15, 19],
 ];
@@ -947,7 +959,7 @@ const TRUNK: Fragment[] = [
  * The two versions of the call (§ 2.9), door by door. Both have the same length, the same doors, the same silences
  * between the words and the same last word; the game never says which one was said.
  */
-const CALL: Record<Version, Record<number, [string, string]>> = {
+export const CALL: Record<Version, Record<number, [string, string]>> = {
   douce: {
     15: ['minavoix', 'Noa ?'],
     18: ['noavoix', '…Mina ? Il est trois heures.'],
@@ -1098,12 +1110,12 @@ export const door41 =
     d.set(`c6_ecoute_${side}`);
     if (!flag(`c6_ecoute_${other}`)) {
       await d.narrate('La porte 41 donne sur la porte 14.', { voice: 'noa' });
-      d.load('couloir_41', 'fourche');
+      reload(d, 'couloir_41', 'fourche', false);
       await d.fadeIn(30);
       await tell(d, 'Le même couloir. L\'autre passage t\'attend.');
       return;
     }
-    d.load('couloir_41', 'bout');
+    reload(d, 'couloir_41', 'bout', false);
     await d.fadeIn(40);
     await question(d);
     await buttonWindows(d);
@@ -1231,7 +1243,7 @@ async function buttonWindows(d: Director): Promise<void> {
   const back = { x: world.player.x, y: world.player.y };
   d.music(null, 1);
   // The room, a year ago. Noa in bed, the nightlight on, the door shut. Dodo sits against the door, in the hallway.
-  d.load('chambre', 'bed', true);
+  reload(d, 'chambre', 'bed');
   d.remove('dodo');
   d.remove('dodo_plush');
   inBed(d, true);
@@ -1288,7 +1300,7 @@ async function buttonWindows(d: Director): Promise<void> {
   await win.to(0);
   win.close();
   d.remove('plush338');
-  d.load('couloir_41', 'bout', true);
+  reload(d, 'couloir_41', 'bout');
   world.player.x = back.x;
   world.player.y = back.y;
   spawnDodo(d, 10, 29);
@@ -1495,7 +1507,8 @@ class NotebookPick implements Scene {
     const pw = 170;
     const ph = 98;
     const px = Math.round(W / 2 - pw / 2);
-    const py = 16;
+    // Low on the screen: she stays in view above it, waiting.
+    const py = H - ph - 6;
     g.fillStyle = '#f4ecd8';
     g.fillRect(px, py, pw, ph);
     g.fillStyle = '#c9d3e6';
@@ -1557,7 +1570,7 @@ export const threshold: Script = async (d) => {
     d.set('c6_partir');
     await tell(d, ['Tu tournes le dos. Tu marches vers la sortie.', 'Le coton étouffe tes pas. Tu ne cours pas. Tu as envie de courir.']);
     await d.fadeOut(40);
-    d.load('voix', 'entree');
+    reload(d, 'voix', 'entree');
     await d.fadeIn(40);
     await tell(d, ['La sortie donne sur la même salle.', 'La même machine. La même croûte. Les mêmes marionnettes. Et au milieu, de dos, la petite fille au bonnet.']);
     await voice(d, ['Il n\'y a pas de sortie, ici. Il n\'y en a jamais eu.', 'Il y a elle. Et il y a moi.']);
@@ -1609,8 +1622,10 @@ async function lookAtHer(d: Director): Promise<void> {
   await d.say(['Et Dodo, faut pas lui en vouloir.', 'Je lui ai dit de veiller sur toi. Il l\'a pris très, très au sérieux.'], 'bonnet:drawn');
 }
 
-/** Dodo comes down from the ceiling: the final battle (dodo_v2), then where it leads (endings.ts). */
-async function beforeFinal(d: Director): Promise<void> {
+/** Dodo comes down from the ceiling: the final battle (dodo_v2), then where it leads (endings.ts). `from`: debug only. */
+async function beforeFinal(d: Director, from: 1 | 2 | 3 | 4 = 1): Promise<void> {
+  world.player.moving = false;
+  await d.cameraTo(15, 11);
   d.sfx('thread', { pitch: 0.5, vol: 0.6 });
   d.shake(1, 20);
   await tell(d, ['Au-dessus de la machine, les coutures du plafond craquent, une à une.', 'Quelque chose descend au bout de ses propres fils.']);
@@ -1630,7 +1645,8 @@ async function beforeFinal(d: Director): Promise<void> {
     await d.say('Reste.', 'dodotorn:creepy');
   }
   d.set('c6_final');
-  const route = await runFinalBattleV2(d);
+  d.cameraFollow();
+  const route = await runFinalBattleV2(d, from);
   d.remove('dodo');
   await afterFinalBattle(d, route);
 }
@@ -1733,7 +1749,7 @@ export const DEBUG: Record<string, Script> = {
   /**
    * The final battle from the threshold, with flags: &bouton=1 (the Bouton doré kept), &pile=1 (the Pile spared: the
    * Pile chargée), &coups=deux|trois|rien|un (what Noa knocked back in Interlude IV), &regarder=1, &histoire=1 (Story
-   * mode: slower knocks, no false knocks), &silence=1 (the route of the ink).
+   * mode: slower knocks, no false knocks), &silence=1 (the route of the ink), &phase=2|3|4 (start the battle there).
    */
   chapter6_final: async (d) => {
     const silence = param('silence') === '1';
@@ -1757,6 +1773,7 @@ export const DEBUG: Record<string, Script> = {
     }
     d.load('voix', 'seuil');
     await d.fadeIn(10);
-    await beforeFinal(d);
+    const phase = Number(param('phase') ?? 1);
+    await beforeFinal(d, phase === 2 || phase === 3 || phase === 4 ? phase : 1);
   },
 };

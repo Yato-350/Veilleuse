@@ -1,0 +1,49 @@
+# Lot 4 (chapter 6 world): the music box at Dodo's heart. The comb of baby teeth (Noa's), the three missing teeth and
+# their memories (Mina stealing one from under the pillow; the door slammed « pour t'aider »), the crank, the counting
+# scene skinned « dents » (three rounds, pins are decoys; sheep=auto plays it), then the lullaby played whole for the
+# first time; Dodo: « Elle la chantait. Maman. Dans le fauteuil. Quarante et une fois. »; the passage opens (c6_boite).
+query: debug=script&name=chapter6_boite&sheep=auto&lang=fr
+god
+wait:1500
+auto
+eval: window.__veilleuse.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => window.__veilleuse.world.removeEntity(e))
+go:15/6
+interact:peigne
+auto
+shot:peigne
+interact:manivelle
+auto
+assert: !window.__veilleuse.G.state.flags.c6_boite
+interact:dent_1
+auto
+interact:dent_2
+auto
+interact:dent_3
+auto
+shot:dents
+assert: window.__veilleuse.G.state.flags.c6_dents === 3 && window.__veilleuse.world.get('peigne').sprite === 'prop_c6_peigne_0'
+interact:manivelle
+auto
+choose:0
+waitfor: window.__veilleuse.scene() === 'CountingScene' || window.__veilleuse.game.top.skin === 'dents'
+wait:3000
+shot:comptage
+zuntil: window.__veilleuse.game.top.roundNo === 2
+zuntil: window.__veilleuse.game.top.roundNo === 3
+shot:manche3
+zuntil: window.__veilleuse.G.state.flags.c6_boite === true
+waitfor: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ').includes('En entier')
+wait:1500
+shot:berceuse
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ').includes('Quarante et une fois')
+wait:1200
+shot:fauteuil
+auto:60000
+shot:ouvert
+assert: window.__veilleuse.world.tilemap.ids[19][14] === 'c6_mousse' && !window.__veilleuse.world.entities.some((e) => e.kind === 'enemy')
+go:14/18
+wait:200
+ArrowDown:600
+waitfor: window.__veilleuse.world.map.id === 'couloir_41'
+auto
+shot:couloir
