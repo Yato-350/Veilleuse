@@ -593,7 +593,7 @@ async function sleepAction(b: Battle, s: V2State): Promise<void> {
   const e = dodo(b);
   s.sleep = Math.min(MAX_SLEEP, s.sleep + 0.14);
   muffle(s);
-  e.hp = e.maxHp;
+  e.hp = Math.min(e.maxHp, e.hp + Math.round(e.maxHp * 0.15));
   e.hpBarT = 90;
   b.heal(4);
   await b.say('* Tu fermes les yeux. Juste un instant.\n* C\'est doux. C\'est chaud. Ça sent ta chambre.\n* Dodo reprend des forces.');
