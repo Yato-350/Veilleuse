@@ -395,8 +395,8 @@ export function drawBullet(g: CanvasRenderingContext2D, b: Bullet, soulEmo: Emot
       b.draw?.(g, b, color, t);
       break;
   }
-  // (`data.lie`: a projectile whose color lies — chapter 6 — shows a « ? » instead of its true shape.)
-  if (shapes && b.data.lie && b.warn <= 0) drawLieToken(g, b.x, b.y);
+  // (`data.lie`: a projectile whose color lies — chapter 6 — shows a « ? » above it instead of its true shape.)
+  if (shapes && b.data.lie && b.warn <= 0) drawLieToken(g, b.x, b.y - 8);
   else if (shapes && b.emo !== 'neutre' && b.warn <= 0) drawShapeTokens(g, b);
   g.globalAlpha = 1;
 }

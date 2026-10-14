@@ -69,6 +69,9 @@ import type { BattleHooks, WordDef } from './types';
  *
  * Outcome: the battle ends 'scripted'; G.state.flags.fin_route = 'aube' | 'beaux_reves' | 'silence'. The story then
  * calls afterFinalBattle(d, route) (src/game/story/endings.ts). Debug: FINAL_V2.from starts at a later phase.
+ * Flags read: i4_knock (round B only), c6_pile (the Pile chargée works), c6_regarder (she speaks as « Mina » with her
+ * face drawn in pencil, `bonnet:drawn`; otherwise « La Petite au Bonnet », no face, `petite`), and the route of the ink
+ * (isSilenceRoute()), G.state.encre (drowned words), G.state.spares (friends), G.meta.deaths (phase 1).
  */
 
 export type FinalV2Route = 'aube' | 'beaux_reves' | 'silence';
