@@ -46,6 +46,8 @@ const douxWords = (chapter: number, n: number) => () => {
  *   bt_aiguille, bt_bouton_pendu, bt_bourre, bt_pile   the regular enemies (La Pile: flags.c6_pile / c6_pile_morte)
  *   bt_moutons        three Moutons Numérotés: spare them from the highest number down, or they multiply
  *   bt_ch6_duo        L'Aiguille and Le Bouton Pendu together
+ *   bt_ch6_defaites   2 defeats already counted and 1 HP: lose once more and the little girl in the knitted hat (no
+ *                     face) chases Dodo's whisper away from the game over screen
  * The final battle v2 (dodo_v2; the route is kept in flags.fin_route: 'aube' | 'beaux_reves' | 'silence'). URL flags,
  * items and keys still apply (&flags=i4_knock=deux,c6_pile&keys=bouton_dore,pile_chargee):
  *   dodo_v2           from the start, no item
@@ -121,6 +123,7 @@ function ch5Stats(chapter: number): void {
 async function ch6(d: Director, ids: string[], flags: string[] = []): Promise<void> {
   setup(d, 1, 'prairie', 'mina', false, ['c1_tutorial', 'c1_mina', ...flags]);
   ch5Stats(6);
+  if (G.state.flags.debug_hp1) G.state.hp = 1;
   await d.fadeIn(10);
   const r = await d.battle(ids);
   G.state.flags.debug_battle = `${r.outcome}:${[...r.spared, ...r.killed].join('+')}`;
@@ -227,6 +230,13 @@ export const DEBUG: Record<string, Script> = {
   bt_pile: (d) => ch6(d, ['pile']),
   bt_moutons: (d) => ch6(d, ['mouton_numerote', 'mouton_numerote', 'mouton_numerote']),
   bt_ch6_duo: (d) => ch6(d, ['aiguille', 'bouton_pendu']),
+  bt_ch6_defaites: async (d) => {
+    G.settings.storyMode = false;
+    setDefeatStreak(['aiguille'], 2, true);
+    G.state.flags.debug_hp1 = true;
+    // (ch6() sets the chapter to 6: the helper is the little girl in the hat.)
+    await ch6(d, ['aiguille']);
+  },
   // The final battle v2
   dodo_v2: (d) => finalV2(d),
   dodo_v2_objets: (d) => finalV2(d, { keys: BOTH, flags: { c6_pile: true } }),

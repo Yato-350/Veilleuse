@@ -1,6 +1,7 @@
 import { audio, parsePattern } from '../../engine/audio';
 import { drawChar } from '../../engine/font';
 import { rng } from '../../engine/math';
+import { tr } from '../../i18n';
 import type { Emotion } from '../../engine/palette';
 import { LULLABY_PATTERN } from '../../data/music';
 import { G } from '../state';
@@ -629,7 +630,7 @@ export const CH6_PATTERNS: Record<string, Pattern> = {
     duration: 400,
     tick(w, t, c) {
       const b = w.box;
-      const word = 'DORS';
+      const word = tr('DORS');
       if (t % Math.max(9, 14 - c.power * 2) === 0 && t < 350) {
         const i = Math.floor(t / 14) % word.length;
         const x0 = b.x + 10 + ((t * 37) % (b.w - 20));

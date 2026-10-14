@@ -215,7 +215,9 @@ export class GameOverScene implements Scene {
     const lines = this.offer === 'ask' ? MINA_ASK : this.reply;
     const fx0 = 52;
     const fy = 110;
-    const key = this.offer === 'ask' ? 'face_mina_sad' : this.accepted ? 'face_mina_happy' : 'face_mina_neutral';
+    // From chapter 5 on, Mina is not there any more: the little girl in the knitted hat chases the whisper away.
+    const hat = G.state.chapter >= 5 && hasSpr('face_bonnet_neutral');
+    const key = hat ? 'face_bonnet_neutral' : this.offer === 'ask' ? 'face_mina_sad' : this.accepted ? 'face_mina_happy' : 'face_mina_neutral';
     if (hasSpr(key)) g.drawImage(spr(key).img, fx0, fy);
     lines.forEach((l, i) => drawText(g, tr(l), fx0 + 40, fy + 4 + i * 12, { color: i === 0 ? MINA_COLOR : '#fffaf2' }));
     if (this.offer === 'ask' && ot >= 60) {

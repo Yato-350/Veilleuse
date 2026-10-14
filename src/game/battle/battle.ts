@@ -339,7 +339,10 @@ export class Battle implements Scene {
     G.state.hp = clamp(this.hp, 1, this.maxHp);
     this.mode = 'idle';
     this.resetMood();
-    streak.record(this.key, this.result.outcome === 'lose', this.ally === 'mina');
+    // Who offers help after three defeats: Mina at Noa's side (chapters 1–3); in chapters 5 and 6, nobody is at his
+    // side, and the little girl in the knitted hat comes instead (see GameOverScene).
+    const helper = this.ally === 'mina' || ((G.state.chapter === 5 || G.state.chapter === 6) && !G.state.flags.interlude);
+    streak.record(this.key, this.result.outcome === 'lose', helper);
     return this.result;
   }
 

@@ -439,6 +439,28 @@ Boutons). Au chapitre 5, personne à côté de Noa : le cadre de Mina reste vide
 bt_masque|bt_gel|bt_thermometre|bt_gribouille_noire|bt_ch5_duo`. Le mini-jeu de dessin à deux est
 `src/game/scenes/drawtogether.ts` (démos `dessin_visite`, `dessin_corriger`).
 
+**Chapitre 6 — Le Ventre de Dodo** (`src/data/enemies-ch6.ts`, sprites `src/data/sprites/enemies-ch6.ts`, motifs
+`src/game/battle/patterns-ch6.ts`, fonds `ventre` (caverne de coton humide, fil rouge, épingles) / `voix` (le module
+vocal REC/PLAY, sa croûte de pile qui pourrit, `CH6_BG.rot` 0–1), `src/game/battle/bg-ch6.ts`) :
+
+| id | Émotion | Besoin | Motifs | Particularité |
+|---|---|---|---|---|
+| `aiguille` (fém.) | colère | tristesse ×2 | `aiguille_points`, `aiguille_couture` | file en laissant des points de couture ; une aiguille qui touche (`data.sew`) coud le cœur : couleur bloquée 2 tours (`Battle.emoLockUntil`, « COUSU ») |
+| `bouton_pendu` | peur | « regarder » (d'un coup) ou tristesse ×2 | `bouton_balancier`, `bouton_pluie` | l'œil-bouton de Dodo au bout d'un fil ; balancier qui balaie la boîte |
+| `bourre` (fém.) | tristesse | « pardon » | `bourre_colle`, `bourre_moisi` | le coton des moutons vidés (seulement si `c4_coton` > 0 : au scénario de décider) ; se colle au cœur et le ralentit (`BulletWorld.slow`) |
+| `mouton_numerote` | joie | joie | `mouton_tampon`, `mouton_saute` | par groupes ; chacun porte un numéro de nuit (« Mouton n°212 ») ; épargné dans le désordre (un numéro plus grand pas encore calme), il se dédouble (4 à l'écran au plus) |
+| `pile` (fém.) | neutre → tristesse | joie, puis « garder » | `pile_fuite`, `pile_gresille` | rencontre unique, pas de fuite ; la piste 1 ralentit à chaque tour (voix `pile`…`pile4`, musique qui se désaccorde) ; épargnée : objet clé `pile_chargee`, `c6_pile = true` ; vaincue : `c6_pile = false`, `c6_pile_morte` |
+| `dodo_v2` (boss final) | neutre | — | voir `src/game/battle/final-v2.ts` | 4 phases (moutons des morts, DORMIR et les couleurs qui mentent, les coups dans le noir, les mots de Mina) ; issue dans `fin_route` ; musique `dodo_v2` |
+
+Le combat final v2 se lance par `runFinalBattleV2(d, from = 1)` (`src/game/battle/final-v2.ts`), qui rend la route
+(`'aube'` | `'beaux_reves'` | `'silence'`, aussi dans `flags.fin_route`) ; la suite est
+`afterFinalBattle(d, route)` (`src/game/story/endings.ts`). Les coups de la phase 3 passent par
+`CountingScene.open('coups', [knockRound(...)])` (mode Histoire : coups plus lents, pas de faux coups). Objets de la
+phase 4 : `bouton_dore` (piste brouillée, une grosse fissure) et `pile_chargee` (si `c6_pile` : la piste 1 entière,
+nette). Combats de debug : `?debug=script&name=bt_aiguille|bt_bouton_pendu|bt_bourre|bt_pile|bt_moutons|bt_ch6_duo`
+et `dodo_v2|dodo_v2_objets|dodo_v2_deux|dodo_v2_histoire|dodo_v2_coups|dodo_v2_mots|dodo_v2_encre|dodo_v2_silence|
+dodo_v2_fin|dodo_v2_fin_silence` (voir l'en-tête de `src/game/battle/debug-battles.ts`).
+
 ---
 
 ## 6. Musique — `src/data/music.ts` (équipe AMBIANCE)
@@ -495,6 +517,9 @@ Accords : C G Am G | C G G7 C | F Dm G C | F Dm G C
 | `plage` | ch. 5, la plage d'avant : berceuse en majeur, trop aiguë, sans basse ; la mer respire, des mouettes au loin |
 | `sas` | ch. 5, le sas : ventilation, un souffle qui retient parfois, un bip, quelques notes de la berceuse très espacées |
 | `vitre` | ch. 5, boss La Vitre : berceuse au piano en do mineur, harmoniques de verre, buée, deux coups « je suis là » |
+| `ventre` | ch. 6, dans la peluche : un battement de cœur étouffé par le coton, la berceuse sur une boîte à musique à trous (des mesures entières manquent) |
+| `appel` | ch. 6, le couloir des 41 portes : presque rien, l'air d'une chambre noire, un téléphone qui vibre sur un bureau, une note aiguë de temps en temps |
+| `dodo_v2` | combat final v2 : la valse de Dodo retournée, plus lente et plus lourde, battement de cœur au kick, la berceuse en mineur harmonique qui perd des mesures, son écho désaccordé une croche en retard |
 
 ---
 
@@ -531,6 +556,12 @@ radiateur). Toute nouvelle illustration va aussi dans `CATALOG` de `src/game/sce
 Interludes III et IV : `src/data/illustrations-nuit.ts` → `polaroid_dodo` (T2, le polaroïd au fond du sac) et
 `dessin_chut` (T5, le dessin du miroir de Maman) ; `photo_decoupee` (la photo de l'été, le visage de Noa découpé) est
 dessinée à côté de `photo_famille` dans `illustrations.ts`, dont elle reprend la peinture.
+Chapitre 6 : `src/data/illustrations-ch6.ts` → `bonnet_visage` (T9 : la Petite au Bonnet, de face, dans le noir du
+ventre ; son bonnet et son gilet sont en laine, son visage est une feuille blanche qu'un crayon dessine sous les yeux
+du joueur : fatiguée, souriante, sans couettes ; à t = 0, la vignette de la galerie, le visage est encore blanc).
+C'est la seule fois où son vrai visage apparaît (§ 1.5, règle 2 de la bible). Portraits : `face_bonnet_neutral` (sans
+visage, des lignes de construction au crayon) et `face_bonnet_drawn` ; locuteurs `petite` (« La Petite au Bonnet »)
+puis `bonnet` (« Mina ») une fois qu'on l'a regardée (`c6_regarder`).
 
 ---
 
@@ -701,7 +732,7 @@ de sauvegarde aussi (seule lumière jaune de l'hôpital). Souvenir 5 : `souvenir
 
 Voir `src/data/items.ts` (`bonbon`, `lait`, `biscuit`, `chocolat`, `gateau`, `mouchoir`, `bulles`, `pluie`,
 `orage`, `pomme` ; clés : `veilleuse_poche`, `ballon`, `chaussette_bleue`, `cle_mina`, `crayons`, `crayon_jaune`,
-`dessin`). Équipements : `G.state.weapon` (`crayon` → `cire` → `plume`) et `G.state.armor` (`pyjama` → `plaid` →
+`dessin` ; v2, chapitre 6, utilisables en combat : `bouton_dore`, `pile_chargee`). Équipements : `G.state.weapon` (`crayon` → `cire` → `plume`) et `G.state.armor` (`pyjama` → `plaid` →
 `cape`) à donner par le scénario (ch1 : `cire`, ch2 : `plaid`, ch3 : `cape` / `plume`).
 
 ### 8.7 Musiques et ambiances par lieu

@@ -1,0 +1,11 @@
+# Lot 4: in chapters 5 and 6 nobody is at Noa's side; after three defeats in a row, the little girl in the knitted hat
+# (no face) chases Dodo's whisper away from the game over screen and offers to help (docs/HISTOIRE.md § 2.10).
+query: debug=script&name=bt_ch6_defaites&lang=fr
+wait:1500
+auto
+write:joie
+until:dodge
+waitfor: window.__veilleuse.game.top.constructor.name === 'GameOverScene'
+wait:6500
+shot:offre
+assert: window.__veilleuse.game.top.offer === 'ask'
