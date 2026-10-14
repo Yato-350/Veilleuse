@@ -1,0 +1,28 @@
+# Lot 4 (chapter 6 world): T7 « Dodo n'a jamais parlé » in the hollow of the seam. Dodo asks « Tu ne dors pas ? »,
+# then says it again and the name in the box flickers from Dodo to Noa ({as:noa}); the real flashback (Noa finishes
+# the battery's sentence himself, then speaks Dodo's first line with Dodo's blip); « Je suis ce que tu fais avec sa
+# voix »; from here the white box speaks with Noa's blip (c6_t7).
+query: debug=script&name=chapter6_t7&lang=fr
+god
+waitfor: window.__veilleuse.dialogue.busy
+eval: window.T = () => (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines || []).flat().map((c) => c.ch).join('')
+shot:dodo
+zuntil: window.T().includes('Dis-le avec moi')
+zuntil: window.__veilleuse.dialogue.asKey !== ''
+wait:300
+shot:bascule
+zuntil: window.__veilleuse.world.map.id === 'chambre'
+zuntil: window.T().includes('Fais de beaux')
+wait:1500
+shot:flashback
+zuntil: window.T().includes('Tu ne dors pas')
+wait:600
+shot:premiere
+zuntil: window.__veilleuse.world.map.id === 'couture' && window.T().includes('ce que tu fais avec sa voix')
+wait:800
+shot:voix
+zuntil: window.T().includes('Tu ne peux pas.')
+wait:600
+shot:narrateur
+auto
+assert: window.__veilleuse.G.state.flags.c6_t7 === true && window.__veilleuse.world.map.id === 'couture' && !window.__veilleuse.world.get('dodo')

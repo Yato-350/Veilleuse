@@ -55,5 +55,7 @@ export const SPEAKERS: Record<string, Speaker> = {
   /** The same, before Noa looked at her (no face, no name). */
   petite: { name: 'La Petite au Bonnet', voice: 'mina', portrait: 'bonnet', color: '#d9cbb5' },
   pile: { name: 'La Pile', voice: 'pile', color: '#c8d0d8' },
+  /** Noa's own voice in the dark, without a face (the doors of the corridor). */
+  noavoix: { name: 'Noa', voice: 'noa', color: '#d4b8f0' },
   system: { name: '', voice: 'none' },
 };

@@ -116,7 +116,7 @@ function tufts(seed: number, n: number, ramp: [string, string, string, string], 
 
 /** Damp yellowed cotton, the floor of the plush. A few darker stains; now and then a single fibre. */
 const cottonFloor = (seed: number, stain: boolean): string => {
-  const base = tufts(seed, 7, ['6', '7', '8', '9']);
+  const base = tufts(seed, 7, ['6', '7', '8', '8'], 1, [4.8, 7.4]);
   return paint((x, y) => {
     const c = base(x, y);
     if (stain) {
@@ -131,7 +131,7 @@ const cottonFloor = (seed: number, stain: boolean): string => {
 
 /** Soaked cotton: darker, heavy, a wet glint here and there. */
 const soaked = (seed: number): string => {
-  const base = tufts(seed, 6, ['8', '9', '%', '&']);
+  const base = tufts(seed, 6, ['7', '8', '9', '%']);
   return paint((x, y) => {
     const c = base(x, y);
     if (c === '8' && hash(x, y, seed + 5) < 0.12) return '6';
@@ -941,6 +941,47 @@ const SPILL = (() => {
   return p.toString();
 })();
 
+/** A little felt mouse sewn to the wall by its tail, a ten-cent coin between its paws (14×14). */
+const MOUSE = (() => {
+  const p = new Pix(14, 14);
+  // The tail, stitched up the wall with three red crosses.
+  p.line(7, 0, 7, 5, 'G');
+  for (const y of [1, 3]) p.set(6, y, '~').set(8, y, '~').set(7, y, '!');
+  p.ellipse(7, 9, 4, 3.5, 'g').ellipse(6, 8.5, 2.5, 2, 'W');
+  p.ellipse(3, 6, 1.6, 1.6, 'p').ellipse(11, 6, 1.6, 1.6, 'p');
+  p.set(5, 9, 'k').set(9, 9, 'k').set(7, 11, 'P');
+  // The coin, held out.
+  p.ellipse(7, 12, 2, 1.2, '}').set(6, 12, '{');
+  return p.contour('k').toString();
+})();
+
+/** A pool of black ink the size of a child, soaked into the cotton (32×16): the route of the ink. */
+const INK_POOL = (() => {
+  const p = new Pix(32, 16);
+  p.ellipse(16, 8, 15, 7, 'j');
+  p.ellipse(15, 8, 13, 6, 'i');
+  p.ellipse(22, 11, 4, 2.5, 'i').ellipse(7, 5, 3, 2, 'i');
+  // A few fibres of cotton drinking it at the edge.
+  for (const [x, y] of [
+    [2, 8],
+    [29, 7],
+    [12, 14],
+    [20, 2],
+  ]) p.set(x, y, '9');
+  p.ellipse(11, 6, 3, 1, 'J');
+  return p.toString();
+})();
+
+/** The knitted hat with sheep ears, lying flat, empty (16×10). */
+const HAT_FLAT = (() => {
+  const p = new Pix(16, 10);
+  p.ellipse(8, 6, 6, 3.5, '7').ellipse(7, 5, 4, 2, '6');
+  p.ellipse(2.5, 7, 2, 1.5, '8').ellipse(13.5, 7, 2, 1.5, '8');
+  for (let x = 3; x <= 12; x += 2) p.set(x, 8, '9');
+  p.set(8, 2, '7').set(8, 1, '6');
+  return p.contour('k').toString();
+})();
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1028,6 +1069,7 @@ export const ART: Record<string, SpriteDef> = keep({
   prop_c6_manivelle: sprite(CRANK),
   prop_c6_dent: sprite(tooth(false)),
   prop_c6_dent_2: sprite(tooth(true)),
+  prop_c6_souris: sprite(MOUSE),
   // --- The voice
   prop_c6_module: sprite(voiceModule(0)),
   prop_c6_module_2: sprite(voiceModule(2)),
@@ -1038,6 +1080,8 @@ export const ART: Record<string, SpriteDef> = keep({
   prop_c6_marionnette_princesse_2: sprite(puppet('princesse', 1)),
   prop_c6_marionnette_feutre: sprite(puppet('feutre', 0)),
   prop_c6_marionnette_feutre_2: sprite(puppet('feutre', -1)),
+  prop_c6_encre: sprite(INK_POOL),
+  prop_c6_bonnet_plat: sprite(HAT_FLAT),
   // --- The corridor, the button eyes, the 3:38 room
   ...plates,
   prop_c6_oeil: sprite(buttonEye(false)),

@@ -332,6 +332,11 @@ export const coutureTuft: Script = looks('touffe_couture', [
   ['Elle palpite toujours.', 'Tu enlèves ta main. Tu ne la remets pas.'],
 ]);
 
+export const hollowStain: Script = looks('creux', [
+  ['Au fond du creux, le coton est tassé en rond, un peu plus sombre.', 'Quelqu\'un s\'est assis là, souvent. Les genoux contre la poitrine. Assez longtemps pour laisser sa forme.'],
+  ['La forme a ta taille. Exactement.', 'Tu ne t\'assois pas dedans. Tu as peur qu\'elle te tienne chaud.'],
+]);
+
 // ---------------------------------------------------------------------------------------------------------------------
 // T7 — « Dodo n'a jamais parlé » (§ 2.8)
 // ---------------------------------------------------------------------------------------------------------------------
@@ -539,6 +544,35 @@ export const jarTonight: Script = async (d) => {
   }
 };
 
+/** The last shelf: jars already labelled for the nights to come, empty, their lids sewn on in advance. */
+export const shelfSealed: Script = async (d) => {
+  const n = G.meta.nuits;
+  const k = bump('c6_n_avance');
+  if (k === 1) {
+    await tell(d, ['Une étagère de bocaux vides. Les couvercles sont déjà cousus au fil rouge.', 'Les étiquettes sont écrites d\'avance.']);
+    await tell(d, [`« Nuit ${n + 1} ». « Nuit ${n + 2} ». « Nuit ${n + 3} ».`, `Plus loin : « Nuit ${n + 40} ». Et plus loin encore, au fond, dans l'ombre : « Nuit ${n + 365} ».`]);
+    await voice(d, ['Je prépare.', 'On n\'est jamais trop prévoyant.']);
+    return;
+  }
+  await tell(d, k === 2 ? ['Tu tournes un bocal vers toi. Sous l\'étiquette, au crayon, une deuxième écriture, plus ronde :', '« et après ? »'] : 'Les bocaux vides attendent. Ils ont tout leur temps. C\'est le seul endroit d\'ici où il y a du temps.');
+};
+
+/** Jars rolled away from the shelves. */
+const LOOSE: Array<[string, string]> = [
+  ['« Nuit 9 : il a demandé à Dodo s\'il pouvait rentrer. Dodo a dit : bientôt. »', 'Dedans, une clé de porte, avec un petit mouton en plastique au bout. Tu sais quelle porte elle ferme.'],
+  ['« Nuit 64 : il a tenu la main de Mina jusqu\'au matin. Le matin n\'est pas venu. »', 'Dedans, une pelote de fil rouge, emmêlée, serrée, comme si on avait tiré dessus de toutes ses forces.'],
+  ['« Nuit 190 : il a perdu une dent dans le rêve. Au réveil, il les avait toutes. »', 'Dedans, une dent en plastique, de celles des pochettes-surprises. Quelqu\'un a essayé de la faire passer pour une vraie.'],
+];
+
+export const looseJar =
+  (i: number): Script =>
+  async (d) => {
+    const [label, inside] = LOOSE[i]!;
+    d.sfx('tooth', { pitch: 1.6, vol: 0.25 });
+    await tell(d, ['Un bocal qui a roulé loin des étagères.', `L'étiquette : ${label}`]);
+    await tell(d, inside);
+  };
+
 /** The sealed seam out of the wadding (the riddle). */
 export const sealedSeam: Script = async (d) => {
   if (flag('c6_couture')) return;
@@ -662,6 +696,10 @@ export const ouateStain: Script = looks('tache', [
 export const ouateThread: Script = look(['Le fil rouge de Mina.', 'Il traverse tout, ici. Il tient les parois ensemble. Si on le coupait, tout s\'effondrerait doucement, comme un oreiller qu\'on ouvre.']);
 export const pitLook: Script = look(['Un trou dans le coton. En bas, c\'est noir et ça sent le renfermé.', 'Quelque chose remonte de là, très lentement : l\'odeur de ta chambre fermée.']);
 export const bridgeLook: Script = look('Trois brins de fil rouge tendus au-dessus du noir. Ils tiennent. Elle cousait solide.');
+export const brokenBridge: Script = looks('pont_coupe', [
+  ['Un autre pont de fil. Il s\'arrête au milieu, au-dessus du noir.', 'Les trois brins ont été coupés net. Non : mordus. Il y a des marques de petites dents dans le fil.'],
+  'Tu regardes en bas. Le noir te regarde aussi, poliment, sans insister.',
+]);
 
 /** When Noa comes near the nest with the Bourres still crawling: their reproach floats out of them. */
 export const bourresMurmur: Script = async () => {
@@ -674,10 +712,33 @@ export const bourresMurmur: Script = async () => {
 // boite_a_musique — Dodo's heart: the comb of baby teeth, three teeth to put back, the lullaby whole
 // ---------------------------------------------------------------------------------------------------------------------
 
+/** The passage down out of the music box chamber: cotton until the lullaby has played whole. */
+export const FOAM_PASSAGE: Array<[number, number]> = [
+  [14, 18],
+  [15, 18],
+  [14, 19],
+  [15, 19],
+];
+
+function openPassage(): void {
+  retile(FOAM_PASSAGE.map(([x, y]) => [x, y, 'c6_mousse']));
+}
+
+/** Once the lullaby has played: the cylinder turns and sings, the passage is open. */
+function boxPlaying(): void {
+  openPassage();
+  const cyl = world.entities.find((e) => e.id === 'cylindre');
+  if (cyl) {
+    cyl.frames = ['prop_c6_cylindre', 'prop_c6_cylindre_2'];
+    cyl.frameSpeed = 20;
+  }
+}
+
 export const boiteEnter: Script = async (d) => {
   installMurmurs();
   syncComb();
   if (flag('c6_boite')) {
+    boxPlaying();
     d.music(null);
     audio.setAmbience('hum', 0.4);
     return;
@@ -789,6 +850,7 @@ async function musicBox(d: Director): Promise<void> {
     cyl.frames = ['prop_c6_cylindre', 'prop_c6_cylindre_2'];
     cyl.frameSpeed = 20;
   }
+  for (const e of world.entities.filter((x) => x.kind === 'enemy')) world.removeEntity(e);
   await d.fadeIn(30);
   await wholeLullaby(d);
   await d.wait(30);
@@ -798,6 +860,7 @@ async function musicBox(d: Director): Promise<void> {
   await d.wait(20);
   d.sfx('thread', { pitch: 0.7, vol: 0.5 });
   d.shake(1, 10);
+  openPassage();
   await tell(d, 'En bas de la salle, la mousse s\'écarte. Un passage. Il donne sur un couloir. Tu connais ce papier peint.');
   d.music('ventre', 2);
 }
@@ -1274,7 +1337,13 @@ export const pile: Script = async (d) => {
     d.set('c6_pile_morte');
     await tell(d, ['Elle ne grésille plus. Plus rien.', 'Quelque part plus loin, dans la grande salle, une voix vient de se taire un peu plus tôt que prévu.']);
   }
-  await tell(d, 'Au fond de la pièce, le mur de coton s\'est ouvert. De l\'autre côté, une lumière blanche, plate. Un bourdonnement.');
+  const seam = d.find('sortie');
+  if (seam) {
+    d.sfx('thread', { pitch: 0.7, vol: 0.5 });
+    seam.sprite = 'prop_c6_couture_ouverte';
+    seam.solid = false;
+  }
+  await tell(d, 'Au fond de la pièce, la couture du papier peint s\'est ouverte. De l\'autre côté, une lumière blanche, plate. Un bourdonnement.');
 };
 
 export const boutLook: Script = looks('bout', [
@@ -1286,6 +1355,8 @@ export const corridorWall: Script = looks('papier', [
   'Il y a des traces de doigts sur le papier peint, à hauteur de ta main. Des centaines. Toujours au même endroit, comme si tu t\'étais tenu au mur, nuit après nuit.',
 ]);
 export const switchLook: Script = look('L\'interrupteur. Tu appuies. Rien. Tu appuies encore. Il fait toujours nuit.');
+/** The seam in the wallpaper of the end room, before the Pile. */
+export const boutSeam: Script = look(['Une couture, au milieu du papier peint. Des croix de fil rouge, serrées.', 'Derrière, quelque chose bourdonne, comme un frigo la nuit. Elle ne s\'ouvre pas. Pas encore.']);
 
 // ---------------------------------------------------------------------------------------------------------------------
 // voix — the voice chamber: the module, the crust, the puppets; the threshold (T9); the final battle
@@ -1299,9 +1370,18 @@ export const voixEnter: Script = async (d) => {
   if (flag('c6_voix_vue')) return;
   d.set('c6_voix_vue');
   await d.wait(30);
-  await tell(d, ['Le fond du ventre. Une salle immense.', 'Au fond, une machine en plastique beige, haute comme une église. Deux boutons ronds : REC. PLAY.']);
+  await tell(d, 'Le fond du ventre. Une salle immense.');
+  // The camera climbs up the machine, slowly.
+  world.player.moving = false;
+  await d.cameraTo(15, 9);
+  await d.wait(30);
+  await d.cameraTo(15, 6);
+  await d.wait(20);
+  await tell(d, ['Au fond, une machine en plastique beige, haute comme une église. Deux boutons ronds : REC. PLAY.', 'Une grille de haut-parleur grande comme un mur.']);
   await tell(d, ['« Mon doudou qui parle ! — 2 pistes ». C\'est moulé en relief sur le côté, à hauteur de géant.', 'Mina l\'a cousue là, avec Nadia, à gros points de fil rouge.']);
   await tell(d, ['La pile fuit. Une croûte blanche descend du ventre de la machine et mange le coton, lentement.', 'Comme une moisissure. Comme du givre qui aurait faim.']);
+  d.cameraFollow();
+  await d.wait(30);
 };
 
 export const moduleLook: Script = async (d) => {
@@ -1334,6 +1414,12 @@ export const crustLook: Script = looks('croute', [
 export const puppetPrincess: Script = look(['La princesse au crayon. Sa robe rose pend au bout des fils, sa couronne de papier par-dessus.', 'Il n\'y a personne dedans. Il n\'y a jamais eu personne dedans : c\'est toi qui tenais les fils.']);
 export const puppetFelt: Script = look(['La poupée de feutre. Mina n°366, ou une autre. Vide, plate, son sourire brodé replié sur lui-même.', 'Sa couronne est cousue. Elle n\'est jamais tombée, celle-là.']);
 export const voixThread: Script = look(['Les fils des marionnettes montent jusqu\'au plafond et se perdent dans le coton.', 'Ils sont tous noués au même endroit. Juste au-dessus de ta tête.']);
+
+/** The route of the ink: where she should be, a pool of ink and the hat lying flat in it. */
+export const inkPool: Script = looks('encre', [
+  ['Une flaque d\'encre, de la taille d\'un enfant. Le coton la boit tout autour, lentement.', 'Au milieu, un bonnet tricoté à oreilles de mouton, posé à plat. Vide.'],
+  'Tu ne le ramasses pas. Il n\'y a plus rien dessous à regarder.',
+]);
 
 /** The little girl in the knitted hat, when Noa talks to her after the threshold (or on the way in). */
 export const petiteTalk: Script = async (d) => {
@@ -1528,7 +1614,7 @@ async function beforeFinal(d: Director): Promise<void> {
   d.sfx('thread', { pitch: 0.5, vol: 0.6 });
   d.shake(1, 20);
   await tell(d, ['Au-dessus de la machine, les coutures du plafond craquent, une à une.', 'Quelque chose descend au bout de ses propres fils.']);
-  spawnDodo(d, 15, 8);
+  spawnDodo(d, 15, 11);
   const dodo = d.find('dodo');
   if (dodo) {
     dodo.oy = -60;

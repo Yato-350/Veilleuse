@@ -10,6 +10,7 @@ import * as chapter2 from './chapter2';
 import * as chapter3 from './chapter3';
 import * as chapter4 from './chapter4';
 import * as chapter5 from './chapter5';
+import * as chapter6 from './chapter6';
 import * as bonus from './bonus';
 import * as socle from './socle';
 import * as battleDebug from '../battle/debug-battles';
@@ -35,6 +36,8 @@ STORY.dream[3] = chapter3.start;
 STORY.dream[4] = chapter4.start;
 // Interlude IV ends by entering chapter 5, which falls into chapter 6 (fallInto) without waking up.
 STORY.dream[5] = chapter5.start;
+// Chapter 5 falls into chapter 6 (chapter5.theFall → fallInto(d, 6)), the last dream.
+STORY.dream[6] = chapter6.start;
 STORY.wake[1] = real.interlude1;
 STORY.wake[2] = real.interlude2;
 STORY.wake[3] = real.finale;
@@ -61,6 +64,7 @@ export const DEBUG_SCRIPTS: Record<string, Script> = {
   ...chapter3.DEBUG,
   ...chapter4.DEBUG,
   ...chapter5.DEBUG,
+  ...chapter6.DEBUG,
   ...bonus.DEBUG,
   ...socle.DEBUG,
   ...battleDebug.DEBUG,

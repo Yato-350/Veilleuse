@@ -170,7 +170,9 @@ export const TILES: Record<string, TileDef> = {
   ...c5Threads('c5_filsable', 'c5_sable', 'carpet'),
   // Chapter 6 « Le Ventre de Dodo » (src/data/sprites/chapter6.ts): damp cotton, pits crossed by Mina's red thread,
   // yellowed foam, the battery's crust, the plastic of the voice module, the fabric and the seam.
-  c6_ouate: { art: v('c6_ouate', 4), edge: C6_COTTON_EDGE, surface: 'carpet' },
+  // The stained variant (t_c6_ouate_3) is kept for c6_tache tiles: scattered at random, its stains lined up like a print.
+  c6_ouate: { art: ['t_c6_ouate_1', 't_c6_ouate_2', 't_c6_ouate_4'], edge: C6_COTTON_EDGE, surface: 'carpet' },
+  c6_tache: { art: 't_c6_ouate_3', edge: C6_COTTON_EDGE, surface: 'carpet' },
   c6_trempe: { art: v('c6_trempe', 2), surface: 'carpet' },
   c6_paroi: { art: v('c6_paroi', 2), solid: true },
   c6_paroi_base: { art: v('c6_paroi_base', 2), solid: true },
