@@ -474,7 +474,6 @@ const LAC_BLANC: MapDef = {
   ],
   triggers: [
     { x: 4, y: 3, w: 30, h: 2, script: C5.shoreEnter, once: 'c5_rive' },
-    { x: 1, y: 15, w: 3, h: 4, script: C5.lakeFirst, once: 'c5_lac' },
     { x: 65, y: 31, script: C5.hutLeave },
   ],
 };

@@ -14,7 +14,7 @@ import type { Script } from '../overworld/types';
 import { world } from '../overworld/world';
 import { DrawTogetherScene, type DrawingId } from '../scenes/drawtogether';
 import { G, maxHp } from '../state';
-import { fallInto, REAL, shop, STORY } from './common';
+import { fallInto, shop, STORY } from './common';
 
 /**
  * Chapter 5 — « La Marée Blanche » (docs/HISTOIRE.md § 3.13, T6 § 2.7). Act III, « Dedans »: correction fluid and blue
@@ -1000,7 +1000,8 @@ export const sasEnter: Script = async (d) => {
     for (let y = 1; y < 10; y++) for (let x = 0; x < 30; x++) cells.push([x, y, 'c5_brume']);
     retile(cells);
   }
-  if (!flag('c5_sas_dodo')) floatingDodo(d);
+  // Dodo floats beside Noa (even once he was shut behind the fourth door: he is on Noa's side of every door).
+  floatingDodo(d);
   if (G.state.map === 'sas' && !flag('c5_sas_intro')) {
     d.set('c5_sas_intro');
     await d.wait(20);
@@ -1862,7 +1863,11 @@ export const vitreDoor: Script = async (d) => {
     await d.say('La porte de verre est ouverte. Le dessin attend sur la table.');
     return;
   }
+  const n = bump('c5_porte_vitre');
   await d.say(['La porte de verre. Fermée.', 'Ta main s\'arrête à un centimètre de la poignée.']);
+  if (n === 1) await d.say('Tu ne peux pas l\'ouvrir. Elle est fermée à clé.');
+  else if (n === 2) await d.say(['Il n\'y a pas de serrure.', 'Tu n\'as pas envie de l\'ouvrir. C\'est tout.']);
+  else await d.say('Tu regardes ta main. Elle ne tremble même pas. Elle s\'arrête, c\'est tout.');
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1978,14 +1983,13 @@ async function theFall(d: Director): Promise<void> {
   p.oy = 0;
   p.alpha = 1;
   d.cameraFollow();
-  // Chapter 6 « Le Ventre de Dodo » (production lot 4) registers STORY.dream[6]: Noa falls into it without waking up.
+  // Chapter 6 « Le Ventre de Dodo » (production lot 4) registers STORY.dream[6] = chapter6.start: Noa falls into it
+  // without waking up. Until then (debug runs only) the fall ends on black.
   if (STORY.dream[6]) {
     await fallInto(d, 6);
     return;
   }
   await d.fadeOut(110, '#000000');
-  G.state.party = [];
-  G.state.flags.interlude = REAL.prologue;
   await d.narrate('…');
 }
 
