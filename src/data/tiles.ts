@@ -15,6 +15,15 @@ const INK_EDGE = { color: PAL.i!, dark: PAL.K!, group: 'ink' };
 const INK_POND_EDGE = { color: PAL.n!, dark: PAL.B!, group: 'a_ink_pond' };
 const VOID_EDGE = { color: '#000000', dark: PAL.i!, group: 'v_edge' };
 const LIGHT_EDGE = { color: PAL.f!, dark: PAL.q!, group: 'v_white' };
+const C5_WHITE_EDGE = { color: PAL.f!, dark: '#dfe7f2', group: 'c5_maree' };
+const C5_SNOW_EDGE = { color: PAL.f!, dark: '#dfe7f2', group: 'c5_neige' };
+
+/** Chapter 5: the red thread drawn over another tile (`h`, `v`, corners `ne nw se sw`, crossing `x`, loose end `bout`). */
+function c5Threads(prefix: string, under: string, surface: TileDef['surface']): Record<string, TileDef> {
+  const out: Record<string, TileDef> = {};
+  for (const s of ['h', 'v', 'ne', 'nw', 'se', 'sw', 'x', 'bout']) out[`${prefix}_${s}`] = { art: `t_c5_fil_${s}`, under, surface };
+  return out;
+}
 
 /** Tile registry: id → definition. Art keys refer to sprites in src/data/sprites/tiles.ts. */
 export const TILES: Record<string, TileDef> = {
@@ -122,4 +131,39 @@ export const TILES: Record<string, TileDef> = {
   c4_attic_floor: { art: v('c4_attic_floor', 2), surface: 'wood' },
   c4_stairs: { art: 't_c4_stairs', surface: 'wood' },
   c4_floor_pen: { art: v('c4_floor_pen', 2), surface: 'paper' },
+
+  // --- Chapter 5 « La Marée Blanche » (src/data/sprites/chapter5.ts, authored in their final colours) -------------
+  // The beach of before, overexposed.
+  c5_sable: { art: v('c5_sable', 4), surface: 'carpet' },
+  c5_sable_mouille: { art: v('c5_sable_mouille', 2), surface: 'carpet' },
+  c5_ecume: { art: 't_c5_ecume_1', anim: v('c5_ecume', 3), animSpeed: 30, solid: true, surface: 'water' },
+  c5_mer: { art: 't_c5_mer_1', anim: v('c5_mer', 3), animSpeed: 34, solid: true, surface: 'water' },
+  c5_dune: { art: v('c5_dune', 2), solid: true },
+  c5_ganivelle: { art: 't_c5_ganivelle', solid: true },
+  c5_rocher: { art: v('c5_rocher', 2), solid: true },
+  c5_planches: { art: 't_c5_planches', surface: 'wood' },
+  c5_maree: { art: v('c5_maree', 2), edge: C5_WHITE_EDGE, surface: 'paper' },
+  c5_brume: { art: v('c5_brume', 2), solid: true },
+  // Ice: the frozen sea, the lake of the hospital.
+  c5_glace: { art: v('c5_glace', 3), surface: 'stone' },
+  c5_glace_vague: { art: v('c5_glace_vague', 2), surface: 'stone' },
+  // The white hospital: correction fluid, tarps, snow.
+  c5_sol: { art: v('c5_sol', 3), surface: 'paper' },
+  c5_mur_top: { art: v('c5_mur_top', 2), solid: true },
+  c5_bache: { art: v('c5_bache', 2), solid: true },
+  c5_bache_base: { art: v('c5_bache_base', 2), solid: true },
+  c5_bache_ombre: { art: 't_c5_bache_ombre', solid: true },
+  c5_bache_ombre_base: { art: 't_c5_bache_ombre_base', solid: true },
+  c5_neige: { art: v('c5_neige', 2), edge: C5_SNOW_EDGE, surface: 'carpet' },
+  c5_rive: { art: v('c5_rive', 2), surface: 'stone' },
+  c5_givre: { art: v('c5_givre', 2), surface: 'stone' },
+  c5_verre_top: { art: v('c5_verre_top', 2), solid: true },
+  c5_vitre: { art: 't_c5_vitre', solid: true },
+  c5_vitre_base: { art: 't_c5_vitre_base', solid: true },
+  c5_lino: { art: v('c5_lino', 2), surface: 'stone' },
+  c5_ouate: { art: v('c5_ouate', 2), surface: 'carpet' },
+  // The red thread of Mina n°366, lying on ice (c5_fil_*), on the hospital floor (c5_filsol_*) or on sand.
+  ...c5Threads('c5_fil', 'c5_glace', 'stone'),
+  ...c5Threads('c5_filsol', 'c5_sol', 'paper'),
+  ...c5Threads('c5_filsable', 'c5_sable', 'carpet'),
 };
