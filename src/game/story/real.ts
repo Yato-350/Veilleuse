@@ -646,7 +646,7 @@ async function interlude2Dodo(d: Director): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function finale(d: Director): Promise<void> {
-  // Reached through wakeUp(3) until the new acts are wired (lot 5), then through wakeUp(6).
+  // Reached through wakeUp(6): « Ouvrir les yeux » at the end of chapter 6 (STORY.wake[6]). Also by debug.
   G.state.flags.interlude = REAL.finale;
   setPageTitle(null);
   d.load('chambre', 'bed');

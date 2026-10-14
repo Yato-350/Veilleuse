@@ -982,6 +982,25 @@ export const TRACKS: Record<string, Track> = {
       ch('hat', drums('. . x . . x', 32), { vol: 0.05 }),
     ],
   },
+
+  /**
+   * Faux générique — the fake credits of the false dawn (§ 3.9): the ending's lullaby, but too sweet. A major third
+   * higher, a little too fast, music box and piano in octaves over a bright pad, and a little bell ringing the same
+   * high note on every other bar, like a toy that loops. Written to be heard backwards as well (audio.reverse, while
+   * the credits rewind): long held notes that swell in, almost nothing struck. 16 bars 3/4.
+   */
+  faux_generique: {
+    bpm: 80,
+    stepsPerBeat: 2,
+    vol: 0.82,
+    channels: [
+      ch('musicbox', transpose(LULLABY, 4), { vol: 0.46, reverb: 0.6 }),
+      ch('piano', transpose(LULLABY, -8), { vol: 0.2, reverb: 0.55 }),
+      ch('pad', padLine(CH_LULLABY.map((c) => transposeChord(c, 4)), 3, 6), { vol: 0.24, reverb: 0.75 }),
+      ch('triangle', figure(CH_LULLABY.map((c) => transposeChord(c, 4)), 2, 'R - - - - -'), { vol: 0.24 }),
+      ch('bell', rep(join('G#6 - - - - -', rest(6)), 8), { vol: 0.05, reverb: 0.9 }),
+    ],
+  },
 };
 
 

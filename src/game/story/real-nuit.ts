@@ -9,13 +9,13 @@ import { G, maxHp } from '../state';
 import { setPageTitle } from '../meta';
 import { CountingScene, type SheepRound } from '../scenes/sheepcount';
 import { dateLabel, PhoneScene, type PhoneCall, type PhoneContact, type PhoneMessage, type PhoneReply } from '../scenes/phone';
-import { enterDream, REAL, realPhase, STORY } from './common';
+import { enterDream, REAL, realPhase } from './common';
 import { inBed, mamanThread, PHONE_CLOCK } from './real';
 
 /**
  * The long night, in the real apartment (docs/HISTOIRE.md § 3.10, § 3.12, T2 § 2.3, T5 § 2.6, § 4 « Monde réel »):
- *   Interlude III « Le sac » (4:06)      after the false dawn; enters chapter 4 (enterDream(4))
- *   Interlude IV  « Le placard » (4:44)  after chapter 4 (STORY.wake[4]); enters chapter 5 once it exists
+ *   Interlude III « Le sac » (4:06)      after the false dawn (fausse-aube.ts); enters chapter 4 (enterDream(4))
+ *   Interlude IV  « Le placard » (4:44)  after chapter 4 (STORY.wake[4]); enters chapter 5 (enterDream(5))
  * Maps (src/data/maps/real.ts): `chambre` (its night props show while isNuit()), `appartement_tard` (the hallway at
  * night, quiet, the right length), `chambre_maman` (IV). G.state.flags.interlude is REAL.i3 or REAL.i4.
  * Quiet, domestic scenes: small sounds, what Maman keeps, the bag that was never unpacked. Every strange detail has
@@ -136,7 +136,7 @@ async function pressBelly(d: Director, slower: boolean): Promise<void> {
 // ---------------------------------------------------------------------------------------------------------------------
 
 export async function interlude3(d: Director): Promise<void> {
-  // Reached from the false dawn (production lot 5) or by debug.
+  // Reached from the false dawn (fausse-aube.ts › notAll) or by debug.
   G.state.flags.interlude = REAL.i3;
   G.state.party = [];
   G.state.hp = maxHp(G.state);
@@ -1243,13 +1243,8 @@ async function dodoIV(d: Director): Promise<void> {
   setPageTitle(null);
   inBed(d, true);
   await d.say(['Tu serres Dodo contre toi. Il est plus léger qu\'avant.', 'Il se vide un peu chaque nuit.']);
-  // Chapter 5 « La Marée Blanche » (production lot 3) registers STORY.dream[5]; until then, the night stops here.
-  if (STORY.dream[5]) {
-    await enterDream(d, 5);
-    return;
-  }
-  await d.fadeOut(90);
-  await d.narrate('…');
+  // Chapter 5 « La Marée Blanche » (STORY.dream[5]).
+  await enterDream(d, 5);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

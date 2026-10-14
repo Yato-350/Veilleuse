@@ -22,10 +22,10 @@ import { DrawTogetherScene } from '../scenes/drawtogether';
  *                   history, the call log
  *   phone_log       the same phone, opened on the « Journal d'appels » tab
  *   phone_ring      an incoming call that cannot be answered, which becomes a missed call
- *   faux_generique  the fake credits (§3.9) with the credits / title blocks: stop on a line, choice, rewind, let roll
- *                   to « Merci d'avoir joué ! — Dodo », cross-stitched title with one « Continuer », three passes at
- *                   most (also ?debug=credits&mode=faux)
- *   wake_3          the end of chapter 3 as wired today: wakeUp(3) still leads to the v1.1 finale (until lot 5)
+ *   socle_faux_generique  the fake credits (§3.9) with the credits / title blocks: stop on a line, choice, rewind,
+ *                   let roll to « Merci d'avoir joué ! — Dodo », cross-stitched title with one « Continuer », three
+ *                   passes at most (also ?debug=credits&mode=faux; the story's own is fausse-aube.ts › faux_generique)
+ *   wake_3          the end of chapter 3: wakeUp(3) leads to the false dawn (fausse-aube.ts), then Interlude III
  *   dessin_visite   the drawing game of chapter 5 (scenes/drawtogether.ts): the moon (the two pens cross on it), she
  *                   draws herself, Noa draws himself and coughs at 55 %, the nurse's shadow, the page dissolves into
  *                   the chapter 2 souvenir (hold A to draw; the arrows pull the pen off the line)
@@ -220,7 +220,7 @@ async function phoneRing(d: Director): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Fake credits (sample: the false dawn, lot 5, writes its own)
+// Fake credits (sample: the false dawn writes its own, fausse-aube.ts)
 // ---------------------------------------------------------------------------
 
 /** The real credits' layout with a cast list, where Mina cannot be found (one more « introuvable » each pass). */
@@ -265,7 +265,7 @@ async function fauxGenerique(d: Director): Promise<void> {
 }
 
 export const DEBUG: Record<string, Script> = {
-  faux_generique: fauxGenerique,
+  socle_faux_generique: fauxGenerique,
   phone_home: (d) => phoneDemo(d, 'messages'),
   phone_log: (d) => phoneDemo(d, 'calls'),
   phone_ring: phoneRing,

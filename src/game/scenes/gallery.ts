@@ -50,6 +50,8 @@ const CATALOG: Array<[key: string, kind: string, title: string, captions: string
       '« Tu le gardes, hein ? Promis ? Promis juré ? »',
     ],
   ],
+  ['faux_aube', KIND_REAL, 'Il fait beau', ['Elle te serre fort, et elle sourit.', 'Elle sourit tout le temps.', 'Elle ne peut rien faire d\'autre.']],
+  ['faux_aube_encre', KIND_REAL, 'Il fait beau, quand même', ['Elle te serre fort.', 'Tu cherches son visage. Il n\'y a que de l\'encre.', 'Tu la reconnais. C\'est la tienne.']],
   ['photo_decoupee', KIND_REAL, 'La photo retournée', ['Maman. Mina, avec sa couronne en papier.', 'À ta place, un trou. Les bords sont nets. Bien droits.', 'Aux ciseaux.']],
   ['polaroid_dodo', KIND_REAL, 'Le polaroïd', ['Dodo, sur un oreiller d\'hôpital. Une main de garçon posée sur lui.', '« Noa prête Dodo à Mina. "Il veillera sur toi." »']],
   ['dessin_chut', KIND_REAL, 'Le dessin du miroir', ['Une petite fille, un doigt sur la bouche.', '« MAMAN TU DIS PAS A NOA. PROMIS. »']],

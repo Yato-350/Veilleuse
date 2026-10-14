@@ -22,7 +22,8 @@ import { setPageTitle } from '../meta';
  *                          ├─ finishGame('beaux_reves')
  *                          └─ finishGame('silence')
  *
- * Until the new acts are wired (production lot 5), STORY.wake[3] is still the v1.1 finale.
+ * Wiring (story/index.ts): STORY.wake[3] is the false dawn (fausse-aube.ts), which ends by playing Interlude III
+ * (real-nuit.ts); STORY.wake[4] is Interlude IV; STORY.wake[6] is the finale (real.ts).
  */
 
 /** Dream chapter numbers. */

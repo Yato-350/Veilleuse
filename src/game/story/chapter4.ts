@@ -13,7 +13,7 @@ import type { Script } from '../overworld/types';
 import { world } from '../overworld/world';
 import { CountingScene, type SheepKind, type SheepRound } from '../scenes/sheepcount';
 import { G, maxHp } from '../state';
-import { REAL, STORY, wakeUp } from './common';
+import { wakeUp } from './common';
 
 /**
  * Chapter 4 — « La Maison Cousue » (docs/HISTOIRE.md § 3.11, T3 § 2.4, T4 § 2.5).
@@ -1702,15 +1702,8 @@ async function endChapter(d: Director): Promise<void> {
   d.souvenir('lumiere');
   await d.image('souvenir_lumiere', SOUVENIRS.lumiere?.captions ?? []);
   await d.wait(40);
-  // Interlude IV (« Le placard », production lot 2) takes over from here.
-  if (STORY.wake[4]) {
-    await wakeUp(d, 4);
-    return;
-  }
-  await d.fadeOut(60, '#ffffff');
-  G.state.flags.interlude = REAL.i4;
-  G.state.party = [];
-  await d.narrate('…');
+  // Interlude IV « Le placard » (STORY.wake[4], real-nuit.ts) takes over from here.
+  await wakeUp(d, 4);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

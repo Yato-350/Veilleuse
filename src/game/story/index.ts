@@ -8,6 +8,7 @@ import * as realNuit from './real-nuit';
 import * as chapter1 from './chapter1';
 import * as chapter2 from './chapter2';
 import * as chapter3 from './chapter3';
+import * as fausseAube from './fausse-aube';
 import * as chapter4 from './chapter4';
 import * as chapter5 from './chapter5';
 import * as chapter6 from './chapter6';
@@ -28,11 +29,12 @@ world.followerTalk = async (d) => {
   await d.say(text, `mina:${expr ?? 'happy'}`);
 };
 
+// Version 2, the whole night (docs/HISTOIRE.md § 3.1):
+//   prologue → ch. 1 → I → ch. 2 → II → ch. 3 → the false dawn → III → ch. 4 → IV → ch. 5 ⇣ ch. 6 → finale.
 STORY.dream[1] = chapter1.start;
 STORY.dream[2] = chapter2.start;
 STORY.dream[3] = chapter3.start;
-// Interlude III (real-nuit.ts) enters chapter 4, whose end wakes up into Interlude IV. Until production lot 5 wires
-// the false dawn, chapter 3 still wakes up into the v1.1 finale, so III, chapter 4 and IV are reached by debug only.
+// Interlude III (real-nuit.ts, entered at the end of the false dawn) enters chapter 4.
 STORY.dream[4] = chapter4.start;
 // Interlude IV ends by entering chapter 5, which falls into chapter 6 (fallInto) without waking up.
 STORY.dream[5] = chapter5.start;
@@ -40,8 +42,11 @@ STORY.dream[5] = chapter5.start;
 STORY.dream[6] = chapter6.start;
 STORY.wake[1] = real.interlude1;
 STORY.wake[2] = real.interlude2;
-STORY.wake[3] = real.finale;
+// Chapter 3 wakes up into the false dawn (fausse-aube.ts), which ends in Interlude III.
+STORY.wake[3] = fausseAube.play;
 STORY.wake[4] = realNuit.interlude4;
+// « Ouvrir les yeux » at the end of chapter 6 wakes up into the finale (« Le carnet »; production lot 9 rewrites it).
+STORY.wake[6] = real.finale;
 
 /** Entry point of a new game. */
 export const startPrologue: Script = real.prologue;
@@ -62,6 +67,7 @@ export const DEBUG_SCRIPTS: Record<string, Script> = {
   ...chapter1.DEBUG,
   ...chapter2.DEBUG,
   ...chapter3.DEBUG,
+  ...fausseAube.DEBUG,
   ...chapter4.DEBUG,
   ...chapter5.DEBUG,
   ...chapter6.DEBUG,

@@ -14,7 +14,7 @@ import type { Script } from '../overworld/types';
 import { world } from '../overworld/world';
 import { DrawTogetherScene, type DrawingId } from '../scenes/drawtogether';
 import { G, maxHp } from '../state';
-import { fallInto, shop, STORY } from './common';
+import { fallInto, shop } from './common';
 
 /**
  * Chapter 5 — « La Marée Blanche » (docs/HISTOIRE.md § 3.13, T6 § 2.7). Act III, « Dedans »: correction fluid and blue
@@ -1997,14 +1997,8 @@ async function theFall(d: Director): Promise<void> {
   p.oy = 0;
   p.alpha = 1;
   d.cameraFollow();
-  // Chapter 6 « Le Ventre de Dodo » is STORY.dream[6] (story/index.ts): Noa falls into it without waking up. Without
-  // it the fall would end on black.
-  if (STORY.dream[6]) {
-    await fallInto(d, 6);
-    return;
-  }
-  await d.fadeOut(110, '#000000');
-  await d.narrate('…');
+  // Chapter 6 « Le Ventre de Dodo » is STORY.dream[6] (story/index.ts): Noa falls into it without waking up.
+  await fallInto(d, 6);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

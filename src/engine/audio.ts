@@ -167,7 +167,9 @@ export type Sfx =
   | 'stitch'
   | 'thread'
   // v2 chapter 5: a cough held back behind a mask.
-  | 'cough';
+  | 'cough'
+  // v2 false dawn: a little bird outside the window (two quick rising chirps).
+  | 'bird';
 
 export type Ambience = 'rain' | 'static' | 'wind' | 'hum' | 'none';
 
@@ -932,6 +934,12 @@ export class AudioEngine {
         this.tone('sawtooth', 170 * p, 90 * p, 0.11, 0.05 * v);
         this.noiseBurst(0.18, 0.32 * v, 'bandpass', 560 * p, t + 0.2);
         this.tone('sawtooth', 150 * p, 80 * p, 0.14, 0.045 * v, t + 0.2);
+        break;
+      case 'bird':
+        // Two quick rising chirps, the second one a little higher, and a falling tail.
+        this.tone('sine', 2300 * p, 3400 * p, 0.06, 0.07 * v);
+        this.tone('sine', 2600 * p, 3900 * p, 0.05, 0.06 * v, t + 0.09);
+        this.tone('sine', 3600 * p, 2500 * p, 0.09, 0.04 * v, t + 0.16);
         break;
       case 'thread':
         this.tone('sawtooth', 260 * p, 820 * p, 0.38, 0.035 * v);

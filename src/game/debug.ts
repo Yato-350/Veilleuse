@@ -127,7 +127,7 @@ export function startDebug(p: URLSearchParams): void {
       if (m === 'faux') {
         game.replace(world);
         void runScript(async (d) => {
-          await DEBUG_SCRIPTS.faux_generique!(d);
+          await DEBUG_SCRIPTS.socle_faux_generique!(d);
         });
       } else void CreditsScene.play({ helpCard: m === 'aide' });
       return;

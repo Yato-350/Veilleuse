@@ -19,6 +19,7 @@ import { BONUS_ILLUSTRATIONS } from './illustrations-bonus';
 import { CH4_ILLUSTRATIONS } from './illustrations-ch4';
 import { CH5_ILLUSTRATIONS } from './illustrations-ch5';
 import { CH6_ILLUSTRATIONS } from './illustrations-ch6';
+import { FAUX_ILLUSTRATIONS } from './illustrations-faux';
 import { NUIT_ILLUSTRATIONS } from './illustrations-nuit';
 
 export type Illustration = (g: CanvasRenderingContext2D, t: number) => void;
@@ -2115,6 +2116,8 @@ export const ILLUSTRATIONS: Record<string, Illustration> = {
   ...NUIT_ILLUSTRATIONS,
   ...CH5_ILLUSTRATIONS,
   ...CH6_ILLUSTRATIONS,
+  // La fausse aube (see illustrations-faux.ts).
+  ...FAUX_ILLUSTRATIONS,
 };
 
 export interface Souvenir {

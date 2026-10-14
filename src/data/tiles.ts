@@ -50,6 +50,16 @@ export const TILES: Record<string, TileDef> = {
   r_wall_mina_base: { art: 't_r_wall_mina_base', solid: true },
   r_floor_mina: { art: v('r_floor_mina', 2), surface: 'carpet' },
 
+  // --- La fausse aube: the real apartment in morning colours (src/data/sprites/fausse-aube.ts) -------
+  fa_floor: { art: v('fa_floor', 3), surface: 'wood' },
+  fa_carpet: { art: v('fa_carpet', 2), surface: 'carpet' },
+  fa_tile: { art: v('fa_tile', 2), surface: 'stone' },
+  fa_wall: { art: 't_fa_wall', solid: true },
+  fa_wall_base: { art: 't_fa_wall_base', solid: true },
+  fa_wall_top: { art: v('fa_wall_top', 2), solid: true },
+  fa_door_top: { art: 't_fa_door_top', solid: true },
+  fa_door: { art: 't_fa_door', solid: true },
+
   // --- Dream: Cotton Country --------------------------------------------------
   grass: { art: v('grass', 4), edge: GRASS_EDGE, surface: 'grass' },
   grass_flowers: { art: v('grass_flowers', 3), edge: GRASS_EDGE, surface: 'grass' },

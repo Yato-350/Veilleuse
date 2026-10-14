@@ -4,18 +4,20 @@ import type { Director } from '../director';
 import { setPageTitle } from '../meta';
 import { world } from '../overworld/world';
 import { G } from '../state';
-import { finishGame, STORY, wakeUp, type EndingId } from './common';
+import { finishGame, wakeUp, type EndingId } from './common';
 
 /**
  * The endings (docs/HISTOIRE.md § 5), taken out of chapter3.ts (production lot 4).
  *
- *   endingAube, endingBeauxReves, endingSilence   version 1.1, moved unchanged: the chapter 3 final battle still ends
- *                                                 on them until production lot 5 shortens it.
+ *   endingAube, endingBeauxReves, endingSilence   version 1.1, moved unchanged. Since the battle of chapter 3 was
+ *                                                 shortened (it always leads to the false dawn), Beaux rêves and
+ *                                                 Silence are reached from the v2 final battle; endingAube (the v1.1
+ *                                                 dream goodbye) only by debug (c3_aube).
  *   endingAubeBlanche, endingVeilleuse           version 2, placeholders: production lot 9 writes them (and the v2
  *                                                 Aube, Beaux rêves and Silence) in this file.
  *   afterFinalBattle(d, route)                   where the v2 final battle (chapter 6, src/data/enemies-ch6.ts) leads:
- *                                                 « Ouvrir les yeux » wakes up into the finale (STORY.wake[6], wired by
- *                                                 lot 5; until then the v1.1 finale), « Rester » is Beaux rêves, the
+ *                                                 « Ouvrir les yeux » wakes up into the finale (STORY.wake[6], still the
+ *                                                 v1.1 « Le carnet » until lot 9), « Rester » is Beaux rêves, the
  *                                                 route of the ink is Silence.
  *   dawnEnding()                                 which ending the finale closes on, once the eyes are open (§ 5).
  *
@@ -145,8 +147,8 @@ export async function afterFinalBattle(d: Director, route: FinalRoute): Promise<
   d.set('fin_route', route);
   if (route === 'silence') await endingSilence(d);
   else if (route === 'beaux_reves') await endingBeauxReves(d);
-  // Until production lot 5 wires STORY.wake[6], the v1.1 finale (STORY.wake[3]) is the one that plays.
-  else await wakeUp(d, STORY.wake[6] ? 6 : 3);
+  // « Ouvrir les yeux »: the finale (STORY.wake[6]).
+  else await wakeUp(d, 6);
 }
 
 /** Aube blanche (§ 5) — placeholder until production lot 9: records the ending and rolls the credits. */
