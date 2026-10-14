@@ -17,6 +17,8 @@ const VOID_EDGE = { color: '#000000', dark: PAL.i!, group: 'v_edge' };
 const LIGHT_EDGE = { color: PAL.f!, dark: PAL.q!, group: 'v_white' };
 const C5_WHITE_EDGE = { color: PAL.f!, dark: '#dfe7f2', group: 'c5_maree' };
 const C5_SNOW_EDGE = { color: PAL.f!, dark: '#dfe7f2', group: 'c5_neige' };
+const C6_COTTON_EDGE = { color: '#d9cba6', dark: '#86765c', group: 'c6_ouate' };
+const C6_CRUST_EDGE = { color: '#f6f4ec', dark: '#cfcab8', group: 'c6_croute' };
 
 /** Chapter 5: the red thread drawn over another tile (`h`, `v`, corners `ne nw se sw`, crossing `x`, loose end `bout`). */
 function c5Threads(prefix: string, under: string, surface: TileDef['surface']): Record<string, TileDef> {
@@ -166,4 +168,21 @@ export const TILES: Record<string, TileDef> = {
   ...c5Threads('c5_fil', 'c5_glace', 'stone'),
   ...c5Threads('c5_filsol', 'c5_sol', 'paper'),
   ...c5Threads('c5_filsable', 'c5_sable', 'carpet'),
+  // Chapter 6 « Le Ventre de Dodo » (src/data/sprites/chapter6.ts): damp cotton, pits crossed by Mina's red thread,
+  // yellowed foam, the battery's crust, the plastic of the voice module, the fabric and the seam.
+  c6_ouate: { art: v('c6_ouate', 4), edge: C6_COTTON_EDGE, surface: 'carpet' },
+  c6_trempe: { art: v('c6_trempe', 2), surface: 'carpet' },
+  c6_paroi: { art: v('c6_paroi', 2), solid: true },
+  c6_paroi_base: { art: v('c6_paroi_base', 2), solid: true },
+  c6_haut: { art: v('c6_haut', 2), solid: true },
+  c6_gouffre: { art: v('c6_gouffre', 2), solid: true },
+  c6_fil_h: { art: 't_c6_fil_h', surface: 'carpet' },
+  c6_fil_v: { art: 't_c6_fil_v', surface: 'carpet' },
+  c6_mousse: { art: v('c6_mousse', 3), surface: 'carpet' },
+  c6_croute: { art: v('c6_croute', 3), edge: C6_CRUST_EDGE, surface: 'stone' },
+  c6_plastique: { art: v('c6_plastique', 3), surface: 'stone' },
+  c6_tissu: { art: v('c6_tissu', 2), solid: true },
+  c6_tissu_base: { art: 't_c6_tissu_base', solid: true },
+  c6_fente: { art: 't_c6_fente', solid: true },
+  c6_fente_base: { art: 't_c6_fente_base', solid: true },
 };
