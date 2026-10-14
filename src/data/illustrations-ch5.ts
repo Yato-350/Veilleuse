@@ -143,7 +143,6 @@ function inHand(x: number, y: number, cx: number, cy: number, s: number): number
 
 /** Distance (approx., in pixels) from a point to the nearest hand on the glass; 0 inside. */
 function nearHand(x: number, y: number, his: boolean): number {
-  let best = 99;
   for (let r = 0; r <= 6; r++) {
     // Cheap ring test: is any hand pixel within r?
     for (const [dx, dy] of [
@@ -159,9 +158,8 @@ function nearHand(x: number, y: number, his: boolean): number {
     ] as const) {
       if (inHand(x + dx, y + dy, HER.x, HER.y, HER.s) || (his && inHand(x + dx, y + dy, HIS.x, HIS.y, HIS.s))) return r;
     }
-    if (r >= best) break;
   }
-  return best;
+  return 99;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

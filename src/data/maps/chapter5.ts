@@ -79,7 +79,7 @@ const PLAGE: MapDef = {
     default: { x: 22, y: 10, dir: 'down' },
     debut: { x: 22, y: 10, dir: 'down' },
     glace: { x: 15, y: 13, dir: 'down' },
-    portail: { x: 22, y: 24, dir: 'down' },
+    portail: { x: 22, y: 16, dir: 'down' },
   },
   onEnter: C5.beachEnter,
   props: [
@@ -144,7 +144,6 @@ const PLAGE: MapDef = {
     { id: 'c5_mouette_2', enemies: ['mouette'], x: 14, y: 7, wander: 3, cond: before },
     { id: 'c5_plage_duo', enemies: ['crabe_bracelet', 'mouette'], x: 36, y: 17, wander: 1, cond: before },
   ],
-  triggers: [{ x: 13, y: 13, w: 6, h: 2, script: C5.afterTideStep, cond: both(after, nf('c5_fil_vu')) }],
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -463,7 +462,7 @@ const LAC_BLANC: MapDef = {
     WALL('prop_c5_grille', 62, 24, -6, { id: 'grille', script: C5.vent }),
     WALL('prop_c5_affiche_planning', 66, 24, -6, { script: C5.visitPlanning }),
     WALL('prop_c5_tel_mural', 69, 24, -2, { script: C5.familyPhone }),
-    P('prop_c5_manteau', 61, 29, { script: C5.coat }),
+    P('prop_c5_manteau', 61, 29, { id: 'manteau', script: C5.coat }),
     SPOT(0, 16, C5.lakeBackDoor, { h: 2, solid: true }),
   ],
   npcs: [{ id: 'dodo', sprite: 'npc_c5_dodo', frames: ['npc_c5_dodo', 'npc_c5_dodo_2'], frameSpeed: 28, x: 18, y: 4, float: true, shadow: false, solid: false, script: C5.dodoCrayon }],

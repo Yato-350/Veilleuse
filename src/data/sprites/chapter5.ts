@@ -1,6 +1,7 @@
 import type { CharDef, SpriteDef } from '../../game/assets';
 import { CHARS as BASE_CHARS } from './characters';
 import { Pix, rows } from './enemies';
+import { ART as PROP_ART } from './props';
 
 /*
  * Chapter 5 « La Marée Blanche » — the world (docs/HISTOIRE.md § 3.13, § 4 « Ch. 5 »).
@@ -265,10 +266,22 @@ function thread(shape: ThreadShape): string {
   };
   if (shape === 'h' || shape === 'x') horiz(0, 15);
   if (shape === 'v' || shape === 'x') vert(0, 15);
-  if (shape === 'ne') (vert(0, 7), horiz(8, 15));
-  if (shape === 'nw') (vert(0, 7), horiz(0, 7));
-  if (shape === 'se') (vert(8, 15), horiz(8, 15));
-  if (shape === 'sw') (vert(8, 15), horiz(0, 7));
+  if (shape === 'ne') {
+    vert(0, 7);
+    horiz(8, 15);
+  }
+  if (shape === 'nw') {
+    vert(0, 7);
+    horiz(0, 7);
+  }
+  if (shape === 'se') {
+    vert(8, 15);
+    horiz(8, 15);
+  }
+  if (shape === 'sw') {
+    vert(8, 15);
+    horiz(0, 7);
+  }
   if (shape === 'end') {
     horiz(0, 8);
     p.rect(8, 6, 3, 3, 'r').set(9, 7, 'R').set(11, 9, 'r').set(12, 10, 'r');
@@ -1864,16 +1877,16 @@ export const ART: Record<string, SpriteDef> = keep({
   prop_c5_thermo_mural: sprite(WALL_THERMO, WHITE),
 
   // --- Props: the lake
-  prop_c5_dessin_maman: drawing('maman', false),
-  prop_c5_dessin_nadia: drawing('nadia', false),
-  prop_c5_dessin_mina: drawing('mina', false),
-  prop_c5_dessin_chaise: drawing('chaise', false),
-  prop_c5_dessin_plage: drawing('plage', false),
-  prop_c5_dessin_maman_corrige: drawing('maman', true),
-  prop_c5_dessin_nadia_corrige: drawing('nadia', true),
-  prop_c5_dessin_mina_corrige: drawing('mina', true),
-  prop_c5_dessin_chaise_corrige: drawing('chaise', true),
-  prop_c5_dessin_plage_corrige: drawing('plage', true),
+  prop_c5_dessin_maman: sprite(drawing('maman', false), WHITE),
+  prop_c5_dessin_nadia: sprite(drawing('nadia', false), WHITE),
+  prop_c5_dessin_mina: sprite(drawing('mina', false), WHITE),
+  prop_c5_dessin_chaise: sprite(drawing('chaise', false), WHITE),
+  prop_c5_dessin_plage: sprite(drawing('plage', false), WHITE),
+  prop_c5_dessin_maman_corrige: sprite(drawing('maman', true), WHITE),
+  prop_c5_dessin_nadia_corrige: sprite(drawing('nadia', true), WHITE),
+  prop_c5_dessin_mina_corrige: sprite(drawing('mina', true), WHITE),
+  prop_c5_dessin_chaise_corrige: sprite(drawing('chaise', true), WHITE),
+  prop_c5_dessin_plage_corrige: sprite(drawing('plage', true), WHITE),
   prop_c5_cabane: sprite(HUT, WHITE),
   prop_c5_fauteuil: ARMCHAIR,
   prop_c5_distributeur: sprite(VENDING, WHITE),
@@ -1906,5 +1919,9 @@ export const ART: Record<string, SpriteDef> = keep({
   prop_c5_empreinte: sprite(HANDPRINT, { ...WHITE, k: '#8f9ab8' }),
   prop_c5_perfusion: sprite(DRIP, WHITE),
 });
+
+/** In the white world, the save point keeps its warm light: the only yellow thing in the hospital. */
+ART['prop_savepoint@blanc'] = PROP_ART.prop_savepoint!;
+ART['prop_savepoint_2@blanc'] = PROP_ART.prop_savepoint_2!;
 
 export const VARIANTS: string[] = [];

@@ -1,0 +1,100 @@
+# Lot 3 (chapter 5 world): the portal answered « Non. J'ai de la fièvre. » — the long way through the waiting room,
+# the Thermomètre calmed with « fièvre », then the airlock: each door opens only once the one behind is closed; the
+# third door knocks once (answering twice keeps the next lamp red), Dodo is shut behind the fourth and is inside anyway.
+query: debug=script&name=chapter5_portail&lang=fr
+god
+wait:1500
+auto
+eval: window.__veilleuse.G.state.cleared.push('c5_gel_1', 'c5_gel_2', 'c5_masque_1', 'c5_masque_2')
+interact:portail
+auto
+choose:1
+auto
+assert: window.__veilleuse.G.state.flags.c5_fievre && !window.__veilleuse.G.state.flags.c5_menti
+assert: window.__veilleuse.world.map.id === 'sas'
+shot:salle
+interact:thermometre
+auto
+write:fièvre
+auto
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c5_thermo_fait
+# Door 1 is open: go through, close it from the far side.
+go:31/7
+wait:300
+auto
+interact:porte_1
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c5_porte_1 === 'fermee'
+# Door 2 turned green: open it from behind, go through, close it.
+go:37/7
+wait:300
+auto
+interact:porte_2
+auto
+go:39/7
+wait:300
+auto
+interact:porte_2
+auto
+choose:0
+auto
+# Door 3: one knock. Answer twice first: the next lamp stays red.
+go:45/7
+wait:300
+auto
+interact:porte_3
+auto
+go:47/7
+wait:300
+auto
+interact:porte_3
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c5_sas_toc === 1
+go:55/7
+wait:300
+auto
+interact:porte_4
+auto
+assert: !window.__veilleuse.G.state.flags.c5_porte_4
+go:47/7
+wait:300
+auto
+interact:porte_3
+auto
+choose:1
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c5_porte_3 === 'fermee'
+# Door 4: Dodo stays on the other side… and is already inside.
+go:55/7
+wait:300
+auto
+interact:porte_4
+auto
+go:57/7
+wait:300
+auto
+interact:porte_4
+auto
+choose:0
+auto
+shot:dodo
+assert: window.__veilleuse.G.state.flags.c5_sas_dodo
+# Door 5, the lake door.
+go:64/7
+wait:300
+auto
+interact:porte_5
+auto
+ArrowRight:900
+auto
+assert: window.__veilleuse.world.map.id === 'lac_blanc'
+shot:lac

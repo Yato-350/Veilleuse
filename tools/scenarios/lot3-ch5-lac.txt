@@ -1,0 +1,72 @@
+# Lot 3 (chapter 5 world): the white lake. The snow hurts (never below 1 HP), the red thread is safe; the five
+# drawings along the shore: Noa draws himself into two (black ballpoint, too tall, no face) and leaves one alone
+# (the counter c5_corrige says 2); the parents' room (T6: the voices through the partition); the glass box.
+query: debug=script&name=chapter5_lac&lang=fr
+wait:1500
+auto
+assert: window.__veilleuse.G.state.flags.c5_lac
+eval: window.__veilleuse.G.state.cleared.push('c5_noire_1', 'c5_noire_2', 'c5_thermo_lac', 'c5_gel_lac')
+eval: window.__veilleuse.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => window.__veilleuse.world.removeEntity(e))
+shot:entree
+# On the thread: nothing happens.
+go:6/19
+wait:2500
+auto
+assert: window.__veilleuse.G.state.hp === 40
+# On the snow: it burns.
+go:22/9
+wait:3500
+auto
+shot:neige
+assert: window.__veilleuse.G.state.hp < 40 && window.__veilleuse.G.state.hp >= 1
+assert: window.__veilleuse.G.state.flags.c5_neige_vue
+# The shore, the drawings.
+go:17/4
+wait:300
+auto
+go:8/3
+interact:dessin_maman
+auto
+choose:0
+zuntil: window.__veilleuse.game.top.drawing === 'maman' && window.__veilleuse.game.top.tracing && !window.__veilleuse.dialogue.busy
+KeyZ:7000
+auto
+assert: window.__veilleuse.G.state.flags.c5_corrige === 1
+go:14/3
+interact:dessin_nadia
+auto
+choose:1
+auto
+assert: window.__veilleuse.G.state.flags.c5_laisse_nadia && !window.__veilleuse.G.state.flags.c5_corrige_nadia
+go:26/3
+interact:dessin_chaise
+auto
+choose:0
+zuntil: window.__veilleuse.game.top.drawing === 'chaise' && window.__veilleuse.game.top.tracing && !window.__veilleuse.dialogue.busy
+KeyZ:7000
+auto
+assert: window.__veilleuse.G.state.flags.c5_corrige === 2
+shot:dessins
+# The parents' room.
+go:38/12
+interact:cabane
+auto
+assert: window.__veilleuse.world.player.x > 60 * 16
+interact:fauteuil
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c5_parents
+shot:cabane
+interact:manteau
+auto
+go:65/31
+wait:400
+auto
+assert: window.__veilleuse.world.player.x < 50 * 16
+# The glass box.
+go:24/22
+interact:porte_verre
+auto
+assert: window.__veilleuse.world.map.id === 'chambre_verre'
+shot:verre

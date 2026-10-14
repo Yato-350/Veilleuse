@@ -4,7 +4,7 @@
 # light (« Je sais que t— »); Maman's room: the alarm clock set on 5h and its post-it (T5), its battery taken, the
 # drawing on the mirror (`dessin_chut`), the voice kit and Nadia's note, the sewing box, the teeth box, the letter
 # of the phone company. Back in the bedroom: one knock in Mina's wall (counting scene « coups », answer mode), then
-# Dodo, his back seam open, and Noa goes back to sleep (chapter 5 when it exists).
+# Dodo, his back seam open, and Noa goes back to sleep: chapter 5 « La Marée Blanche » begins (lot 3).
 query: debug=script&name=interlude4&sheep=auto&lang=fr
 wait:1500
 auto
@@ -105,3 +105,4 @@ shot:dodo
 choose:0
 auto
 assert: window.__veilleuse.G.state.flags.i4_fin === true
+assert: window.__veilleuse.world.map.id === 'plage' && window.__veilleuse.G.state.chapter === 5 && window.__veilleuse.G.state.flags.c5_intro

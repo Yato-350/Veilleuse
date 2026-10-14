@@ -34,7 +34,7 @@ import { fallInto, REAL, shop, STORY } from './common';
  *   c5_donnes         shells given to Mina of before (her castle grows with them; she always counts forty-two)
  *   c5_mina_parle     times Noa talked to Mina of before
  *   c5_sieste         she lay down on the towel (the 30-second wait runs from then)
- *   c5_serviette      times Noa tried to wake her (each press: « Elle dort. »); 0 = he let her sleep and walked off
+ *   c5_serviette      times Noa pressed A on her while she slept (« Elle dort. »; the last one wakes the tide)
  *   c5_nulle          Noa's only line slipped out (« T'es nulle, tu dors tout le temps. »)
  *   c5_maree          the white tide has passed (the sea is frozen; the beach re-tiled by freezeBeach)
  *   c5_drap           the towel is a hospital sheet, flat and empty
@@ -343,8 +343,17 @@ async function opening(d: Director): Promise<void> {
 /** Timestamp (ms) when Mina lay down on the towel (module state: a reload restarts the wait). */
 let sleepStart = 0;
 
+/** The music's mood on this map: tempo scale and wobble (battles save and restore it). */
+function mood(tempo: number, wobble: number): void {
+  audio.tempoScale = tempo;
+  audio.corruption = wobble;
+}
+
 export const beachEnter: Script = (d) => {
   noShadows();
+  // After the tide the lullaby in major goes on, a little slower, a little out of tune.
+  if (flag('c5_maree')) mood(0.9, 0.16);
+  else mood(1, 0);
   const sun = pinned(d, 'soleil', 'c5_soleil', 58, 70);
   sun.alpha = 0.9;
   const veil = pinned(d, 'voile', 'c5_voile', W / 2, H);
@@ -362,6 +371,8 @@ export const beachEnter: Script = (d) => {
     if (flag('c5_sieste') && !flag('c5_maree') && sleepStart) {
       const k = Math.min(1, (performance.now() - sleepStart) / sleepWaitMs());
       self.alpha = 0.14 + k * 0.22;
+      // And the lullaby slows down, as if it were falling asleep too.
+      if (world.controllable) mood(1 - k * 0.3, k * 0.3);
     }
   };
 };
@@ -375,10 +386,22 @@ function freezeBeach(render = true): void {
       const id = tm.ids[y]![x]!;
       if (id === 'c5_ecume') cells.push([x, y, 'c5_glace_vague']);
       else if (id === 'c5_mer') cells.push([x, y, 'c5_glace']);
-      else if (id === 'c5_sable_mouille' && (x * 7 + y * 3) % 5 < 2) cells.push([x, y, 'c5_maree']);
+      // The tide mark: where the white stopped, a thick band of correction fluid along the water.
+      else if (id === 'c5_sable_mouille') cells.push([x, y, 'c5_maree']);
     }
-  // Patches of white where the tide went highest.
-  for (const [x, y] of [[12, 13], [13, 13], [17, 14], [18, 14], [22, 15], [23, 15], [28, 13], [29, 14], [33, 15], [20, 12], [9, 14], [38, 14]] as const) cells.push([x, y, 'c5_maree']);
+  // Tongues of white where the tide went highest, up the beach (never on the props or the thread).
+  const tongues: Array<[number, number, number, number]> = [
+    [11, 14, 3, 2],
+    [17, 14, 2, 3],
+    [22, 15, 4, 2],
+    [27, 13, 3, 4],
+    [32, 15, 3, 2],
+    [36, 14, 2, 3],
+    [4, 15, 3, 2],
+    [12, 13, 2, 1],
+  ];
+  for (const [x0, y0, w, h] of tongues)
+    for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) if (tm.ids[y]?.[x] === 'c5_sable') cells.push([x, y, 'c5_maree']);
   // The red thread: from the knot by the sheet down to the portal.
   const thread: Array<[number, number, string]> = [
     [15, 13, 'c5_filsable_v'],
@@ -599,8 +622,11 @@ export const minaAvant: Script = async (d) => {
     d.sfx('pop', { pitch: 1.1 });
     await d.say(tf('Tu lui donnes tes coquillages. Elle les enfonce un par un dans les murs du château. ({0})', have));
     if (castleStage() !== before) {
-      world.removeEntity('prop_chateau');
-      await d.warp('plage', { x: tileOf(world.player.x), y: tileOf(world.player.y - 2), dir: world.player.dir } as never, { fade: 10, keepMusic: true });
+      // The castle grows in place (the map shows the right stage on the next load).
+      const c = world.entities.find((e) => e.sprite?.startsWith('prop_c5_chateau_'));
+      if (c) c.sprite = `prop_c5_chateau_${castleStage()}`;
+      d.sfx('erase', { pitch: 1.6, vol: 0.3 });
+      await d.say(castleStage() === 3 ? 'Le château a trois tours, maintenant. Et un drapeau.' : 'Le château a grandi d\'un coup. Deux tours de plus.');
     }
     if (have >= 42) {
       await d.say('Regarde, Noa ! J\'en ai quarante-deux !', 'mina:happy');
@@ -663,7 +689,7 @@ async function asleep(d: Director): Promise<void> {
 /** After the wait: Noa tries to wake her, Dodo, the one line, the white tide. */
 async function wakeAttempt(d: Director): Promise<void> {
   audio.stopMusic(3);
-  audio.corruption = 0;
+  mood(1, 0);
   audio.setAmbience('none');
   await d.wait(40);
   await d.say(['Tu t\'accroupis à côté d\'elle.', 'Mina. Mina, réveille-toi. Le château.']);
@@ -716,9 +742,11 @@ async function whiteTide(d: Director): Promise<void> {
   const dd = d.find('dodo');
   if (dd) dd.data.parked = false;
   await d.say(['Ce n\'est qu\'un drap.', 'Les draps, ça se plie.'], 'dodo');
+  await d.wait(40);
+  await afterTideStep(d);
 }
 
-/** First steps after the tide: the red thread. */
+/** Right after the tide: the red thread. */
 export const afterTideStep: Script = async (d) => {
   if (flag('c5_fil_vu')) return;
   d.set('c5_fil_vu');
@@ -964,6 +992,7 @@ function syncDoors(): void {
 export const lakeDoorOpen = (): boolean => doorState(5) === 'ouverte';
 
 export const sasEnter: Script = async (d) => {
+  mood(1, 0);
   syncDoors();
   if (flag('c5_menti')) {
     // The short way: the waiting room, the changing room and the sinks were never drawn.
@@ -1426,6 +1455,11 @@ export const lakeEnter: Script = async (d) => {
   const p = world.player;
   if (tileOf(p.x) < 52) floatingDodo(d);
   else d.remove('dodo');
+  // Out of the airlock: the first look at the lake (the snow only falls from then on).
+  if (!flag('c5_lac') && tileOf(p.x) < 6) {
+    await d.wait(20);
+    await lakeFirst(d);
+  }
 };
 
 export const lakeFirst: Script = async (d) => {
@@ -1879,17 +1913,19 @@ async function theFall(d: Director): Promise<void> {
   await d.fadeIn(60);
   await d.say(['Dehors, le lac. La boîte de verre est vide derrière toi.', 'Il ne neige plus. Tout est immobile.']);
   await d.wait(40);
-  // The giant Dodo comes down over the lake.
+  // The giant Dodo comes down over the lake: twice his size, too big for the screen.
   const g = d.spawn({ id: 'dodo_geant', sprite: 'c5_dodo_geant', x: 24, y: 19, solid: false, shadow: false });
   g.layer = 1;
   g.alpha = 0;
+  g.scaleX = 2;
+  g.scaleY = 2;
   g.y -= 120;
   d.sfx('whoosh', { pitch: 0.3, vol: 0.6 });
   d.sfx('heartbeat', { pitch: 0.6, vol: 0.5 });
-  await d.cameraTo(24, 17);
+  await d.cameraTo(24, 16);
   for (let i = 0; i < 60; i++) {
     g.alpha = Math.min(1, i / 30);
-    g.y += 1.2;
+    g.y += 2;
     await d.wait(1);
   }
   await d.wait(20);
@@ -1913,11 +1949,12 @@ async function theFall(d: Director): Promise<void> {
   g.sprite = 'c5_dodo_geant_2';
   d.shake(2, 30);
   await d.say(['La couture s\'ouvre en grand.', 'Dedans, c\'est noir et jaune. Ça sent la poussière et la lessive de Maman.']);
-  // The white floor turns to cotton, from Noa outwards.
+  // The white floor turns to cotton, from Noa outwards. The camera goes down to him; the words go up.
   const p = world.player;
+  await d.cameraTo(tileOf(p.x), tileOf(p.y) - 2);
   const cx = tileOf(p.x);
   const cy = tileOf(p.y - 2);
-  for (let r = 0; r <= 6; r++) {
+  for (let r = 0; r <= 7; r++) {
     const cells: Array<[number, number, string]> = [];
     for (let y = cy - r; y <= cy + r; y++)
       for (let x = cx - r; x <= cx + r; x++) {
@@ -1929,16 +1966,18 @@ async function theFall(d: Director): Promise<void> {
     d.sfx('erase', { pitch: 0.4, vol: 0.3 });
     await d.wait(14);
   }
-  await d.say(['Sous tes pieds, la glace devient molle.', 'Du coton. Jaune, tassé, tiède. Le sol blanc était du coton depuis le début.']);
-  await d.say('…', 'noa:sad');
+  await d.say(['Sous tes pieds, la glace devient molle.', 'Du coton. Jaune, tassé, tiède. Le sol blanc était du coton depuis le début.'], undefined, { pos: 'top' });
+  await d.say('Tu t\'enfonces. Jusqu\'aux chevilles. Jusqu\'aux genoux. Ça ne fait pas mal. C\'est ça, le pire.', undefined, { pos: 'top' });
+  await d.say('…', 'noa:sad', { pos: 'top' });
   d.sfx('whoosh', { pitch: 0.25, vol: 0.7 });
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 60; i++) {
     p.oy += 0.5;
-    p.alpha = Math.max(0, 1 - i / 45);
+    p.alpha = Math.max(0, 1 - i / 55);
     await d.wait(2);
   }
   p.oy = 0;
   p.alpha = 1;
+  d.cameraFollow();
   // Chapter 6 « Le Ventre de Dodo » (production lot 4) registers STORY.dream[6]: Noa falls into it without waking up.
   if (STORY.dream[6]) {
     await fallInto(d, 6);

@@ -686,6 +686,17 @@ Lus par les lots suivants : `i3_reply` (`pardon` | `bonnenuit` | `rien`), `i3_ph
 `NIGHT()`), le couloir est `appartement_tard` (nom selon l'heure) et la chambre de Maman `chambre_maman` (IV).
 `STORY.wake[4]` = Interlude IV ; l'Interlude III est branché sur la fausse aube au lot 5 (`STORY.wake[3]`).
 
+**v2, chapitre 5** (`src/game/story/chapter5.ts`, cartes `src/data/maps/chapter5.ts` : `plage` (monde `dream`),
+`sas`, `lac_blanc`, `chambre_verre` (monde `blanc`)) : drapeaux `c5_*` documentés en tête du module. Lus par les lots
+suivants : `c5_corrige` (0–5 ; ≥ 3 → *Aube blanche*), `c5_fievre` (condition de la fin secrète) / `c5_menti`,
+`c5_vitre` (`epargnee`|`brisee`), `c5_visite`, `c5_serviette`, `c5_coquillages` (0–42), `c5_coquillage42`, `c5_fin`.
+`STORY.dream[5]` = `chapter5.start` (l'Interlude IV y entre) ; la fin du chapitre tombe dans le chapitre 6 par
+`fallInto(d, 6)` dès que `STORY.dream[6]` existe (sinon fondu au noir et « … »). L'attente de 30 s sur la serviette
+(`sleepWaitMs()`) passe à 5 s avec le mode Histoire ou l'option « Réduire les attentes » (`G.settings.shortWaits`).
+Les sprites du chapitre gardent leurs couleurs dans le monde `blanc` (`keep()` : `clé@blanc` = même dessin) ; le point
+de sauvegarde aussi (seule lumière jaune de l'hôpital). Souvenir 5 : `souvenir_vitre` (épargnée) ou
+`souvenir_vitre_brisee` (`src/data/illustrations-ch5.ts`).
+
 ### 8.6 Objets
 
 Voir `src/data/items.ts` (`bonbon`, `lait`, `biscuit`, `chocolat`, `gateau`, `mouchoir`, `bulles`, `pluie`,
@@ -698,4 +709,6 @@ Voir `src/data/items.ts` (`bonbon`, `lait`, `biscuit`, `chocolat`, `gateau`, `mo
 `chambre`/`appartement` → `room`/`interlude` + `rain` ; `prairie` → `meadow` ; `village` → `village` ;
 `boutique` → `shop` ; `colline` → `mina` ; boss → `boss` ; `lisiere`/`foret`/`clairiere` → `forest` ;
 `bibliotheque` → `village` (calme) ; `atelier` → `boss` pendant le combat ; `ruines` → `dodo` ; `hopital` /
-`chambre_304` → `hospital` + `hum` ; `vide` → `void` puis `dodo_battle` ; finale → `ending`.
+`chambre_304` → `hospital` + `hum` ; `vide` → `void` puis `dodo_battle` ; finale → `ending`. Chapitre 5 : `plage` →
+`plage` + `wind` (après la marée : plus lente, désaccordée) ; `sas` → `sas` + `hum` ; `lac_blanc` et
+`chambre_verre` → silence (`wind` / `hum`) ; la Vitre → `vitre`.

@@ -26,6 +26,7 @@ import { DEBUG_SCRIPTS } from '../src/game/story';
 import { fallInto, REAL, STORY } from '../src/game/story/common';
 import { PHONE_CLOCK } from '../src/game/story/real';
 import { interlude3, interlude4, isNuit } from '../src/game/story/real-nuit';
+import * as chapter5 from '../src/game/story/chapter5';
 import { G } from '../src/game/state';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -489,6 +490,67 @@ describe('night interludes (lot 2)', () => {
 
   it('keeps the rule of the 41 seconds: no line says which version of the call is the true one', () => {
     const src = readFileSync(join('src', 'game', 'story', 'real-nuit.ts'), 'utf8');
+    expect(src).not.toMatch(/vraie version|version vraie|true version|la vraie|callVersion/i);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Production lot 3: chapter 5 « La Marée Blanche ».
+// ---------------------------------------------------------------------------
+
+describe('chapter 5 (lot 3)', () => {
+  it('is entered from Interlude IV and replayable by debug', () => {
+    expect(STORY.dream[5]).toBe(chapter5.start);
+    for (const name of ['chapter5', 'chapter5_serviette', 'chapter5_portail', 'chapter5_sas', 'chapter5_lac', 'chapter5_cabane', 'chapter5_visite', 'chapter5_vitre', 'chapter5_chute']) {
+      expect(typeof DEBUG_SCRIPTS[name], name).toBe('function');
+    }
+    for (const id of ['plage', 'sas', 'lac_blanc', 'chambre_verre']) expect(MAPS[id], id).toBeTruthy();
+  });
+
+  it('has forty-one shells in clusters (the forty-second is hidden) and five drawings to correct', () => {
+    expect(chapter5.SHELL_CLUSTERS.reduce((n, c) => n + c[2], 0)).toBe(41);
+    expect(chapter5.DRAWINGS.map(([, id]) => id).sort()).toEqual(['chaise', 'maman', 'mina', 'nadia', 'plage']);
+  });
+
+  it('cuts the 30-second wait on the towel to 5 s with Story mode or « Réduire les attentes »', () => {
+    const before = { ...G.settings };
+    try {
+      G.settings.storyMode = false;
+      G.settings.shortWaits = false;
+      expect(chapter5.sleepWaitMs()).toBe(30000);
+      G.settings.shortWaits = true;
+      expect(chapter5.sleepWaitMs()).toBe(5000);
+      G.settings.shortWaits = false;
+      G.settings.storyMode = true;
+      expect(chapter5.sleepWaitMs()).toBe(5000);
+    } finally {
+      Object.assign(G.settings, before);
+    }
+  });
+
+  it('opens each airlock door only once the one behind is closed (and not while Noa answers the knocks)', () => {
+    const before = { ...G.state.flags };
+    try {
+      for (let n = 1; n <= 5; n++) delete G.state.flags[`c5_porte_${n}`];
+      delete G.state.flags.c5_sas_toc;
+      expect(chapter5.doorState(1)).toBe('ouverte');
+      expect(chapter5.doorState(2)).toBe('rouge');
+      G.state.flags.c5_porte_1 = 'fermee';
+      expect(chapter5.doorState(1)).toBe('morte');
+      expect(chapter5.doorState(2)).toBe('verte');
+      G.state.flags.c5_porte_2 = 'fermee';
+      G.state.flags.c5_sas_toc = 1;
+      expect(chapter5.doorState(4)).toBe('rouge');
+      G.state.flags.c5_porte_3 = 'fermee';
+      expect(chapter5.doorState(4)).toBe('verte');
+      expect(chapter5.lakeDoorOpen()).toBe(false);
+    } finally {
+      G.state.flags = before;
+    }
+  });
+
+  it('keeps the rule of the 41 seconds', () => {
+    const src = readFileSync(join('src', 'game', 'story', 'chapter5.ts'), 'utf8');
     expect(src).not.toMatch(/vraie version|version vraie|true version|la vraie|callVersion/i);
   });
 });
