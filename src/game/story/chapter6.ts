@@ -810,7 +810,7 @@ export const tooth =
     d.remove(`dent_${i}`);
     d.sfx('item', { pitch: 1.3 });
     await tell(d, TEETH[i]!);
-    if (i === 3) await d.say('{p:20}Hé. T\'as crié comme une fille, gros bêta.', 'minavoix');
+    if (i === 3) await d.say(['{p:20}Hé. C\'est moi qui ai crié le plus fort.', 'Mais c\'est toi qui as pleuré, gros bêta.'], 'minavoix');
     syncComb();
     if (num('c6_dents') === 3) await tell(d, 'Trois dents dans ta main. Elles cliquettent comme des billes.');
   };
@@ -1426,6 +1426,25 @@ export const crustLook: Script = looks('croute', [
 export const puppetPrincess: Script = look(['La princesse au crayon. Sa robe rose pend au bout des fils, sa couronne de papier par-dessus.', 'Il n\'y a personne dedans. Il n\'y a jamais eu personne dedans : c\'est toi qui tenais les fils.']);
 export const puppetFelt: Script = look(['La poupée de feutre. Mina n°366, ou une autre. Vide, plate, son sourire brodé replié sur lui-même.', 'Sa couronne est cousue. Elle n\'est jamais tombée, celle-là.']);
 export const voixThread: Script = look(['Les fils des marionnettes montent jusqu\'au plafond et se perdent dans le coton.', 'Ils sont tous noués au même endroit. Juste au-dessus de ta tête.']);
+
+/** The string that hangs from the ceiling of the voice chamber: the one under Dodo's tail that plays the lullaby. */
+export const pullString: Script = async (d) => {
+  await tell(d, ['Une ficelle pend du plafond, avec un anneau de plastique au bout.', 'Celle qu\'on tire sous la queue de Dodo pour entendre la berceuse. Tu la tirais cent fois par soir, quand tu avais trois ans.']);
+  const r = await d.ask('La tirer ?', ['Tirer', 'Non'], undefined, { cancelIndex: 1 });
+  if (r !== 0) return;
+  d.sfx('thread', { pitch: 1.2, vol: 0.4 });
+  await d.wait(30);
+  if (flag('c6_boite')) {
+    // The first four notes of the lullaby, far away.
+    for (const e of parsePattern(LULLABY_PATTERN).events.slice(0, 4)) {
+      audio.note('musicbox', e.midis[0]!, 0.6, 0.45);
+      await d.wait(16);
+    }
+    await tell(d, ['Quatre notes, très loin, du côté du cœur. Puis la ficelle remonte toute seule.', 'Le mécanisme marche. C\'est toi qui l\'as réparé.']);
+  } else {
+    await tell(d, 'La ficelle descend, remonte. Rien. Quelque part, un mécanisme tourne à vide.');
+  }
+};
 
 /** The route of the ink: where she should be, a pool of ink and the hat lying flat in it. */
 export const inkPool: Script = looks('encre', [

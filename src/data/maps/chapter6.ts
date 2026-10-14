@@ -464,6 +464,9 @@ const VOIX: MapDef = {
     SPOT(26, 7, C6.voixThread),
     WALL('prop_c6_epingles_1', 3, 6, 4, { script: C6.pinsCeiling }),
     WALL('prop_c6_epingles_2', 27, 6, 4, { script: C6.pinsCeiling }),
+    P('prop_c6_fil_pendu_1', 22, 17, { solid: false, oy: -14, frames: ['prop_c6_fil_pendu_1', 'prop_c6_fil_pendu_2'], frameSpeed: 56, script: C6.pullString }),
+    FLAT('prop_c6_croute_1', 4, 18, { w: 3, script: C6.crustLook }),
+    FLAT('prop_c6_tache', 19, 21, { w: 2, script: C6.ouateStain }),
     // --- The route of the ink: nobody there, a pool of ink, a hat.
     FLAT('prop_c6_encre', 14, 13, { id: 'flaque_encre', w: 2, ox: 8, cond: isSilenceRoute, script: C6.inkPool }),
     P('prop_c6_bonnet_plat', 15, 13, { solid: false, oy: -2, cond: isSilenceRoute, script: C6.inkPool }),
