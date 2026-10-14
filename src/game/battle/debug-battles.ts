@@ -3,6 +3,7 @@ import type { Script } from '../overworld/types';
 import { WORD_POOLS } from '../../data/words';
 import { G, maxHp } from '../state';
 import { setDefeatStreak } from './battle';
+import { runFinalBattleV2 } from './final-v2';
 
 /** A notebook with the chapter's bittersweet words first (the longest last), then one word of each other emotion. */
 const douxWords = (chapter: number, n: number) => () => {
@@ -38,6 +39,22 @@ const douxWords = (chapter: number, n: number) => () => {
  *   bt_crabe_bracelet, bt_mouette, bt_masque, bt_gel, bt_thermometre   the regular enemies
  *   bt_gribouille_noire   fear drawn in ink: words slide off, blows split it, only fleeing works (not Ink)
  *   bt_ch5_duo        Crabe-Bracelet and Mouette together, on the beach
+ *
+ * Chapter 6 « Le Ventre de Dodo » (chapter 5 stats: 26 Étoiles, the Plume dorée, the plaid; nobody at Noa's side; the
+ * outcome is kept in flags.debug_battle):
+ *   bt_aiguille, bt_bouton_pendu, bt_bourre, bt_pile   the regular enemies (La Pile: flags.c6_pile / c6_pile_morte)
+ *   bt_moutons        three Moutons Numérotés: spare them from the highest number down, or they multiply
+ *   bt_ch6_duo        L'Aiguille and Le Bouton Pendu together
+ * The final battle v2 (dodo_v2; the route is kept in flags.fin_route: 'aube' | 'beaux_reves' | 'silence'). URL flags,
+ * items and keys still apply (&flags=i4_knock=deux,c6_pile&keys=bouton_dore,pile_chargee):
+ *   dodo_v2           from the start, no item
+ *   dodo_v2_objets    with the Bouton doré and the Pile chargée (flags.c6_pile)
+ *   dodo_v2_deux      flags.i4_knock = 'deux': only the second round of knocks
+ *   dodo_v2_histoire  Story mode: slower knocks, no false knocks
+ *   dodo_v2_coups     straight to phase 3 (the knocks in the dark)
+ *   dodo_v2_mots      straight to phase 4, with both items and a few spared friends
+ *   dodo_v2_encre     phase 4 on a mixed route (9 Encre: two of her words drowned)
+ *   dodo_v2_silence   the route of the ink (nothing spared, 12 Ink): nobody knocks, every word is drowned
  */
 function setup(d: Director, chapter: number, map: string, spawn: string, mina: boolean, flags: string[] = []): void {
   G.state.chapter = chapter;
@@ -80,6 +97,56 @@ async function ch5(d: Director, ids: string[], flags: string[] = []): Promise<vo
   const r = await d.battle(ids);
   s.flags.debug_battle = `${r.outcome}:${[...r.spared, ...r.killed].join('+')}`;
 }
+
+/** Chapter 5 stats, as after chapter 5. */
+function ch5Stats(chapter: number): void {
+  const s = G.state;
+  s.chapter = chapter;
+  s.etoiles = 26;
+  s.encre = 3;
+  s.weapon = 'plume';
+  s.armor = 'plaid';
+  s.items = ['chocolat', 'lait', 'biscuit', 'mouchoir', 'pluie', ...s.items].slice(0, 8);
+  s.hp = maxHp(s);
+  s.party = [];
+}
+
+/** Chapter 6 battle: chapter 5 stats, nobody in the party. */
+async function ch6(d: Director, ids: string[], flags: string[] = []): Promise<void> {
+  setup(d, 1, 'prairie', 'mina', false, ['c1_tutorial', 'c1_mina', ...flags]);
+  ch5Stats(6);
+  await d.fadeIn(10);
+  const r = await d.battle(ids);
+  G.state.flags.debug_battle = `${r.outcome}:${[...r.spared, ...r.killed].join('+')}`;
+}
+
+interface FinalDebug {
+  from?: 1 | 2 | 3 | 4;
+  flags?: Record<string, string | number | boolean>;
+  keys?: string[];
+  story?: boolean;
+  encre?: number;
+  kills?: Record<string, number>;
+  spares?: Record<string, number>;
+}
+
+/** The final battle v2 (chapter 6): chapter 5 stats, then options. */
+async function finalV2(d: Director, o: FinalDebug = {}): Promise<void> {
+  setup(d, 1, 'prairie', 'mina', false, ['c1_tutorial', 'c1_mina']);
+  ch5Stats(6);
+  const s = G.state;
+  Object.assign(s.flags, o.flags ?? {});
+  for (const k of o.keys ?? []) if (!s.keyItems.includes(k)) s.keyItems.push(k);
+  if (o.story) G.settings.storyMode = true;
+  if (o.encre !== undefined) s.encre = o.encre;
+  if (o.kills) s.kills = o.kills;
+  if (o.spares) s.spares = o.spares;
+  await d.fadeIn(10);
+  const route = await runFinalBattleV2(d, o.from ?? 1);
+  s.flags.debug_battle = route;
+}
+
+const BOTH = ['bouton_dore', 'pile_chargee'];
 
 export const DEBUG: Record<string, Script> = {
   bt_ally: async (d) => {
@@ -143,4 +210,20 @@ export const DEBUG: Record<string, Script> = {
   bt_thermometre: (d) => ch5(d, ['thermometre']),
   bt_gribouille_noire: (d) => ch5(d, ['gribouille_noire']),
   bt_ch5_duo: (d) => ch5(d, ['crabe_bracelet', 'mouette']),
+  // Chapter 6
+  bt_aiguille: (d) => ch6(d, ['aiguille']),
+  bt_bouton_pendu: (d) => ch6(d, ['bouton_pendu']),
+  bt_bourre: (d) => ch6(d, ['bourre'], ['c4_coton']),
+  bt_pile: (d) => ch6(d, ['pile']),
+  bt_moutons: (d) => ch6(d, ['mouton_numerote', 'mouton_numerote', 'mouton_numerote']),
+  bt_ch6_duo: (d) => ch6(d, ['aiguille', 'bouton_pendu']),
+  // The final battle v2
+  dodo_v2: (d) => finalV2(d),
+  dodo_v2_objets: (d) => finalV2(d, { keys: BOTH, flags: { c6_pile: true } }),
+  dodo_v2_deux: (d) => finalV2(d, { flags: { i4_knock: 'deux' } }),
+  dodo_v2_histoire: (d) => finalV2(d, { story: true }),
+  dodo_v2_coups: (d) => finalV2(d, { from: 3 }),
+  dodo_v2_mots: (d) => finalV2(d, { from: 4, keys: BOTH, flags: { c6_pile: true }, spares: { nuage: 1, placard: 1, pissenlit: 1 } }),
+  dodo_v2_encre: (d) => finalV2(d, { from: 4, encre: 9, kills: { nuage: 2, mouton_noir: 3, taille_crayon: 2, avion: 2 }, spares: { pissenlit: 1 } }),
+  dodo_v2_silence: (d) => finalV2(d, { encre: 12, kills: { gribouille: 3, nuage: 3, mouton_noir: 2, placard: 1, aiguille: 3 }, spares: {} }),
 };

@@ -34,6 +34,21 @@ export const ITEMS: Record<string, ItemDef> = {
   crayons: { id: 'crayons', name: 'Boîte de crayons', desc: 'Il manque le jaune.', key: true },
   crayon_jaune: { id: 'crayon_jaune', name: 'Crayon jaune', desc: 'Le jaune des soleils de Mina.', key: true },
   dessin: { id: 'dessin', name: 'Dessin plié', desc: 'Un dessin de Mina, plié en quatre.', key: true },
+  // Version 2 — the final battle (chapter 6): both are used from the OBJET menu in its last phase.
+  bouton_dore: {
+    id: 'bouton_dore',
+    name: 'Bouton doré',
+    desc: 'Le bouton du trésor de Mina. Quand on le serre fort, il fait un drôle de petit bruit.',
+    key: true,
+    battleKey: true,
+  },
+  pile_chargee: {
+    id: 'pile_chargee',
+    name: 'Pile chargée',
+    desc: 'Une pile bouton, LR44. Elle est encore tiède. Il lui reste une phrase.',
+    key: true,
+    battleKey: true,
+  },
 };
 
 export function itemName(id: string): string {

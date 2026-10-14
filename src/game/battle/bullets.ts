@@ -103,6 +103,8 @@ export class BulletWorld {
    * the bullets' hit rules (no invincibility frames, not absorbed by a shield). Set by the battle.
    */
   onSting: ((n: number) => void) | null = null;
+  /** Speed multiplier of the heart (chapter 6: wet cotton stuck to it slows it down). Reset by `clear()`. */
+  slow = 1;
 
   spawn(p: Partial<Bullet>): Bullet {
     const b: Bullet = {
@@ -143,6 +145,7 @@ export class BulletWorld {
     this.post = null;
     this.dark = false;
     this.liveBox = false;
+    this.slow = 1;
     this.soul.pin = 0;
   }
 
@@ -392,8 +395,22 @@ export function drawBullet(g: CanvasRenderingContext2D, b: Bullet, soulEmo: Emot
       b.draw?.(g, b, color, t);
       break;
   }
-  if (shapes && b.emo !== 'neutre' && b.warn <= 0) drawShapeTokens(g, b);
+  // (`data.lie`: a projectile whose color lies — chapter 6 — shows a « ? » instead of its true shape.)
+  if (shapes && b.data.lie && b.warn <= 0) drawLieToken(g, b.x, b.y);
+  else if (shapes && b.emo !== 'neutre' && b.warn <= 0) drawShapeTokens(g, b);
   g.globalAlpha = 1;
+}
+
+/** The « ? » token of a projectile whose color lies: a dark chip with a white question mark. */
+const LIE_ICON = ['.###.', '#...#', '...#.', '..#..', '.....', '..#..'];
+function drawLieToken(g: CanvasRenderingContext2D, cx: number, cy: number): void {
+  const x = Math.round(cx) - 3;
+  const y = Math.round(cy) - 4;
+  g.fillStyle = '#0b0710';
+  g.fillRect(x + 1, y, 5, 8);
+  g.fillRect(x, y + 1, 7, 6);
+  g.fillStyle = '#fffaf2';
+  LIE_ICON.forEach((r, j) => [...r].forEach((c, i) => c === '#' && g.fillRect(x + 1 + i, y + 1 + j, 1, 1)));
 }
 
 /** Accessibility shapes over a colored projectile: one token at its center, several along bars and rings. */

@@ -7,7 +7,7 @@ import { hash2 } from '../../engine/math';
 import { LULLABY_PATTERN } from '../../data/music';
 import { buildSprite, drawSprite, type Sprite } from '../../engine/sprite';
 import { ART as ENEMY_ART } from '../../data/sprites/enemies';
-import { charSet, spr } from '../assets';
+import { charSet, hasSpr, spr } from '../assets';
 import { G } from '../state';
 import { dialogue } from '../ui/dialogue';
 import { box, heart, rect } from '../ui/draw';
@@ -273,6 +273,11 @@ export class CountingScene implements Scene {
   private replies: number[] = [];
   /** Teeth put back in the music box this round. */
   private teeth = 0;
+  /**
+   * Knocks only: a sprite standing at the knocking spot, seen from behind, who knocks herself (frame `_2` on each of
+   * her knocks). The final battle shows the little girl in the knitted hat after two wrong answers.
+   */
+  visitor: string | null = null;
 
   constructor(
     readonly skin: CountSkin = 'moutons',
@@ -1021,6 +1026,12 @@ export class CountingScene implements Scene {
       g.globalAlpha = 0.25;
       this.disc(g, KNOCK_X + 3, KNOCK_Y, 9, '#ffe991');
       g.globalAlpha = 1;
+    }
+    if (this.visitor) {
+      // She knocks: arm raised for a few frames after each of her knocks.
+      const knocking = this.sheep.some((s) => !s.black && s.state === 'away' && this.roundT - s.stateT < 14);
+      const key = knocking && hasSpr(`${this.visitor}_2`) ? `${this.visitor}_2` : this.visitor;
+      if (hasSpr(key)) drawSprite(g, spr(key), KNOCK_X - 6, GROUND + 1, { alpha: 0.88 });
     }
     for (const s of this.sheep) this.drawKnock(g, s, blind);
     // Noa's own knocks (answer mode), a little lower: his fist, his side of the wall.

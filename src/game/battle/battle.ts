@@ -16,6 +16,7 @@ import { attack, defense, G, level, MAX_ITEMS, maxHp } from '../state';
 import { bar, heart, nextArrow } from '../ui/draw';
 import { layoutRich, parseRich, type RichChar } from '../ui/richtext';
 import { BulletWorld, type Bullet } from './bullets';
+import { drawCh6Background } from './bg-ch6';
 import { drawEmoIcon, soulHeart } from './emoshape';
 import { EnemyRuntime } from './enemy';
 import { PATTERNS, type Pattern, type PatternCtx } from './patterns';
@@ -224,6 +225,15 @@ export class Battle implements Scene {
   textInset = 0;
   /** 0..1: part of the box text muffled (greyed) as if spoken through a mask. */
   muffle = 0;
+  /**
+   * Chapter 6: the heart was sewn by L'Aiguille (a projectile with `data.sew`): its color cannot change until this turn
+   * is over (words and items leave it as it is).
+   */
+  emoLockUntil = -1;
+  /** A sewing was just done (said once the attack is over). */
+  private sewn = false;
+  /** Chapter 6 (« les couleurs mentent »): the HUD cannot tell the heart's color, it shows « ? ». */
+  lie = false;
 
   constructor(defs: EnemyDef[], opts: BattleOptions = {}) {
     this.enemies = defs.map((d) => new EnemyRuntime(d));
@@ -243,7 +253,7 @@ export class Battle implements Scene {
       party: G.state.party,
       flags: G.state.flags,
     });
-    this.moodMusic = !opts.fixedMusic && !defs.some((d) => d.id === 'dodo');
+    this.moodMusic = !opts.fixedMusic && !defs.some((d) => d.id === 'dodo' || d.id === 'dodo_v2');
     const n = this.enemies.length;
     this.enemies.forEach((e, i) => {
       e.x = Math.round(W / 2 + (i - (n - 1) / 2) * (n > 2 ? 86 : 110));
@@ -297,6 +307,10 @@ export class Battle implements Scene {
       }
       if (this.ended || !this.alive.length) break;
       await this.enemyTurn();
+      if (this.sewn && this.hp > 0) {
+        this.sewn = false;
+        await this.say('* L\'aiguille a cousu ton cœur.\n* Il gardera sa couleur deux tours.');
+      }
       if (this.hp <= 0) {
         if (await this.hooks.onPlayerDeath?.(this)) continue;
         if (this.opts.tutorial) {
@@ -581,8 +595,18 @@ export class Battle implements Scene {
     await game.until(() => Math.abs(this.box.w - TEXT_BOX.w) < 1);
   }
 
+  /** The heart is sewn (L'Aiguille): its color stays as it is. */
+  get emoLocked(): boolean {
+    return this.turn <= this.emoLockUntil;
+  }
+
   private hurt(b: Bullet): void {
     if (b.dmg <= 0) return;
+    if (b.data?.sew && !this.emoLocked) {
+      this.emoLockUntil = this.turn + b.data.sew;
+      this.sewn = true;
+      audio.sfx('stitch', { pitch: 0.8 });
+    }
     const src = this.alive[0];
     const dmg = enemyDamage(b.dmg, src?.def.atk ?? 0, defense(G.state), this.combatEmo, src?.emotion ?? 'neutre', G.settings.storyMode);
     this.hp = Math.max(0, this.hp - dmg);
@@ -617,6 +641,12 @@ export class Battle implements Scene {
   /** Changes the soul's color. `e2`: second color of a bicolor (bittersweet) soul. */
   setEmotion(e: Emotion, sound = true, e2: Emotion | null = null): void {
     const second = e2 && e2 !== e ? e2 : null;
+    if (this.emoLocked && (e !== this.soulEmo || second !== this.soulEmo2)) {
+      // Sewn: the thread holds the color in place.
+      if (sound) audio.sfx('stitch', { pitch: 0.6, vol: 0.6 });
+      this.floaters.push({ text: 'COUSU', x: Math.round(this.bw.soul.x), y: 124, t: 0, color: '#e8505b' });
+      return;
+    }
     if (this.soulEmo === e && this.soulEmo2 === second) return;
     this.soulEmo = e;
     this.soulEmo2 = second;
@@ -1005,7 +1035,7 @@ export class Battle implements Scene {
     for (const b of this.bubbles) {
       if (b.shown < b.total) {
         b.shown = Math.min(b.total, b.shown + [0.5, 1, 2, 99][G.settings.textSpeed]!);
-        if (Math.floor(b.shown) % 2 === 0) audio.voice(VOICES[b.e.def.boss ? 'monster' : 'default']!);
+        if (Math.floor(b.shown) % 2 === 0) audio.voice(VOICES[b.e.def.voice ?? (b.e.def.boss ? 'monster' : 'default')] ?? VOICES.default!);
         all = false;
       }
     }
@@ -1226,7 +1256,7 @@ export class Battle implements Scene {
     // Soul movement
     const s = bw.soul;
     const ax = input.axis();
-    const speed = 1.5 * soulSpeed(this.soulEmo, this.soulEmo2);
+    const speed = 1.5 * soulSpeed(this.soulEmo, this.soulEmo2) * bw.slow;
     let dx = ax.x;
     let dy = ax.y;
     if (dx && dy) {
@@ -1300,10 +1330,17 @@ export class Battle implements Scene {
       // Chapter 5: the overexposed beach, the white hospital drawn in shaky blue pen (dark under the scene, for the HUD).
       plage: ['#141620', '#c9c2ae', '#fffaf2'],
       blanc: ['#10131c', '#aab6cc', '#fffaf2'],
+      // Chapter 6: inside the plush (damp cotton, red thread, pins), the arena of the voice module (a crust that rots).
+      ventre: ['#160f0c', '#2a1d16', '#6b5640'],
+      voix: ['#0c0a0b', '#1a1516', '#4a4038'],
     };
     const [c0, c1, c2] = palettes[kind] ?? palettes.dream!;
     g.fillStyle = c0;
     g.fillRect(0, 0, W, H);
+    if (kind === 'ventre' || kind === 'voix') {
+      drawCh6Background(g, kind, t);
+      return;
+    }
     if (kind === 'plage' || kind === 'blanc') {
       if (kind === 'plage') this.drawBeachBackground(g, t);
       else this.drawWhiteBackground(g, t);
@@ -1611,7 +1648,19 @@ export class Battle implements Scene {
     const flash = this.soulFlash > 0 && this.soulFlash % 4 < 2;
     const [c1, c2] = this.soulColors();
     soulHeart(g, sx - 3, sy - 3, flash ? '#fffaf2' : c1, flash ? null : c2);
-    if (G.settings.emotionShapes) {
+    if (this.emoLocked) {
+      // Sewn: two red cross-stitches through the heart.
+      g.fillStyle = '#e8505b';
+      for (const [x, y] of [[-3, -2], [-2, -1], [-1, 0], [0, 1], [1, -2], [0, -1], [-2, 1], [2, -1], [3, -2]] as const) g.fillRect(sx + x, sy + y, 1, 1);
+      g.fillStyle = '#a8324a';
+      g.fillRect(sx - 4, sy - 3, 1, 1);
+      g.fillRect(sx + 3, sy - 3, 1, 1);
+    }
+    if (G.settings.emotionShapes && this.lie) {
+      g.globalAlpha = 0.9;
+      drawOutlined(g, '?', sx - 2, sy - 13, '#fffaf2', '#0b0710');
+      g.globalAlpha = 1;
+    } else if (G.settings.emotionShapes) {
       // Accessibility: the emotion's shape(s) just above the heart.
       g.globalAlpha = 0.9;
       if (this.soulEmo2) {
@@ -1787,9 +1836,9 @@ export class Battle implements Scene {
     const maxw = Math.min(70, 24 + this.maxHp);
     bar(g, 104, y + 3, maxw, 7, this.hp / this.maxHp, this.hp / this.maxHp < 0.3 ? '#ff4a5a' : '#ffd84a', '#5a1c2c', this.hpGhost / this.maxHp);
     drawText(g, `${this.hp}/${this.maxHp}`, 108 + maxw, y, { color: '#fffaf2' });
-    const label = soulLabel(this.soulEmo, this.soulEmo2);
+    const label = this.lie ? '?' : soulLabel(this.soulEmo, this.soulEmo2);
     const lw = measure(label);
-    const [c1, c2] = this.soulColors();
+    const [c1, c2] = this.lie ? (['#fffaf2', null] as [string, null]) : this.soulColors();
     soulHeart(g, W - 22 - lw, y + 3, c1, c2);
     if (c2) {
       // « DOUX-AMER »: each half in its color.
@@ -1798,7 +1847,7 @@ export class Battle implements Scene {
       drawText(g, head, W - 12 - lw, y, { color: c1 });
       drawText(g, label.slice(dash), W - 12 - lw + measure(head), y, { color: c2 });
     } else drawText(g, label, W - 12 - lw, y, { color: c1 });
-    if (G.settings.emotionShapes) {
+    if (G.settings.emotionShapes && !this.lie) {
       if (this.soulEmo2) {
         drawEmoIcon(g, this.soulEmo2, W - 30 - lw, y + 3, c2!, '#0b0710');
         drawEmoIcon(g, this.soulEmo, W - 37 - lw, y + 3, c1, '#0b0710');

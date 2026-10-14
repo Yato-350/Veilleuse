@@ -50,6 +50,17 @@ export const WORD_POOLS: Record<number, WordDef[]> = {
     ...w('neutre', 'je ne sais pas', 'sable', 'masque', 'bracelet', 'lune', 'crayon rouge'),
     ...doux('coquillage', 'bonnet', 'deux crayons', 'quarante-deux'),
   ],
+  // Chapter 6 « Le Ventre de Dodo »: inside the plush. « regarder » (Le Bouton Pendu), « pardon » (La Bourre) are also
+  // special words; « garder » belongs to La Pile alone. « je suis là » and « bonne nuit » are the knocks of the wall,
+  // put into words: two knocks, three knocks.
+  6: [
+    ...w('joie', 'lumière', 'chanter', 'ensemble', 'rire', 'câlin', 'réveil', 'dents de lait', 'courage'),
+    ...w('tristesse', 'pardon', 'absence', 'fauteuil', 'quarante et une', 'manquer', 'nuit blanche', 'adieu', 'trop tard'),
+    ...w('colere', 'découdre', 'arracher', 'menteur', 'assez', 'mordre', 'tais-toi', 'pourquoi'),
+    ...w('peur', 'noir', 'aiguille', 'trois heures', 'sonnerie', 'tousser', 'coups'),
+    ...w('neutre', 'regarder', 'je ne sais pas', 'coton', 'fil rouge', 'bocal', 'pile'),
+    ...doux('je suis là', 'bonne nuit', 'berceuse', 'veilleuse'),
+  ],
 };
 
 /** Words Dodo forces into the notebook during the final battle. */
@@ -57,6 +68,27 @@ export const DODO_WORDS: WordDef[] = w('neutre', 'dors', 'reste', 'oublie', 'chu
 
 /** Mina's words, written in her handwriting during the final battle. */
 export const MINA_WORDS: WordDef[] = [
+  { text: 'merci', emotion: 'joie', power: 2 },
+  { text: 'pardon', emotion: 'tristesse', power: 2 },
+  { text: 'au revoir', emotion: 'tristesse', power: 2 },
+  { text: 'je t\'aime', emotion: 'joie', power: 2 },
+  { text: 'lumière', emotion: 'joie', power: 2 },
+  { text: 'matin', emotion: 'joie', power: 2 },
+];
+
+/**
+ * Version 2, the final battle (chapter 6), phase 2: Dodo's words, the ones of the phone call at 3:14 (from both
+ * versions, never told apart). They are shown as subtitles when written.
+ */
+export const DODO_WORDS_V2: WordDef[] = w('neutre', 'Dors.', 'Arrête d\'appeler.', 'Demain.', 'Promis.', 'reste', 'oublie');
+
+/**
+ * Version 2, the final battle, phase 4: Mina's words, in the handwriting of the little girl in the knitted hat. « je
+ * suis là » and « bonne nuit » are the knocks of the wall (two, three). In this order in the notebook (six at a time).
+ */
+export const MINA_WORDS_V2: WordDef[] = [
+  { text: 'je suis là', emotion: 'joie', emotion2: 'tristesse', power: 2 },
+  { text: 'bonne nuit', emotion: 'tristesse', emotion2: 'joie', power: 2 },
   { text: 'merci', emotion: 'joie', power: 2 },
   { text: 'pardon', emotion: 'tristesse', power: 2 },
   { text: 'au revoir', emotion: 'tristesse', power: 2 },

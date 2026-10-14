@@ -10,6 +10,7 @@ import * as enemyCh4Art from '../data/sprites/enemies-ch4';
 import * as chapter4Art from '../data/sprites/chapter4';
 import * as enemyCh5Art from '../data/sprites/enemies-ch5';
 import * as chapter5Art from '../data/sprites/chapter5';
+import * as enemyCh6Art from '../data/sprites/enemies-ch6';
 import { realify, corrupt, V2_WORLDS, WORLD_MATERIALS, WORLD_TRANSFORMS, type V2World } from '../engine/palette';
 import type { Dir } from '../engine/math';
 
@@ -149,7 +150,7 @@ export interface SpriteModule {
   CHARS?: Record<string, CharDef>;
 }
 
-export const SPRITE_MODULES: SpriteModule[] = [devArt, characterArt, tileArt, propArt, enemyArt, epilogueArt, bonusArt, enemyCh4Art, chapter4Art, enemyCh5Art, chapter5Art];
+export const SPRITE_MODULES: SpriteModule[] = [devArt, characterArt, tileArt, propArt, enemyArt, epilogueArt, bonusArt, enemyCh4Art, chapter4Art, enemyCh5Art, chapter5Art, enemyCh6Art];
 
 /** Builds every sprite of the game (call once at boot). */
 export function buildAll(): void {

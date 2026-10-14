@@ -890,6 +890,98 @@ export const TRACKS: Record<string, Track> = {
       ch('hat', drums('. . x . x .', 16), { vol: 0.05 }),
     ],
   },
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Chapter 6 « Le Ventre de Dodo »
+  // -------------------------------------------------------------------------------------------------------------------
+
+  /**
+   * Le Ventre de Dodo — inside the plush: a heartbeat heard through cotton (lub-dub, then a long rest), and the lullaby
+   * on a music box with holes in it — whole bars missing, as if the cylinder had lost its pins — in C minor, far away,
+   * a little flat. Under it, a drone, and the cotton breathing. 16 bars 3/4.
+   */
+  ventre: {
+    bpm: 58,
+    stepsPerBeat: 2,
+    vol: 0.8,
+    channels: [
+      ch('kick', drums(join('X . x . . .', rest(6)), 8), { vol: 0.26 }),
+      ch('musicbox', dropBars(toMinor(LULLABY), [1, 3, 4, 6, 9, 10, 12, 13, 15]), { vol: 0.24, reverb: 0.9, detune: -22 }),
+      ch('musicbox', transpose(dropBars(toMinor(LULLABY), [0, 2, 5, 7, 8, 11, 14, 15]), -12), { vol: 0.07, reverb: 0.95, detune: 26 }),
+      ch('pad', padLine(['Cm', 'Cm', 'G#', 'G#', 'Fm', 'Fm', 'G', 'G', 'Cm', 'Cm', 'G#', 'G#', 'Fm', 'G', 'Cm', 'Cm'], 2, 6), { vol: 0.09, reverb: 0.8, detune: -12 }),
+      ch('breath', rep(join(hold('E3', 9), rest(3)), 8), { vol: 0.05 }),
+    ],
+  },
+
+  /**
+   * L'appel — the corridor of the 41 doors: almost nothing. The air of a dark room, a phone vibrating on a wooden
+   * desk (two buzzes, a pause, two buzzes… then it stops for a long time), one high note now and then, like a
+   * second ticking past. 16 bars 4/4.
+   */
+  appel: {
+    bpm: 60,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch('air', hold('C3', 128), { vol: 0.1 }),
+      ch(
+        'saw',
+        join(
+          'A#1 A#1 . A#1 A#1 . . .',
+          rest(8),
+          'A#1 A#1 . A#1 A#1 . . .',
+          rest(8),
+          'A#1 A#1 . A#1 A#1 . . .',
+          rest(8),
+          rest(8),
+          rest(8),
+          rest(8),
+          'A#1 A#1 . A#1 A#1 . . .',
+          rest(8),
+          rest(8),
+          rest(8),
+          rest(8),
+          rest(8),
+          rest(8),
+        ),
+        { vol: 0.07 },
+      ),
+      ch('bell', join('. . . . . . . .', 'E6 . . . . . . .', rest(8), rest(8), '. . . . D6 . . .', rest(8), rest(8), rest(8), rest(8), '. . C6 . . . . .', rest(8), rest(8), rest(8), rest(8), '. . . . . . B5 .', rest(8)), {
+        vol: 0.035,
+        reverb: 0.95,
+        detune: -15,
+      }),
+      ch('sine', rep(join(hold('C2', 8), rest(8)), 8), { vol: 0.05 }),
+    ],
+  },
+
+  /**
+   * Dodo, the final battle of version 2 — the dark waltz of version 1.1 turned inside out: slower, heavier, a heartbeat
+   * on the kick (lub-dub), the lullaby in harmonic minor on a music box that loses bars, and the same tune echoed one
+   * step late an octave up on a thin pulse, out of tune (a voice repeating what another says). An organ breathing the
+   * chords; a bass that drags. 32 bars 3/4.
+   */
+  dodo_v2: {
+    bpm: 112,
+    stepsPerBeat: 2,
+    vol: 0.72,
+    channels: [
+      ch('musicbox', join(dropBars(toHarmonicMinor(LULLABY), [3, 7, 11]), dropBars(toHarmonicMinor(LULLABY), [1, 4, 6, 9, 12, 14, 15])), { vol: 0.3, reverb: 0.5, detune: -30 }),
+      ch(
+        'pulse12',
+        join(transpose(toHarmonicMinor(LULLABY), 12), transpose(toHarmonicMinor(LULLABY), 12))
+          .split(' ')
+          .map((_tok, i, a) => (i === 0 ? '.' : a[i - 1]!))
+          .join(' '),
+        { vol: 0.035, detune: 38 },
+      ),
+      ch('organ', rep(padLine(['Cm', 'G', 'G#', 'G', 'Cm', 'G', 'G7', 'Cm', 'Fm', 'G#', 'G7', 'Cm', 'Fm', 'C#', 'G7', 'Cm'], 3, 6), 2), { vol: 0.08, detune: -10 }),
+      ch('bass', rep(figure(['Cm', 'G', 'G#', 'G', 'Cm', 'G', 'G7', 'Cm', 'Fm', 'G#', 'G7', 'Cm', 'Fm', 'C#', 'G7', 'Cm'], 2, 'R - - - 5 -'), 2), { vol: 0.42 }),
+      ch('kick', drums('X . x . . .', 32), { vol: 0.46 }),
+      ch('snare', drums(join(rest(6), rest(6), rest(6), '. . . . x .'), 8), { vol: 0.12 }),
+      ch('hat', drums('. . x . . x', 32), { vol: 0.05 }),
+    ],
+  },
 };
 
 

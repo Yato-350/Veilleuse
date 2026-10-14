@@ -47,5 +47,11 @@ export const SPEAKERS: Record<string, Speaker> = {
   // Chapter 5 « La Marée Blanche »: voices heard through a partition or a shell.
   mamanvoix: { name: 'Maman', voice: 'maman', color: '#f8b6cf' },
   medecin: { name: 'Le médecin', voice: 'owl', color: '#a7c7f0' },
+  // Chapter 6 « Le Ventre de Dodo »: since T7, Dodo speaks with Noa's blip (it was always Noa's voice); torn open in
+  // the final battle; the little girl in the knitted hat (Mina, drawn in pencil); the battery of the voice module.
+  dodonoa: { name: 'Dodo', voice: 'noa', portrait: 'dodo', color: '#fffaf2' },
+  dodotorn: { name: 'Dodo', voice: 'noa', portrait: 'dodotorn', color: '#d9cbb5' },
+  bonnet: { name: 'Mina', voice: 'mina', color: '#d9cbb5' },
+  pile: { name: 'Pile', voice: 'pile', color: '#c8d0d8' },
   system: { name: '', voice: 'none' },
 };

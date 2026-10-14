@@ -196,6 +196,11 @@ export const VOICES: Record<string, Voice> = {
   owl: { wave: 'triangle', pitch: 420, vary: 0.1, len: 0.05, vol: 0.2 },
   eraser: { wave: 'square', pitch: 300, vary: 0.05, len: 0.04, vol: 0.09 },
   tv: { wave: 'sawtooth', pitch: 900, vary: 0.4, len: 0.03, vol: 0.05 },
+  /** La Pile (chapter 6): Dodo's voice on a dying battery, lower and slower each turn. */
+  pile: { wave: 'sine', pitch: 500, vary: 0.06, len: 0.06, vol: 0.22 },
+  pile2: { wave: 'sine', pitch: 410, vary: 0.05, len: 0.08, vol: 0.2 },
+  pile3: { wave: 'sine', pitch: 320, vary: 0.04, len: 0.11, vol: 0.18 },
+  pile4: { wave: 'sine', pitch: 230, vary: 0.03, len: 0.15, vol: 0.16 },
   none: { wave: 'sine', pitch: 0, vol: 0 },
 };
 

@@ -145,7 +145,7 @@ export interface AllyContext {
  * (`c4_couseuse === 'vaincue'`); in chapter 5, only her empty frame. Never in the tutorial, the final Dodo battle (it has its own design) or the real world.
  */
 export function allyState(c: AllyContext): AllyState {
-  if (c.noAlly || c.tutorial || c.enemyIds.includes('dodo')) return 'none';
+  if (c.noAlly || c.tutorial || c.enemyIds.includes('dodo') || c.enemyIds.includes('dodo_v2')) return 'none';
   if (c.bg === 'real' || c.flags.interlude) return 'none';
   if (c.chapter === 4) {
     if (!c.party.includes('mina366')) return 'none';

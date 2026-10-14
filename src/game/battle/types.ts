@@ -90,7 +90,9 @@ export interface EnemyDef {
   hooks?: Partial<BattleHooks>;
   music?: string;
   /** Battle background. */
-  bg?: 'dream' | 'forest' | 'hospital' | 'void' | 'closet' | 'eraser' | 'real' | 'feutre' | 'stylo' | 'noir' | 'plage' | 'blanc';
+  bg?: 'dream' | 'forest' | 'hospital' | 'void' | 'closet' | 'eraser' | 'real' | 'feutre' | 'stylo' | 'noir' | 'plage' | 'blanc' | 'ventre' | 'voix';
+  /** Blip voice of its speech bubbles (default: 'monster' for a boss, 'default' otherwise). */
+  voice?: string;
   /** Pixel offset for the sprite. */
   dy?: number;
   /** Emotion inflicted on the soul at the start of the battle. */
