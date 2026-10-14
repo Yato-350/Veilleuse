@@ -901,9 +901,9 @@ export class CountingScene implements Scene {
     }
     const label = tf('Comptés : {0}', this.counted);
     drawText(g, label, right, 8, { align: 'right', color: '#fffaf2', shadow: '#1c1424' });
-    // Cotton balls = mistakes still allowed.
+    // Cotton balls = mistakes still allowed (none drawn when the round never fails, e.g. the final battle's knocks).
     const left = right - measure(label) - 8;
-    for (let i = 0; i < r.tolerance; i++) {
+    for (let i = 0; i < (r.tolerance < 10 ? r.tolerance : 0); i++) {
       const cx = left - i * 9;
       const used = i < this.errors;
       rect(g, cx - 3, 10, 7, 5, used ? '#3e4160' : '#fffaf2');

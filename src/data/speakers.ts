@@ -51,7 +51,9 @@ export const SPEAKERS: Record<string, Speaker> = {
   // the final battle; the little girl in the knitted hat (Mina, drawn in pencil); the battery of the voice module.
   dodonoa: { name: 'Dodo', voice: 'noa', portrait: 'dodo', color: '#fffaf2' },
   dodotorn: { name: 'Dodo', voice: 'noa', portrait: 'dodotorn', color: '#d9cbb5' },
-  bonnet: { name: 'Mina', voice: 'mina', color: '#d9cbb5' },
-  pile: { name: 'Pile', voice: 'pile', color: '#c8d0d8' },
+  bonnet: { name: 'Mina', voice: 'mina', portrait: 'bonnet', color: '#d9cbb5' },
+  /** The same, before Noa looked at her (no face, no name). */
+  petite: { name: 'La Petite au Bonnet', voice: 'mina', portrait: 'bonnet', color: '#d9cbb5' },
+  pile: { name: 'La Pile', voice: 'pile', color: '#c8d0d8' },
   system: { name: '', voice: 'none' },
 };

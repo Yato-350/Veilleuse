@@ -18,6 +18,7 @@ import { ctx2d, makeCanvas, parseRows } from '../engine/sprite';
 import { BONUS_ILLUSTRATIONS } from './illustrations-bonus';
 import { CH4_ILLUSTRATIONS } from './illustrations-ch4';
 import { CH5_ILLUSTRATIONS } from './illustrations-ch5';
+import { CH6_ILLUSTRATIONS } from './illustrations-ch6';
 import { NUIT_ILLUSTRATIONS } from './illustrations-nuit';
 
 export type Illustration = (g: CanvasRenderingContext2D, t: number) => void;
@@ -2113,6 +2114,7 @@ export const ILLUSTRATIONS: Record<string, Illustration> = {
   ...CH4_ILLUSTRATIONS,
   ...NUIT_ILLUSTRATIONS,
   ...CH5_ILLUSTRATIONS,
+  ...CH6_ILLUSTRATIONS,
 };
 
 export interface Souvenir {

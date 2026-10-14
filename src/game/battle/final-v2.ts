@@ -157,6 +157,12 @@ const TALK: Record<string, string[]> = {
   silence: ['Dors.', 'Il n\'y a plus rien.', 'Plus personne.'],
 };
 
+/**
+ * The little girl in the knitted hat speaks: « La Petite au Bonnet », without a face, or « Mina » with the face drawn
+ * in pencil once Noa looked at her (chapter 6, « regarder »: flags.c6_regarder).
+ */
+const bonnet = (): string => (G.state.flags.c6_regarder ? 'bonnet:drawn' : 'petite');
+
 const SLEEP_LINES = ['Voilà. C\'est bien.', 'Doucement…', 'Encore un peu.', 'Tu vois ? C\'est facile.'];
 
 /** Dodo, when one of his words (those of the call) is written. */
@@ -493,7 +499,7 @@ async function toPhase2(b: Battle, s: V2State): Promise<void> {
   fx.shake(3, 40);
   e.flash = 20;
   tear(b, s);
-  await b.say('* Les coutures de Dodo s\'ouvrent, une à une. Le fil rouge saute.\n* Le rembourrage pend. Un œil-bouton se balance au bout de son fil.');
+  await b.say('* Ses coutures s\'ouvrent, une à une. Le fil rouge saute.\n* Le rembourrage pend. Un œil-bouton se balance.');
 }
 
 function blacken(b: Battle, s: V2State): void {
@@ -502,6 +508,14 @@ function blacken(b: Battle, s: V2State): void {
   s.knock = s.silence ? 'A' : ['deux', 'trois'].includes(String(G.state.flags.i4_knock ?? '')) ? 'B' : 'A';
   scaleAtk(b, 3, 14);
   CH6_BG.rot = 0.6;
+  const e = dodo(b);
+  e.def = {
+    ...e.def,
+    check: 'Tu ne le vois plus. Tu l\'entends respirer, tout près. Quelque part, on frappe.',
+    flavor: s.silence
+      ? ['* Le noir est complet.', '* Seul le radiateur cogne. Personne d\'autre.', '* Tu attends. Rien ne vient.']
+      : ['* Le noir est complet. Tu entends ton cœur. Et autre chose.', '* Le radiateur cogne, quelque part. Ou quelqu\'un.', '* Tu tends la main. Le mur est là. Froid.', '* Ça sent la poussière chaude. Ta chambre, la nuit.'],
+  };
 }
 
 async function toPhase3(b: Battle, s: V2State): Promise<void> {
@@ -554,14 +568,14 @@ async function toPhase4(b: Battle, s: V2State): Promise<void> {
     s.bonnet = i / 39;
     await game.wait(2);
   }
-  await b.say('* Le noir se déchire, tout doucement, comme du papier mouillé.\n* À côté de toi, quelqu\'un. Un bonnet à oreilles de mouton.');
+  await b.say('* Le noir se déchire, doucement. Du papier mouillé.\n* À côté de toi, quelqu\'un. Un bonnet à oreilles de mouton.');
   audio.playMusic('title', { fadeIn: 3, fadeOut: 2 });
   s.sleep = Math.max(0, s.sleep - 0.2);
   muffle(s);
   s.drowned = DROWN_ORDER.slice(0, drownedCountV2(G.state.encre));
   s.friends = friendQueue(G.state.spares, s.drowned.length);
-  await b.say('* Le carnet s\'ouvre tout seul. Ce n\'est pas ton écriture.\n* Une écriture au crayon de papier. Appliquée. Fatiguée.');
-  await director.say(['T\'as répondu.', 'Maintenant, écris avec moi, gros bêta. On a encore des choses à se dire.'], 'bonnet');
+  await b.say('* Le carnet s\'ouvre. Ce n\'est pas ton écriture.\n* C\'est du crayon de papier. Appliqué. Fatigué.');
+  await director.say(['T\'as répondu.', 'Maintenant, écris avec moi, gros bêta. On a encore des choses à se dire.'], bonnet());
   if (s.drowned.length) {
     director.sfx('glitch', { vol: 0.5 });
     await b.say(
@@ -569,7 +583,7 @@ async function toPhase4(b: Battle, s: V2State): Promise<void> {
         ? "* Mais sur la page, deux mots sont noyés d'encre.\n* Tu reconnais cette encre. C'est la tienne."
         : "* Mais sur la page, un mot est noyé d'encre.\n* Tu reconnais cette encre. C'est la tienne.",
     );
-    await director.say(['Y a des mots que j\'arrive plus à dire. C\'est tout taché.', 'Mais les autres sont encore là.'], 'bonnet');
+    await director.say(['Y a des mots que j\'arrive plus à dire. C\'est tout taché.', 'Mais les autres sont encore là.'], bonnet());
   }
   showHp(b, s);
 }
@@ -618,7 +632,7 @@ async function knockAction(b: Battle, s: V2State): Promise<void> {
   const round = s.silence ? 'rien' : s.knock === 'B' ? 'B' : 'A';
   await b.say(
     helped
-      ? '* Dans le noir, une petite silhouette s\'approche du mur.\n* Un bonnet à oreilles de mouton. Elle lève la main. Lentement.'
+      ? '* Une petite silhouette s\'approche du mur, dans le noir.\n* Un bonnet à oreilles de mouton. Elle lève la main.'
       : '* Tu poses ta main à plat sur le mur. Il est froid.\n* Tu écoutes.',
   );
   await director.fadeOut(16);
@@ -748,7 +762,7 @@ async function crack(b: Battle, s: V2State, w: WordDef): Promise<void> {
   const pair = MINA_PAIRS[w.text];
   if (pair) {
     await b.bubble([{ e, text: pair[0] }]);
-    await director.say(pair[1], 'bonnet');
+    await director.say(pair[1], bonnet());
   }
   showHp(b, s);
   const n = s.written.length + s.bonus;
@@ -992,7 +1006,7 @@ export const FINAL_V2_HOOKS: Partial<BattleHooks> = {
           s.lieNow = true;
           b.lie = true;
           await director.say('Tu la reconnais ? C\'est elle qui l\'a dessinée. Sa princesse.', 'dodotorn:happy');
-          await b.say('* Dodo agite la princesse au crayon au bout de ses fils.\n* Ses crayons ont l\'air jaunes. Ton cœur aussi, peut-être.');
+          await b.say('* Dodo agite la princesse au crayon sur ses fils.\n* Ses crayons ont l\'air jaunes. Ton cœur aussi.');
           await b.bubble([{ e, text: 'Ici, même les couleurs mentent.' }]);
         }
       }
@@ -1005,7 +1019,7 @@ export const FINAL_V2_HOOKS: Partial<BattleHooks> = {
       if (s.silence && s.p4 >= 3) await silenceEnd(b, s);
       else if (!s.silence) {
         if (s.sleep >= MAX_SLEEP - 0.001) await offerStay(b, s);
-        if (!b.ended && s.written.length === 0 && s.p4 === 3) await director.say('Écris, Noa. Dans le carnet. Avec moi.', 'bonnet');
+        if (!b.ended && s.written.length === 0 && s.p4 === 3) await director.say('Écris, Noa. Dans le carnet. Avec moi.', bonnet());
         if (!b.ended && s.p4 >= 2) await visit(b, s);
       }
     }
@@ -1089,7 +1103,7 @@ export const FINAL_V2_HOOKS: Partial<BattleHooks> = {
     else if (!s.written.includes(w.text) && MINA_PAIRS[w.text]) await crack(b, s, w);
     else {
       await b.bubble([{ e, text: 'Tu l\'as déjà dit…' }]);
-      await director.say('Je l\'ai entendu, Noa. La première fois.', 'bonnet');
+      await director.say('Je l\'ai entendu, Noa. La première fois.', bonnet());
     }
     return true;
   },

@@ -1,0 +1,23 @@
+# Lot 4 regression: the version 1.1 final battle of chapter 3 still plays after the shared helpers moved to
+# src/game/battle/final-common.ts and the endings to src/game/story/endings.ts. Phase 3 with ink and Gomme spared (she
+# erases a drowned word), Mina's words until SE RÉVEILLER, then the Aube ending (flags.c3_dawn_ready).
+query: debug=script&name=c3_final_gomme&lang=fr
+god
+wait:1500
+auto
+write:pardon
+auto
+write:au revoir
+auto
+write:je t'aime
+auto
+write:matin
+auto
+write:merci
+auto
+assert: window.__veilleuse.game.top.menuLabels.includes('SE RÉVEILLER')
+menu:3
+auto
+choose:0
+zuntil: window.__veilleuse.G.state.flags.c3_dawn_ready === true
+assert: window.__veilleuse.G.state.flags.fin_route === 'aube'

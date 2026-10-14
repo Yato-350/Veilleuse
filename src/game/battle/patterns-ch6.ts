@@ -217,7 +217,7 @@ export const CH6_PATTERNS: Record<string, Pattern> = {
   // --- L'Aiguille ---------------------------------------------------------------------------------------------------
   /** The needle dashes from edge to edge (a thin warning line first) and leaves running stitches that linger. */
   aiguille_points: {
-    box: { w: 130, h: 70 },
+    box: { w: 130, h: 64 },
     duration: 380,
     tick(w, t, c) {
       const b = w.box;
@@ -259,7 +259,7 @@ export const CH6_PATTERNS: Record<string, Pattern> = {
   },
   /** A seam sewn through the box: the needle dives in and out along a line; the thread it leaves blocks, with gaps. */
   aiguille_couture: {
-    box: { w: 140, h: 76 },
+    box: { w: 140, h: 64 },
     duration: 420,
     tick(w, t, c) {
       const b = w.box;
@@ -298,7 +298,7 @@ export const CH6_PATTERNS: Record<string, Pattern> = {
   // --- Le Bouton Pendu ------------------------------------------------------------------------------------------------
   /** The button eye swings across the box on its thread, faster and wider; buttons come loose at the ends. */
   bouton_balancier: {
-    box: { w: 150, h: 72 },
+    box: { w: 150, h: 64 },
     duration: 420,
     start(w, c) {
       const b = w.box;
@@ -348,7 +348,7 @@ export const CH6_PATTERNS: Record<string, Pattern> = {
   },
   /** Buttons on threads drop from the top like yo-yos, to different depths, and climb back. */
   bouton_pluie: {
-    box: { w: 140, h: 70 },
+    box: { w: 140, h: 64 },
     duration: 380,
     start(w) {
       w.pre = (g, bw) => {
@@ -385,7 +385,7 @@ export const CH6_PATTERNS: Record<string, Pattern> = {
   // --- La Bourre ------------------------------------------------------------------------------------------------------
   /** Wet cotton drips; a wad that touches the heart sticks to it and slows it down (a sad heart lets them through). */
   bourre_colle: {
-    box: { w: 130, h: 72 },
+    box: { w: 130, h: 64 },
     duration: 400,
     start(w) {
       w.post = (g, bw) => {
@@ -437,7 +437,7 @@ export const CH6_PATTERNS: Record<string, Pattern> = {
   },
   /** Puffs of mildew drift in from the sides, waving, and burst into spores. */
   bourre_moisi: {
-    box: { w: 140, h: 70 },
+    box: { w: 140, h: 64 },
     duration: 380,
     tick(w, t, c) {
       const b = w.box;
@@ -473,7 +473,7 @@ export const CH6_PATTERNS: Record<string, Pattern> = {
   // --- Les Moutons Numérotés -----------------------------------------------------------------------------------------
   /** Rubber stamps slam down on the box: a warning, the hit, and the red print that stays (harmless). */
   mouton_tampon: {
-    box: { w: 140, h: 72 },
+    box: { w: 140, h: 64 },
     duration: 400,
     start(w) {
       w.pre = (g, bw) => {
@@ -546,7 +546,7 @@ export const CH6_PATTERNS: Record<string, Pattern> = {
   // --- La Pile --------------------------------------------------------------------------------------------------------
   /** The battery leaks: a white crust grows from the floor of the box in columns, then crumbles; drops of electrolyte. */
   pile_fuite: {
-    box: { w: 140, h: 72 },
+    box: { w: 140, h: 64 },
     duration: 400,
     tick(w, t, c) {
       const b = w.box;
@@ -561,7 +561,7 @@ export const CH6_PATTERNS: Record<string, Pattern> = {
   },
   /** Its voice: a waveform of static scrolling across the box, flatter every turn (CH6.voice); dots that crackle. */
   pile_gresille: {
-    box: { w: 150, h: 70 },
+    box: { w: 150, h: 64 },
     duration: 380,
     tick(w, t, c) {
       const b = w.box;
@@ -625,7 +625,7 @@ export const CH6_PATTERNS: Record<string, Pattern> = {
   },
   /** Phase 2: the word of the call falls, letter by letter — D, O, R, S — in columns that sway. */
   v2_dors: {
-    box: { w: 140, h: 72 },
+    box: { w: 140, h: 64 },
     duration: 400,
     tick(w, t, c) {
       const b = w.box;
@@ -652,7 +652,7 @@ export const CH6_PATTERNS: Record<string, Pattern> = {
   },
   /** Phase 2: pins fall from the roof like stalactites — a glint where each one is, then it drops. */
   v2_epingles: {
-    box: { w: 150, h: 72 },
+    box: { w: 150, h: 64 },
     duration: 380,
     tick(w, t, c) {
       const b = w.box;
@@ -669,7 +669,7 @@ export const CH6_PATTERNS: Record<string, Pattern> = {
    * like any other: dodge everything. (`data.lie`: a « ? » instead of the emotion's shape.)
    */
   v2_crayons: {
-    box: { w: 150, h: 72 },
+    box: { w: 150, h: 64 },
     duration: 400,
     tick(w, t, c) {
       const b = w.box;
@@ -704,7 +704,7 @@ export const CH6_PATTERNS: Record<string, Pattern> = {
    * fall in the dark, glinting first. Story mode: her knocks only, slower, and slower pins.
    */
   v2_coups_noir: {
-    box: { w: 150, h: 76 },
+    box: { w: 150, h: 64 },
     duration: 440,
     start(w, c) {
       w.dark = true;
@@ -764,7 +764,7 @@ export const CH6_PATTERNS: Record<string, Pattern> = {
    * melody's next note (higher note, higher hole). Follow the tune to get through.
    */
   v2_berceuse: {
-    box: { w: 160, h: 76 },
+    box: { w: 160, h: 64 },
     duration: 440,
     tick(w, t, c) {
       const b = w.box;
@@ -784,7 +784,7 @@ export const CH6_PATTERNS: Record<string, Pattern> = {
   },
   /** Phase 4: Dodo's seams burst — fans of grey stuffing thrown from the top, and the button eye swinging below. */
   v2_coutures: {
-    box: { w: 150, h: 74 },
+    box: { w: 150, h: 64 },
     duration: 420,
     start(w, c) {
       CH6_PATTERNS.bouton_balancier!.start!(w, { ...c, power: Math.min(1, c.power) });

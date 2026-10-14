@@ -1,0 +1,11 @@
+# Lot 4 (chapter 6 battles): La Pile, beaten (HP lowered to keep the run short): the voice stops mid-word,
+# flags.c6_pile = false and c6_pile_morte (Dodo's voice dies sooner; the secret ending is lost). No Pile chargée.
+query: debug=script&name=bt_pile&lang=fr
+god
+wait:1500
+auto
+eval: window.__veilleuse.game.top.enemies[0].hp = 3
+hit
+zuntil: window.__veilleuse.G.state.flags.debug_battle === 'win:pile'
+assert: window.__veilleuse.G.state.flags.c6_pile === false && window.__veilleuse.G.state.flags.c6_pile_morte === true
+assert: !window.__veilleuse.G.state.keyItems.includes('pile_chargee')

@@ -1,0 +1,30 @@
+# Lot 4: the knocks after « deux » at Interlude IV (flags.i4_knock = 'deux'): only round B. A wrong answer (two knocks:
+# « Deux ? Tu étais là, peut-être. Mais tu n'es pas venu. »), Dodo gets HP back; a second wrong answer, and the little
+# girl in the knitted hat knocks in plain view, slowly; three knocks, and phase 4 opens.
+query: debug=script&name=dodo_v2_deux&lang=fr
+god
+wait:1500
+auto
+menu:0
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+ArrowRight
+KeyZ
+wait:2500
+auto
+assert: window.__veilleuse.game.top.menuLabels[0] === 'FRAPPER'
+menu:0
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+KeyZ
+wait:2500
+auto
+menu:0
+zuntil: window.__veilleuse.game.top.skin === 'coups' && window.__veilleuse.game.top.visitor === 'b_bonnet'
+wait:2600
+shot:aide
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+ArrowRight
+ArrowRight
+KeyZ
+wait:2500
+auto
+assert: window.__veilleuse.game.top.menuLabels[1] === 'ÉCRIRE'

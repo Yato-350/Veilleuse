@@ -3,6 +3,7 @@ import type { Script } from '../overworld/types';
 import { WORD_POOLS } from '../../data/words';
 import { G, maxHp } from '../state';
 import { setDefeatStreak } from './battle';
+import { afterFinalBattle } from '../story/endings';
 import { runFinalBattleV2 } from './final-v2';
 
 /** A notebook with the chapter's bittersweet words first (the longest last), then one word of each other emotion. */
@@ -49,12 +50,17 @@ const douxWords = (chapter: number, n: number) => () => {
  * items and keys still apply (&flags=i4_knock=deux,c6_pile&keys=bouton_dore,pile_chargee):
  *   dodo_v2           from the start, no item
  *   dodo_v2_objets    with the Bouton doré and the Pile chargée (flags.c6_pile)
- *   dodo_v2_deux      flags.i4_knock = 'deux': only the second round of knocks
- *   dodo_v2_histoire  Story mode: slower knocks, no false knocks
+ *   dodo_v2_deux      phase 3 with flags.i4_knock = 'deux': only the second round of knocks
+ *   dodo_v2_histoire  phase 3 in Story mode: slower knocks, no false knocks
  *   dodo_v2_coups     straight to phase 3 (the knocks in the dark)
- *   dodo_v2_mots      straight to phase 4, with both items and a few spared friends
- *   dodo_v2_encre     phase 4 on a mixed route (9 Encre: two of her words drowned)
+ *   dodo_v2_mots      straight to phase 4, with both items and a few spared friends; she was looked at
+ *                     (flags.c6_regarder: her portrait has the face drawn in pencil)
+ *   dodo_v2_encre     phase 4 on a mixed route (9 Encre: two of her words drowned); not looked at (no face)
  *   dodo_v2_silence   the route of the ink (nothing spared, 12 Ink): nobody knocks, every word is drowned
+ * …and on to the ending the route leads to (afterFinalBattle, src/game/story/endings.ts: « Ouvrir les yeux » wakes up
+ * into the finale, « Rester » is Beaux rêves, the ink is Silence):
+ *   dodo_v2_fin           phase 4 with both items (choose « Ouvrir les yeux » or « Rester »)
+ *   dodo_v2_fin_silence   phase 3 on the route of the ink
  */
 function setup(d: Director, chapter: number, map: string, spawn: string, mina: boolean, flags: string[] = []): void {
   G.state.chapter = chapter;
@@ -128,6 +134,8 @@ interface FinalDebug {
   encre?: number;
   kills?: Record<string, number>;
   spares?: Record<string, number>;
+  /** Go on to the ending the route leads to. */
+  ending?: boolean;
 }
 
 /** The final battle v2 (chapter 6): chapter 5 stats, then options. */
@@ -144,9 +152,11 @@ async function finalV2(d: Director, o: FinalDebug = {}): Promise<void> {
   await d.fadeIn(10);
   const route = await runFinalBattleV2(d, o.from ?? 1);
   s.flags.debug_battle = route;
+  if (o.ending) await afterFinalBattle(d, route);
 }
 
 const BOTH = ['bouton_dore', 'pile_chargee'];
+const SILENCE_KILLS = { gribouille: 3, nuage: 3, mouton_noir: 2, placard: 1, aiguille: 3 };
 
 export const DEBUG: Record<string, Script> = {
   bt_ally: async (d) => {
@@ -220,10 +230,12 @@ export const DEBUG: Record<string, Script> = {
   // The final battle v2
   dodo_v2: (d) => finalV2(d),
   dodo_v2_objets: (d) => finalV2(d, { keys: BOTH, flags: { c6_pile: true } }),
-  dodo_v2_deux: (d) => finalV2(d, { flags: { i4_knock: 'deux' } }),
-  dodo_v2_histoire: (d) => finalV2(d, { story: true }),
+  dodo_v2_deux: (d) => finalV2(d, { from: 3, flags: { i4_knock: 'deux' } }),
+  dodo_v2_histoire: (d) => finalV2(d, { from: 3, story: true }),
   dodo_v2_coups: (d) => finalV2(d, { from: 3 }),
-  dodo_v2_mots: (d) => finalV2(d, { from: 4, keys: BOTH, flags: { c6_pile: true }, spares: { nuage: 1, placard: 1, pissenlit: 1 } }),
+  dodo_v2_mots: (d) => finalV2(d, { from: 4, keys: BOTH, flags: { c6_pile: true, c6_regarder: true }, spares: { nuage: 1, placard: 1, pissenlit: 1 } }),
   dodo_v2_encre: (d) => finalV2(d, { from: 4, encre: 9, kills: { nuage: 2, mouton_noir: 3, taille_crayon: 2, avion: 2 }, spares: { pissenlit: 1 } }),
-  dodo_v2_silence: (d) => finalV2(d, { encre: 12, kills: { gribouille: 3, nuage: 3, mouton_noir: 2, placard: 1, aiguille: 3 }, spares: {} }),
+  dodo_v2_silence: (d) => finalV2(d, { encre: 12, kills: SILENCE_KILLS, spares: {} }),
+  dodo_v2_fin: (d) => finalV2(d, { from: 4, keys: BOTH, flags: { c6_pile: true, c6_regarder: true }, spares: { nuage: 1 }, ending: true }),
+  dodo_v2_fin_silence: (d) => finalV2(d, { from: 3, encre: 12, kills: SILENCE_KILLS, spares: {}, ending: true }),
 };

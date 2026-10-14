@@ -168,4 +168,15 @@ describe('battle texts fit their box', () => {
     }
     expect(bad).toEqual([]);
   });
+  it('chapter 6 and final battle narrations (« * » lines said in the battle box) hold in three lines, in French and English', () => {
+    const files = ['src/data/enemies-ch6.ts', 'src/game/battle/final-v2.ts', 'src/game/battle/final-common.ts'];
+    const texts = files.flatMap((f) => (extractStrings(readFileSync(f, 'utf8')) as Missing[]).map((m) => m.value)).filter((t) => t.startsWith('* '));
+    expect(texts.length).toBeGreaterThan(40);
+    const bad: string[] = [];
+    for (const lang of ['fr', 'en'] as const) {
+      bindLanguage(() => lang);
+      for (const t of texts) if (layoutRich(parseRich(tr(t).replace('{0}', 'Mouton n°212').replace(/\{[1-9n]\}/g, '364')), 276).length > 3) bad.push(`${lang}: ${JSON.stringify(t)}`);
+    }
+    expect(bad).toEqual([]);
+  });
 });

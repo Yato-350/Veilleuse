@@ -1,0 +1,21 @@
+# Lot 4 (chapter 6 battles): La Pile, the battery of the voice module (unique encounter, no fleeing). Its voice slows
+# down every turn. Joie, then « garder »: spared, it becomes the key item « Pile chargée » (flags.c6_pile).
+query: debug=script&name=bt_pile&lang=fr
+god
+wait:1500
+auto
+shot:menu
+write:joie
+until:dodge
+wait:2400
+shot:dodge
+auto
+shot:slow
+write:garder
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.debug_battle === 'spare:pile'
+assert: window.__veilleuse.G.state.flags.c6_pile === true && window.__veilleuse.G.state.keyItems.includes('pile_chargee')

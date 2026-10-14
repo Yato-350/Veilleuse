@@ -1,0 +1,19 @@
+# Lot 4 (chapter 6 battles): La Bourre (Tristesse), the cotton of the emptied sheep (only met when flags.c4_coton > 0).
+# Wet cotton sticks to the heart and slows it; « pardon » calms it.
+query: debug=script&name=bt_bourre&lang=fr
+god
+wait:1500
+auto
+shot:menu
+write:joie
+until:dodge
+wait:3000
+shot:dodge
+auto
+write:pardon
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.debug_battle === 'spare:bourre'

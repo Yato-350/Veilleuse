@@ -1869,6 +1869,14 @@ export class Battle implements Scene {
       g.fillRect(x + 1, y + 1, 70, 16);
       const label = tr(this.menuLabels[i] ?? '');
       const lw = measure(label);
+      // Too long for one line (« OUVRIR LES YEUX »): two lines, split at the middle space.
+      const sp = lw > 68 ? label.lastIndexOf(' ', Math.ceil(label.length / 2)) : -1;
+      if (sp > 0) {
+        for (const [k, part] of [label.slice(0, sp), label.slice(sp + 1)].entries()) {
+          drawText(g, part, x + 1 + Math.floor((70 - measure(part)) / 2), y - 1 + k * 8, { color });
+        }
+        continue;
+      }
       // Long labels (« SE RÉVEILLER ») take the whole button: no icon, centered.
       if (lw > 56) {
         drawText(g, label, x + 1 + Math.floor((70 - lw) / 2), y + 3, { color });

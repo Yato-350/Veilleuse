@@ -1,0 +1,68 @@
+# Lot 4 (chapter 6 battles): three Moutons Numérotés (Joie → Joie), stamped with night numbers. Calmed and spared out of
+# order (a higher number still waiting), a sheep multiplies; spared from the highest number down, they file away.
+query: debug=script&name=bt_moutons&lang=fr
+god
+wait:1500
+auto
+shot:menu
+# The lowest number first: wrong order, it multiplies.
+menu:1
+wait:300
+eval: { const t = window.__veilleuse.game.top; const ns = t.alive.map((e) => e.data.n); t.list.idx = ns.indexOf(Math.min(...ns)); }
+KeyZ
+wait:300
+eval: { const t = window.__veilleuse.game.top; t.nb.idx = t.nb.words.findIndex((w) => w.emotion === 'joie') + 1; }
+KeyZ
+until:dodge
+wait:2000
+shot:dodge
+auto
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.game.top.alive.length === 4
+shot:twin
+# Then the right order: highest first, each in turn.
+eval: window.__veilleuse.__calm = () => { const t = window.__veilleuse.game.top; const ns = t.alive.map((e) => e.data.n); t.list.idx = ns.indexOf(Math.max(...ns)); }
+menu:1
+wait:300
+eval: window.__veilleuse.__calm()
+KeyZ
+wait:300
+eval: { const t = window.__veilleuse.game.top; t.nb.idx = t.nb.words.findIndex((w) => w.emotion === 'joie') + 1; }
+KeyZ
+auto
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.game.top.alive.length === 3
+menu:1
+wait:300
+eval: window.__veilleuse.__calm()
+KeyZ
+wait:300
+eval: { const t = window.__veilleuse.game.top; t.nb.idx = t.nb.words.findIndex((w) => w.emotion === 'joie') + 1; }
+KeyZ
+auto
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.game.top.alive.length === 2
+menu:1
+wait:300
+eval: window.__veilleuse.__calm()
+KeyZ
+wait:300
+eval: { const t = window.__veilleuse.game.top; t.nb.idx = t.nb.words.findIndex((w) => w.emotion === 'joie') + 1; }
+KeyZ
+auto
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.game.top.alive.length === 1
+write:joie
+auto
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.debug_battle.startsWith('spare:mouton_numerote')

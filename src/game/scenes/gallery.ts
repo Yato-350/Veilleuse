@@ -38,6 +38,7 @@ const CATALOG: Array<[key: string, kind: string, title: string, captions: string
   ['souvenir_lumiere', KIND_SOUVENIR, '', []],
   ['souvenir_vitre', KIND_SOUVENIR, '', []],
   ['souvenir_vitre_brisee', KIND_SOUVENIR, '', []],
+  ['bonnet_visage', KIND_SOUVENIR, 'La Petite au Bonnet', ['Son visage, au crayon de papier. Fatigué, et souriant.', '« T\'as mis le temps, gros bêta. »']],
   ['photo_famille', KIND_REAL, 'La photo de l\'été', ['Maman, toi, et Mina avec sa couronne en papier.', 'Tu avais oublié que tu souriais comme ça.']],
   [
     'tv_mina',

@@ -17,6 +17,8 @@ export const DATA: Record<string, string> = {
   'Infirmière': 'Nurse',
   'Maman (téléphone)': 'Mom (phone)',
   'Le médecin': 'The doctor',
+  'La Petite au Bonnet': 'The Girl in the Hat',
+  'La Pile': 'The Battery',
   'La vendeuse': 'The shopkeeper',
   'Le Réveil': 'The Alarm Clock',
   'Sabine': 'Sabine',

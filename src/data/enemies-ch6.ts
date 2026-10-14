@@ -23,7 +23,7 @@ import { MOUTON_STAMP } from './sprites/enemies-ch6';
  *                     met when flags.c4_coton > 0 (the sheep Noa emptied in chapter 4): the story decides.
  *   mouton_numerote   Joie → Joie. Met in groups (put them alone in the battle, hooks come from the first enemy):
  *                     each gets a night number (« Mouton n°212 »). Spared out of order — while a higher number is
- *                     still not calm — it multiplies (up to three on screen). Spare from the highest number down.
+ *                     still not calm — it multiplies (up to four on screen). Spare from the highest number down.
  *   pile              Neutre → Joie, then Tristesse → « garder ». Unique encounter, cannot be fled. Its voice (track 1
  *                     of the voice module) slows down every turn. Spared: key item « Pile chargée » and
  *                     flags.c6_pile = true. Defeated: flags.c6_pile = false and flags.c6_pile_morte = true (Dodo's
@@ -50,7 +50,7 @@ function state<T extends object>(b: Battle, init: () => T): T {
 // Moutons Numérotés — spare them from the highest number down
 // ---------------------------------------------------------------------------------------------------------------------
 
-const MOUTON_MAX = 3;
+const MOUTON_MAX = 4;
 
 /** The night number stamped on a sheep (set on the first turn). */
 const numberOf = (e: EnemyRuntime): number => Number(e.data.n ?? 0);
@@ -115,9 +115,9 @@ const MOUTON_HOOKS: Partial<BattleHooks> = {
       layout(b);
       twin.flash = 12;
       director.sfx('baa', { pitch: 0.7 });
-      await b.say(tf('* {0} se dédouble ! Un autre dossier sort du premier.\n* Pas dans cet ordre-là. Le n°{1} attend encore.', e.name, numberOf(higher[0]!)));
+      await b.say(tf('* {0} se dédouble. Un dossier sort du dossier.\n* Pas dans cet ordre. Le n°{1} attend encore.', e.name, numberOf(higher[0]!)));
     } else {
-      await b.say(tf('* {0} se froisse et recommence son dossier.\n* Pas dans cet ordre-là. Le n°{1} attend encore.', e.name, numberOf(higher[0]!)));
+      await b.say(tf('* {0} se froisse et recommence.\n* Pas dans cet ordre. Le n°{1} attend encore.', e.name, numberOf(higher[0]!)));
     }
     return true;
   },
@@ -344,7 +344,7 @@ export const CH6_ENEMIES: Record<string, EnemyDef> = {
       'bonne nuit': 'Bonne nuit, N… Bonne nuit… N…',
     },
     spareText: '* Tu ramasses la Pile. Elle tient au creux de ta main. Tiède. Il lui reste une phrase.\n* Tu obtiens : {c:y}Pile chargée{/c}.',
-    killText: '* La Pile s\'éteint au milieu d\'un mot. Plus de voix. Plus rien.\n* Quelque part, très loin, Dodo se tait un peu plus tôt.',
+    killText: '* La Pile s\'éteint au milieu d\'un mot. Plus de voix.\n* Quelque part, très loin, Dodo se tait un peu plus tôt.',
     patterns: ['pile_fuite', 'pile_gresille'],
     rewards: { boutons: 0 },
     hooks: PILE_HOOKS,

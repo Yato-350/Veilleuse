@@ -34,6 +34,12 @@ import { REAL, wakePhase } from '../src/game/story/common';
 import { saveJSON, useMemoryStorage } from '../src/engine/storage';
 import { nameReaction } from '../src/game/scenes/nameentry';
 import { composePoem } from '../src/game/scenes/poem';
+import { drownedCountV2, knockRound, sheepFor } from '../src/game/battle/final-v2';
+import { validCount } from '../src/game/scenes/sheepcount';
+import { DODO_WORDS_V2, MINA_WORDS_V2 } from '../src/data/words';
+import { ITEMS } from '../src/data/items';
+import { dawnEnding } from '../src/game/story/endings';
+import { G } from '../src/game/state';
 
 describe('math', () => {
   it('hash2 is deterministic and in [0,1)', () => {
@@ -372,6 +378,75 @@ describe('chapter 5 battles', () => {
     m.applyWord({ text: 'pardon', emotion: 'tristesse' });
     expect(m.step).toBe(1);
     expect(m.total).toBe(4);
+  });
+});
+
+describe('chapter 6 battles and the final battle v2', () => {
+  it('has the special words of its fights in the chapter 6 pool (« regarder », « pardon »), and the knocks as words', () => {
+    const texts = WORD_POOLS[6]!.map((w) => w.text);
+    for (const w of ['regarder', 'pardon', 'je suis là', 'bonne nuit']) expect(texts).toContain(w);
+    expect(WORD_POOLS[6]!.find((w) => w.text === 'regarder')!.emotion).toBe('neutre');
+  });
+  it('declares the fights the story calls, with their needs', () => {
+    for (const id of ['aiguille', 'bouton_pendu', 'bourre', 'mouton_numerote', 'pile', 'dodo_v2']) expect(ENEMIES[id]).toBeTruthy();
+    expect(ENEMIES.aiguille!.needs).toEqual([{ emotion: 'tristesse', count: 2 }]);
+    expect(ENEMIES.bourre!.needs[0]!.word).toBe('pardon');
+    expect(ENEMIES.pile!.needs.map((n) => n.emotion ?? n.word)).toEqual(['joie', 'garder']);
+    expect(ENEMIES.pile!.noFlee && ENEMIES.dodo_v2!.noFlee && ENEMIES.dodo_v2!.boss).toBe(true);
+    expect(ENEMIES.dodo_v2!.music).toBe('dodo_v2');
+  });
+  it('Le Bouton Pendu: « regarder » calms it at once; Tristesse ×2 too', () => {
+    const a = new EnemyRuntime(ENEMIES.bouton_pendu!);
+    a.applyWord({ text: 'regarder', emotion: 'neutre' });
+    expect(a.spareable).toBe(true);
+    const b = new EnemyRuntime(ENEMIES.bouton_pendu!);
+    b.applyWord({ text: 'adieu', emotion: 'tristesse' });
+    b.applyWord({ text: 'manquer', emotion: 'tristesse' });
+    expect(b.spareable).toBe(true);
+  });
+  it('phase 1 counts one sheep per death (41 at most), or her 41 nights when the player never died', () => {
+    expect(sheepFor(0)).toBe(41);
+    expect(sheepFor(3)).toBe(3);
+    expect(sheepFor(120)).toBe(41);
+  });
+  it('phase 4: her notebook (« je suis là », « bonne nuit »), ink drowns at most two of her words', () => {
+    const texts = MINA_WORDS_V2.map((w) => w.text);
+    for (const w of ['je suis là', 'bonne nuit', 'merci', 'pardon', 'au revoir', 'je t\'aime', 'lumière', 'matin']) expect(texts).toContain(w);
+    expect(DODO_WORDS_V2.map((w) => w.text)).toContain('Dors.');
+    expect([0, 2, 3, 6, 9, 40].map(drownedCountV2)).toEqual([0, 0, 1, 2, 2, 2]);
+  });
+  it('phase 3: blind rounds among the radiator\'s knocks; after two mistakes she knocks in plain view, alone', () => {
+    const a = knockRound('A', false);
+    expect(a.blind).toBe(true);
+    expect(a.seqs.map(validCount)).toEqual(a.seqs.map(() => 1));
+    expect(knockRound('B', false).seqs.map(validCount)).toEqual([3, 3, 3]);
+    expect(knockRound('A', true)).toMatchObject({ blind: false, seqs: [['S']] });
+    expect(knockRound('B', true)).toMatchObject({ blind: false, seqs: [['S', 'S', 'S']] });
+    expect(knockRound('rien', false).seqs.map(validCount)).toEqual([0]);
+  });
+  it('the Bouton doré and the Pile chargée are key items usable in battle', () => {
+    expect(ITEMS.bouton_dore).toMatchObject({ key: true, battleKey: true });
+    expect(ITEMS.pile_chargee).toMatchObject({ key: true, battleKey: true });
+  });
+  it('once the eyes are open: Aube, Aube blanche (3 drawings corrected or more), or Veilleuse when every condition holds', () => {
+    const keep = { state: G.state, meta: G.meta };
+    try {
+      G.state = newState();
+      G.meta = readMeta();
+      expect(dawnEnding()).toBe('aube');
+      G.state.flags.c5_corrige = 3;
+      expect(dawnEnding()).toBe('aube_blanche');
+      Object.assign(G.state.flags, { c5_corrige: 1, c5_fievre: true, c6_pile: true, i4_pile: true });
+      G.meta.callVersion = 'sais_pas';
+      expect(dawnEnding()).toBe('aube');
+      G.meta.endings = ['aube'];
+      expect(dawnEnding()).toBe('veilleuse');
+      G.state.flags.c1_bouton_vendu = true;
+      expect(dawnEnding()).toBe('aube');
+    } finally {
+      G.state = keep.state;
+      G.meta = keep.meta;
+    }
   });
 });
 
