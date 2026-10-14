@@ -943,11 +943,25 @@ export const portal: Script = async (d) => {
   d.sfx('beep', { pitch: 0.7 });
   await d.say('« 38,4 ». L\'écran passe à l\'orange.');
   await d.wait(30);
+  // Behind the glass of the thermometer, a small shape in a knitted hat hits it with her fist.
+  const sil = d.spawn({ id: 'sil_thermo', sprite: 'npc_c5_silhouette', x: 22, y: 25, solid: false, shadow: false });
+  sil.layer = 1;
+  sil.alpha = 0.75;
+  sil.oy = -6;
+  sil.brain = (self) => {
+    self.ox = (self.animT % 20 < 3 ? (self.animT % 2 ? 1 : -1) : 0);
+  };
   d.sfx('knock1', { vol: 0.7 });
   d.shake(2, 14);
   await d.say(['Derrière le verre du thermomètre, contre la colonne, une petite silhouette tape du poing.', 'Un bonnet. Deux oreilles de mouton.']);
-  await d.say('T\'avais promis !', 'minavoix', { });
+  d.sfx('knock1', { vol: 0.9, pitch: 1.1 });
+  await d.say('T\'avais promis !', 'minavoix');
   d.shake(3, 20);
+  for (let i = 10; i >= 0; i--) {
+    sil.alpha = i / 14;
+    await d.wait(3);
+  }
+  d.remove('sil_thermo');
   await d.say(['Ça fait mal.', 'C\'est vrai, et ça fait mal. Les deux en même temps.']);
   await d.say('…Je sais.', 'noa:sad');
   await d.wait(30);
