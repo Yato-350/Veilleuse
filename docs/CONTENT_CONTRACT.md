@@ -588,8 +588,9 @@ Les chapitres ne se connectent **que** via `src/game/story/common.ts` :
   `enterDream(d, 3)` ; `finale` (route de l'aube) par `finishGame(d, 'aube')`.
 - `chapter1.start` / `chapter2.start` : charger la première carte (`d.load(map, spawn)`), jouer l'ouverture, rendre la
   main. La fin du chapitre (après le boss et le souvenir) appelle `await wakeUp(d, n)`.
-- `chapter3` gère le combat final contre Dodo et ses trois issues : `wakeUp(d, 3)` (aube), `finishGame(d,
-  'beaux_reves')`, `finishGame(d, 'silence')` (route du silence : `isSilenceRoute()` de `common.ts`).
+- `chapter3` gère le combat (court, v2) contre Dodo : toutes ses issues mènent à `wakeUp(d, 3)`, la fausse aube. Les
+  fins (`finishGame(d, 'aube' | 'aube_blanche' | 'beaux_reves' | 'silence' | 'veilleuse')`) sont dans `endings.ts`
+  et suivent le combat final du chapitre 6 (route du silence : `isSilenceRoute()` de `common.ts`).
 - Un `start` de chapitre commence écran noir (`fx` à 1) : il doit faire `d.load(...)` puis `await d.fadeIn()`, et
   peut d'abord appeler `await d.chapter('Chapitre 1', 'Le Pays de Coton', 'sous-titre')`.
 
@@ -715,14 +716,26 @@ Lus par les lots suivants : `i3_reply` (`pardon` | `bonnenuit` | `rien`), `i3_ph
 `i4_knock` (`deux` | `trois` | `rien` | `un`), `i4_pile` (la pile du réveil prise), `i4_dessin`, `i4_reveil`,
 `i4_lettre`, `i4_mot`. Pendant ces interludes, `chambre` montre ses accessoires de nuit (cartes `real.ts` : `DAY()` /
 `NIGHT()`), le couloir est `appartement_tard` (nom selon l'heure) et la chambre de Maman `chambre_maman` (IV).
-`STORY.wake[4]` = Interlude IV ; l'Interlude III est branché sur la fausse aube au lot 5 (`STORY.wake[3]`).
+`STORY.wake[4]` = Interlude IV ; l'Interlude III est joué à la fin de la fausse aube (`fausse-aube.ts`, `STORY.wake[3]`).
+
+**v2, chapitre 3 raccourci et fausse aube** (`src/game/story/chapter3.ts`, `src/game/story/fausse-aube.ts`, cartes
+`src/data/maps/fausse-aube.ts` : `chambre_faux` et `appartement_faux`, monde `faux`) : le combat contre Dodo du
+chapitre 3 n'a plus que les phases 1 et 2 ; « pardon » écrit trois fois, il cède, et [Se réveiller] / [Rester]
+mènent tous deux à `wakeUp(d, 3)` = la fausse aube (`fa_reste` retient [Rester]). Drapeaux `fa_*` documentés en tête
+du module : `fa_debut` (sauvegarde automatique juste après : une sauvegarde chargée sur ces cartes rejoue la fausse
+aube depuis le blanc), `fa_reste`, `fa_tours` (passages du faux générique, 1–3), `fa_fin` ; `G.meta.fauxGenerique`
+compte les faux génériques atteints. La non-fin « Fin heureuse » n'est jamais enregistrée comme une fin. La fausse aube
+finit par `realNuit.interlude3(d)`. Le monde `faux` prend les boîtes de dialogue du monde réel. Une sauvegarde v1.1
+prise pendant le final v1.1 (interlude 3) se réveille dans la fausse aube (`migrateSave`, drapeaux `fin_*` oubliés).
+Toute la nuit est branchée : chapitre 3 → fausse aube → III → ch. 4 → IV → ch. 5 ⇣ ch. 6 → `STORY.wake[6]` = final
+(`real.finale`, réécrit au lot 9) ; preuve : scénario `tools/scenarios/v2_aube.txt`.
 
 **v2, chapitre 5** (`src/game/story/chapter5.ts`, cartes `src/data/maps/chapter5.ts` : `plage` (monde `dream`),
 `sas`, `lac_blanc`, `chambre_verre` (monde `blanc`)) : drapeaux `c5_*` documentés en tête du module. Lus par les lots
 suivants : `c5_corrige` (0–5 ; ≥ 3 → *Aube blanche*), `c5_fievre` (condition de la fin secrète) / `c5_menti`,
 `c5_vitre` (`epargnee`|`brisee`), `c5_visite`, `c5_serviette`, `c5_coquillages` (0–42), `c5_coquillage42`, `c5_fin`.
 `STORY.dream[5]` = `chapter5.start` (l'Interlude IV y entre) ; la fin du chapitre tombe dans le chapitre 6 par
-`fallInto(d, 6)` dès que `STORY.dream[6]` existe (sinon fondu au noir et « … »). L'attente de 30 s sur la serviette
+`fallInto(d, 6)`. L'attente de 30 s sur la serviette
 (`sleepWaitMs()`) passe à 5 s avec le mode Histoire ou l'option « Réduire les attentes » (`G.settings.shortWaits`).
 Les sprites du chapitre gardent leurs couleurs dans le monde `blanc` (`keep()` : `clé@blanc` = même dessin) ; le point
 de sauvegarde aussi (seule lumière jaune de l'hôpital). Souvenir 5 : `souvenir_vitre` (épargnée) ou
@@ -755,6 +768,8 @@ Voir `src/data/items.ts` (`bonbon`, `lait`, `biscuit`, `chocolat`, `gateau`, `mo
 `bibliotheque` → `village` (calme) ; `atelier` → `boss` pendant le combat ; `ruines` → `dodo` ; `hopital` /
 `chambre_304` → `hospital` + `hum` ; `vide` → `void` puis `dodo_battle` ; finale → `ending`. Chapitre 5 : `plage` →
 `plage` + `wind` (après la marée : plus lente, désaccordée) ; `sas` → `sas` + `hum` ; `lac_blanc` et
-`chambre_verre` → silence (`wind` / `hum`) ; la Vitre → `vitre`. Chapitre 6 : `couture`, `ouate`, `boite_a_musique` → `ventre` (la
+`chambre_verre` → silence (`wind` / `hum`) ; la Vitre → `vitre`. Fausse aube : `chambre_faux` / `appartement_faux`
+→ pas de musique, des oiseaux (les trois mêmes pépiements en boucle) ; le faux générique → `faux_generique` (joué à
+l'envers quand il remonte). Chapitre 6 : `couture`, `ouate`, `boite_a_musique` → `ventre` (la
 boîte se tait une fois la berceuse jouée en entier, `hum`) ; `couloir_41` → `appel` ; `voix` → silence + `hum` ; le
 combat final → `dodo_v2`.
