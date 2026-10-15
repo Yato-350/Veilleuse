@@ -1,0 +1,44 @@
+# A v1.1 save taken in the middle of chapter 3 (room 304, Mina already erased) continues in the version 2 flow: the
+# souvenir « La veilleuse », Dodo's reveal (« Tu vois ? Tu peux partir quand tu veux. »), the short battle (« pardon »
+# three times, he gives in), [Se réveiller], the door of light, and Noa wakes up into the false dawn — no longer into
+# the v1.1 finale.
+query: debug=title&lang=fr
+eval: (() => { const sp = window.__veilleuse.MAPS.chambre_304.spawns.door; localStorage.setItem('veilleuse.save.v1', JSON.stringify({ version: 1, playerName: 'Sacha', chapter: 3, map: 'chambre_304', x: sp.x * 16 + 8, y: sp.y * 16 + 14, dir: 'up', hp: 24, etoiles: 9, encre: 1, items: ['lait'], keyItems: ['veilleuse_poche'], souvenirs: ['souvenir_fenetre', 'souvenir_dessin'], flags: { interlude: 0, world: 'ink', c3_intro: true, c3_hospital_seen: true, c3_hosp_in: true, c3_corridor: true, c3_door304: true, c3_mina_erased: true, c3_loop: 3, c1_placard_spared: true, c2_gomme_spared: true }, kills: { gribouille: 1 }, spares: { nuage: 2, placard: 1, gomme: 1 }, cleared: [], party: [], playtime: 4000, savedAt: 1, weapon: 'plume', armor: 'cape' })); return 1; })()
+eval: window.__veilleuse.flow.continueGame().then(() => 1)
+wait:1500
+assert: window.__veilleuse.G.state.map === 'chambre_304' && window.__veilleuse.G.state.chapter === 3 && window.__veilleuse.G.state.version === 2
+god
+auto
+interact:r304_light
+zuntil: window.__veilleuse.scene() === 'ImageScene'
+wait:1500
+shot:souvenir
+zuntil: window.__veilleuse.scene() === 'Battle'
+auto
+menu:3
+choose:0
+auto
+menu:3
+choose:0
+auto
+menu:3
+choose:0
+auto
+menu:3
+choose:0
+auto
+write:pardon
+auto
+write:pardon
+auto
+write:pardon
+auto
+shot:cede
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c3_dawn_ready === true && !window.__veilleuse.G.state.flags.fa_reste
+go:27/9
+ArrowRight:1200
+zuntil: window.__veilleuse.G.state.map === 'chambre_faux' && window.__veilleuse.world.busy === 0 && !window.__veilleuse.dialogue.busy
+shot:fausse-aube
+assert: window.__veilleuse.G.state.flags.interlude === 3 && window.__veilleuse.G.state.flags.fa_maman === true && window.__veilleuse.readSave().map === 'chambre_faux'
