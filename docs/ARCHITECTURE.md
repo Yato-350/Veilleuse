@@ -56,7 +56,9 @@ Le français est la langue source : les textes restent en français dans le code
 ```
 WarningScene → TitleScene → NameEntryScene → flow.newGame
   → story.real.prologue (WorldScene) → enterDream(1) → chapter1 → wakeUp(1) → interlude1 → enterDream(2) …
-  → chapter3 → Dodo → { wakeUp(3) → finale | beaux_reves | silence } → finishGame → CreditsScene → TitleScene
+  → chapter3 → Dodo (court) → wakeUp(3) → fausseAube (faux générique, « Fin heureuse » ≤ 3 tours) → interlude3
+  → enterDream(4) → chapter4 → wakeUp(4) → interlude4 → enterDream(5) → chapter5 → fallInto(6) → chapter6
+  → combat final → { wakeUp(6) → finale → épilogue | beaux_reves | silence } → finishGame → CreditsScene → TitleScene
 ```
 
 ## Qualité

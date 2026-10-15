@@ -170,8 +170,10 @@ async function opening(d: Director): Promise<void> {
   await d.say('Tu es réveillé.', who());
   await d.wait(20);
   inBed(d, false);
-  d.face('player', 'up');
   d.sfx('step', { pitch: 0.6 });
+  // A step aside, to see her (she sits at the edge of the bed, where he got up).
+  await d.walk('player', 1, 0, 0.8);
+  d.face('player', 'left');
   await d.wait(20);
   await d.say('…Maman ?', 'noa:surprised');
   await d.say(['Noa, mange quelque chose, s\'il te plaît.', 'Je t\'aime. Tiret. Maman.'], who());

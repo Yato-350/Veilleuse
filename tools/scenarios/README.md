@@ -9,4 +9,5 @@ Format: `#` starts a comment line; `query: <url query>` (e.g. `debug=script&name
 may contain commas), plus three checks that fail the run: `assert: <js>` (falsy = failure), `waitfor: <js>` (waits up
 to 20 s) and `zuntil: <js>` (presses Z until true, up to 30 s). `window.__veilleuse` = { game, world, G, MAPS,
 dialogue, fx, scene, flow, readSave, readMeta }. Name files by lot (`lot0-…`, `lot1-…`); `v11-…` files check that
-version 1.1 still plays.
+version 1.1 saves and screens still work; `v2_aube` plays a whole new game, from the title to the end credits through
+the six chapters (about 25 minutes: run it alone, `node tools/run-scenarios.mjs v2_aube --jobs 1`).

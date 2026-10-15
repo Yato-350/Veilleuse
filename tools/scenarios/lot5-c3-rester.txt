@@ -1,0 +1,25 @@
+# Lot 5 (chapter 3, the short battle against Dodo, § 3.8): straight in phase 2, the notebook holds Dodo's words and one
+# word of Noa's, « pardon ». Written three times, it cracks Dodo on the surface and he gives in far too easily
+# (« D'accord. Tu l'as dit. C'est fini. Réveille-toi. »); [Rester] leads to the false dawn all the same (fa_reste), where
+# Maman knows it: « Tu es resté. C'est bien. »
+query: debug=script&name=c3_battle_p2&lang=fr
+god
+wait:1500
+eval: window.T = () => (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ')
+auto
+assert: window.__veilleuse.game.top.enemies[0].def.sprite === 'b_dodo_dark'
+write:pardon
+auto
+write:pardon
+auto
+write:pardon
+auto
+shot:choix
+assert: window.__veilleuse.dialogue.choices && window.__veilleuse.game.top.enemies[0].def.sprite === 'b_dodo'
+choose:1
+zuntil: window.__veilleuse.G.state.map === 'chambre_faux'
+assert: window.__veilleuse.G.state.flags.fa_reste === true && window.__veilleuse.G.state.flags.fa_debut === true && window.__veilleuse.G.state.flags.interlude === 3
+zuntil: window.T().includes('Tu es resté')
+shot:reste
+auto
+assert: window.__veilleuse.G.state.flags.fa_maman === true && window.__veilleuse.scene() === 'WorldScene' && !window.__veilleuse.dialogue.busy
