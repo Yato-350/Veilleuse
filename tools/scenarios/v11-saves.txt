@@ -1,6 +1,7 @@
 # v1.1 saves load in v2. A v1.1 memory (two endings) is migrated on boot (endingsV1, one night per ending); v1.1
-# saves taken during interlude I and in chapter 2 resume as is; a v1.1 save taken in the finale (interlude 3) resumes
-# as the finale (9). (tests/engine.test.ts loads one v1.1 save per step of a run.)
+# saves taken during interlude I and in chapter 2 resume as is; a v1.1 save taken in the finale (interlude 3) wakes up
+# where version 2 goes after chapter 3: the false dawn, from the white (« Tu te réveilles. »), its fin_* flags
+# forgotten. (tests/engine.test.ts loads one v1.1 save per step of a run.)
 query: debug=title&lang=fr
 eval: (() => { localStorage.setItem('veilleuse.meta.v1', JSON.stringify({ launches: 3, deaths: 4, endings: ['aube', 'silence'], names: ['Sacha'], seen: [], poems: [] })); return 1; })()
 assert: (() => { const m = window.__veilleuse.readMeta(); return m.endingsV1.join() === 'aube,silence' && m.nuits === 367 && m.metaVersion === 2; })()
@@ -20,5 +21,8 @@ auto
 eval: (() => { const sp = window.__veilleuse.MAPS.chambre_mina.spawns.door; localStorage.setItem('veilleuse.save.v1', JSON.stringify({ version: 1, playerName: 'Sacha', chapter: 3, map: 'chambre_mina', x: sp.x * 16 + 8, y: sp.y * 16 + 14, dir: 'up', hp: 24, etoiles: 9, encre: 1, items: [], keyItems: [], souvenirs: ['souvenir_fenetre'], flags: { interlude: 3, fin_room: true, world: 'real' }, kills: {}, spares: {}, cleared: [], party: [], playtime: 3600, savedAt: 1, weapon: 'cire', armor: 'cape', playerChar: 'noa' })); return 1; })()
 eval: window.__veilleuse.flow.continueGame().then(() => 1)
 wait:1500
-shot:finale
-assert: window.__veilleuse.G.state.map === 'chambre_mina' && window.__veilleuse.G.state.flags.interlude === 9 && window.__veilleuse.G.state.flags.fin_room === true
+waitfor: window.__veilleuse.dialogue.busy
+shot:fausse-aube
+assert: window.__veilleuse.G.state.map === 'chambre_faux' && window.__veilleuse.G.state.flags.interlude === 3 && window.__veilleuse.G.state.flags.fa_debut === true && !window.__veilleuse.G.state.flags.fin_room
+auto
+assert: window.__veilleuse.G.state.flags.fa_maman === true && window.__veilleuse.scene() === 'WorldScene' && !window.__veilleuse.dialogue.busy

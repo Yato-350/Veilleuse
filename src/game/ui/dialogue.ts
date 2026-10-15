@@ -358,7 +358,8 @@ export class Dialogue {
 
   draw(g: CanvasRenderingContext2D): void {
     if (!this.open) return;
-    const style = this.opts.style ?? (G.state.flags.world === 'real' ? 'real' : 'dream');
+    // The false dawn (world `faux`) passes itself off as the real world: same boxes.
+    const style = this.opts.style ?? (G.state.flags.world === 'real' || G.state.flags.world === 'faux' ? 'real' : 'dream');
     const r = this.boxRect();
     const anim = this.openAnim;
     const hh = Math.round(r.h * anim);

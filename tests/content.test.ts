@@ -27,6 +27,8 @@ import { fallInto, REAL, STORY } from '../src/game/story/common';
 import { PHONE_CLOCK } from '../src/game/story/real';
 import { interlude3, interlude4, isNuit } from '../src/game/story/real-nuit';
 import * as chapter5 from '../src/game/story/chapter5';
+import * as fausseAube from '../src/game/story/fausse-aube';
+import { finale } from '../src/game/story/real';
 import * as chapter6 from '../src/game/story/chapter6';
 import { G } from '../src/game/state';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -432,8 +434,10 @@ describe('v2 scenes', () => {
     expect(PHONE_CLOCK[REAL.i4]).toBe('4:44');
     expect(PHONE_CLOCK[REAL.finale]).toBe('5:52');
     expect(typeof fallInto).toBe('function');
-    // Until lot 5 wires the new acts, chapter 3 still wakes up into the v1.1 finale.
-    expect(STORY.dream[1] && STORY.dream[2] && STORY.dream[3] && STORY.wake[1] && STORY.wake[2] && STORY.wake[3]).toBeTruthy();
+    // Lot 5 wires the whole night: every dream has its entry, every waking up its scene (chapter 5 falls, it never wakes).
+    for (const n of [1, 2, 3, 4, 5, 6] as const) expect(STORY.dream[n], `dream ${n}`).toBeTruthy();
+    for (const n of [1, 2, 3, 4, 6] as const) expect(STORY.wake[n], `wake ${n}`).toBeTruthy();
+    expect(STORY.wake[5]).toBeUndefined();
   });
 
   it('debug: every lot 0 demo can be replayed', () => {
@@ -448,8 +452,9 @@ describe('v2 scenes', () => {
 // ---------------------------------------------------------------------------
 
 describe('night interludes (lot 2)', () => {
-  it('chapter 4 wakes up into Interlude IV; chapter 3 still wakes up into the v1.1 finale until lot 5', () => {
+  it('chapter 4 wakes up into Interlude IV; chapter 3 wakes up into the false dawn, which ends in Interlude III', () => {
     expect(STORY.wake[4]).toBe(interlude4);
+    expect(STORY.wake[3]).toBe(fausseAube.play);
     expect(STORY.wake[3]).not.toBe(interlude3);
     expect(STORY.dream[4]).toBeTruthy();
   });
@@ -601,3 +606,50 @@ describe('chapter 6 (lot 4)', () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Production lot 5: chapter 3's short battle against Dodo, the false dawn, and the whole night wired.
+// ---------------------------------------------------------------------------
+
+describe('the false dawn (lot 5)', () => {
+  it('wires the six chapters in order: chapter 3 → the false dawn → III → 4 → IV → 5 ⇣ 6 → the finale', () => {
+    expect(STORY.wake[3]).toBe(fausseAube.play);
+    expect(STORY.wake[6]).toBe(finale);
+    expect(STORY.dream[5]).toBe(chapter5.start);
+    expect(STORY.dream[6]).toBe(chapter6.start);
+    for (const name of ['fausse_aube', 'fausse_aube_reste', 'fausse_aube_appart', 'fausse_aube_encre', 'faux_generique', 'fausse_aube_fin', 'c3_battle_p2', 'c3_battle_silence']) {
+      expect(typeof DEBUG_SCRIPTS[name], name).toBe('function');
+    }
+  });
+
+  it('has the two faux maps (the bedroom and the apartment, too beautiful) and the music that can play backwards', () => {
+    for (const id of ['chambre_faux', 'appartement_faux']) {
+      expect(MAPS[id], id).toBeTruthy();
+      expect(MAPS[id]!.world, id).toBe('faux');
+    }
+    // Mina's door is not there: the hallway has the four doors of the real apartment minus hers.
+    const rows = parseRows(MAPS.appartement_faux!.tiles);
+    const doors = [...rows[1]!].map((c, x) => (c === 'D' ? x : -1)).filter((x) => x >= 0);
+    expect(doors).toEqual([2, 6, 14, 18]);
+    expect(TRACKS.faux_generique).toBeTruthy();
+    expect(ILLUSTRATIONS.faux_aube && ILLUSTRATIONS.faux_aube_encre).toBeTruthy();
+  });
+
+  it('lays out the fake credits like the real ones, stuck on « Mina ……… introuvable », one more each pass', () => {
+    G.meta.endingsV1 = [];
+    for (const pass of [1, 2, 3]) {
+      const { lines, stop } = fausseAube.fauxCreditLines(pass);
+      expect(lines[stop]![0]).toBe(['Mina ………', ...Array(pass).fill('introuvable')].join(' '));
+      expect(lines.slice(0, 4)).toEqual(CREDIT_LINES.slice(0, 4));
+      expect(lines[lines.length - 1]).toEqual(CREDIT_LINES[CREDIT_LINES.length - 1]);
+    }
+    expect(fausseAube.fauxCreditLines(1).lines.some(([t]) => t.startsWith('Tu croyais'))).toBe(false);
+    G.meta.endingsV1 = ['aube'];
+    expect(fausseAube.fauxCreditLines(1).lines.some(([t]) => t === 'Tu croyais que c\'était fini, la dernière fois.')).toBe(true);
+    G.meta.endingsV1 = [];
+  });
+
+  it('keeps the rule of the 41 seconds in the false dawn and chapter 3', () => {
+    const src = ['src/game/story/fausse-aube.ts', 'src/data/maps/fausse-aube.ts', 'src/game/story/chapter3.ts'].map((f) => readFileSync(f, 'utf8')).join('\n');
+    expect(src).not.toMatch(/vraie version|version vraie|true version|real version|true call/i);
+  });
+});

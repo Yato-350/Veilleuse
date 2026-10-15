@@ -1,7 +1,9 @@
-# v1.1 path: the end of chapter 3 still wakes up into the v1.1 finale (until lot 5 wires the new acts).
-# wakeUp(3) → the finale sets the real-world moment to 9 (REAL.finale), Noa in bed, Dodo turned toward the door.
+# The end of chapter 3 no longer leads to the v1.1 finale: wakeUp(3) wakes up into the false dawn (STORY.wake[3],
+# fausse-aube.ts) — the real-world moment is Interlude III's (3), the bedroom is too beautiful (chambre_faux, world
+# `faux`), Maman is already sitting on the bed and leaves between two blinks; the autosave is taken at its start.
 query: debug=script&name=wake_3&lang=fr
 auto:30000
-shot:finale
-assert: window.__veilleuse.G.state.flags.interlude === 9 && window.__veilleuse.G.state.map === 'chambre'
+shot:fausse-aube
+assert: window.__veilleuse.G.state.flags.interlude === 3 && window.__veilleuse.G.state.map === 'chambre_faux' && window.__veilleuse.G.state.flags.fa_maman === true
+assert: window.__veilleuse.readSave().map === 'chambre_faux' && window.__veilleuse.readSave().flags.fa_debut === true
 assert: window.__veilleuse.scene() === 'WorldScene' && !window.__veilleuse.dialogue.busy

@@ -524,12 +524,17 @@ describe('state & saves', () => {
       expect(s.version, step).toBe(SAVE_VERSION);
       expect(MAPS[s.map], `${step}: map ${s.map}`).toBeDefined();
       expect(s.chapter, step).toBe(raw.chapter);
+      // The v1.1 finale wakes up into the false dawn (version 2 goes there after chapter 3).
+      expect(s.map, step).toBe(step === 'finale' ? 'chambre_faux' : raw.map);
       expect(s.playerName, step).toBe(raw.playerName);
       expect(s.playerChar, step).toBe('noa');
       expect(Array.isArray(s.souvenirs) && Array.isArray(s.cleared), step).toBe(true);
-      // Every flag survives, except the finale's moment, which moves from 3 to 9.
+      // Every flag survives, except what the v1.1 finale had seen (fin_*): its moment stays 3 (REAL.i3).
       const flags = { ...raw.flags };
-      if (step === 'finale') flags.interlude = REAL.finale;
+      if (step === 'finale') {
+        delete flags.fin_room;
+        expect(s.flags.interlude, step).toBe(REAL.i3);
+      }
       expect(s.flags, step).toEqual(flags);
       // Saving and loading again changes nothing (no double migration).
       writeSave(s);
@@ -538,12 +543,14 @@ describe('state & saves', () => {
     deleteSave();
   });
 
-  it('keeps the v1.1 run order: interludes I and II stay 1 and 2, only the old finale moves', () => {
-    expect(migrateSave({ version: 1, flags: { interlude: 1 } }).flags.interlude).toBe(1);
-    expect(migrateSave({ version: 1, flags: { interlude: 2 } }).flags.interlude).toBe(2);
-    expect(migrateSave({ version: 1, flags: { interlude: 3 } }).flags.interlude).toBe(9);
+  it('keeps the v1.1 run order: interludes I and II stay 1 and 2, only the old finale moves (to the false dawn)', () => {
+    expect(migrateSave({ version: 1, map: 'appartement', flags: { interlude: 1 } })).toMatchObject({ map: 'appartement', flags: { interlude: 1 } });
+    expect(migrateSave({ version: 1, map: 'appartement_nuit', flags: { interlude: 2 } })).toMatchObject({ map: 'appartement_nuit', flags: { interlude: 2 } });
+    const old = migrateSave({ version: 1, chapter: 3, map: 'chambre_mina', party: ['mina'], flags: { interlude: 3, fin_room: true, fin_carnet: true, fin_route: 'aube', c3_veilleuse: true } });
+    expect(old).toMatchObject({ map: 'chambre_faux', chapter: 3, party: [], flags: { interlude: REAL.i3, c3_veilleuse: true } });
+    expect(Object.keys(old.flags).filter((k) => k.startsWith('fin_'))).toEqual([]);
     // A v2 save at interlude III (3) is not touched.
-    expect(migrateSave({ version: 2, flags: { interlude: 3 } }).flags.interlude).toBe(3);
+    expect(migrateSave({ version: 2, map: 'chambre', flags: { interlude: 3 } })).toMatchObject({ map: 'chambre', flags: { interlude: 3 } });
     expect([1, 2, 3, 4, 6].map((n) => wakePhase(n as 1 | 2 | 3 | 4 | 6))).toEqual([REAL.i1, REAL.i2, REAL.i3, REAL.i4, REAL.finale]);
   });
 

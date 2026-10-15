@@ -255,13 +255,18 @@ export function readSave(): GameState | null {
 
 /**
  * Brings a save of any older version up to SAVE_VERSION. Missing fields get their defaults (forward-compatible).
- * v1 → v2: a v1.1 run in chapters 1–3 or interludes I–II resumes as is; the v1.1 finale (interlude 3) is now 9.
+ * v1 → v2: a v1.1 run in chapters 1–3 or interludes I–II resumes as is. A save taken in the v1.1 finale (interlude 3,
+ * after the end of chapter 3) now wakes up where version 2 goes after chapter 3: the false dawn (story/fausse-aube.ts
+ * replays it from the white when a save is loaded on its maps). What the v1.1 finale had seen (fin_*) is forgotten.
  */
 export function migrateSave(raw: Partial<GameState>): GameState {
   const s: GameState = { ...newState(raw.playerName ?? ''), ...raw, flags: { ...(raw.flags ?? {}) } };
   const from = typeof raw.version === 'number' ? raw.version : 1;
   if (from < 2) {
-    if (Number(s.flags.interlude ?? 0) === 3) s.flags.interlude = 9;
+    if (Number(s.flags.interlude ?? 0) === 3) {
+      for (const k of Object.keys(s.flags)) if (k.startsWith('fin_')) delete s.flags[k];
+      Object.assign(s, { chapter: 3, map: 'chambre_faux', x: 2 * 16 + 8, y: 5 * 16 + 14, dir: 'up', party: [] });
+    }
   }
   s.version = SAVE_VERSION;
   return s;
