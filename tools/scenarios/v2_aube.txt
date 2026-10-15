@@ -1,0 +1,670 @@
+# Version 2, the whole night (docs/HISTOIRE.md § 3.1, production lot 5 « Fini quand »): a NEW GAME goes from the title
+# screen to the end credits through the six chapters, crossing every transition for real — prologue ─ enterDream(1) ─▶
+# ch. 1 ─ wakeUp(1) ─▶ I ─▶ ch. 2 ─▶ II ─▶ ch. 3 ─ wakeUp(3) ─▶ the false dawn ─▶ III ─ enterDream(4) ─▶ ch. 4 ─
+# wakeUp(4) ─▶ IV ─ enterDream(5) ─▶ ch. 5 ─ fallInto(6) ─▶ ch. 6 ─ « Ouvrir les yeux » ─ wakeUp(6) ─▶ the finale
+# (v1.1 « Le carnet » until lot 9) ─▶ the epilogue ─▶ finishGame('aube') ─▶ the credits. God mode; inside the chapters,
+# long walks and the middle of each chapter are skipped with flags and loads (each skip is commented), never a
+# transition. Every chapter entry checks its autosave. Takes about 25 minutes: run it alone (--jobs 1).
+query: debug=title&sheep=auto&lang=fr
+wait:1500
+eval: window.V = window.__veilleuse
+assert: V.scene() === 'TitleScene'
+KeyZ
+waitfor: V.game.top.constructor.name === 'NameEntryScene'
+wait:500
+KeyS
+KeyA
+KeyC
+KeyH
+KeyA
+wait:300
+Enter
+wait:800
+KeyZ
+waitfor: V.scene() === 'WorldScene' && V.G.state.map === 'chambre'
+god
+auto
+shot:prologue
+assert: V.G.state.playerName === 'sacha' && V.G.meta.runInProgress && !V.G.state.flags.interlude
+interact:bed
+auto
+interact:bed
+auto
+choose:0
+# --- Chapter 1 « Le Pays de Coton » (enterDream(1)): the tutorial fight, then straight to the Closet Monster on the hill
+zuntil: V.G.state.chapter === 1 && V.G.state.map === 'prairie' && V.scene() === 'Battle'
+assert: V.G.state.flags.interlude === 0
+auto
+write:joie
+auto
+menu:3
+choose:0
+auto
+assert: V.G.state.flags.c1_tutorial === true
+shot:ch1
+eval: (V.G.state.flags.c1_mina = true, V.G.state.keyItems.push('veilleuse_poche'), V.G.state.party = ['mina'], 1)
+load:colline/summit
+wait:800
+auto
+eval: V.world.setFollower('mina')
+interact:closet_door
+auto
+write:joie
+auto
+write:joie
+auto
+write:joie
+auto
+write:joie
+auto
+write:joie
+auto
+menu:3
+choose:0
+zuntil: V.scene() === 'ImageScene'
+shot:souvenir1
+zuntil: V.G.state.flags.interlude === 1 && V.G.state.map === 'chambre' && !V.dialogue.busy && V.world.busy === 0
+shot:interlude1
+assert: V.G.state.flags.c1_placard_spared === true && V.G.state.party.length === 0
+# --- Interlude I « Le frigo » (wakeUp(1)) and Interlude II « La porte » (3:33)
+god
+auto
+go:8/3
+ArrowUp:120
+KeyZ
+waitfor: V.G.state.map === 'appartement'
+auto
+go:26/4
+ArrowUp:120
+KeyZ
+auto
+assert: V.G.state.flags.i1_note === true
+go:6/3
+ArrowUp:120
+KeyZ
+waitfor: V.G.state.map === 'chambre'
+auto
+interact:bed
+auto
+choose:0
+# --- Chapter 2 « La Forêt de Crayons » (enterDream(2)): straight to Gomme in the workshop
+zuntil: V.G.state.chapter === 2 && V.G.state.map === 'lisiere' && V.world.busy === 0 && !V.dialogue.busy
+assert: V.readSave().chapter === 2 && V.readSave().map === 'lisiere' && V.G.state.flags.interlude === 0
+shot:ch2
+eval: (Object.assign(V.G.state.flags, { c2_flowers: true, c2_freeze: true, c2_hibou_met: true, c2_lanterns_ok: true, c2_oubli: true }), V.G.state.party = ['mina'], 1)
+load:atelier/south
+wait:800
+auto
+eval: V.world.setFollower('mina')
+interact:gomme_boss
+auto
+write:tristesse
+auto
+write:tristesse
+auto
+write:garder
+auto
+eval: V.game.top.enemies[0].forceSpare = true
+menu:3
+choose:0
+zuntil: V.scene() === 'ImageScene'
+shot:souvenir2
+zuntil: V.G.state.flags.interlude === 2 && V.G.state.map === 'chambre' && !V.dialogue.busy && V.world.busy === 0
+shot:interlude2
+assert: V.G.state.flags.c2_gomme_spared === true && V.G.state.party.length === 0
+interact:phone
+zuntil: V.game.top.constructor.name === 'PhoneScene' && V.game.top.mode === 'choose'
+choose:0
+zuntil: V.scene() === 'WorldScene' && !V.dialogue.busy && V.world.busy === 0
+assert: V.G.state.flags.i2_voicemail === true
+go:8/3
+ArrowUp:120
+KeyZ
+waitfor: V.G.state.map === 'appartement_nuit'
+auto
+interact:dodo_corridor
+auto
+go:16/5
+ArrowRight:600
+wait:300
+auto
+assert: V.G.state.flags.i2_tv === true && V.G.state.flags.i2_dodo_back === true
+go:6/3
+ArrowUp:120
+KeyZ
+waitfor: V.G.state.map === 'chambre'
+auto
+interact:bed
+auto
+choose:0
+# --- Chapter 3 « L'Hôpital de Papier » (enterDream(3)): to room 304 and the souvenir, then the short battle against
+# Dodo: « pardon » three times, he gives in (« D'accord. Tu l'as dit. C'est fini. Réveille-toi. »), [Se réveiller],
+# the door of light → wakeUp(3)
+zuntil: V.G.state.chapter === 3 && V.G.state.map === 'ruines' && V.world.busy === 0 && !V.dialogue.busy
+assert: V.readSave().chapter === 3 && V.readSave().map === 'ruines' && V.G.state.flags.interlude === 0
+shot:ch3
+eval: (Object.assign(V.G.state.flags, { c3_hospital_seen: true, c3_hosp_in: true, c3_corridor: true, c3_door304: true, c3_mina_erased: true, c3_loop: 3 }), V.G.state.party = [], V.world.setFollower(null), 1)
+load:chambre_304/door
+wait:800
+auto
+interact:r304_light
+zuntil: V.scene() === 'ImageScene'
+shot:souvenir3
+zuntil: V.scene() === 'Battle'
+auto
+menu:3
+choose:0
+auto
+menu:3
+choose:0
+auto
+menu:3
+choose:0
+auto
+menu:3
+choose:0
+auto
+write:pardon
+auto
+write:pardon
+auto
+write:pardon
+auto
+shot:giveup
+choose:0
+auto
+assert: V.G.state.flags.c3_dawn_ready === true && !V.G.state.flags.fa_reste
+# --- The false dawn (wakeUp(3) → STORY.wake[3], fausse-aube.ts): from the white, Maman already on the bed
+go:27/9
+ArrowRight:1200
+zuntil: V.G.state.map === 'chambre_faux' && V.world.busy === 0 && !V.dialogue.busy
+shot:dawn
+assert: V.G.state.flags.fa_debut === true && V.G.state.flags.fa_maman === true && V.G.state.flags.interlude === 3
+# --- La fausse aube (6:00): the bedroom too beautiful, the apartment without Mina's door, Maman in the kitchen
+interact:fa_fenetre
+auto
+interact:fa_fenetre
+auto
+interact:fa_fenetre
+auto
+shot:fa-chambre
+interact:fa_photo
+auto
+choose:0
+auto
+assert: V.G.state.flags.fa_photo === true && V.readSave().map === 'chambre_faux' && V.readSave().flags.fa_debut === true
+go:8/3
+ArrowUp:120
+KeyZ
+waitfor: V.G.state.map === 'appartement_faux'
+auto
+assert: V.G.state.flags.fa_appart === true
+interact:fa_mur_mina
+auto
+interact:fa_mur_mina
+auto
+interact:fa_mur_mina
+auto
+shot:fa-mur
+go:29/5
+interact:fa_gaziniere
+auto
+choose:0
+auto
+interact:maman
+auto
+choose:1
+auto
+assert: V.G.state.flags.fa_bras === true && !V.G.state.flags.fa_calin
+interact:maman
+auto
+choose:0
+zuntil: V.scene() === 'ImageScene'
+wait:2500
+shot:faux-aube
+zuntil: V.scene() !== 'ImageScene'
+waitfor: V.game.top.phase === 'stopped' && V.game.top.stopT > 80
+shot:faux-generique
+assert: V.game.top.lines.some(([t]) => t === 'Mina ……… introuvable') && V.G.state.flags.fa_tours === 1
+ArrowRight
+wait:200
+KeyZ
+wait:2500
+shot:rewind
+zuntil: V.game.top.constructor.name === 'CrossOutPage'
+wait:2500
+shot:fin-raturee
+zuntil: V.G.state.map === 'chambre' && V.G.state.flags.interlude === 3
+auto
+shot:interlude3
+assert: V.G.state.flags.fa_fin === true && V.G.meta.fauxGenerique >= 1 && !V.G.meta.endings.length
+# --- Interlude III « Le sac » (4:06), played at the end of the false dawn
+auto
+shot:i3-wake
+interact:dodo_plush
+auto
+choose:0
+auto
+assert: V.G.state.flags.i3_dodo === true && V.G.state.flags.i3_ventre === 1
+interact:phone
+zuntil: V.game.top.constructor.name === 'PhoneScene' && V.game.top.mode === 'browse'
+KeyZ
+zuntil: V.dialogue.choices
+choose:0
+zuntil: V.game.top.mode === 'choose'
+choose:0
+zuntil: V.game.top.mode === 'browse'
+shot:i3-thread
+ArrowLeft
+wait:300
+ArrowRight
+zuntil: V.game.top.mode === 'browse'
+shot:i3-calls
+KeyZ
+zuntil: V.game.top.mode === 'browse'
+KeyX
+auto
+assert: V.G.state.flags.i3_reply === 'pardon' && V.G.state.flags.i3_appel === true && !V.G.state.flags.i3_porte
+interact:n_photo
+auto
+interact:n_photo
+auto
+interact:n_photo
+zuntil: V.scene() === 'ImageScene'
+wait:800
+shot:i3-photo
+auto
+assert: V.G.state.flags.i3_photo === true && V.G.state.flags.i3_porte === true
+shot:i3-door
+interact:n_porte
+wait:1500
+auto
+assert: V.G.state.map === 'appartement_tard'
+shot:i3-hall
+interact:t_placard
+auto
+choose:0
+auto
+choose:0
+auto
+choose:0
+auto
+choose:0
+auto
+choose:0
+auto
+choose:0
+auto
+shot:i3-bag
+choose:0
+zuntil: V.scene() === 'ImageScene'
+wait:1200
+shot:i3-polaroid
+auto
+assert: V.G.state.flags.i3_sac === true && V.G.state.flags.i3_sac_couronne && V.G.state.flags.i3_sac_telephone
+go:6/3
+ArrowUp:120
+KeyZ
+wait:1500
+auto
+assert: V.G.state.map === 'chambre'
+interact:dodo_plush
+auto
+shot:i3-dodo
+choose:0
+zuntil: V.G.state.chapter === 4 && V.G.state.map === 'maison_feutre'
+wait:1500
+shot:i3-ch4
+assert: V.G.state.flags.i3_fin === true && V.G.state.flags.interlude === 0
+# --- Chapter 4 « La Maison Cousue »: entered for real from Interlude III; the 41 nights are skipped (flags of Night 35,
+# La Couseuse spared, the nightlight in Noa's hands, three knocks counted) up to the end of the knocking corridor.
+auto
+assert: V.G.state.chapter === 4 && V.G.state.flags.c4_intro && V.readSave().chapter === 4
+eval: (Object.assign(V.G.state.flags, { c4_diner_vu: true, c4_diner_fait: true, c4_maman: 'merci', c4_nuit: 35, c4_nuit_fait: 35, c4_couseuse: 'epargnee', c4_t3: true, c4_veilleuse: true, c4_coups_debut: true, c4_coups_intro: true, c4_code: true, c4_coups: 3, c4_mina_dort: true }), Object.assign(V.G.state.spares, { couseuse: 1, poupee_maman: 1 }), V.G.state.party = [], V.world.setFollower(null), 1)
+load:couloir_coups/fin
+wait:800
+auto
+go:63/4
+wait:300
+zuntil: V.scene() === 'Battle'
+auto
+write:peur
+auto
+write:tristesse
+auto
+write:tristesse
+auto
+write:rendre
+auto
+assert: V.game.top.enemies[0].spareable
+menu:3
+choose:0
+zuntil: V.game.top.constructor.name === 'ImageScene'
+wait:2500
+shot:souvenir4
+auto
+# --- Interlude IV « Le placard » (4:44): wakeUp(4)
+waitfor: V.G.state.flags.interlude === 4 && V.G.state.map === 'chambre'
+assert: V.G.state.flags.c4_fin === true && V.G.state.flags.c4_petit_homme === 'epargne' && V.G.state.souvenirs.includes('lumiere')
+# Interlude IV: the whole interlude, Noa knocks twice (« Je suis là. »), then Dodo, and chapter 5 (enterDream(5))
+auto
+shot:i4-wake
+interact:n_armoire
+auto
+interact:n_boite_mots
+auto
+interact:n_boite_veilleuse
+auto
+interact:n_thermometre
+auto
+choose:0
+auto
+interact:n_bureau
+auto
+choose:0
+auto
+assert: V.G.state.flags.i4_armoire && V.G.state.flags.i4_mots && V.G.state.flags.i4_boite && V.G.state.flags.i4_thermo
+shot:i4-room
+interact:n_porte
+wait:1500
+auto
+assert: V.G.state.map === 'appartement_tard'
+shot:i4-hall
+interact:t_frigo
+auto
+choose:0
+auto
+interact:gaziniere
+zuntil: V.scene() === 'PaperScene'
+wait:1500
+shot:i4-mot
+auto
+assert: V.G.state.flags.i4_mot === true
+interact:t_porte_maman
+auto
+choose:0
+wait:1500
+auto
+assert: V.G.state.map === 'chambre_maman'
+shot:i4-maman
+interact:reveil
+zuntil: V.scene() === 'PaperScene'
+wait:1200
+shot:i4-postit
+auto
+choose:0
+auto
+assert: V.G.state.flags.i4_reveil && V.G.state.flags.i4_pile
+interact:m_miroir
+zuntil: V.scene() === 'ImageScene'
+wait:1200
+shot:i4-chut
+auto
+interact:m_kit
+auto
+interact:m_couture
+auto
+interact:m_dents
+auto
+choose:0
+auto
+interact:m_commode
+auto
+choose:0
+auto
+interact:m_chaise
+auto
+interact:m_planning
+auto
+shot:i4-maman2
+assert: V.G.state.flags.i4_dessin && V.G.state.flags.i4_kit && V.G.state.flags.i4_dents && V.G.state.flags.i4_lettre && V.G.state.items.includes('bonbon')
+go:6/8
+ArrowDown:500
+wait:1500
+auto
+assert: V.G.state.map === 'appartement_tard'
+go:6/3
+ArrowUp:120
+KeyZ
+wait:1200
+zuntil: V.dialogue.choices
+shot:i4-knock
+choose:0
+zuntil: V.game.top.answering && !V.dialogue.busy
+shot:i4-answer
+ArrowRight
+KeyZ
+auto
+assert: V.G.state.flags.i4_knock === 'deux'
+shot:i4-after
+interact:dodo_plush
+auto
+choose:0
+auto
+shot:i4-dodo
+choose:0
+auto
+assert: V.G.state.flags.i4_fin === true
+assert: V.world.map.id === 'plage' && V.G.state.chapter === 5 && V.G.state.flags.c5_intro
+# --- Chapter 5 « La Marée Blanche »: entered for real from Interlude IV. Mina of before on the beach; the tide, the
+# airlock (the long way: Noa said he has a fever) and the lake are skipped (flags) up to the room of glass.
+waitfor: V.world.map.id === 'plage' && V.G.state.flags.c5_intro && !V.dialogue.busy && V.world.busy === 0
+assert: V.G.state.chapter === 5 && V.readSave().chapter === 5 && V.G.state.flags.interlude === 0
+eval: V.G.state.cleared.push('c5_crabe_1', 'c5_mouette_1', 'c5_mouette_2', 'c5_plage_duo', 'c5_gel_1', 'c5_gel_2', 'c5_masque_1', 'c5_masque_2', 'c5_noire_1', 'c5_noire_2', 'c5_thermo_lac', 'c5_gel_lac')
+eval: V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => V.world.removeEntity(e))
+shot:ch5
+interact:mina_avant
+auto
+eval: (Object.assign(V.G.state.flags, { c5_sieste: true, c5_serviette: 3, c5_nulle: true, c5_maree: true, c5_drap: true, c5_coquillages: 12, c5_donnes: 12, c5_mina_parle: 4, c5_fil_vu: true, c5_portail: true, c5_fievre: true, c5_thermo_fait: true, c5_porte_1: 'fermee', c5_porte_2: 'fermee', c5_porte_3: 'fermee', c5_porte_4: 'fermee', c5_porte_5: 'ouverte', c5_sas_dodo: true, c5_lac: true, c5_rive: true, c5_parents: true, c5_corrige: 1, c5_corrige_chaise: true }), 1)
+load:chambre_verre/entree
+wait:800
+auto
+interact:silhouette
+auto
+choose:0
+zuntil: V.game.top.tracing && !V.dialogue.busy
+KeyZ:5200
+zuntil: V.game.top.tracing && V.game.top.tracing.who === 'noa' && !V.dialogue.busy
+KeyZ:4500
+waitfor: V.game.top.result.coughed === true
+wait:1600
+auto
+assert: V.G.state.flags.c5_visite && V.world.map.id === 'chambre_verre'
+go:11/12
+wait:300
+auto
+assert: V.game.top.enemies && V.game.top.enemies[0].def.id === 'vitre'
+write:tristesse
+auto
+write:tristesse
+auto
+write:je ne sais pas
+auto
+assert: V.game.top.enemies[0].spareable
+menu:3
+choose:0
+zuntil: V.game.top.constructor.name === 'ImageScene'
+wait:2500
+shot:souvenir5
+auto
+assert: V.G.state.flags.c5_vitre === 'epargnee' && V.G.state.souvenirs.includes('vitre') && V.G.state.flags.c5_fin
+# --- Chapter 6 « Le Ventre de Dodo »: Noa does not wake up, he falls (fallInto). T7 in the hollow of the seam; the
+# wadding, the music box and the corridor of the 41 doors are skipped (flags: « Laquelle est vraie ? » answered « Je ne
+# sais pas ») up to the Pile, the voice chamber and the threshold.
+zuntil: V.G.state.chapter === 6 && V.world.map && V.world.map.id === 'couture'
+wait:2000
+shot:ch6
+auto
+assert: V.G.state.flags.c6_intro && V.readSave().chapter === 6 && V.readSave().map === 'couture' && V.G.state.flags.interlude === 0
+go:9/6
+wait:400
+auto
+go:12/6
+wait:400
+auto
+go:15/7
+wait:400
+auto
+go:18/7
+wait:400
+auto
+go:19/7
+waitfor: V.dialogue.busy
+zuntil: V.G.state.flags.c6_t7 === true
+auto
+shot:t7
+eval: (Object.assign(V.G.state.flags, { c6_ouate_vu: true, c6_couture_vue: true, c6_nuit1: true, c6_bocal0: true, c6_couture: true, c6_bocaux: 8, c6_boite_vue: true, c6_peigne: true, c6_dent_1: true, c6_dent_2: true, c6_dent_3: true, c6_dents: 3, c6_boite: true, c6_couloir: true, c6_fourche: true, c6_ecoute_haut: true, c6_ecoute_bas: true, c6_appel: true, c6_fenetres: true }), V.G.meta.callVersion = 'sais_pas', 1)
+load:couloir_41/bout
+wait:800
+auto
+eval: V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => V.world.removeEntity(e))
+go:20/27
+interact:pile
+auto
+write:joie
+auto
+write:garder
+auto
+menu:3
+choose:0
+auto
+assert: V.G.state.flags.c6_pile === true && V.G.state.keyItems.includes('pile_chargee')
+go:25/24
+ArrowUp:500
+waitfor: V.world.map.id === 'voix'
+zuntil: !V.dialogue.busy && V.G.state.flags.c6_voix_vue
+auto
+go:15/18
+ArrowUp:400
+zuntil: V.game.top.constructor.name === 'NotebookPick'
+wait:600
+shot:seuil
+KeyZ
+zuntil: V.scene() === 'Battle'
+assert: V.G.state.flags.c6_regarder
+# --- The final battle (dodo_v2): the sheep, DORMIR, the knocks in the dark (Noa knocked twice in Interlude IV: only
+# the « bonne nuit » round), her words and the Pile chargée; « Ouvrir les yeux ».
+auto
+write:joie
+auto
+write:tristesse
+auto
+write:colere
+auto
+assert: V.game.top.enemies[0].def.sprite === 'b_dodo_torn'
+write:Dors.
+auto
+write:Arrête d'appeler.
+auto
+write:Demain.
+auto
+assert: V.game.top.menuLabels[0] === 'FRAPPER'
+menu:0
+zuntil: V.game.top.answering && !V.dialogue.busy
+shot:coups
+ArrowRight
+ArrowRight
+KeyZ
+wait:2500
+auto
+assert: V.game.top.menuLabels[1] === 'ÉCRIRE'
+write:je suis là
+auto
+menu:2
+wait:300
+eval: V.game.top.list.idx = V.game.top.list.items.indexOf('Pile chargée')
+KeyZ
+auto
+write:bonne nuit
+auto
+write:pardon
+auto
+write:merci
+auto
+assert: V.game.top.menuLabels[3] === 'OUVRIR LES YEUX'
+menu:3
+auto
+shot:ouvrir
+choose:0
+# --- Finale « Le carnet » (5:52): wakeUp(6), the version 1.1 finale until production lot 9 rewrites it
+zuntil: V.G.state.flags.interlude === 9 && V.G.state.map === 'chambre'
+assert: V.G.state.flags.fin_route === 'aube' && V.G.state.flags.c6_final
+auto
+shot:finale
+go:8/3
+ArrowUp:120
+KeyZ
+waitfor: V.G.state.map === 'appartement_aube'
+auto
+go:10/3
+ArrowUp:120
+KeyZ
+zuntil: V.dialogue.choices
+choose:0
+waitfor: V.G.state.map === 'chambre_mina'
+auto
+interact:carnet
+zuntil: V.game.top.constructor.name === 'PoemScene'
+shot:poeme
+KeyZ
+wait:200
+KeyZ
+wait:200
+KeyZ
+wait:200
+KeyZ
+wait:200
+KeyZ
+wait:200
+KeyZ
+zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'fin_aube'
+wait:2000
+shot:fin-aube
+# --- Épilogue « Une veilleuse neuve »
+zuntil: V.G.state.map === 'bazar' && V.world.busy === 0 && !V.dialogue.busy
+shot:bazar
+interact:vl_lune
+zuntil: V.dialogue.choices
+choose:0
+auto
+go:10/5
+ArrowUp:150
+KeyZ
+zuntil: V.dialogue.choices
+choose:0
+auto
+assert: V.G.state.flags.ep_paid === true
+go:7/7
+ArrowDown:600
+waitfor: V.G.state.map === 'jardin'
+auto
+go:19/5
+ArrowUp:300
+wait:300
+auto
+assert: V.G.state.flags.ep_maman_wait === true
+go:19/4
+interact:mina_stone
+zuntil: V.dialogue.choices
+choose:0
+zuntil: V.dialogue.choices
+choose:0
+zuntil: V.dialogue.choices
+shot:dodo-pierre
+choose:1
+auto
+assert: V.G.state.flags.ep_poem === true
+interact:maman
+zuntil: V.dialogue.choices
+choose:0
+zuntil: V.scene() === 'ImageScene'
+wait:2000
+shot:fin-jardin
+zuntil: V.scene() === 'CreditsScene'
+wait:1500
+shot:credits
+assert: V.G.meta.endings.includes('aube') && !V.G.meta.runInProgress && V.readSave() === null
+KeyZ:15000
+zuntil: V.scene() === 'TitleScene'
+shot:titre
+assert: !V.G.meta.runInProgress && V.G.meta.endings.length === 1 && V.G.meta.fauxGenerique === 1
