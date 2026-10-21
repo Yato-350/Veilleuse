@@ -27,7 +27,7 @@ import { epilogue, EPILOGUE_DEBUG } from './epilogue';
  *   i1_peluche (0–2: Dodo found at the foot of the bed, then the label « N… »), i1_dodo_remis (put back on the pillow)
  * Flags (Interlude II, i2_*): i2_out, i2_coups (three knocks in Mina's wall), i2_voicemail, i2_fil (Maman's thread
  *   read back a year), i2_tv, i2_loop, i2_reflet (the reflection with closed eyes), i2_dodo_gone / i2_dodo_back
- * Counters <moment>_n_<prop> (moment p, i1, i2, fin) pick the line of each inspection.
+ * Counters <moment>_n_<prop> (moment p, i1, i2, aube) pick the line of each inspection.
  */
 
 export { REAL, isFinale } from './common';
@@ -36,7 +36,7 @@ const flag = (k: string): boolean => !!G.state.flags[k];
 const num = (k: string): number => Number(G.state.flags[k] ?? 0);
 
 /** Prefix of the inspection counters of each real-world moment. */
-const MOMENT: Record<number, string> = { [REAL.prologue]: 'p', [REAL.i1]: 'i1', [REAL.i2]: 'i2', [REAL.finale]: 'fin' };
+const MOMENT: Record<number, string> = { [REAL.prologue]: 'p', [REAL.i1]: 'i1', [REAL.i2]: 'i2', [REAL.finale]: 'aube' };
 
 /** How many times this was inspected in this moment (then counts it). */
 function nth(key: string): number {
