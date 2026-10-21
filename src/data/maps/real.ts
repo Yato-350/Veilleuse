@@ -36,6 +36,17 @@ const byNight =
 /** An invisible interactable on a door tile of the top wall, with an id (bot scenarios). */
 const DOOR_AT = (id: string, x: number, script: Script): PropDef => ({ id, sprite: '', x, y: 2, script });
 
+/**
+ * Dodo sitting on the bed. His footprint is the right half of the bed's lower tile (the sprite is shifted back over
+ * the bed): from the side of the bed the player reaches Dodo, from below the bed itself.
+ */
+const PLUSH = (sprite: string, oy: number, o: Partial<PropDef>): PropDef => ON(sprite, 1.5, 4, oy, { id: 'dodo_plush', w: 0.5, ox: -4, ...o });
+/**
+ * The wall the bed is pushed against: the wall tiles above the bed cannot be faced (bed and nightstand stand in
+ * front of them), so the wall answers on the left side of the room, at the foot of the bed.
+ */
+const BED_WALL = (id: string, script: Script): PropDef => ({ id, sprite: '', x: 0, y: 5, script });
+
 const REAL_LEGEND = {
   T: 'r_wall_top',
   W: 'r_wall',
@@ -69,10 +80,11 @@ function chambreNuit(): PropDef[] {
     P('prop_nightstand', 2, 3, { id: 'n_chevet', script: N.nightlight }),
     ON('prop_veilleuse', 2, 3, -9, { id: 'veilleuse', light: NIGHTLIGHT, script: N.nightlight, cond: () => !(iv() && G.state.flags.c4_fele) }),
     ON('prop_veilleuse_fele', 2, 3, -9, { id: 'veilleuse', light: NIGHTLIGHT, script: N.nightlight, cond: () => iv() && !!G.state.flags.c4_fele }),
-    ON('prop_dodo_plush', 1, 4, -5, { id: 'dodo_plush', script: N.dodo, cond: notIV }),
-    ON('prop_dodo_plush_decousu', 1, 4, -5, { id: 'dodo_plush', script: N.dodo, cond: iv }),
-    WALL('prop_mur_use', 1, 2, -3, { id: 'n_mur', script: N.wall }),
-    WALL('prop_calendar', 2, 2, -8, { id: 'n_calendrier', script: N.calendar }),
+    PLUSH('prop_dodo_plush', -5, { script: N.dodo, cond: notIV }),
+    PLUSH('prop_dodo_plush_decousu', -5, { script: N.dodo, cond: iv }),
+    WALL('prop_mur_use', 1, 2, -3, { script: N.wall }),
+    BED_WALL('n_mur', N.wall),
+    WALL('prop_calendar', 12, 2, -8, { id: 'n_calendrier', script: N.calendar }),
     P('prop_desk', 3, 3, { id: 'n_bureau', w: 2, script: N.desk, cond: notIV }),
     P('prop_desk_tiroir', 3, 3, { id: 'n_bureau', w: 2, script: N.desk, cond: iv }),
     ON('prop_phone', 4, 3, -12, { id: 'phone', frames: ['prop_phone', 'prop_phone_2'], frameSpeed: 30, script: N.phone, cond: notIV }),
@@ -88,7 +100,7 @@ function chambreNuit(): PropDef[] {
     WALL('prop_clock', 10, 2, -10, { id: 'n_horloge', script: N.clock }),
     P('prop_closet', 10, 3, { id: 'n_armoire', w: 2, script: N.closet, cond: notIV }),
     P('prop_closet_open', 10, 3, { id: 'n_armoire', w: 2, script: N.closet, cond: iv }),
-    P('prop_plant', 12, 3, { id: 'n_plante', script: N.plant }),
+    P('prop_plant', 12, 4, { id: 'n_plante', script: N.plant }),
     P('prop_trash', 12, 7, { id: 'n_corbeille', script: N.trash }),
     P('prop_photo', 7, 7, { id: 'n_photo', solid: false, script: N.photo }),
     // Interlude IV: what fell out of the open wardrobe, and the trail of stuffing from the bed to it.
@@ -136,21 +148,28 @@ const CHAMBRE: MapDef = {
     P('prop_bed', 1, 3, { id: 'bed', h: 2, script: R.bed }),
     P('prop_nightstand', 2, 3, { script: R.nightlight }),
     ON('prop_veilleuse', 2, 3, -9, { id: 'veilleuse', light: NIGHTLIGHT, script: R.nightlight }),
-    ON('prop_dodo_plush', 1, 4, -5, {
-      id: 'dodo_plush',
-      cond: () => (phase() === 0 ? !G.state.flags.p_dodo : phase() === 2 ? !!G.state.flags.i2_dodo_back : true),
+    // Interlude I: Dodo is not where he was left (at the foot of the bed, facing the door) until Noa puts him back.
+    PLUSH('prop_dodo_plush', -5, {
+      script: R.plush,
+      cond: () => (phase() === 0 ? !G.state.flags.p_dodo : phase() === 2 ? !!G.state.flags.i2_dodo_back : phase() !== 1 || !!G.state.flags.i1_dodo_remis),
     }),
-    WALL('prop_calendar', 2, 2, -8, { text: ['Un calendrier.', 'Il n\'a pas été tourné depuis un an. Les cases sont vides.'] }),
-    P('prop_desk', 3, 3, { w: 2, script: R.desk }),
+    PLUSH('prop_dodo_plush', 2, { script: R.plush, cond: () => phase() === 1 && !G.state.flags.i1_dodo_remis }),
+    WALL('prop_mur_use', 1, 2, -3, { script: R.wall }),
+    // The prologue without Dodo: what he used to say is one of Mina's treasure-hunt drawings, above the bed.
+    WALL('prop_dessin_chasse', 1, 2, -15, { id: 'dessin_chasse', script: R.huntDrawing, cond: () => phase() === 0 && G.meta.dodoSilent }),
+    BED_WALL('mur', R.wall),
+    WALL('prop_calendar', 12, 2, -8, { id: 'calendrier', script: R.calendar }),
+    P('prop_desk', 3, 3, { id: 'bureau', w: 2, script: R.desk }),
+    ON('prop_casque', 3, 3, -14, { ox: 6 }),
     ON('prop_phone', 4, 3, -12, { id: 'phone', frames: ['prop_phone', 'prop_phone_2'], frameSpeed: 30, script: R.phone }),
     P('prop_chair', 4, 4, { solid: false, text: 'Ta chaise. Ton sweat est roulé en boule dessus.' }),
     WALL('prop_poster', 5, 2, -4, { text: ['Un poster du système solaire.', 'Mina disait que Pluton était triste d\'être toute seule au bout.'] }),
     P('prop_shelf', 6, 3, { w: 2, script: R.shelf }),
     WALL('prop_clock', 10, 2, -10, { script: R.clock }),
-    P('prop_closet', 10, 3, { w: 2, script: R.closet }),
-    P('prop_plant', 12, 3, { text: ['Une plante. Elle a soif.', 'Toi aussi, peut-être.'] }),
+    P('prop_closet', 10, 3, { id: 'armoire', w: 2, script: R.closet }),
+    P('prop_plant', 12, 4, { text: ['Une plante. Elle a soif.', 'Toi aussi, peut-être.'] }),
     P('prop_trash', 12, 7, { text: ['La corbeille déborde de mouchoirs.', 'Et d\'un dessin froissé que tu n\'as pas réussi à jeter.'] }),
-    P('prop_photo', 7, 7, { solid: false, script: R.photo }),
+    P('prop_photo', 7, 7, { id: 'photo', solid: false, script: R.photo }),
     ]),
     ...NIGHT(chambreNuit()),
   ],
@@ -198,7 +217,8 @@ const appartProps = (night: boolean): PropDef[] => [
   P('prop_coat', 1, 3, { text: night ? ['Le manteau de Maman n\'est pas là.'] : ['Le portemanteau. Ton blouson. Une petite cape rouge, accrochée tout en bas.'] }),
   P('prop_shoes', 3, 3, { solid: false, text: night ? ['Tes chaussures. Les petites bottes jaunes ne sont plus là.', '… Ont-elles déjà été là ?'] : ['Tes baskets. Les chaussures de Maman. Une paire de petites bottes jaunes, bien rangées.'] }),
   // Hallway
-  P('prop_shelf', 7, 3, { w: 2, script: R.familyPhoto }),
+  P('prop_shelf', 7, 3, { id: 'a_etagere', w: 2, script: R.familyPhoto }),
+  WALL('prop_photo_bebe', 9, 2, -8, { id: 'a_photo_bebe', script: R.babyPhoto }),
   WALL('prop_clock', 12, 2, -10, { script: R.hallClock }),
   WALL('prop_picture', 16, 2, -10, { text: ['Un tableau : une plage, l\'été. Vous y êtes allés une fois, tous les trois.', 'Mina avait ramassé quarante-deux coquillages. Elle les avait comptés.'] }),
   P('prop_plant', 20, 3, { text: night ? ['La plante a perdu toutes ses feuilles.', 'Ce matin, elle en avait encore.'] : ['Une plante verte. Maman l\'arrose quand elle pense à elle.'] }),
@@ -215,7 +235,7 @@ const appartProps = (night: boolean): PropDef[] => [
   P('prop_lamp', 15, 7, { light: night ? undefined : { r: 34, color: '#ffe0a0' }, text: night ? 'La lampe ne s\'allume plus.' : 'Le lampadaire du salon. Sa lumière est jaune et douce.' }),
   P('prop_toybox', 22, 8, { text: ['Le coffre à jouets de Mina, rangé dans le salon.', 'Le couvercle est fermé avec du scotch. C\'est toi qui l\'as fermé.'] }),
   // Kitchen
-  P('prop_fridge', 26, 3, { script: R.fridge }),
+  P('prop_fridge', 26, 3, { id: 'a_frigo', script: R.fridge }),
   WALL('prop_drawings', 27, 2, -6, { script: R.kitchenDrawings }),
   P('prop_counter', 27, 3, { w: 2, text: ['Le plan de travail. Une pile d\'assiettes propres. Personne ne mange vraiment, ici.'] }),
   P('prop_sink', 29, 3, { text: ['L\'évier. Le robinet goutte.', 'Plic. Plic. Plic.'] }),
@@ -259,9 +279,9 @@ const APPARTEMENT: MapDef = {
   props: [
     ...appartProps(false),
     DOOR(2, R.frontDoor),
-    DOOR(10, R.minaDoor),
-    DOOR(14, R.bathroomDoor),
-    DOOR(18, R.mamanDoor),
+    DOOR_AT('a_porte_mina', 10, R.minaDoor),
+    DOOR_AT('a_sdb', 14, R.bathroomDoor),
+    DOOR_AT('a_porte_maman', 18, R.mamanDoor),
   ],
   warps: [{ x: 6, y: 2, door: true, to: 'chambre', spawn: 'door' }],
 };
@@ -287,7 +307,7 @@ const APPARTEMENT_NUIT: MapDef = {
     loop: { x: 9, y: 4, dir: 'left' },
   },
   onEnter: R.appartNuitEnter,
-  props: [...appartProps(true), DOOR(2, R.frontDoor), DOOR(14, R.bathroomDoor), DOOR(18, R.mamanDoor)],
+  props: [...appartProps(true), DOOR(2, R.frontDoor), DOOR_AT('a_sdb', 14, R.bathroomDoor), DOOR_AT('a_porte_maman', 18, R.mamanDoor)],
   warps: [{ x: 6, y: 2, door: true, to: 'chambre', spawn: 'door' }],
   triggers: [
     { x: 10, y: 2, script: R.minaDoorAjar },

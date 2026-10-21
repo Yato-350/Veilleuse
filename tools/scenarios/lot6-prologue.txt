@@ -1,0 +1,92 @@
+# Lot 6 (docs/HISTOIRE.md § 3.3): the clues of the prologue, reached the way a player reaches them (walking up to
+# each object and pressing Z, no interact:). Dodo examined from the side of the bed before he wakes up (the red seam,
+# the gnawed back), then the bed from below wakes him; the nightlight twice (« …Non ? »), the calendar (« visite ? »,
+# « elle va mieux !! »), the desk (the headphones, the drawer), the wall at the foot of the bed, the closet, the scrap
+# of photo paper, and the phone: the pinned « Mina 🐑 » thread is locked (« Pas ce soir. »), Maman's thread answers.
+query: debug=script&name=prologue_chambre&lang=fr
+wait:1500
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+assert: V.G.state.map === 'chambre' && V.G.state.flags.interlude === 0 && !V.G.state.flags.p_dodo
+# Dodo, from the side of the bed
+go:2/4
+ArrowLeft:80
+KeyZ
+auto
+assert: SAW('Une peluche de mouton') && SAW('Une couture rouge sur le ventre') && SAW('Comme rongé.') && V.G.state.flags.p_peluche === true && !V.G.state.flags.p_dodo
+shot:dodo-plush
+# The bed, from below: Dodo wakes up
+go:1/5
+ArrowUp:80
+KeyZ
+auto
+assert: SAW('Ton lit, poussé contre le mur.') && SAW('Mina m\'a donné à toi.') && V.G.state.flags.p_dodo === true
+# The nightlight, twice (save point: say no)
+go:2/4
+ArrowUp:80
+KeyZ
+auto
+choose:1
+auto
+KeyZ
+auto
+assert: SAW('Elle a toujours été là, sur ta table de nuit.')
+shot:nightlight
+choose:1
+auto
+# The calendar (on the wall by the window)
+go:12/3
+ArrowUp:80
+KeyZ
+auto
+assert: SAW('Il n\'a pas été tourné depuis un an.') && SAW('« visite ? »') && SAW('« elle va mieux !! »')
+# The desk: the headphones, then the drawer
+go:3/4
+ArrowUp:80
+KeyZ
+auto
+KeyZ
+auto
+assert: SAW('Le fil est enroulé si serré qu\'il a coupé le plastique.') && SAW('Tu sais ce qu\'il y a dedans.')
+# The wall the bed is pushed against (from the foot of the bed)
+go:1/5
+ArrowLeft:80
+KeyZ
+auto
+KeyZ
+auto
+assert: SAW('De l\'autre côté, c\'est sa chambre.') && SAW('le vieux tuyau du radiateur cogne')
+# The closet, twice
+go:10/4
+ArrowUp:80
+KeyZ
+auto
+KeyZ
+auto
+assert: SAW('Avant elle, quelqu\'un d\'autre le disait.')
+# The photo face down, twice: a scrap of photo paper
+go:7/6
+ArrowDown:80
+KeyZ
+auto
+KeyZ
+auto
+assert: SAW('une rognure de papier glacé')
+# The phone: the whole list, « Mina 🐑 » pinned and locked
+interact:phone
+zuntil: V.game.top.constructor.name === 'PhoneScene' && V.game.top.mode === 'browse'
+wait:400
+shot:phone-list
+KeyZ
+zuntil: SAW('Pas ce soir.') && V.game.top.mode === 'browse'
+ArrowDown
+wait:200
+KeyZ
+zuntil: V.game.top.constructor.name === 'PhoneScene' && V.game.top.mode === 'choose'
+shot:phone-maman
+choose:0
+zuntil: V.scene() === 'WorldScene' && !V.dialogue.busy && V.world.busy === 0
+assert: typeof V.G.state.flags.p_reply === 'string' && V.G.state.flags.p_reply !== 'rien'

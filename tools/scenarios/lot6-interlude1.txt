@@ -1,0 +1,82 @@
+# Lot 6 (docs/HISTOIRE.md § 3.5): Interlude I « Le frigo », 14:06, reached by walking and pressing Z. Back to bed too
+# early: « Pas maintenant. Pour l'instant. » (the tic). Dodo is not on the pillow any more (at the foot of the bed,
+# facing the door), then the label « N… ». The calendar by day (« visite ? », crossed out three times). In the
+# hallway: the little photo of the boy and his sheep (« Tu ne te souviens pas de cette photo. »), the fridge note
+# then its back (crossed out, unreadable), Mina's locked door, Maman's door without a lock; the phone and its list.
+query: debug=script&name=interlude1_chambre&lang=fr
+wait:1500
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+assert: V.G.state.map === 'chambre' && V.G.state.flags.interlude === 1
+shot:room
+# The bed, too early
+go:1/5
+ArrowUp:80
+KeyZ
+auto
+assert: SAW('Pas maintenant. Pour l\'instant.')
+# Dodo, from the side: moved, then the label
+go:2/4
+ArrowLeft:80
+KeyZ
+auto
+KeyZ
+auto
+assert: SAW('Il est assis au pied du lit, tourné vers la porte.') && SAW('presque effacé : N…') && V.G.state.flags.i1_dodo_remis === true
+assert: V.world.entities.find((e) => e.id === 'dodo_plush').oy === -5
+# The calendar by day
+go:12/3
+ArrowUp:80
+KeyZ
+auto
+assert: SAW('Tu ne sais plus pourquoi.')
+# The phone (the list, then Maman's question)
+interact:phone
+zuntil: V.game.top.constructor.name === 'PhoneScene' && V.game.top.mode === 'browse'
+KeyZ
+zuntil: SAW('Pas en plein jour.') && V.game.top.mode === 'browse'
+ArrowDown
+wait:200
+KeyZ
+zuntil: V.game.top.constructor.name === 'PhoneScene' && V.game.top.mode === 'choose'
+choose:0
+zuntil: V.scene() === 'WorldScene' && !V.dialogue.busy && V.world.busy === 0
+assert: typeof V.G.state.flags.i1_reply === 'string'
+# The hallway
+go:8/3
+ArrowUp:120
+KeyZ
+waitfor: V.G.state.map === 'appartement'
+auto
+go:9/3
+ArrowUp:80
+KeyZ
+auto
+KeyZ
+auto
+assert: SAW('Un petit garçon serre un mouton blanc plus gros que lui.') && SAW('Tu ne te souviens pas de cette photo.')
+shot:baby-photo
+go:10/3
+ArrowUp:80
+KeyZ
+auto
+KeyZ
+auto
+assert: SAW('C\'est fermé à clé, de toute façon.')
+go:18/3
+ArrowUp:80
+KeyZ
+auto
+KeyZ
+auto
+assert: SAW('Il n\'y a pas de serrure.')
+go:26/4
+ArrowUp:120
+KeyZ
+auto
+KeyZ
+auto
+assert: V.G.state.flags.i1_note === true && V.G.state.flags.i1_dos === true && SAW('Raturées si fort que le stylo a troué le papier.')

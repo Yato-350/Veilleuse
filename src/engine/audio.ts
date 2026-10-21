@@ -186,7 +186,8 @@ export const VOICES: Record<string, Voice> = {
   narrator: { wave: 'triangle', pitch: 330, vary: 0.02, len: 0.05, vol: 0.2 },
   noa: { wave: 'triangle', pitch: 260, vary: 0.04, len: 0.05, vol: 0.22 },
   mina: { wave: 'square', pitch: 740, vary: 0.12, len: 0.035, vol: 0.09 },
-  dodo: { wave: 'sine', pitch: 520, vary: 0.08, len: 0.06, vol: 0.25 },
+  /** Noa's blip an octave higher (docs/HISTOIRE.md § 2.8): the same voice, made small and sweet. */
+  dodo: { wave: 'triangle', pitch: 520, vary: 0.04, len: 0.05, vol: 0.24 },
   /** Mina n°366, the felt Mina (chapter 4): Mina's voice, flattened, a little lower, as if replayed. */
   mina366: { wave: 'square', pitch: 680, vary: 0.02, len: 0.045, vol: 0.08 },
   dododark: { wave: 'sawtooth', pitch: 110, vary: 0.15, len: 0.08, vol: 0.12 },

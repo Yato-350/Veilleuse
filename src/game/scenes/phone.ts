@@ -142,6 +142,8 @@ export class PhoneScene implements Scene {
   private listScroll = 0;
   /** The player scrolled the thread by hand: stop following the bottom. */
   private manual = false;
+  /** Scroll position the thread glides to (`scrollToMessage`), null = none. */
+  private aim: number | null = null;
   private resolveBrowse: ((e: PhoneEvent) => void) | null = null;
   /** Row shaking after a refused (locked) tap. */
   private refuseT = 0;
@@ -212,9 +214,21 @@ export class PhoneScene implements Scene {
     this.msgs = this.threads.get(id) ?? [];
     this.view = 'thread';
     this.manual = false;
+    this.aim = null;
     this.typingOn = false;
     this.scroll = Math.max(0, this.contentHeight() - AREA.h);
     c.unread = 0;
+  }
+
+  /**
+   * Glides the open thread up (or down) until message `index` of the thread sits near the top: the story reads back
+   * a conversation with the player (the player can still scroll by hand afterwards).
+   */
+  scrollToMessage(index: number): void {
+    let y = 4;
+    for (let i = 0; i < Math.min(index, this.msgs.length); i++) y += this.msgHeight(this.msgs[i]!);
+    this.manual = true;
+    this.aim = Math.max(0, Math.min(y - 14, this.contentHeight() - AREA.h));
   }
 
   showList(): void {
@@ -364,7 +378,13 @@ export class PhoneScene implements Scene {
     this.card = this.mode === 'choose' ? Math.min(1, this.card + 0.1) : Math.max(0, this.card - 0.12);
     if (this.view === 'thread') {
       const target = Math.max(0, this.contentHeight() - AREA.h);
-      if (!this.manual) {
+      if (this.aim !== null) {
+        this.scroll += (this.aim - this.scroll) * 0.12;
+        if (Math.abs(this.aim - this.scroll) < 0.5) {
+          this.scroll = this.aim;
+          this.aim = null;
+        }
+      } else if (!this.manual) {
         this.scroll += (target - this.scroll) * 0.2;
         if (Math.abs(target - this.scroll) < 0.5) this.scroll = target;
       } else this.scroll = Math.max(0, Math.min(target, this.scroll));
@@ -437,6 +457,7 @@ export class PhoneScene implements Scene {
     if (tapId === 'tab:messages' && this.view !== 'list') return this.switchTab('messages');
     if (tapId === 'tab:calls' && this.view !== 'calls') return this.switchTab('calls');
     if (this.view === 'thread') {
+      if (input.down('up') || input.down('down')) this.aim = null;
       if (input.down('up')) {
         this.manual = true;
         this.scroll -= 3;

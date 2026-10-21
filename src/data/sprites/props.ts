@@ -490,6 +490,7 @@ const NIGHTSTAND = (() => {
   return p.toString();
 })();
 
+/** Dodo, the plush sheep. A red seam across the belly, in big stitches: something was sewn inside (§1.1). */
 const DODO_PLUSH = `
   ..kk.kk.kk..
   .kwwkwwkwwk.
@@ -499,7 +500,7 @@ const DODO_PLUSH = `
   ..kGgggPkkPk
   .kwkGGGGkPPk
   kwwwkkkkwkk.
-  kWwwwwwwwWk.
+  kWwrwrwrwWk.
   kWWwwwwwWWk.
   .kGkWWWWkGk.
   ..kk.kk.kk..
@@ -2482,7 +2483,27 @@ const RADIATEUR = (() => {
   return p.toString();
 })();
 
+/**
+ * One of Mina's treasure-hunt drawings, taped to the wall above the bed (the prologue once Dodo has gone silent,
+ * docs/HISTOIRE.md § 3.3): a red arrow pointing down at a bed, and a little sheep waiting underneath.
+ */
+const DESSIN_CHASSE = `
+  kkkkkkkkkkkk
+  kQqqqqqqqqQk
+  kqqqqrqqqqWk
+  kqqqqrqqqqWk
+  kqqqrrrqqqWk
+  kqqqqrqqqqWk
+  kqCbbbbbbCWk
+  kqCCCCCCCCWk
+  kqCqwwwwCqWk
+  kqqwwkwwwqWk
+  kWWWdqqdWWWk
+  kkkkkkkkkkkk
+`;
+
 const NIGHT: Record<string, SpriteDef> = {
+  prop_dessin_chasse: DESSIN_CHASSE,
   prop_radiateur: RADIATEUR,
   prop_casque: CASQUE,
   prop_desk_tiroir: DESK_DRAWER,

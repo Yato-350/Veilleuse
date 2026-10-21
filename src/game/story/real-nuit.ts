@@ -10,7 +10,7 @@ import { setPageTitle } from '../meta';
 import { CountingScene, type SheepRound } from '../scenes/sheepcount';
 import { dateLabel, PhoneScene, type PhoneCall, type PhoneContact, type PhoneMessage, type PhoneReply } from '../scenes/phone';
 import { enterDream, REAL, realPhase } from './common';
-import { inBed, mamanThread, PHONE_CLOCK } from './real';
+import { inBed, leoThread, mamanThread, PHONE_CLOCK, shortDate } from './real';
 
 /**
  * The long night, in the real apartment (docs/HISTOIRE.md § 3.10, § 3.12, T2 § 2.3, T5 § 2.6, § 4 « Monde réel »):
@@ -348,40 +348,12 @@ function minaThread(): PhoneMessage[] {
   return out;
 }
 
-/** Léo, from school: one sheep a week, whatever happens. */
-function leoThread(): PhoneMessage[] {
-  return [
-    { from: 'info', text: dateLabel(121) },
-    { from: 'them', text: 'tu reviens quand au collège ?' },
-    { from: 'info', text: dateLabel(97) },
-    { from: 'them', text: 'on t\'a gardé ta place à la cantine' },
-    { from: 'them', text: 'enfin on essaie. Kenzo veut la prendre' },
-    { from: 'them', text: 'je l\'ai mordu' },
-    { from: 'them', text: 'non je rigole' },
-    { from: 'them', text: 'un peu' },
-    { from: 'info', text: dateLabel(60) },
-    { from: 'them', text: 'regarde ce mouton il a ta tête quand on te réveille en maths' },
-    { from: 'them', text: '🐑' },
-    { from: 'me', text: 'arrête avec tes moutons', status: 'Lu' },
-    { from: 'them', text: 'jamais' },
-    { from: 'info', text: dateLabel(39) },
-    { from: 'them', text: 'mouton n°47' },
-    { from: 'them', text: '🐑' },
-    { from: 'info', text: dateLabel(12) },
-    { from: 'them', text: 'mouton n°112. il est content' },
-    { from: 'them', text: 'comme toi bientôt' },
-    { from: 'them', text: '🐑' },
-  ];
-}
-
-/** A list date without its year (« 8 juil. »): the contact list has no room for more. */
-const shortDate = (n: number): string => dateLabel(n).replace(/,? \d{4}$/, '');
 
 function contacts(): PhoneContact[] {
   return [
     { id: 'mina', name: MINA, avatar: '🐑', color: '#e0834f', pinned: true, locked: !flag('i3_tel'), when: flag('i3_reply') && G.state.flags.i3_reply !== 'rien' ? PHONE_CLOCK[REAL.i3]! : shortDate(STRANGER_DAY), messages: minaThread() },
     { id: 'maman', name: 'Maman', color: '#c86a8a', when: '3:33', messages: mamanThread() },
-    { id: 'leo', name: 'Léo', color: '#5f8fd6', when: shortDate(12), unread: flag('i3_leo') ? 0 : 3, messages: leoThread() },
+    { id: 'leo', name: 'Léo', color: '#5f8fd6', when: shortDate(12), unread: flag('i3_leo') || flag('leo_lu') ? 0 : 3, messages: leoThread() },
   ];
 }
 

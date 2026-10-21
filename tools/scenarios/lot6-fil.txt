@@ -1,0 +1,36 @@
+# Lot 6 (docs/HISTOIRE.md T6 § 2.7, § 3.7 item 5): at 3:33, after the voicemail, Noa reads Maman's thread back a
+# year: « Elle va un peu mieux ❤ », « Tu tousses encore ? Alors tu ne viens pas, d'accord ? », then the messages of
+# the last evening. The pinned « Mina 🐑 » thread stays locked (« Pas cette nuit. »).
+query: debug=script&name=interlude2_fil&lang=fr
+wait:800
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+zuntil: V.game.top.constructor.name === 'PhoneScene' && V.game.top.mode === 'browse'
+KeyZ
+zuntil: SAW('Pas cette nuit.') && V.game.top.mode === 'browse'
+ArrowDown
+wait:200
+KeyZ
+zuntil: V.dialogue.choices
+choose:0
+zuntil: SAW('« Elle va un peu mieux. »')
+wait:300
+shot:mieux
+zuntil: SAW('Tu ne te souviens pas d\'avoir toussé.')
+wait:300
+shot:toux
+zuntil: SAW('Le dernier soir.')
+wait:900
+shot:dernier-soir
+zuntil: V.game.top.constructor.name === 'PhoneScene' && V.game.top.mode === 'browse' && !V.dialogue.busy
+wait:600
+shot:libre
+assert: V.G.state.flags.i2_fil === true
+assert: V.game.top.msgs.some((m) => m.text === 'Elle réclame sa veilleuse 🙂 Tu peux me l\'apporter ?') && V.game.top.msgs.some((m) => m.text === 'Tu tousses encore ? Alors tu ne viens pas, d\'accord ?')
+KeyX
+wait:300
+KeyX
+zuntil: V.scene() === 'WorldScene' && !V.dialogue.busy && V.world.busy === 0

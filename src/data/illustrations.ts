@@ -1787,10 +1787,46 @@ function paintTvScene(g: Ctx): void {
   rect(g, dx + 38, dy + 20, 4, 5, '#f8d0b0');
 }
 
+/**
+ * The frame that jumps in the middle of the family video (Interlude II, T9 § 2.10): another room, at night — a
+ * window, a bed rail, and a little girl sitting on the bed, seen from behind, in a knitted bonnet with sheep ears.
+ * No face. It lasts five frames, every ten seconds.
+ */
+function paintTvBonnet(g: Ctx): void {
+  const { x, y, w, h } = SCREEN;
+  field(g, x, y, w, h, (xx, yy) => ramp(['#2c3c4c', '#243444', '#1c2a38'], (yy - y) / h + (xx - x) / w / 4, xx, yy));
+  // window, night, a few lit windows far away
+  rect(g, x + 80, y + 8, 34, 30, '#5a6878');
+  rect(g, x + 82, y + 10, 30, 26, '#121c32');
+  rect(g, x + 96, y + 10, 2, 26, '#5a6878');
+  for (const [wx, wy] of [[85, 27], [89, 30], [101, 25], [107, 31], [104, 28]] as const) px(g, x + wx, y + wy, '#e8d080');
+  // a soft light from the left (the hallway door)
+  withAlpha(g, 0.18, () => fillP(g, ell(x + 6, y + 40, 40, 60), [x, y, x + w, y + h], '#f0e0b0'));
+  // the bed: mattress, sheet, metal rail
+  rect(g, x, y + 72, w, h - 72, '#b8c2cc');
+  rect(g, x, y + 72, w, 2, '#d8dee4');
+  rect(g, x, y + 66, w, 2, '#8a96a2');
+  for (const rx of [6, 40, 74, 108]) rect(g, x + rx, y + 66, 2, 8, '#8a96a2');
+  // the little girl, from behind: shoulders in a blue gown, the bonnet, two little sheep ears
+  const mx = x + 52;
+  const my = y + 86;
+  fillP(g, poly([mx - 18, my, mx - 13, my - 15, mx + 13, my - 15, mx + 18, my]), [mx - 19, my - 16, mx + 19, my], '#7f9cc0');
+  fillP(g, poly([mx - 13, my - 15, mx + 13, my - 15, mx + 15, my - 10, mx - 15, my - 10]), [mx - 16, my - 16, mx + 16, my - 9], '#93aed0');
+  rect(g, mx - 1, my - 14, 2, 14, '#6a86ac');
+  fillP(g, ell(mx, my - 25, 9, 10), [mx - 10, my - 36, mx + 10, my - 14], (xx, yy) => ((yy + (xx >> 1)) % 3 === 0 ? '#d6c8ae' : '#ece0ca'));
+  rect(g, mx - 8, my - 17, 16, 3, '#cdbd9f');
+  fillP(g, poly([mx - 8, my - 29, mx - 12, my - 28, mx - 13, my - 25, mx - 8, my - 25]), [mx - 14, my - 30, mx - 7, my - 24], '#e4d6bc');
+  fillP(g, poly([mx + 8, my - 29, mx + 12, my - 28, mx + 13, my - 25, mx + 8, my - 25]), [mx + 7, my - 30, mx + 14, my - 24], '#e4d6bc');
+  px(g, mx - 11, my - 27, '#e8b8b0');
+  px(g, mx + 11, my - 27, '#e8b8b0');
+  fillP(g, ell(mx, my - 36, 3, 2.5), [mx - 4, my - 39, mx + 4, my - 33], '#d6c8ae');
+}
+
 function drawTv(g: Ctx, t: number): void {
   g.drawImage(layer('tv_body', paintTvBody), 0, 0);
   const { x, y, w, h } = SCREEN;
-  const scene = layer('tv_scene', paintTvScene);
+  const frame = t % 600;
+  const scene = frame >= 96 && frame < 101 ? layer('tv_bonnet', paintTvBonnet) : layer('tv_scene', paintTvScene);
   // Horizontal jitter on a few lines + vertical roll
   const roll = Math.floor(t * 0.4) % h;
   for (let yy = 0; yy < h; yy++) {

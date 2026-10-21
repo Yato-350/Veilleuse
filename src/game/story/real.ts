@@ -6,7 +6,7 @@ import { world } from '../overworld/world';
 import { G, maxHp, writeMeta } from '../state';
 import { isLateNight, setPageTitle } from '../meta';
 import { composePoem } from '../scenes/poem';
-import { PhoneScene, type PhoneMessage, type PhoneReply } from '../scenes/phone';
+import { dateLabel, PhoneScene, type PhoneContact, type PhoneMessage, type PhoneReply } from '../scenes/phone';
 import { enterDream, isFinale, REAL, realPhase } from './common';
 import { epilogue, EPILOGUE_DEBUG } from './epilogue';
 
@@ -16,11 +16,44 @@ import { epilogue, EPILOGUE_DEBUG } from './epilogue';
  *   0 = prologue, 1 = after chapter 1, 2 = after chapter 2, 3 = interlude III (« Le sac », 4:06),
  *   4 = interlude IV (« Le placard », 4:44), 9 = finale (dawn route). Saves of v1.1 stored the finale as 3: the save
  *   migration (state.ts) turns it into 9.
+ *
+ * Version 2 plants the clues of the real world here (docs/HISTOIRE.md § 3.3, § 3.5, § 3.7; checklist: docs/INDICES.md).
+ * Every one of them has an ordinary double (the radiator, a dying battery, the laundry, a draught, tiredness).
+ * Flags (prologue, p_*):
+ *   p_dodo           Dodo woke up (the guide); p_peluche: the plush examined before (the red seam, the gnawed back)
+ *   p_seul / p_dessin  the prologue without Dodo (G.meta.dodoSilent): the bed seen, Mina's treasure-hunt drawing read
+ *   p_reply          the answer to Maman (also i1_reply, i2_reply; see below); leo_lu: Léo's thread opened (any moment)
+ * Flags (Interlude I, i1_*): i1_note (the fridge note), i1_dos (its back, crossed out), i1_ate, i1_out,
+ *   i1_peluche (0–2: Dodo found at the foot of the bed, then the label « N… »), i1_dodo_remis (put back on the pillow)
+ * Flags (Interlude II, i2_*): i2_out, i2_coups (three knocks in Mina's wall), i2_voicemail, i2_fil (Maman's thread
+ *   read back a year), i2_tv, i2_loop, i2_reflet (the reflection with closed eyes), i2_dodo_gone / i2_dodo_back
+ * Counters <moment>_n_<prop> (moment p, i1, i2, fin) pick the line of each inspection.
  */
 
 export { REAL, isFinale } from './common';
 const phase = realPhase;
 const flag = (k: string): boolean => !!G.state.flags[k];
+const num = (k: string): number => Number(G.state.flags[k] ?? 0);
+
+/** Prefix of the inspection counters of each real-world moment. */
+const MOMENT: Record<number, string> = { [REAL.prologue]: 'p', [REAL.i1]: 'i1', [REAL.i2]: 'i2', [REAL.finale]: 'fin' };
+
+/** How many times this was inspected in this moment (then counts it). */
+function nth(key: string): number {
+  const k = `${MOMENT[phase()] ?? 'r'}_n_${key}`;
+  const n = num(k);
+  G.state.flags[k] = n + 1;
+  return n;
+}
+
+/**
+ * A version 2 ending is in the memory: an ending version 1.1 never had, or more nights than the 1.1 endings count
+ * (meta.nuits goes up by one per ending). Opens the « nouvelle partie+ » lines (docs/HISTOIRE.md § 5).
+ */
+export function sawV2Ending(): boolean {
+  const m = G.meta;
+  return m.endings.some((e) => !m.endingsV1.includes(e)) || m.nuits > 365 + m.endingsV1.length;
+}
 
 // ---------------------------------------------------------------------------
 // Small helpers
@@ -102,10 +135,13 @@ const replyDef = (n: number, id: string | undefined): ReplyDef | undefined => RE
 const sentReplies = (): string[] => [0, 1, 2].filter(answered).map((n) => replyOf(n)!);
 const ANGRY = ['laisse', 'arrete', 'pourquoi'];
 
-/** What Maman wrote at moment n (it depends on what Noa answered before). */
-function mamanWrote(n: number): PhoneMessage[] {
+/**
+ * What Maman wrote at moment n (it depends on what Noa answered before). Read back from the night of Interlude II on
+ * (`dated`), the first two moments carry their date instead of « 14 messages non lus » / « Aujourd'hui ».
+ */
+function mamanWrote(n: number, dated = false): PhoneMessage[] {
   const them = (text: string): PhoneMessage => ({ from: 'them', text });
-  if (n === 0) return [{ from: 'info', text: '14 messages non lus' }, them('Noa ?'), them('Tu dors ?'), them('Je rentre tard. Il y a des pâtes dans le frigo. Je t\'aime.')];
+  if (n === 0) return [{ from: 'info', text: dated ? dateLabel(2) : '14 messages non lus' }, them('Noa ?'), them('Tu dors ?'), them('Je rentre tard. Il y a des pâtes dans le frigo. Je t\'aime.')];
   if (n === 1) {
     const before: Record<string, string> = {
       ok: 'Merci pour ton « ok », hier.',
@@ -114,7 +150,7 @@ function mamanWrote(n: number): PhoneMessage[] {
       laisse: 'Je te laisse tranquille. Promis. Juste une question :',
     };
     const p = replyOf(0);
-    return [{ from: 'info', text: 'Aujourd\'hui' }, ...(p && before[p] ? [them(before[p])] : []), them('Tu as mangé ?')];
+    return [{ from: 'info', text: dated ? dateLabel(1) : 'Aujourd\'hui' }, ...(p && before[p] ? [them(before[p])] : []), them('Tu as mangé ?')];
   }
   if (n === 2) return [{ from: 'info', text: '3:33' }, { from: 'info', text: 'Appel manqué' }, them('Message vocal · 0:41')];
   return [{ from: 'info', text: '5:52' }, them('Je rentre.')];
@@ -128,19 +164,191 @@ function repliedAt(n: number, upTo: number): PhoneMessage[] {
   return [{ from: 'me', text: def.text, status }, ...(def.answer ?? []).map((text): PhoneMessage => ({ from: 'them', text }))];
 }
 
-function thread(upTo: number, withReply: boolean): PhoneMessage[] {
+/** Messages of the last evening, a year ago (Interlude II reads them back; chapter 4 hears them on the wall phone). */
+const LAST_EVENING = 'Elle réclame sa veilleuse 🙂 Tu peux me l\'apporter ?';
+const BETTER = 'Elle va un peu mieux ❤';
+const COUGH = 'Tu tousses encore ? Alors tu ne viens pas, d\'accord ?';
+
+/**
+ * A year of Maman's thread before the prologue (docs/HISTOIRE.md § 1.1, T6 § 2.7), read back from Interlude II on:
+ * the forty-two days at the hospital (dates counted back from the anniversary, like the « Mina 🐑 » thread of the
+ * night interludes), the last evening, then the year after, where she writes and he hardly answers.
+ */
+function mamanYear(): PhoneMessage[] {
   const out: PhoneMessage[] = [];
+  const day = (n: number): void => {
+    out.push({ from: 'info', text: dateLabel(n) });
+  };
+  const at = (time: string): void => {
+    out.push({ from: 'info', text: time });
+  };
+  const her = (...t: string[]): void => t.forEach((text) => out.push({ from: 'them', text }));
+  const me = (text: string): void => {
+    out.push({ from: 'me', text, status: 'Lu' });
+  };
+  day(408);
+  her('On est arrivées. Elle a déjà réclamé ses crayons.', 'Il y a des pâtes au frigo, et du jambon.', 'T\'es grand, tu te débrouilles, hein ?');
+  me('oui');
+  day(404);
+  her('Elle ne lâche plus Dodo.', 'Elle dit qu\'il sent la maison.');
+  me('tant mieux');
+  day(397);
+  her('Elle dessine un carnet. Pour toi. C\'est un secret, alors tu ne sais rien.');
+  me('je sais rien');
+  day(388);
+  her('Nadia, l\'infirmière de nuit, te dit bonjour.', 'Mina lui a tout raconté sur toi. Tout.');
+  day(381);
+  me('je peux venir demain ?');
+  her('Oui !!', 'Elle va être folle de joie.');
+  day(377);
+  her('Une mauvaise nuit. Ils surveillent.', COUGH);
+  me('ok');
+  day(372);
+  her(BETTER);
+  me('!!');
+  day(369);
+  her('Elle te fait dire bonne nuit. « Gros bêta », elle a dit. Je transmets.');
+  day(366);
+  at('20:12');
+  her(LAST_EVENING);
+  me('oui tt à l\'heure');
+  at('22:51');
+  her('Nadia m\'envoie dormir. Je rentre. Pose-la dans l\'entrée, je la lui apporte à l\'aube ❤');
+  day(358);
+  her('Je suis dans la cuisine, si tu veux.');
+  day(331);
+  her('J\'ai pris un travail de nuit. Aux Glycines. Je commence lundi.', 'Ça m\'aidera à ne pas penser.');
+  day(300);
+  her('Tu as mangé ?');
+  me('oui');
+  day(262);
+  her('Le collège a appelé.', 'On en parle ce soir ? Pas longtemps. Promis.');
+  day(214);
+  her('Tu as mangé ?');
+  day(181);
+  her('Six mois.', 'Je pense à elle tout le temps. À toi aussi. Tout le temps.');
+  day(150);
+  her('Il y a de la soupe. Celle que tu aimes.');
+  day(103);
+  her('Tu as mangé ?');
+  day(61);
+  her('J\'ai rêvé d\'elle, cette nuit. Elle riait.', 'Je voulais te le dire. C\'est tout.');
+  day(30);
+  her('Tu as mangé ?');
+  me('oui');
+  day(9);
+  her('Je rentre tard ❤');
+  return out;
+}
+
+/** Maman's thread up to moment `upTo`; from Interlude II on, a whole year of it (it can be read back). */
+function thread(upTo: number, withReply: boolean): PhoneMessage[] {
+  const dated = upTo >= REAL.i2;
+  const out: PhoneMessage[] = dated ? mamanYear() : [];
   for (let n = 0; n <= upTo; n++) {
-    out.push(...mamanWrote(n));
+    out.push(...mamanWrote(n, dated));
     if (n < upTo || withReply) out.push(...repliedAt(n, upTo));
   }
   return out;
 }
 
+/** A list date without its year (« 8 juil. »): the contact list has no room for more. */
+export const shortDate = (n: number): string => dateLabel(n).replace(/,? \d{4}$/, '');
+
+/** Léo, from school: one sheep a week, whatever happens (the night interludes show the same thread). */
+export function leoThread(): PhoneMessage[] {
+  return [
+    { from: 'info', text: dateLabel(121) },
+    { from: 'them', text: 'tu reviens quand au collège ?' },
+    { from: 'info', text: dateLabel(97) },
+    { from: 'them', text: 'on t\'a gardé ta place à la cantine' },
+    { from: 'them', text: 'enfin on essaie. Kenzo veut la prendre' },
+    { from: 'them', text: 'je l\'ai mordu' },
+    { from: 'them', text: 'non je rigole' },
+    { from: 'them', text: 'un peu' },
+    { from: 'info', text: dateLabel(60) },
+    { from: 'them', text: 'regarde ce mouton il a ta tête quand on te réveille en maths' },
+    { from: 'them', text: '🐑' },
+    { from: 'me', text: 'arrête avec tes moutons', status: 'Lu' },
+    { from: 'them', text: 'jamais' },
+    { from: 'info', text: dateLabel(39) },
+    { from: 'them', text: 'mouton n°47' },
+    { from: 'them', text: '🐑' },
+    { from: 'info', text: dateLabel(12) },
+    { from: 'them', text: 'mouton n°112. il est content' },
+    { from: 'them', text: 'comme toi bientôt' },
+    { from: 'them', text: '🐑' },
+  ];
+}
+
+/**
+ * The whole phone before the long night (prologue, Interludes I and II): « Mina 🐑 » pinned on top, with a padlock
+ * (docs/HISTOIRE.md T8 § 2.9: « Tu ne l'ouvres pas. Pas ce soir. »), Maman, Léo. The night interludes open it.
+ */
+function contactsAt(n: 0 | 1 | 2): PhoneContact[] {
+  const done = n === 2 ? flag('i2_voicemail') : !!replyOf(n);
+  return [
+    { id: 'mina', name: 'Mina 🐑', avatar: '🐑', color: '#e0834f', pinned: true, locked: true, preview: '', messages: [] },
+    { id: 'maman', name: 'Maman', color: '#c86a8a', when: PHONE_CLOCK[n], unread: done ? 0 : n === 0 ? 14 : 1, messages: thread(n, answered(n)) },
+    { id: 'leo', name: 'Léo', color: '#5f8fd6', when: shortDate(12), unread: flag('leo_lu') ? 0 : 3, messages: leoThread() },
+  ];
+}
+
+/** What the narration says when the pinned thread is tapped. */
+const LOCKED: string[][] = [
+  ['« Mina 🐑 ». Un petit cadenas.', 'Tu ne l\'ouvres pas. Pas ce soir.'],
+  ['« Mina 🐑 ». Le petit cadenas.', 'Pas aujourd\'hui. Pas en plein jour.'],
+  ['« Mina 🐑 ».', 'Pas cette nuit. Surtout pas cette nuit.'],
+];
+
+/** Noa browses his phone (prologue, I, II after the voicemail). Opening Maman's thread lets him answer, once. */
+async function homePhone(d: Director, n: 0 | 1 | 2): Promise<void> {
+  const ph = PhoneScene.home({ clock: PHONE_CLOCK[n]!, contacts: contactsAt(n) });
+  for (;;) {
+    const ev = await ph.browse();
+    if (ev.kind === 'close') break;
+    if (ev.kind === 'locked') await d.say(LOCKED[n]!);
+    else if (ev.kind === 'open' && ev.id === 'leo') d.set('leo_lu');
+    else if (ev.kind === 'open' && ev.id === 'maman') {
+      if (n < 2 && !answered(n)) {
+        await replyIn(d, ph, n);
+        return;
+      }
+      if (n === 2) await readBack(d, ph);
+    }
+  }
+  await ph.close();
+}
+
+/**
+ * Interlude II: Noa reads Maman's thread back, a year up (T6). The story glides to three places and says almost
+ * nothing; then the player scrolls freely.
+ */
+async function readBack(d: Director, ph: PhoneScene): Promise<void> {
+  if (flag('i2_fil')) return;
+  await d.wait(20);
+  await d.say(['Le fil de Maman. Tout en bas, son message vocal.', 'Au-dessus, une année entière.']);
+  const r = await d.ask('Remonter le fil ?', ['Remonter', 'Laisser'], undefined, { cancelIndex: 1 });
+  if (r !== 0) return;
+  d.set('i2_fil');
+  const msgs = thread(REAL.i2, true);
+  const at = (text: string): number => Math.max(0, msgs.findIndex((m) => m.text === text) - 1);
+  ph.scrollToMessage(at(BETTER));
+  await d.wait(90);
+  await d.say(['« Elle va un peu mieux. »', 'Tu y avais cru. Tu l\'avais même écrit.']);
+  ph.scrollToMessage(at(COUGH) - 1);
+  await d.wait(60);
+  await d.say('Tu ne te souviens pas d\'avoir toussé.');
+  ph.scrollToMessage(at(LAST_EVENING) - 1);
+  await d.wait(80);
+  await d.say('Le dernier soir.');
+  await d.say('…', 'noa:sad');
+}
+
 /** Maman's thread as it stands after interlude II (read by the night interludes III and IV, real-nuit.ts). */
 export const mamanThread = (): PhoneMessage[] => thread(REAL.i2, true);
 
-/** Opens the phone at moment n: Noa may answer (once — or again later if he chose silence). */
+/** Opens Maman's thread at moment n: Noa may answer (once — or again later if he chose silence). */
 async function answerMaman(d: Director, n: 0 | 1 | 2): Promise<void> {
   const prev = replyOf(n);
   const done = !!prev && prev !== 'rien';
@@ -150,6 +358,11 @@ async function answerMaman(d: Director, n: 0 | 1 | 2): Promise<void> {
     await ph.close();
     return;
   }
+  await replyIn(d, ph, n);
+}
+
+/** The reply notebook next to the open thread, Maman's answer, then the phone is put down and the narration follows. */
+async function replyIn(d: Director, ph: PhoneScene, n: 0 | 1 | 2): Promise<void> {
   await d.wait(24);
   const options = [...REPLIES[n]!.filter((r) => !r.when || r.when()), SILENCE];
   const pick = options[await ph.choose('Répondre :', options)]!;
@@ -237,8 +450,12 @@ export const chambreEnter: Script = async (d) => {
 export const bed: Script = async (d) => {
   const p = phase();
   if (p === 0) {
+    if (G.meta.dodoSilent) {
+      await bedAlone(d);
+      return;
+    }
     if (!flag('p_dodo')) {
-      await d.say(['Ton lit. Les draps sont froids.', 'Sur l\'oreiller, quelque chose te regarde.']);
+      await d.say(['Ton lit, poussé contre le mur. Les draps sont froids.', 'Sur l\'oreiller, quelque chose te regarde.']);
       await prologueDodo(d);
       return;
     }
@@ -254,8 +471,8 @@ export const bed: Script = async (d) => {
   }
   if (p === 1) {
     if (!flag('i1_note')) {
-      await d.say('Dodo est assis sur l\'oreiller. Une peluche. Juste une peluche.');
       await d.say(['Tu n\'as pas sommeil. Pas encore.', 'Le ventre vide, et la tête pleine.']);
+      await d.say('Pas maintenant. Pour l\'instant.', 'noa:tired');
       return;
     }
     const r = await d.ask('Te recoucher ?', ['Dormir', 'Pas encore'], undefined, { cancelIndex: 1 });
@@ -275,6 +492,75 @@ export const bed: Script = async (d) => {
   await d.say(['Dodo est sur ton lit, la tête tournée vers la porte.', 'Tu n\'as plus sommeil. Pour la première fois depuis longtemps.']);
 };
 
+/**
+ * Dodo, sitting on the bed (reached from the side of the bed; from below, it is the bed). What he looks like before
+ * he wakes up (T7 § 2.8: the red seam, the gnawed back), where he is in the afternoon (T2 § 2.3: moved, the label
+ * « N… »). When there is nothing new to see, it is the bed.
+ */
+export const plush: Script = async (d) => {
+  const p = phase();
+  if (p === REAL.prologue && !flag('p_dodo') && !flag('p_peluche')) {
+    d.set('p_peluche');
+    await d.say(G.meta.dodoSilent ? 'Dodo, sur ton lit. Il ne bouge pas.' : 'Une peluche de mouton, sur ton lit.');
+    await d.say(['Une couture rouge sur le ventre, à gros points.', 'Quand tu appuies, ça craque.']);
+    await d.say(['Son dos est pelé par endroits.', 'Comme rongé.']);
+    return;
+  }
+  if (p === REAL.i1 && num('i1_peluche') < 2) {
+    const n = num('i1_peluche');
+    d.set('i1_peluche', n + 1);
+    if (n === 0) {
+      await d.say(['Dodo n\'est plus sur l\'oreiller.', 'Il est assis au pied du lit, tourné vers la porte.']);
+      await d.say('Tu as dû le faire tomber en dormant. Sûrement.');
+      return;
+    }
+    await d.say('Tu le prends pour le remettre à sa place.');
+    const e = d.find('dodo_plush');
+    if (e) e.oy = -5;
+    d.set('i1_dodo_remis');
+    await d.say(['Sur l\'étiquette, un prénom au feutre, presque effacé : N…', 'Le reste est parti au lavage.']);
+    return;
+  }
+  await bed(d);
+};
+
+/**
+ * The prologue once the secret ending has been seen (G.meta.dodoSilent, docs/HISTOIRE.md § 3.3 item 9): Dodo does not
+ * wake up. What he used to say is on the wall, in Mina's hand: one of her treasure hunts.
+ */
+async function bedAlone(d: Director): Promise<void> {
+  if (!flag('p_seul')) {
+    d.set('p_seul');
+    await d.say(['Ton lit, poussé contre le mur. Les draps sont froids.', 'Sur l\'oreiller, Dodo. Une peluche. Juste une peluche.']);
+    await d.wait(40);
+    await d.say('Il ne dit rien.');
+    await d.wait(30);
+    await huntDrawing(d);
+    return;
+  }
+  if (!flag('p_dessin')) {
+    await huntDrawing(d);
+    return;
+  }
+  const r = await d.ask('Glisser sous le lit ?', ['Oui', 'Non'], undefined, { cancelIndex: 1 });
+  if (r !== 0) {
+    await d.say('Pas encore.');
+    return;
+  }
+  await d.say(['Personne ne te dit de fermer les yeux.', 'Tu les fermes quand même.']);
+  d.sfx('whoosh', { pitch: 0.5 });
+  await enterDream(d, 1);
+}
+
+/** Mina's drawing taped above the bed (the prologue without Dodo): « REGARDE SOUS LE LIT ». */
+export const huntDrawing: Script = async (d) => {
+  const first = !flag('p_dessin');
+  d.set('p_dessin');
+  await d.say(['Au-dessus du lit, un dessin de Mina, scotché au mur.', 'Une flèche rouge. Un lit. Et dessous, un petit mouton qui attend.']);
+  await d.say('En lettres énormes, au crayon violet : « REGARDE SOUS LE LIT ».');
+  if (first) await d.say(['Une chasse au trésor. Elle en faisait pour toi, avant.', 'Le scotch est neuf.']);
+};
+
 export const nightlight: Script = async (d) => {
   const p = phase();
   if (p === 2) {
@@ -284,6 +570,11 @@ export const nightlight: Script = async (d) => {
   }
   if (p === REAL.finale) {
     await d.savePoint('La veilleuse de Mina. Dehors, le ciel pâlit. Elle n\'a presque plus besoin de briller.');
+    return;
+  }
+  if (p === 0 && nth('veilleuse') > 0) {
+    await d.say('Elle a toujours été là, sur ta table de nuit.');
+    await d.savePoint('{p:30}…Non ?');
     return;
   }
   await d.savePoint(
@@ -308,7 +599,12 @@ async function prologueDodo(d: Director): Promise<void> {
   await d.say(['Pas Noa. L\'autre.', 'Celui ou celle qui tient sa main, de l\'autre côté de l\'écran.'], 'dodo:neutral');
   await d.wait(20);
   await d.say('Ah. {wave}{player}{/wave}. C\'est joli, {player}.', 'dodo:happy');
-  if (G.meta.endings.length) await d.say(['On s\'est déjà dit bonne nuit, toi et moi.', 'Tu te souviens ? Moi, je me souviens de tout.'], 'dodo:creepy');
+  if (sawV2Ending()) {
+    // Nouvelle partie+ (docs/HISTOIRE.md § 3.3 item 8): the player knows. Dodo asks for the silence.
+    await d.say(['Tu reviens.', 'Tu sais, toi.'], 'dodo:neutral');
+    await d.wait(30);
+    await d.say('{p:30}… Tu ne lui diras rien, hein ?', 'dodo:creepy');
+  } else if (G.meta.endings.length) await d.say(['On s\'est déjà dit bonne nuit, toi et moi.', 'Tu te souviens ? Moi, je me souviens de tout.'], 'dodo:creepy');
   else if (G.meta.newGames > 1) await d.say('Tu es revenu·e. Je savais que tu reviendrais.', 'dodo:happy');
   if (isLateNight()) await d.say('Il est {time}. Toi non plus, tu ne dors pas ?', 'dodo:neutral');
   await d.say(
@@ -333,20 +629,35 @@ export const desk: Script = async (d) => {
     await d.say(['Ton bureau. Tes cahiers.', 'Peut-être que tu les rouvriras. Un jour. Pas tout de suite.']);
     return;
   }
-  await d.say(['Ton bureau. Des cahiers jamais ouverts depuis la rentrée.', 'Le collège a appelé, une fois. Maman a parlé longtemps, à voix basse, dans la cuisine.']);
+  const n = nth('bureau');
+  if (n % 3 === 0) {
+    await d.say(['Ton bureau. Des cahiers jamais ouverts depuis la rentrée.', 'Le collège a appelé, une fois. Maman a parlé longtemps, à voix basse, dans la cuisine.']);
+    if (n === 0) await d.say(['Ton casque est posé dessus.', 'Le fil est enroulé si serré qu\'il a coupé le plastique.']);
+    return;
+  }
+  if (n % 3 === 1) {
+    await d.say('Le tiroir de droite est fermé.');
+    await d.say(['Tu sais ce qu\'il y a dedans.', '{p:30}Non.{p:20} Tu ne sais pas.']);
+    return;
+  }
+  await d.say(
+    p === REAL.i2
+      ? ['Ton casque. Tu ne l\'as pas mis, cette nuit.', 'Tu entends tout.']
+      : ['Ton casque. Tu le mets pour t\'endormir, pour ne rien entendre.', 'Ni la pluie, ni le radiateur. Ni le reste.'],
+  );
 };
 
 export const phone: Script = async (d) => {
   const p = phase();
   if (p === 0) {
     if (!replyOf(0)) await d.say('Ton téléphone. 14 messages non lus de « Maman ».');
-    await answerMaman(d, 0);
+    await homePhone(d, 0);
   } else if (p === 1) {
     if (!replyOf(1)) await d.say('Un nouveau message de « Maman ».');
-    await answerMaman(d, 1);
+    await homePhone(d, 1);
   } else if (p === 2) {
     if (flag('i2_voicemail')) {
-      await answerMaman(d, 2);
+      await homePhone(d, 2);
       return;
     }
     d.sfx('beep');
@@ -355,7 +666,7 @@ export const phone: Script = async (d) => {
     if (!sent.length) await d.say(['Noa… c\'est Maman.', 'Je… je sais que tu ne décroches pas. C\'est pas grave.'], 'maman:sad');
     else if (sent.every((r) => ANGRY.includes(r))) await d.say(['Noa… c\'est Maman.', 'Je sais que tu m\'en veux. Tu as le droit, tu sais.'], 'maman:sad');
     else await d.say(['Noa… c\'est Maman.', 'Tes petits messages… je les garde tous. Tous.'], 'maman:sad');
-    await d.say(['Ça fait un an demain.', 'Je rentre ce soir. Plus tôt. J\'ai demandé.'], 'maman:sad');
+    await d.say(['Ça fait un an, cette nuit.', 'Je rentre tout à l\'heure. Plus tôt. J\'ai demandé.'], 'maman:sad');
     await d.say(['On ira la voir ensemble, d\'accord ?', 'Je t\'aime, mon grand.'], 'maman:sad');
     await d.wait(30);
     await d.say('…', 'noa:sad');
@@ -387,12 +698,67 @@ export const closet: Script = async (d) => {
     await d.say(['Ton armoire. Fermée.', 'Il n\'y a pas de monstre dedans. Il n\'y en a jamais eu. Juste des pulls.']);
     return;
   }
+  if (nth('armoire') > 0) {
+    await d.say(['Avant elle, quelqu\'un d\'autre le disait. Qu\'il y avait un monstre, là-dedans.', 'Tu ne sais plus qui.']);
+    return;
+  }
   await d.say(['Ton armoire. Tu n\'aimes pas la laisser ouverte la nuit.', 'Mina disait qu\'un monstre vivait dedans. Tu lui répondais que c\'était n\'importe quoi.']);
   if (G.state.flags.c1_placard_spared) await d.say('Tu espères qu\'il va bien, le monstre.');
 };
 
+/** The calendar (prologue: T6 § 2.7 — « visite ? », crossed out; further on, « elle va mieux !! »). */
+export const calendar: Script = async (d) => {
+  const p = phase();
+  if (p === REAL.finale) {
+    await d.say(['Le calendrier de l\'année dernière.', 'Tu pourras le décrocher. Plus tard.']);
+    return;
+  }
+  if (p === REAL.i2) {
+    await d.say(['Le calendrier.', 'Dans le noir, on ne voit plus que les ratures.']);
+    return;
+  }
+  if (p === REAL.i1) {
+    await d.say(['Le calendrier, à la lumière du jour.', '« visite ? », entouré au feutre, puis raturé. Trois fois.', 'Tu ne sais plus pourquoi.']);
+    return;
+  }
+  if (nth('calendrier') > 0) {
+    await d.say('Tu ne le tournes pas.');
+    return;
+  }
+  await d.say(['Un calendrier.', 'Il n\'a pas été tourné depuis un an.']);
+  await d.say(['Un jour entouré : « visite ? ». Raturé.', 'Plus loin, ton écriture : « elle va mieux !! »']);
+};
+
+/** The wall the bed is pushed against (prologue § 3.3 item 5). Behind it, her room — and the old radiator pipe. */
+export const wall: Script = async (d) => {
+  const p = phase();
+  if (p === REAL.finale) {
+    await d.say(['Le mur contre ton lit.', 'De l\'autre côté, sa chambre. Ce matin, sa porte est ouverte.']);
+    return;
+  }
+  if (p === REAL.i2) {
+    await d.say(flag('i2_coups') ? ['Tu poses la main sur le mur.', 'Il est froid. De l\'autre côté, plus rien.'] : ['Le mur contre ton lit.', 'De l\'autre côté, sa chambre. Le silence.']);
+    return;
+  }
+  const n = nth('mur');
+  if (n === 0) {
+    await d.say(['Le mur contre ton lit.', 'Tu as poussé ton lit contre ce mur. De l\'autre côté, c\'est sa chambre.']);
+    return;
+  }
+  if (n === 1) {
+    d.sfx('pipe', { vol: 0.3 });
+    await d.say(['À hauteur d\'oreiller, la peinture est plus claire. Une tache ronde.', 'Derrière, le vieux tuyau du radiateur cogne, la nuit. Toc. Toc.']);
+    return;
+  }
+  await d.say('Ce n\'est que le radiateur.');
+};
+
 export const photo: Script = async (d) => {
   if (!isFinale()) {
+    if (phase() !== REAL.i2 && nth('photo') === 1) {
+      await d.say(['À côté du cadre, sur le parquet, une rognure de papier glacé.', 'Une petite courbe, toute fine. Bleue d\'un côté.']);
+      return;
+    }
     await d.say(['Un cadre photo, posé face contre le sol.', 'Tu ne le retournes pas.']);
     return;
   }
@@ -444,6 +810,24 @@ export const familyPhoto: Script = async (d) => {
   await d.image('photo_famille', p === REAL.finale ? ['Vous souriez tous les trois.', 'C\'était vrai. Tout ça, c\'était vrai.'] : ['Le parc, l\'été dernier. L\'été d\'avant.', 'Tu ne regardes pas trop longtemps.']);
 };
 
+/** The little photo of the hallway (T2 § 2.3): a small boy hugging a white sheep bigger than him. */
+export const babyPhoto: Script = async (d) => {
+  const p = phase();
+  if (p === REAL.i2) {
+    await d.say(['La petite photo du couloir.', 'Dans le noir, on ne voit plus le petit garçon. Seulement le mouton, tout blanc.']);
+    return;
+  }
+  if (p === REAL.finale) {
+    await d.say(['Le petit garçon et son mouton blanc, plus gros que lui.', 'Il le serre comme si on allait le lui prendre.']);
+    return;
+  }
+  if (nth('photo_bebe') === 0) {
+    await d.say(['Une petite photo au mur du couloir, dans un cadre en bois.', 'Un petit garçon serre un mouton blanc plus gros que lui. Il le tient par le cou.']);
+    return;
+  }
+  await d.say('Tu ne te souviens pas de cette photo.');
+};
+
 export const hallClock: Script = async (d) => {
   const p = phase();
   if (p === 2) await d.say(['L\'horloge du couloir indique 3h33.', 'Comme celle de ta chambre. Comme toutes les horloges.']);
@@ -474,6 +858,14 @@ export const fridge: Script = async (d) => {
     await d.paper(['Noa,', '', 'Mange quelque chose,', 's\'il te plaît.', 'Il y a des pâtes.', '', 'Je t\'aime.', '— Maman'], '');
     d.set('i1_note');
     await d.say('Tu relis le mot. Deux fois.', 'noa:sad');
+    return;
+  }
+  if (p === 1 && !flag('i1_dos')) {
+    // The back of the note (T5 § 2.6, coda § 2.11): crossed out here; read in Interlude IV; finished in the finale.
+    d.set('i1_dos');
+    await d.say(['Le mot de Maman, sous l\'aimant fraise.', 'Tu le retournes.']);
+    await d.say(['Au dos, des lignes de son écriture. Raturées.', 'Raturées si fort que le stylo a troué le papier.']);
+    await d.say('Tu ne peux rien lire.');
     return;
   }
   await d.say(['Le frigo. Des yaourts, du jus d\'orange, une boîte de pâtes.', 'Les dessins de Mina tiennent avec des aimants en forme de fruits.']);
@@ -522,6 +914,10 @@ export const minaDoor: Script = async (d) => {
     if (r === 0) await d.warp('chambre_mina', 'door', { sfx: 'door' });
     return;
   }
+  if (nth('porte_mina') > 0) {
+    await d.say(['La poignée ne tourne pas.', 'C\'est fermé à clé, de toute façon.']);
+    return;
+  }
   await d.say(['Une pancarte en carton, écrite au feutre :', '« CHAMBRE DE MINA — DÉFENSE D\'ENTRER (sauf Noa) »']);
   await d.say(['Tu poses la main sur la poignée.', '{p:30}Tu ne peux pas.'], 'noa:sad');
 };
@@ -529,7 +925,20 @@ export const minaDoor: Script = async (d) => {
 export const bathroomDoor: Script = async (d) => {
   const p = phase();
   if (p === 2) {
+    if (flag('i2_reflet')) {
+      await d.say(['Le robinet est fermé.', 'Tu ne retournes pas devant le miroir.']);
+      return;
+    }
     await d.say(['Derrière la porte de la salle de bain, l\'eau coule.', 'Personne n\'a ouvert le robinet.']);
+    const r = await d.ask('Entrer ?', ['Entrer', 'Laisser'], undefined, { cancelIndex: 1 });
+    if (r !== 0) return;
+    // T8 § 2.9: the reflection with closed eyes (a blink, tiredness — or someone pretending to sleep).
+    d.set('i2_reflet');
+    d.sfx('door', { pitch: 0.9, vol: 0.4 });
+    await d.say(['Tu entres sans allumer. Tu fermes le robinet.', 'Dans le miroir, ton reflet a les yeux fermés.']);
+    fx.pulseGlitch(4);
+    await d.wait(40);
+    await d.say(['Tu clignes des yeux.', 'Il les a ouverts. Il les a toujours eus ouverts.']);
     return;
   }
   if (p === REAL.finale) {
@@ -541,6 +950,10 @@ export const bathroomDoor: Script = async (d) => {
 
 export const mamanDoor: Script = async (d) => {
   const p = phase();
+  if (p !== REAL.finale && nth('porte_maman') > 0) {
+    await d.say(['Tu regardes la poignée.', 'Il n\'y a pas de serrure.']);
+    return;
+  }
   if (p === 2) await d.say(['La chambre de Maman.', 'Le lit n\'a pas été défait. Elle n\'est toujours pas rentrée.']);
   else if (p === REAL.finale) await d.say('La chambre de Maman. Vide. Plus pour longtemps.');
   else await d.say(['La chambre de Maman.', 'Elle travaille de nuit, maintenant. Depuis l\'année dernière. Elle dit que ça l\'aide à ne pas penser.']);
@@ -572,6 +985,17 @@ export const appartNuitEnter: Script = async (d) => {
   if (!flag('i2_out')) {
     d.set('i2_out');
     await d.say(['Le couloir est plongé dans le noir.', 'Quelque part, une télé grésille.']);
+    // § 3.7 item 1: three knocks in Mina's wall, then nothing (the old radiator pipe runs behind it).
+    await d.wait(50);
+    for (let i = 0; i < 3; i++) {
+      d.sfx('knock1', { vol: 0.6, pitch: 0.95 });
+      await d.wait(28);
+    }
+    d.set('i2_coups');
+    await d.emote('player', '!');
+    await d.say('Trois coups. Dans le mur de Mina.');
+    await d.wait(60);
+    await d.say('Puis rien.');
   }
 };
 
@@ -589,6 +1013,8 @@ export const tvWakes: Script = async (d) => {
   ]);
   d.glitch(30);
   await d.wait(30);
+  // T9 § 2.10: one frame of the video is not from that day (a little girl in a knitted bonnet, from behind).
+  await d.say(['Au milieu, une image a sauté.', 'Une seule. Tu n\'as pas eu le temps de voir.']);
   await d.say(['La vidéo s\'arrête.', 'Il ne reste que la neige, et ton reflet dedans.']);
   await d.say('…Promis.', 'noa:sad');
 };
@@ -610,6 +1036,7 @@ export const corridorLoop: Script = async (d) => {
 
 export const corridorDodo: Script = async (d) => {
   await d.say(['Dodo. Assis au milieu du couloir.', 'Il était sur ton lit. Tu en es sûr.']);
+  await d.say(['Ses pattes sont propres.', 'Le couloir est plein de poussière.']);
   await d.wait(30);
   await d.emote('dodo_corridor', '…', 60);
   await d.say('Ses yeux-boutons te regardent. Ils brillent.');
@@ -628,15 +1055,19 @@ export const minaDoorAjar: Script = async (d) => {
   await d.walk('player', 0, 1, 1.4);
 };
 
+/**
+ * Dodo speaks in the real world (T7 § 2.8): his blip, but no portrait. The plush does not move; only Noa does.
+ * In a new game after the fake credits were seen, he knows it (§ 5).
+ */
 async function interlude2Dodo(d: Director): Promise<void> {
-  const plush = d.find('dodo_plush');
-  if (plush) await d.emote('dodo_plush', '…', 50);
+  await d.emote('player', '…', 50);
   d.music('dodo');
-  await d.say('Tu sais ce qui se passe quand on se réveille, {player} ?', 'dododark:neutral');
-  await d.say(['On perd tout.', 'Les rêves s\'en vont. Les gens dedans aussi.'], 'dododark:creepy');
-  await d.say(['Mais si on ne se réveille pas…', 'si on reste bien au chaud, sous la couette…', 'alors rien ne s\'en va jamais.'], 'dodo:happy');
+  await d.say('Tu sais ce qui se passe quand on se réveille, {player} ?', 'dodoreel');
+  await d.say(['On perd tout.', 'Les rêves s\'en vont. Les gens dedans aussi.'], 'dodoreel');
+  await d.say(['Mais si on ne se réveille pas…', 'si on reste bien au chaud, sous la couette…', 'alors rien ne s\'en va jamais.'], 'dodoreel');
+  if (G.meta.fauxGenerique > 0) await d.say('Cette fois, tu sais que ça ne s\'arrête pas au générique.', 'dodoreel');
   setPageTitle('Ne pars pas');
-  await d.say('Dors, Noa. {spd:0.5}Mina t\'attend.{/spd}', 'dodo:creepy');
+  await d.say('Dors, Noa. {spd:0.5}Mina t\'attend.{/spd}', 'dodoreel');
   await d.ask('Tes paupières sont si lourdes.', ['Dormir']);
   await enterDream(d, 3);
 }
@@ -812,6 +1243,33 @@ async function mamanInvites(d: Director): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export const DEBUG: Record<string, Script> = {
+  /** The bedroom at 23:52, Dodo still asleep (lot 6 clues: plush, wall, calendar, desk, phone, nightlight). */
+  prologue_chambre: async (d) => {
+    G.state.flags.interlude = REAL.prologue;
+    d.load('chambre', 'bed');
+    await d.fadeIn(10);
+  },
+  /** The prologue without Dodo (memory: the secret ending was seen). */
+  prologue_seul: async (d) => {
+    G.meta.dodoSilent = true;
+    G.state.flags.interlude = REAL.prologue;
+    d.load('chambre', 'bed');
+    await d.fadeIn(10);
+  },
+  /** Interlude I in the bedroom (Dodo moved, the calendar by day). */
+  interlude1_chambre: async (d) => {
+    G.state.flags.interlude = REAL.i1;
+    d.load('chambre', 'bed');
+    await d.fadeIn(10);
+  },
+  /** Interlude II in the bedroom, the voicemail already heard (the phone opens on the whole year). */
+  interlude2_fil: async (d) => {
+    G.state.flags.interlude = REAL.i2;
+    G.state.flags.i2_voicemail = true;
+    d.load('chambre', 'bed');
+    await d.fadeIn(10);
+    await phone(d);
+  },
   prologue_dodo: async (d) => {
     G.state.flags.interlude = 0;
     d.load('chambre', 'bed');
