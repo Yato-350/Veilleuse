@@ -1176,7 +1176,13 @@ export const DEBUG: Record<string, Script> = {
   },
   c2_freeze: async (d) => {
     setup(d, ['c2_flowers'], 'foret', 'north');
+    // Walking up the north path, Mina behind, as when the trigger fires in play.
+    d.player.x = 40 * 16 + 8;
+    d.player.y = 8 * 16 + 14;
+    d.face('player', 'up');
+    world.resetFollower();
     await d.fadeIn(10);
+    await d.walk('player', 0, -3);
     await minaFreeze(d);
   },
   c2_bibliotheque: async (d) => {

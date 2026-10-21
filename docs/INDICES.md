@@ -116,6 +116,32 @@ Noa à côté, avec Mina.
 | — | Le Placard vaincu fond en encre : « L'encre sent le désinfectant. » | Sommet | `chapter1.ts:980` | `lot7-placard-vaincu` |
 | T7 | Dodo : « C'est l'heure de se réveiller… pour l'instant. » (existant) | Fin du chapitre | `chapterEnd`, `chapter1.ts:1002` | `v2_aube` |
 
+## Chapitre 2 — « La Forêt de Crayons » (§ 3.6, lot 7)
+
+Toujours l'acte I : une seule fausse note par endroit, chacune avec son double ordinaire (une réplique de Mina, une
+blague, une explication banale). Rien sur l'appel. Tout s'atteint en marchant et en appuyant sur A ; les scripts de debug
+`c2_chuchote`, `c2_figure`, `c2_taille`, `c2_bocal` posent Noa à côté, avec Mina (`c2_boutons` montre la frame aux
+yeux-boutons à l'arrêt). Les entités portent des ids pour le bot (`trou_chuchote`, `trou_figure`, `c2_bonnet`,
+`taille_crayon_geant`, `etagere_illisible`, `etagere_contes`, `carnet_etoiles`, `bocal_miettes`).
+
+| Twist | Indice | Où | Entité / code | Preuve |
+|---|---|---|---|---|
+| T3 | Mina : « Tu es revenu ! Tu as dormi super longtemps » (existant : la phrase de chaque nuit) | Lisière, arrivée | `intro`, `src/game/story/chapter2.ts:114` | `lot7-lisiere` |
+| T7 | Friture sur Dodo dès le ch. 2 : sur « abîmée » et sur le « moi » de « pensez à moi » (balise `{static}`) ; le « Chut. » devient « Ch—t. » | Lisière ; atelier, fin du chapitre | `chapter2.ts:136`, `:147`, `dodoHush` `:1077` | `lot7-lisiere`, `lot7-gomme` |
+| T3 | Un trou gommé chuchote des nombres : « …trois cent… soixante… » ; double : Mina, « C'est quelqu'un qui compte les moutons. Faut pas le déranger. Sinon, il doit tout recommencer depuis le début. » ; ensuite « Tu n'arrives jamais à entendre la fin. » | Forêt, trou blanc à l'est du taille-crayon | `trou_chuchote` (`src/data/maps/chapter2.ts:362`) → `erasedHole`, `chapter2.ts:313`, `:321` ; compteur `c2_chuchote` | `lot7-foret` |
+| T7 | Mina : « Qui c'est qui parle, quand c'est écrit en blanc ? …Le livre, je parie. » (3ᵉ réplique) | Forêt, parler à Mina | `MINA_LINES.foret`, `chapter2.ts:1137` | `lot7-foret` |
+| T9 | Dans l'autre trou gommé, très loin, une toute petite figure au crayon gris, de dos, bonnet à oreilles de mouton ; double : Mina, « C'est un bout de dessin que Gomme a oublié ! Il reste toujours un petit bout, quand on gomme. » ; puis elle n'y est plus (« Gomme est repassée, sûrement. ») | Forêt, trou blanc au sud-ouest | `c2_bonnet` (sprite `prop_bonnet_trou`, `src/data/sprites/props.ts:1941`, carte `maps/chapter2.ts:365`), `trou_figure` → `erasedHoleFigure`, `chapter2.ts:331` ; drapeau `c2_bonnet_vu` | `lot7-foret` |
+| § 3.6 | Les copeaux « comme des rognures d'ongles » ; double : Mina en fait des jupes aux fleurs. Tailler l'arbre-crayon rouge voisin (au choix) : l'encre rouge sombre perle de la coupe, coule le long du tronc et fait une flaque ; Mina : « Il saigne ! » puis « C'est un crayon rouge, gros bêta. C'est rouge, dedans. » et le panneau de la Lisière (« ne pas tailler les arbres SVP ») | Forêt, taille-crayon géant | `taille_crayon_geant` (`maps/chapter2.ts:354`) → `sharpener`, `bleedingTree`, `chapter2.ts:353`, `:373` ; particules `Particles.bleed` (`src/game/overworld/particles.ts:53`, gouttes `ooze` puis flaques `pool`) ; drapeaux `c2_copeaux`, `c2_taille` | `lot7-foret` |
+| § 6.4 | Avec « Réduire les flashs » : pas de secousse, pas de giclée, seulement des gouttes lentes | Même scène | `bleedingTree` (`gentle`) | `lot7-taille-doux` |
+| T3 | Mina se fige : pendant quelques images, face à toi, ses yeux sont deux boutons gris cousus d'une croix de fil rouge ; puis le glitch, et elle finit sa phrase | Forêt, chemin du nord | `minaFreeze`, `chapter2.ts:264`, `:284` ; pose `pose_mina_boutons` (`src/data/sprites/characters.ts:1715`) | `lot7-freeze` |
+| T3 | L'étagère des livres que personne ne lit, 2ᵉ examen : un seul livre a servi, chaque page dit « Tu es revenu ! / Tu as dormi super longtemps. », la dernière s'arrête (« super lon ») ; « Tu ne comptes pas les pages. » ; double : Mina, « C'est des lignes ! Comme à l'école » | Bibliothèque | `etagere_illisible` → `shelfUnread`, `chapter2.ts:541`, `:548`–`:550` ; compteur `c2_illisible` | `lot7-bibliotheque` |
+| T8 | L'étagère des contes, 2ᵉ examen : un conte sans couverture qui s'arrête au milieu d'une phrase ; le Hibou : « Et celui-ci, quelqu'un l'a écouté à travers un téléphone. Il ne finit pas. » ; double : Mina, « Au téléphone, ça coupe toujours au meilleur moment. Saleté de réseau ! » | Bibliothèque | `etagere_contes` → `shelfTales`, `chapter2.ts:558`, `:565`–`:567` ; compteur `c2_contes` | `lot7-bibliotheque` |
+| T1 | Une fois le carnet aux étoiles regardé, le Hibou a un sujet de plus, « Le carnet » : « Ce carnet n'a que trois pays. Le reste, quelqu'un d'autre le gribouille. » ; double : Mina, « Les dernières pages d'un cahier, c'est toujours pour les gribouillis. » (sans elle, le Hibou : « Les cahiers d'enfants finissent souvent comme ça. ») | Bibliothèque, parler au Hibou | `hibou` (sujets `chapter2.ts:484`) → `owlNotebook`, `:511` ; drapeaux `c2_carnet`, `c2_carnet_hibou` | `lot7-bibliotheque` |
+| T9 | Les lanternes allumées : dans la lumière bleue, deux fils au-dessus des poignets de Mina, qui montent hors de vue ; doubles : Mina croit à une araignée (« ENLÈVE-LA ! »), le narrateur parle de fils de lumière laissés par les lucioles | Clairière | `lanternsSolved` → `threadsInBlue`, `chapter2.ts:705`, `:728` ; sprite `fx_fils_mina` (`props.ts:1966`) ; drapeau `c2_fils` | `lot7-fils` |
+| § 3.6 | Le bocal de miettes de gomme, « À JETER » : « Certaines ont une bouche. » ; double : Mina, « Elles bâillent. C'est l'heure de dormir, pour les miettes. » ; Gomme épargnée, le bocal est ouvert, une miette dort au fond | Atelier de Gomme | `bocal_miettes` (`maps/chapter2.ts:681`, `:682`, sprites `bocalMiettes`, `props.ts:1983`) → `crumbJar`, `chapter2.ts:1103` ; drapeau `c2_bocal` | `lot7-atelier` |
+| — | Gomme épargnée : « On efface pour ne plus avoir mal. Ou pour ne plus être coupable. Ce n'est pas pareil. » (contrepoint : elle rend les dessins, existant) | Atelier, après le combat | `gommeSpared`, `chapter2.ts:995` | `lot7-gomme` |
+| T6 | Souvenir 2, le dessin inachevé : un petit nuage gris près de la bouche du Noa dessiné, soufflé vers elle (on le prend pour une bulle vide) ; « parce que… PARCE QUE » (existant) | Fin du chapitre | `paintDessin`, `src/data/illustrations.ts:1439` | `lot7-gomme` |
+
 ## Encore à faire par les lots suivants
 
 | Twist | Indice | Où | Lot |

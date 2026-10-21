@@ -1,0 +1,64 @@
+# Lot 7 (docs/HISTOIRE.md § 2.4, § 2.8, § 2.10, § 3.6): chapter 2, the Pencil Forest, with Mina. The erased hole east
+# of the path whispers numbers, « …trois cent… soixante… » (T3); Mina: someone counting sheep. Mina, third time you talk
+# to her: « Qui c'est qui parle, quand c'est écrit en blanc ? …Le livre, je parie. » (T7). In the south-west hole, a
+# tiny grey figure from behind, in a hat with sheep ears (T9); Mina: an eraser always misses a bit; then she is gone.
+# The giant sharpener: shavings like nail clippings; sharpening the red pencil tree beside it makes it bleed thick
+# dark-red ink down the trunk (particles 'ooze' then 'pool'); Mina: « C'est un crayon rouge, gros bêta. »
+query: debug=script&name=c2_chuchote&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+eval: (V.G.state.cleared.push('c2_taille_1', 'c2_avion_1', 'c2_taille_2', 'c2_avion_2', 'c2_duo_1', 'c2_luciole_0'), V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => V.world.removeEntity(e)), 1)
+# The whispering hole
+interact:trou_chuchote
+zuntil: SAW('soixante')
+shot:chuchote
+zuntil: IDLE()
+assert: SAW('Tout au fond, quelque chose chuchote.') && SAW('…trois cent… soixante…') && SAW('Sinon, il doit tout recommencer depuis le début.')
+assert: !SEEN.some((t) => t.includes('spd'))
+interact:trou_chuchote
+zuntil: IDLE()
+assert: SAW('Tu n\'arrives jamais à entendre la fin.')
+# Mina's third line in the forest
+interact:mina
+zuntil: IDLE()
+interact:mina
+zuntil: IDLE()
+interact:mina
+zuntil: SAW('Qui c\'est qui parle, quand c\'est écrit en blanc ?')
+shot:blanc
+zuntil: IDLE()
+assert: SAW('Le livre, je parie.')
+# The tiny figure in the south-west hole
+go:11/25
+wait:300
+assert: !!V.world.get('c2_bonnet') && V.world.get('c2_bonnet').sprite === 'prop_bonnet_trou'
+interact:trou_figure
+zuntil: SAW('une toute petite figure. De dos.')
+shot:figure
+zuntil: IDLE()
+assert: SAW('Il reste toujours un petit bout, quand on gomme.') && SAW('Gomme est repassée, sûrement.')
+assert: V.G.state.flags.c2_bonnet_vu === true && !V.world.get('c2_bonnet')
+interact:trou_figure
+zuntil: IDLE()
+assert: SAW('Même pas le vide.')
+# The sharpener and the bleeding red pencil tree
+go:34/17
+wait:300
+interact:taille_crayon_geant
+zuntil: V.dialogue.choices && V.dialogue.choices.length === 2
+assert: SAW('Comme des rognures d\'ongles.') && SAW('jupes aux fleurs')
+choose:0
+zuntil: V.world.particles.list.some((p) => p.kind === 'ooze')
+zuntil: V.world.particles.list.some((p) => p.kind === 'pool')
+shot:saigne
+zuntil: SAW('Il saigne !')
+zuntil: IDLE()
+assert: SAW('C\'est un crayon rouge, gros bêta.') && SAW('Le panneau disait de pas tailler les arbres') && V.G.state.flags.c2_taille === true
+interact:taille_crayon_geant
+zuntil: IDLE()
+assert: SAW('Tu n\'as pas envie de recommencer.')

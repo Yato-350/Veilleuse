@@ -628,7 +628,10 @@ export const CHAPTER1_MAPS: Record<string, MapDef> = {
   personnage sont construites à la demande (`?debug=map&map=village&world=feutre` pour essayer une carte existante).
 - `darkness` (0–1) + `light` sur props/PNJ (`{ r, color, flicker }`) + `playerLight` pour l'éclairage.
 - `ambience` : `'rain' | 'static' | 'wind' | 'hum' | 'none'` ; `particles` : `'fireflies' | 'cotton' | 'dust' |
-  'rain' | 'ink' | 'petals' | 'stars' | 'snow'`.
+  'rain' | 'ink' | 'petals' | 'stars' | 'snow'`. Effets ponctuels : `world.particles.burst(x, y, couleur)` (éclats) et
+  `world.particles.bleed(x, y, sol, { color, dark, frames, gentle })` (encre épaisse qui perle d'une coupe, coule
+  jusqu'à `sol` et y fait une flaque : les arbres-crayons du ch. 2 ; `gentle: G.settings.reduceFlashes` retire la
+  giclée).
 - Murs vus de face : rangée `*_wall_top` (dessus), puis `*_wall` (haut de la face), puis `*_wall_base` (bas) ; le
   sol commence en dessous. Les portes : `door_top` dans la rangée `wall`, `door` dans la rangée `wall_base`, avec un
   `warp` `{ door: true }` sur la case `door` (on interagit face à la porte).
@@ -679,7 +682,7 @@ de poche pour le Placard), `onWord`, `words` (remplacer le carnet), `menuLabels`
 ### 8.4 Texte : balisage et ton
 
 - Balises : `{c:y}jaune{/c}` (couleurs `y r b p v g o l a`), `{wave}…{/wave}`, `{shake}…{/shake}`,
-  `{glitch}…{/glitch}`, `{p:30}` (pause), `{spd:0.5}` (vitesse), `{player}` (nom du joueur), `{time}` (heure réelle).
+  `{glitch}…{/glitch}`, `{p:30}` (pause), `{spd:0.5}…{/spd}` (vitesse), `{player}` (nom du joueur), `{time}` (heure réelle).
 - Version 2 : `{static}…{/static}` (friture : lettres qui sautent, bip remplacé par du grésillement) ;
   `{as:noa}` / `{as:noa:sad}` (à partir de là, la boîte appartient à un autre personnage : nom, portrait et bip
   changent au milieu de la boîte, T7) ; `{voice:noa}` (seul le bip change). `dialogue.narratorVoice` donne un bip au

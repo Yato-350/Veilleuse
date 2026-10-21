@@ -1,0 +1,20 @@
+# Lot 7 (docs/HISTOIRE.md § 2.10, T9): chapter 2, the Firefly Clearing. Once the four lanterns are lit, for a moment,
+# in the blue light, two threads rise from above Mina's wrists out of sight (fx_fils_mina, drawn over her). Mina thinks
+# it is a spider (« ENLÈVE-LA ! »); the narrator: a thread of light, the fireflies leave them everywhere. Then the path
+# opens and the plaid is found, as in version 1.1.
+query: debug=script&name=c2_lanterns&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: (V.G.state.cleared.push('c2_luciole_1', 'c2_luciole_2', 'c2_duo_2'), V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => V.world.removeEntity(e)), 1)
+zuntil: !!V.world.get('fils_mina') && SAW('quelque chose brille au-dessus des poignets de Mina')
+wait:600
+assert: V.world.get('fils_mina').alpha === 1 && V.world.get('fils_mina').layer === 1 && Math.abs(V.world.get('fils_mina').x - V.world.get('mina').x) < 1
+shot:fils
+zuntil: SAW('ENLÈVE-LA !')
+zuntil: !V.world.get('fils_mina')
+zuntil: V.G.state.armor === 'plaid' && !V.dialogue.busy && V.world.busy === 0
+assert: SAW('Les lucioles en laissent partout.') && V.G.state.flags.c2_fils === true && V.G.state.flags.c2_lanterns_ok === true

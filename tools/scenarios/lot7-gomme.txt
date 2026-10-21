@@ -1,0 +1,21 @@
+# Lot 7 (docs/HISTOIRE.md § 2.7, § 3.6): chapter 2's end with Eraser spared. Her new line: « On efface pour ne plus avoir
+# mal. Ou pour ne plus être coupable. Ce n'est pas pareil. » Memory 2, the unfinished drawing, now has a little grey
+# cloud by drawn Noa's mouth (T6, it reads as a speech bubble). Dodo's « Chut. » crackles with static (« Ch—t. »), as do
+# two words of his greeting at the Forest Edge. Then Interlude II.
+query: debug=script&name=c2_end&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+zuntil: SAW('Ce n\'est pas pareil.')
+assert: SAW('Ou pour ne plus être coupable.')
+zuntil: V.scene() === 'ImageScene'
+wait:2500
+shot:souvenir
+zuntil: V.dialogue.busy && V.dialogue.opts.who === 'dododark'
+wait:1200
+shot:chut
+assert: V.dialogue.pages[V.dialogue.pageIdx].lines.flat().some((c) => c.fx === 'static')
+zuntil: V.G.state.flags.interlude === 2 && V.G.state.map === 'chambre' && !V.dialogue.busy && V.world.busy === 0
