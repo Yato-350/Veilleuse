@@ -21,7 +21,7 @@ import { mix, realify } from '../../engine/palette';
  *
  * Tiles `t_c6_*` (registered in src/data/tiles.ts as `c6_*`); the little girl in the knitted hat walking (`bonnet`,
  * faceless, and `bonnet_drawn`, her face drawn in pencil once Noa has looked at her); props `prop_c6_*`. Also her
- * far-off silhouette, seen from behind and faded (`npc_bonnet_loin`, `_2` half gone), placed in the earlier chapters
+ * far-off silhouette, seen from behind and faded (`npc_bonnet_loin`, `_fondu` half gone), placed in the earlier chapters
  * from chapter 1 on (T9, docs/HISTOIRE.md § 2.10).
  */
 
@@ -1095,7 +1095,7 @@ export const ART: Record<string, SpriteDef> = keep({
   prop_c6_encre: sprite(INK_POOL),
   prop_c6_bonnet_plat: sprite(HAT_FLAT),
   npc_bonnet_loin: bonnetFar(false),
-  npc_bonnet_loin_2: bonnetFar(true),
+  npc_bonnet_loin_fondu: bonnetFar(true),
   // --- The corridor, the button eyes, the 3:38 room
   ...plates,
   prop_c6_oeil: sprite(buttonEye(false)),

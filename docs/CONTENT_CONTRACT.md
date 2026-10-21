@@ -161,7 +161,7 @@ Portraits cadrés buste/visage, fond transparent, contour `k`. Ils sont affiché
 | `npc_lune`, `npc_lune_2` | 32×32 | Madame Lune : croissant jaune endormi, bonnet de nuit bleu, « zzz ». |
 | `npc_hibou`, `npc_hibou_2` | 16×20 | Hibou bibliothécaire en papier plié, lunettes rondes. |
 | `npc_agneau` | 12×14 | Petit agneau (enfant du village). |
-| `npc_bonnet_loin`, `npc_bonnet_loin_2` | 16×24 | v2 (`chapter6.ts`) : la petite fille au bonnet, de dos et délavée dans le crépuscule du rêve (silhouette des ch. 1 à 3, T9) ; `_2` = un pixel sur deux, juste avant qu'elle disparaisse. |
+| `npc_bonnet_loin`, `npc_bonnet_loin_fondu` | 16×24 | v2 (`chapter6.ts`) : la petite fille au bonnet, de dos et délavée dans le crépuscule du rêve (silhouette des ch. 1 à 3, T9) ; `_fondu` = un pixel sur deux, juste avant qu'elle disparaisse. |
 | `npc_placard` | 32×40 | Le Monstre du Placard apaisé : armoire sombre, yeux jaunes doux dans la fente, petits bras-cintres. |
 | `npc_gomme` | 24×20 | Gomme apaisée : gomme rose usée, visage doux. |
 | `npc_luciole`, `npc_luciole_2` | 8×8 | Luciole lumineuse (jaune/crème). |

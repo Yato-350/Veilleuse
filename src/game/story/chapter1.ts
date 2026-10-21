@@ -582,7 +582,7 @@ export const hillIntro: Script = async (d) => {
 export const hillSilhouette: Script = async (d) => {
   const e = d.find('c1_bonnet');
   if (!e) return;
-  e.sprite = 'npc_bonnet_loin_2';
+  e.sprite = 'npc_bonnet_loin_fondu';
   await d.wait(4);
   d.remove('c1_bonnet');
 };
