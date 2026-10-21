@@ -718,6 +718,16 @@ Lus par les lots suivants : `i3_reply` (`pardon` | `bonnenuit` | `rien`), `i3_ph
 `NIGHT()`), le couloir est `appartement_tard` (nom selon l'heure) et la chambre de Maman `chambre_maman` (IV).
 `STORY.wake[4]` = Interlude IV ; l'Interlude III est joué à la fin de la fausse aube (`fausse-aube.ts`, `STORY.wake[3]`).
 
+**v2, indices du monde réel** (`src/game/story/real.ts`, liste de contrôle `docs/INDICES.md`) : drapeaux `p_*`, `i1_*`
+et `i2_*` documentés en tête du module (compteurs d'examen `<moment>_n_<objet>`). Dans `chambre`, Dodo (`dodo_plush`)
+occupe la moitié droite du bas du lit (`PLUSH`) : depuis le côté du lit, on examine Dodo ; depuis le bas, le lit. Les
+tuiles de mur au-dessus du lit et de la table de nuit ne peuvent pas être regardées : le mur contre le lit répond au
+pied du lit, côté gauche (`BED_WALL`, `mur` / `n_mur`), le calendrier est accroché près de la fenêtre (12, 2) et la
+plante est en (12, 4). Le téléphone s'ouvre sur la liste des contacts (`PhoneScene.home`) dès le prologue, « Mina 🐑 »
+épinglé et verrouillé ; à partir de l'Interlude II, le fil de Maman contient une année (`mamanYear`) que l'histoire
+fait défiler (`PhoneScene.scrollToMessage`). `sawV2Ending()` ouvre la réplique de nouvelle partie+ du prologue,
+`G.meta.fauxGenerique` celle de l'Interlude II, `G.meta.dodoSilent` le prologue sans Dodo (dessin `dessin_chasse`).
+
 **v2, chapitre 3 raccourci et fausse aube** (`src/game/story/chapter3.ts`, `src/game/story/fausse-aube.ts`, cartes
 `src/data/maps/fausse-aube.ts` : `chambre_faux` et `appartement_faux`, monde `faux`) : le combat contre Dodo du
 chapitre 3 n'a plus que les phases 1 et 2 ; « pardon » écrit trois fois, il cède, et [Se réveiller] / [Rester]

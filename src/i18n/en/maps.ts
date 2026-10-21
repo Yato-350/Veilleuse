@@ -3,7 +3,6 @@ export const MAPS: Record<string, string> = {
   // --- Real world: the apartment (real.ts) ------------------------------------------------------------------------
   'Chambre de Noa': 'Noa\'s Room',
   'Un calendrier.': 'A calendar.',
-  'Il n\'a pas été tourné depuis un an. Les cases sont vides.': 'Nobody has turned the page in a year. The boxes are empty.',
   'Ta chaise. Ton sweat est roulé en boule dessus.': 'Your chair. Your hoodie is balled up on it.',
   'Un poster du système solaire.': 'A poster of the solar system.',
   'Mina disait que Pluton était triste d\'être toute seule au bout.': 'Mina used to say Pluto was sad to be all alone at the end.',

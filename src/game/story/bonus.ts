@@ -87,7 +87,7 @@ export async function start(d: Director): Promise<void> {
   d.sfx('beep', { pitch: 1.3 });
   await d.wait(30);
   await d.say(['Noa… c\'est Maman.', 'Je… je sais que tu ne décroches pas. C\'est pas grave.'], 'maman:sad');
-  await d.say(['Ça fait un an demain.', 'Je rentre ce soir. Plus tôt. J\'ai demandé.'], 'maman:sad');
+  await d.say(['Ça fait un an, cette nuit.', 'Je rentre tout à l\'heure. Plus tôt. J\'ai demandé.'], 'maman:sad');
   await d.say(['On ira la voir ensemble, d\'accord ?', 'Je t\'aime, mon grand.'], 'maman:sad');
   await d.wait(40);
   await d.narrate(['Tu raccroches.', 'Sur la table, à côté du téléphone, ton vieux réveil fait tic.', 'Puis tac.']);
