@@ -545,6 +545,49 @@ const MOUTON_LEFT = [
   patch(stack(MOUTON_TOP_UP, MOUTON_LEFT_UPPER, MOUTON_LEFT_LEGS_2), { 16: '.k666666d66677k.', 17: '..k66666d666677k' }),
 ];
 
+/**
+ * Redraws the face of every frame of a sheep (version 2, chapter 1). `edit(r, y)` receives the frame's rows as
+ * character arrays and the row of the eyes (found by its pattern, since the frames do not all start at the same row).
+ */
+function sheepFace(frames: string[], eyes: string, edit: (r: string[][], y: number) => void): string[] {
+  return frames.map((f) => {
+    const r = rows(f).map((l) => l.split(''));
+    const y = r.findIndex((l) => l.join('').includes(eyes));
+    if (y > 0) edit(r, y);
+    return r.map((l) => l.join('')).join('\n');
+  });
+}
+const put = (r: string[][], x: number, y: number, c: string): void => {
+  if (r[y]?.[x] !== undefined) r[y]![x] = c;
+};
+
+/** The Moutonnier (the colline): his eyes sewn shut, two little crosses of white thread (§ 3.4). */
+const MOUTONNIER = {
+  down: sheepFace(MOUTON_DOWN, 'kdwddddwdk', (r, y) => {
+    for (const cx of [5, 10]) for (const [dx, dy] of [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]] as const) put(r, cx + dx, y + dy, 'w');
+  }),
+  up: MOUTON_UP,
+  left: sheepFace(MOUTON_LEFT, 'kdwdddk', (r, y) => {
+    for (const [dx, dy] of [[0, -1], [-1, 0], [0, 0], [1, 0], [0, 1]] as const) put(r, 2 + dx, y + dy, 'w');
+  }),
+};
+
+/** Lilac-grey wool, so the one-eyed sheep is not mistaken for the village's other sheep. */
+const WOOL_LILAS = { '6': '#f1eaf7', '7': '#d6c9e6', '8': '#a897c2' };
+
+/** The one-eyed sheep (the village): one button eye gone, a hole and a short end of thread where it was. */
+const MOUTON_BORGNE = {
+  down: sheepFace(MOUTON_DOWN, 'kdwddddwdk', (r, y) => {
+    put(r, 5, y, 'K');
+    put(r, 5, y + 1, 'g');
+  }),
+  up: MOUTON_UP,
+  left: sheepFace(MOUTON_LEFT, 'kdwdddk', (r, y) => {
+    put(r, 2, y, 'K');
+    put(r, 2, y + 1, 'g');
+  }),
+};
+
 // ---------------------------------------------------------------------------------------------------------------------
 // PORTRAITS (32x32) — face_<id>_<expression>. A base bust per character, expressions are overlays on the face
 // ('_' = keep the base pixel).
@@ -1719,6 +1762,8 @@ export const CHARS: Record<string, CharDef> = {
   mouton_rose: { ...MOUTON, opts: { colors: WOOL_ROSE }, variants: ['ink'] },
   mouton_bleu: { ...MOUTON, opts: { colors: WOOL_BLEU }, variants: ['ink'] },
   mouton_jaune: { ...MOUTON, opts: { colors: WOOL_JAUNE }, variants: ['ink'] },
+  moutonnier: { ...MOUTONNIER, opts: { colors: WOOL_WHITE }, variants: ['ink'] },
+  mouton_borgne: { ...MOUTON_BORGNE, opts: { colors: WOOL_LILAS }, variants: ['ink'] },
 };
 
 void patch;

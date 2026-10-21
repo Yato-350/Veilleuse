@@ -5,7 +5,7 @@ import { ART as C5_ART } from './chapter5';
 import { ART as PROP_ART } from './props';
 import { ART as CHAR_ART } from './characters';
 import { ART as ENEMY6_ART } from './enemies-ch6';
-import { realify } from '../../engine/palette';
+import { mix, realify } from '../../engine/palette';
 
 /*
  * Chapter 6 « Le Ventre de Dodo » — the world (docs/HISTOIRE.md § 3.14, § 4 « Ch. 6 »). The inside of a plush:
@@ -20,7 +20,9 @@ import { realify } from '../../engine/palette';
  * bottom) and keeps its red thread, its steel and its crust. Noa himself (and every older sprite) is cottonified.
  *
  * Tiles `t_c6_*` (registered in src/data/tiles.ts as `c6_*`); the little girl in the knitted hat walking (`bonnet`,
- * faceless, and `bonnet_drawn`, her face drawn in pencil once Noa has looked at her); props `prop_c6_*`.
+ * faceless, and `bonnet_drawn`, her face drawn in pencil once Noa has looked at her); props `prop_c6_*`. Also her
+ * far-off silhouette, seen from behind and faded (`npc_bonnet_loin`, `_2` half gone), placed in the earlier chapters
+ * from chapter 1 on (T9, docs/HISTOIRE.md § 2.10).
  */
 
 const N = 16;
@@ -362,6 +364,16 @@ const bonnetChar = (drawn: boolean): CharDef => ({
   left: MINA.left.map((f) => bonnetFrame(f, 'left', drawn)),
   opts: { colors: C6 },
 });
+
+/**
+ * Her silhouette far off, seen from behind (chapters 1–3): the same girl, washed in the dusk of the dream so she reads
+ * as a shape rather than a character. `half` drops every other pixel: the frame just before she is gone.
+ */
+function bonnetFar(half: boolean): SpriteDef {
+  let art = bonnetFrame(MINA.up[0]!, 'up', false);
+  if (half) art = rows(art).map((l, y) => [...l].map((c, x) => ((x + y) % 2 ? c : '.')).join('')).join('\n');
+  return { art, colors: C6, transform: (hex) => mix(hex, '#8478a0', 0.55) };
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Props — the jars of the nights
@@ -1082,6 +1094,8 @@ export const ART: Record<string, SpriteDef> = keep({
   prop_c6_marionnette_feutre_2: sprite(puppet('feutre', -1)),
   prop_c6_encre: sprite(INK_POOL),
   prop_c6_bonnet_plat: sprite(HAT_FLAT),
+  npc_bonnet_loin: bonnetFar(false),
+  npc_bonnet_loin_2: bonnetFar(true),
   // --- The corridor, the button eyes, the 3:38 room
   ...plates,
   prop_c6_oeil: sprite(buttonEye(false)),

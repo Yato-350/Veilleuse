@@ -67,7 +67,7 @@ const PRAIRIE: MapDef = {
     east: { x: 41, y: 10, dir: 'left' },
   },
   props: [
-    P('prop_bed_dream', 6, 10, { id: 'dream_bed', h: 2, script: C1.dreamBed }),
+    P('prop_bed_tally', 6, 10, { id: 'dream_bed', h: 2, script: C1.dreamBed }),
     savePoint(9, 8, 'Une petite lumière en forme de lune. Elle te rappelle quelque chose. Tu te sens au chaud.'),
     DECO('prop_sign', 12, 9, undefined, { script: C1.prairieSign }),
     P('prop_balloon_tree', 15, 4, { id: 'balloon_tree', script: C1.balloonTree, cond: () => !G.state.flags.c1_ballon_quest || !G.state.keyItems.includes('ballon') }),
@@ -212,6 +212,7 @@ const VILLAGE: MapDef = {
     { id: 'poete', char: 'mouton_rose', x: 12, y: 21, wander: 1, script: C1.moutonPoete },
     { id: 'peureux', char: 'mouton_bleu', x: 33, y: 12, wander: 1, script: C1.moutonPeureux },
     { id: 'jaune', char: 'mouton_jaune', x: 8, y: 10, script: C1.moutonJaune },
+    { id: 'borgne', char: 'mouton_borgne', x: 37, y: 21, dir: 'left', script: C1.moutonBorgne },
     {
       id: 'chaussette_perdue',
       sprite: 'ow_chaussette_perdue',
@@ -362,6 +363,8 @@ const COLLINE: MapDef = {
     savePoint(9, 9, 'Une veilleuse posée sur la couverture. Tout là-haut, quelque chose respire dans le noir.'),
     P('prop_pillow_big', 2, 23, { w: 2, script: C1.pillowA }),
     P('prop_pillow_big', 16, 16, { w: 2, script: C1.pillowB }),
+    // A little silhouette in a hat with sheep ears, her back turned, half hidden by the pillow (T9): gone when Noa comes near.
+    P('npc_bonnet_loin', 17, 15, { id: 'c1_bonnet', ox: -8, oy: 9, solid: false, cond: () => !G.state.flags.c1_bonnet_vu && !G.state.flags.c1_boss_done }),
     // The summit path: two pillows block it until the Moutonnier's sheep are counted, then they move aside.
     P('prop_pillow_big', 21, 14, { id: 'hill_pillow_l', w: 2, script: C1.blockingPillows, cond: nf('c1_sheep_done') }),
     P('prop_pillow_big', 23, 14, { id: 'hill_pillow_r', w: 2, script: C1.blockingPillows, cond: nf('c1_sheep_done') }),
@@ -373,7 +376,7 @@ const COLLINE: MapDef = {
     P('prop_cloud_big', 4, 29, { w: 3, text: 'Un nuage endormi.' }),
   ],
   npcs: [
-    { id: 'moutonnier', char: 'mouton', x: 22, y: 16, dir: 'down', script: C1.moutonnier },
+    { id: 'moutonnier', char: 'moutonnier', x: 22, y: 16, dir: 'down', script: C1.moutonnier },
     { id: 'pen_sheep', char: 'mouton', x: 25, y: 17, dir: 'left', script: C1.penSheep },
     { id: 'pen_sheep_2', char: 'mouton_rose', x: 26, y: 18, dir: 'left', script: C1.penSheep },
     { id: 'pen_black', sprite: 'ow_mouton_noir', x: 27, y: 17, script: C1.penBlackSheep },
@@ -387,6 +390,7 @@ const COLLINE: MapDef = {
   triggers: [
     { x: 1, y: 30, w: 28, h: 1, once: 'c1_hill', script: C1.hillIntro },
     { x: 1, y: 12, w: 28, h: 1, once: 'c1_fears', script: C1.hillFears },
+    { x: 12, y: 15, w: 9, h: 5, once: 'c1_bonnet_vu', cond: nf('c1_boss_done'), script: C1.hillSilhouette },
     { x: 21, y: 15, w: 3, h: 5, once: 'c1_sheep_meet', cond: nf('c1_sheep_done'), script: C1.moutonnierMeet },
   ],
   warps: [{ x: 14, y: 33, w: 2, to: 'village', spawn: 'north' }],

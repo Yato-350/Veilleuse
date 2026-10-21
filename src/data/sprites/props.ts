@@ -1603,6 +1603,23 @@ const BED_DREAM = (() => {
   return withColors(p, { '6': LAV_MID });
 })();
 
+/**
+ * The prairie's dream bed (chapter 1, version 2): the headboard is carved all over with little tally marks, in
+ * bundles (§ 3.4, T3). Grooves in dark wood with a light edge, of uneven lengths, as if cut one night at a time.
+ */
+const BED_TALLY = (() => {
+  const p = pix((BED_DREAM as { art: string }).art);
+  p.rect(2, 2, 12, 4, 'C');
+  const marks: Array<[number, number, number]> = [
+    [2, 2, 3], [3, 3, 3], [4, 2, 4], [5, 2, 3], [7, 3, 3], [8, 2, 3], [9, 2, 4], [10, 3, 2], [12, 2, 3], [13, 3, 3],
+  ];
+  for (const [x, y, len] of marks) p.vl(x, y, len, 'x');
+  // the strokes that tie each bundle of five, and a light edge where the knife slid
+  p.line(2, 5, 6, 2, 'x').line(7, 5, 11, 2, 'x');
+  p.px(6, 4, 'c').px(11, 5, 'c').px(13, 2, 'c');
+  return withColors(p, { '6': LAV_MID });
+})();
+
 const COUNTER_SHOP = (() => {
   const p = box(32, 16, { top: 'c', hi: 'Q', lip: 'C', front: 'C', shade: 'x', depth: 5 });
   for (const x of [8, 16, 24]) p.vl(x, 8, 6, 'x');
@@ -1672,6 +1689,7 @@ const DREAM: Record<string, SpriteDef> = {
   prop_savepoint: savepoint(0),
   prop_savepoint_2: savepoint(1),
   prop_bed_dream: BED_DREAM,
+  prop_bed_tally: BED_TALLY,
   prop_counter_shop: COUNTER_SHOP,
   prop_jar_shelf: JAR_SHELF,
 };

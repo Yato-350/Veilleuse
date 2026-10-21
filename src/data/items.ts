@@ -26,6 +26,16 @@ export const ITEMS: Record<string, ItemDef> = {
   pluie: { id: 'pluie', name: 'Flacon de pluie', desc: 'Il pleut à l\'intérieur. Donne de la TRISTESSE.', emotion: 'tristesse', price: 6, useText: 'Une petite pluie tombe sur ton cœur.' },
   orage: { id: 'orage', name: 'Bocal d\'orage', desc: 'Ça gronde là-dedans. Donne de la COLÈRE.', emotion: 'colere', price: 6, useText: 'Le tonnerre roule dans ta poitrine.' },
   pomme: { id: 'pomme', name: 'Pomme d\'amour', desc: 'Rouge et brillante, comme à la fête foraine. Rend 15 PV.', heal: 15, price: 12, useText: 'Le caramel craque sous la dent.' },
+  // Version 2 — Chaussette's new stock (chapter 1, § 3.4).
+  yeux: {
+    id: 'yeux',
+    name: 'Yeux de rechange',
+    desc: 'Deux boutons pour le prix d\'un. Pour les jours où on ne veut pas voir. Calme le cœur, rend 10 PV.',
+    heal: 10,
+    emotion: 'neutre',
+    price: 7,
+    useText: 'Tu poses les deux boutons sur tes paupières, comme des rondelles de concombre. Un moment, plus rien à voir.',
+  },
   // Key items
   veilleuse_poche: { id: 'veilleuse_poche', name: 'Veilleuse de poche', desc: 'Une toute petite lune qui brille. Pour ceux qui ont peur du noir.', key: true, battleKey: true },
   ballon: { id: 'ballon', name: 'Ballon rouge', desc: 'Il tire doucement vers le haut, comme s\'il voulait rentrer chez lui.', key: true },
