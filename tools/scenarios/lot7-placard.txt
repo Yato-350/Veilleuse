@@ -1,0 +1,28 @@
+# Lot 7 (docs/HISTOIRE.md § 2.5, § 3.4): chapter 1, the Closet Monster spared with the pocket nightlight. Its new last
+# line: « …Je l'ai gardée pour moi, la lumière. J'avais si peur. » (T4), then the chapter ends as before.
+query: debug=script&name=c1_boss&lang=fr
+wait:1000
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+god
+interact:closet_door
+auto
+write:joie
+auto
+write:joie
+auto
+write:joie
+auto
+write:joie
+auto
+write:joie
+auto
+menu:3
+choose:0
+zuntil: SAW('Je l\'ai gardée pour moi, la lumière.')
+shot:gardee
+zuntil: V.scene() === 'ImageScene'
+assert: V.G.state.flags.c1_placard_spared === true && SAW('J\'avais si peur.') && SAW('Il est gentil, en vrai !')

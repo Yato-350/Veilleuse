@@ -20,7 +20,7 @@ import { tf, tr } from '../../i18n';
  *   c1_bouton_vendu  it was sold: no Bouton doré in the final battle, and no secret ending (endings.ts › dawnEnding)
  *   c1_code          Mina explained the knock code at the Mouton Noir's door; c1_knock: Noa knocked (any number)
  *   c1_bonnet_vu     the little silhouette in a hat behind the pillow of the colline has vanished (seen once)
- *   c1_bed_baton, c1_chaussette_vue, c1_borgne, c1_lune_voyage: lines said once (talk counters)
+ *   c1_bed_baton, c1_chaussette_vue, c1_borgne, c1_lune_voyage, c1_lune_cycle: talk counters
  */
 
 const flag = (k: string): boolean => !!G.state.flags[k];
@@ -278,14 +278,14 @@ export const lune: Script = async (d) => {
     return;
   }
   const lines = [
+    ['Je regarde dormir tout le monde, la nuit… *bâille*…', 'Il y en a un qui fait semblant. Il respire trop fort.', 'Zzz…'],
     ['Les rêves sont des chambres… *bâille*… dont on oublie la porte.'],
     ['Le mouton qui veille… il veille trop, parfois. Zzz…'],
-    ['Je regarde dormir tout le monde, la nuit… *bâille*…', 'Il y en a un qui fait semblant. Il respire trop fort.', 'Zzz…'],
     ['Quand le soleil se lève… même moi, je vais me coucher. C\'est normal. C\'est bien.'],
   ];
-  const i = n % lines.length;
+  const i = bump('c1_lune_cycle') % lines.length;
   await d.say(lines[i]!, 'lune:neutral');
-  if (i === 2 && withMina()) await d.say('C\'est pas moi ! {p:20}…Enfin, des fois.', 'mina:happy');
+  if (i === 0 && withMina()) await d.say('C\'est pas moi ! {p:20}…Enfin, des fois.', 'mina:happy');
 };
 
 export const agneau: Script = async (d) => {
@@ -684,12 +684,12 @@ async function countSheep(d: Director, replay = false): Promise<boolean> {
   let gaveUp = false;
   if (round === 1 && !flag('c1_sheep_tried')) {
     d.set('c1_sheep_tried');
-    await d.say(['Voilà mes moutons. Ils vont sauter la barrière, un par un.', 'À chaque mouton qui passe {c:y}au-dessus{/c}, tu comptes avec moi.'], 'mouton');
+    await d.say(['Voilà mes moutons. Ils vont sauter la barrière, un par un.', 'À chaque mouton qui passe {c:y}au-dessus{/c}, tu comptes avec moi.'], 'moutonnier');
     await d.say(controlsHint());
   }
   while (round <= 3) {
     scene.announce(round);
-    if (attempt === 0) await d.say(ROUND_INTRO[round - 1]!, 'mouton');
+    if (attempt === 0) await d.say(ROUND_INTRO[round - 1]!, 'moutonnier');
     const r = await scene.play(round, attempt + fails);
     let ok = r.ok;
     if (round === 3) {
@@ -699,13 +699,13 @@ async function countSheep(d: Director, replay = false): Promise<boolean> {
         [-2, -1, 0],
       ][(attempt + fails) % 3]!;
       const nums = offsets.map((o) => r.valid + o);
-      const i = await d.ask('*dresse une oreille* Alors… ça fait combien ?', nums.map(String), 'mouton');
+      const i = await d.ask('*dresse une oreille* Alors… ça fait combien ?', nums.map(String), 'moutonnier');
       ok = nums[i] === r.valid;
-      if (ok) await d.say([tf('{0} ! C\'est exactement ça.', tr(NUMBER_WORDS[r.valid] ?? String(r.valid))), 'Moi, j\'en avais compté quarante-deux. Mais je dormais un peu.'], 'mouton');
-      else await d.say([tf('Hmm… Moi, à l\'oreille, j\'en ai entendu {0}.', r.valid), 'Ils vont ressauter dans un autre ordre. Ouvre bien les yeux… enfin, toi.'], 'mouton');
+      if (ok) await d.say([tf('{0} ! C\'est exactement ça.', tr(NUMBER_WORDS[r.valid] ?? String(r.valid))), 'Moi, j\'en avais compté quarante-deux. Mais je dormais un peu.'], 'moutonnier');
+      else await d.say([tf('Hmm… Moi, à l\'oreille, j\'en ai entendu {0}.', r.valid), 'Ils vont ressauter dans un autre ordre. Ouvre bien les yeux… enfin, toi.'], 'moutonnier');
     } else if (ok) {
-      if (round === 1) await d.say(['Bravo ! Ils sont tous passés.', 'Tu as un don. Ou alors… tu as du mal à dormir, toi aussi ?'], 'mouton');
-      else await d.say(r.errors ? 'Ils sont tous passés ! Et le mouton noir boude dans son coin. Parfait.' : 'Pas une seule erreur ! Le mouton noir est vexé. C\'est bon signe.', 'mouton');
+      if (round === 1) await d.say(['Bravo ! Ils sont tous passés.', 'Tu as un don. Ou alors… tu as du mal à dormir, toi aussi ?'], 'moutonnier');
+      else await d.say(r.errors ? 'Ils sont tous passés ! Et le mouton noir boude dans son coin. Parfait.' : 'Pas une seule erreur ! Le mouton noir est vexé. C\'est bon signe.', 'moutonnier');
     }
     if (ok) {
       round++;
@@ -716,16 +716,16 @@ async function countSheep(d: Director, replay = false): Promise<boolean> {
     fails++;
     attempt++;
     if (!replay) d.set('c1_sheep_fails', fails);
-    if (round < 3) await d.say(FAIL_LINES[(fails - 1) % FAIL_LINES.length]!, 'mouton');
+    if (round < 3) await d.say(FAIL_LINES[(fails - 1) % FAIL_LINES.length]!, 'moutonnier');
     if (fails === 1 && withMina()) await d.say('Courage, chevalier ! Moi, après dix, je me trompe tout le temps.', 'mina:happy');
     const choices = ['On recommence', 'Plus tard'];
     if (fails >= 2) choices.push('Je n\'y arrive pas');
-    const c = await d.ask('On recommence ?', choices, 'mouton', { cancelIndex: 1 });
+    const c = await d.ask('On recommence ?', choices, 'moutonnier', { cancelIndex: 1 });
     if (c === 1) {
       await d.fadeOut(24);
       scene.close();
       await d.fadeIn(24);
-      await d.say('D\'accord. Je ne bouge pas d\'ici. Enfin… si je ne m\'endors pas.', 'mouton');
+      await d.say('D\'accord. Je ne bouge pas d\'ici. Enfin… si je ne m\'endors pas.', 'moutonnier');
       return false;
     }
     if (c === 2) {
@@ -738,39 +738,39 @@ async function countSheep(d: Director, replay = false): Promise<boolean> {
       'Ce n\'est pas grave, tu sais.',
       'Moi non plus, je n\'y arrive jamais. Je m\'endors toujours avant la fin.',
       'Mais tu as compté avec moi. Et regarde : ils sont tous couchés quand même.',
-    ], 'mouton');
+    ], 'moutonnier');
     if (withMina()) await d.say('Tu vois ? T\'as réussi quand même. À ta façon.', 'mina:happy');
   }
   await d.fadeOut(24);
   scene.close();
   await d.fadeIn(24);
   if (replay) {
-    await d.say(['Merci… Ça fait du bien, de compter à deux.', 'Zzz…'], 'mouton');
+    await d.say(['Merci… Ça fait du bien, de compter à deux.', 'Zzz…'], 'moutonnier');
     return true;
   }
   d.set('c1_sheep_done');
   if (gaveUp) d.set('c1_sheep_helped');
-  else await d.say(['Tous comptés ! Tous couchés !', 'Merci, petit. Maintenant, je vais enfin pouvoir… *bâille*…'], 'mouton');
+  else await d.say(['Tous comptés ! Tous couchés !', 'Merci, petit. Maintenant, je vais enfin pouvoir… *bâille*…'], 'moutonnier');
   await d.say([
     'C\'est un grand mouton tout doux qui m\'a appris à compter, tu sais.',
     'Il dit qu\'à force de compter, on oublie tout le reste.',
     'C\'est reposant, d\'oublier…',
-  ], 'mouton');
+  ], 'moutonnier');
   if (withMina()) await d.say('Moi, je veux rien oublier.', 'mina:neutral');
   await d.say('Dans un grand soupir de plumes, les oreillers bâillent… et s\'écartent.');
   await pillowsMoveAside(d);
-  await d.say(['Tiens, pour la route. Un lait chaud.', 'C\'est fait pour dormir… mais ça marche aussi pour être courageux.'], 'mouton');
+  await d.say(['Tiens, pour la route. Un lait chaud.', 'C\'est fait pour dormir… mais ça marche aussi pour être courageux.'], 'moutonnier');
   await d.give('lait');
   if (withMina()) await d.say('Le chemin est ouvert ! L\'étoile, on arrive !', 'mina:happy');
   await d.emote('moutonnier', '…');
-  await d.say('Zzz… cent douze… cent treize… Zzz…', 'mouton');
+  await d.say('Zzz… cent douze… cent treize… Zzz…', 'moutonnier');
   return true;
 }
 
 async function offerHelp(d: Director): Promise<void> {
-  const r = await d.ask('Compter les moutons avec lui ?', ['Compter', 'Pas maintenant'], 'mouton', { cancelIndex: 1 });
+  const r = await d.ask('Compter les moutons avec lui ?', ['Compter', 'Pas maintenant'], 'moutonnier', { cancelIndex: 1 });
   if (r !== 0) {
-    await d.say('D\'accord. Je ne bouge pas d\'ici. Enfin… si je ne m\'endors pas.', 'mouton');
+    await d.say('D\'accord. Je ne bouge pas d\'ici. Enfin… si je ne m\'endors pas.', 'moutonnier');
     return;
   }
   if (withMina() && !bump('c1_sheep_mina')) await d.say('Noa est super fort pour compter ! Il m\'aidait toujours pour mes devoirs.', 'mina:happy');
@@ -781,18 +781,18 @@ async function offerHelp(d: Director): Promise<void> {
 export const moutonnierMeet: Script = async (d) => {
   d.face('moutonnier', 'left');
   await d.emote('moutonnier', '!');
-  await d.say(['Hé ! Hé, vous deux ! Par ici !', 'Vous voulez monter au sommet ? Ah… Ça va être difficile.'], 'mouton');
+  await d.say(['Hé ! Hé, vous deux ! Par ici !', 'Vous voulez monter au sommet ? Ah… Ça va être difficile.'], 'moutonnier');
   if (withMina()) await d.say('Pourquoi t\'as des croix sur les yeux, toi ?', 'mina:surprised');
   else await d.say('Il a les yeux cousus. Deux petites croix de fil.');
-  await d.say(['Je les ai cousus. C\'est plus reposant.', 'Et puis, pour compter les moutons, pas besoin de les voir. Il suffit de les entendre sauter.'], 'mouton');
+  await d.say(['Je les ai cousus. C\'est plus reposant.', 'Et puis, pour compter les moutons, pas besoin de les voir. Il suffit de les entendre sauter.'], 'moutonnier');
   await d.say([
     'Le soir, les oreillers ferment le chemin.',
     'Ils ne se poussent que quand tous les moutons sont {c:y}comptés et couchés{/c}. C\'est la règle.',
     'Les oreillers sont très à cheval sur la règle.',
-  ], 'mouton');
+  ], 'moutonnier');
   if (withMina()) await d.say('Ben, compte-les, alors !', 'mina:neutral');
-  await d.say(['J\'essaie ! Mais au bout de trois ou quatre moutons… *bâille*…', '…je m\'endors. C\'est le problème, quand on compte les moutons.'], 'mouton');
-  await d.say('Tu voudrais bien compter avec moi ?', 'mouton');
+  await d.say(['J\'essaie ! Mais au bout de trois ou quatre moutons… *bâille*…', '…je m\'endors. C\'est le problème, quand on compte les moutons.'], 'moutonnier');
+  await d.say('Tu voudrais bien compter avec moi ?', 'moutonnier');
   await offerHelp(d);
 };
 
@@ -800,18 +800,18 @@ export const moutonnier: Script = async (d) => {
   if (flag('c1_sheep_done')) {
     const n = bump('c1_moutonnier_after');
     if (n % 2 === 0) {
-      await d.say('Zzz… deux cent… deux cent quoi, déjà… Zzz…', 'mouton');
+      await d.say('Zzz… deux cent… deux cent quoi, déjà… Zzz…', 'moutonnier');
       return;
     }
-    await d.say('*dresse une oreille* Tu veux recompter avec moi ? Juste pour le plaisir ?', 'mouton');
-    const r = await d.ask('Recompter les moutons ?', ['Oui', 'Non'], 'mouton', { cancelIndex: 1 });
+    await d.say('*dresse une oreille* Tu veux recompter avec moi ? Juste pour le plaisir ?', 'moutonnier');
+    const r = await d.ask('Recompter les moutons ?', ['Oui', 'Non'], 'moutonnier', { cancelIndex: 1 });
     if (r === 0) await countSheep(d, true);
-    else await d.say('Zzz…', 'mouton');
+    else await d.say('Zzz…', 'moutonnier');
     return;
   }
   d.set('c1_sheep_meet');
   const round = Number(G.state.flags.c1_sheep_round ?? 1);
-  await d.say(round > 1 ? tf('Tu reviens ! On en était à la manche {0}. Les moutons t\'attendent.', round) : 'Alors ? Tu es prêt ? Les moutons s\'impatientent.', 'mouton');
+  await d.say(round > 1 ? tf('Tu reviens ! On en était à la manche {0}. Les moutons t\'attendent.', round) : 'Alors ? Tu es prêt ? Les moutons s\'impatientent.', 'moutonnier');
   await offerHelp(d);
 };
 

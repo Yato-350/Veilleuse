@@ -136,6 +136,7 @@ export const CHARS: Record<string, CharDef> = {
 | `maman` | 16×28. Adulte fatiguée, cheveux châtains attachés, manteau beige, cernes. Tons sobres (monde réel). | — |
 | `mouton` | 16×20 dans un canevas 16×24 (pieds en bas). Mouton debout, laine blanche bouffante (`w/W/g`), visage gris (`d`), oreilles et joues roses. | `ink` |
 | `mouton_rose`, `mouton_bleu`, `mouton_jaune` | Même dessin que `mouton` avec `opts.colors` qui recolore la laine. | `ink` |
+| `moutonnier`, `mouton_borgne` | v2, chapitre 1 : le Moutonnier aux yeux cousus (deux croix de fil blanc) et le mouton borgne du village (laine lilas, un trou et un bout de fil à la place d'un œil). Visages redessinés par `sheepFace()`. | `ink` |
 
 ### 2.2 Portraits (32×32) — clés `face_<id>_<expression>`
 
@@ -160,6 +161,7 @@ Portraits cadrés buste/visage, fond transparent, contour `k`. Ils sont affiché
 | `npc_lune`, `npc_lune_2` | 32×32 | Madame Lune : croissant jaune endormi, bonnet de nuit bleu, « zzz ». |
 | `npc_hibou`, `npc_hibou_2` | 16×20 | Hibou bibliothécaire en papier plié, lunettes rondes. |
 | `npc_agneau` | 12×14 | Petit agneau (enfant du village). |
+| `npc_bonnet_loin`, `npc_bonnet_loin_2` | 16×24 | v2 (`chapter6.ts`) : la petite fille au bonnet, de dos et délavée dans le crépuscule du rêve (silhouette des ch. 1 à 3, T9) ; `_2` = un pixel sur deux, juste avant qu'elle disparaisse. |
 | `npc_placard` | 32×40 | Le Monstre du Placard apaisé : armoire sombre, yeux jaunes doux dans la fente, petits bras-cintres. |
 | `npc_gomme` | 24×20 | Gomme apaisée : gomme rose usée, visage doux. |
 | `npc_luciole`, `npc_luciole_2` | 8×8 | Luciole lumineuse (jaune/crème). |
@@ -703,6 +705,13 @@ Drapeaux partagés :
 | `c1_chaussette_paire` | CH1 | CH2 | la Chaussette Perdue a retrouvé sa paire (Chaussette marchande heureuse) |
 | `fin_route` | CH3 | RÉEL | `'aube'` quand Noa choisit de se réveiller |
 
+**v2, indices du chapitre 1** (`src/game/story/chapter1.ts`, liste de contrôle `docs/INDICES.md`) : drapeaux
+documentés en tête du module. Lus par les lots suivants : `c1_bouton` (Mina a donné le Bouton doré, objet clé
+`bouton_dore` lu par le combat final), `c1_bouton_vendu` (vendu à Chaussette : ni bouton au combat final, ni fin
+secrète ; un joueur qui n'est jamais revenu au trésor avec Mina n'a ni le bouton ni ce drapeau), `c1_code` (Mina a
+expliqué le code des coups), `c1_bonnet_vu`. Le locuteur `mouton` s'appelle maintenant « Mouton » (tous les moutons du
+rêve) ; le Moutonnier a son locuteur `moutonnier`.
+
 **v2, chapitre 4** (`src/game/story/chapter4.ts`, cartes `src/data/maps/chapter4.ts`) : tous les drapeaux `c4_*`
 sont documentés en tête du module. Lus par les lots suivants : `c4_maman` (`merci`|`reste`), `c4_reste`, `c4_coton`
 (0–4, les Bourres du ch. 6), `c4_couseuse` (`epargnee`|`vaincue`), `c4_petit_homme` (`epargne`|`vaincu`), `c4_fele`
@@ -767,7 +776,7 @@ en pleine scène, sans bandeau).
 ### 8.6 Objets
 
 Voir `src/data/items.ts` (`bonbon`, `lait`, `biscuit`, `chocolat`, `gateau`, `mouchoir`, `bulles`, `pluie`,
-`orage`, `pomme` ; clés : `veilleuse_poche`, `ballon`, `chaussette_bleue`, `cle_mina`, `crayons`, `crayon_jaune`,
+`orage`, `pomme`, v2 : `yeux` (Yeux de rechange, chez Chaussette) ; clés : `veilleuse_poche`, `ballon`, `chaussette_bleue`, `cle_mina`, `crayons`, `crayon_jaune`,
 `dessin` ; v2, chapitre 6, utilisables en combat : `bouton_dore`, `pile_chargee`). Équipements : `G.state.weapon` (`crayon` → `cire` → `plume`) et `G.state.armor` (`pyjama` → `plaid` →
 `cape`) à donner par le scénario (ch1 : `cire`, ch2 : `plaid`, ch3 : `cape` / `plume`).
 

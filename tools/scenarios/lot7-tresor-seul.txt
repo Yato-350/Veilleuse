@@ -1,0 +1,19 @@
+# Lot 7: the treasure box found before meeting Mina: Noa takes only the biscuit and leaves the Golden Button. Coming
+# back with her, she shows the film canister and gives him the button.
+query: debug=script&name=c1_tresor&alone=1&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+zuntil: !V.dialogue.busy && V.world.busy === 0
+assert: SAW('Tu laisses le reste') && V.G.state.flags.c1_tresor === true && !V.G.state.keyItems.includes('bouton_dore')
+interact:tresor_mina
+auto
+assert: SAW('Trois billes, un bouton doré, une plume et une boîte de pellicule.')
+# Mina joins, then the box again
+eval: (V.G.state.party = ['mina'], V.world.setFollower('mina'), 1)
+interact:tresor_mina
+zuntil: !V.dialogue.busy && V.world.busy === 0
+assert: SAW('T\'as fouillé dedans, avoue.') && SAW('dents de lait') && V.G.state.keyItems.includes('bouton_dore')

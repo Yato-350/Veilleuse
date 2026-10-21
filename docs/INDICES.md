@@ -1,9 +1,10 @@
-# Liste de contrôle des indices — monde réel
+# Liste de contrôle des indices
 
 Chaque indice que la bible (`docs/HISTOIRE.md`, § 2.2 à § 2.11, § 3.3, § 3.5, § 3.7, § 4 « Monde réel », § 5) place
 dans le monde réel : prologue, interludes I à IV, fausse aube, final, épilogue, bonus et mémoire méta. Pour chacun :
 où il se trouve dans le jeu (fichier:ligne au moment du lot 6, identifiant d'entité pour le bot) et le scénario du bot
-qui le prouve (`tools/scenarios/`). Les indices des chapitres 1 à 3 sont ceux des lots 7 et 8.
+qui le prouve (`tools/scenarios/`). Les indices des chapitres 1 à 3 (lots 7 et 8) suivent, après ceux des interludes
+III et IV.
 
 Tous les indices des lots 6 et 2 s'atteignent comme un joueur les atteint (marcher jusqu'à l'objet et appuyer sur A) :
 Dodo s'examine depuis le côté du lit (depuis le bas, c'est le lit), le mur contre le lit répond au pied du lit
@@ -77,6 +78,43 @@ Dodo s'examine depuis le côté du lit (depuis le bas, c'est le lit), le mur con
 | T7 | Le tic « Pas maintenant. Pour l'instant. » | III et IV, lit | `real-nuit.ts:244`, `:253` | — |
 | — | Coton sous les ongles, la couture du dos qui lâche | IV, Dodo | `real-nuit.ts:1199` | `lot2-i4-*` |
 | — | La peinture usée à hauteur d'oreiller | III et IV, mur au pied du lit | `n_mur`, `real-nuit.ts:715` | `lot6-nuit` |
+
+## Chapitre 1 — « Le Pays de Coton » (§ 3.4, lot 7)
+
+L'acte I reste tendre : une seule fausse note par endroit, et chacune a son double ordinaire (une réplique de Mina, une
+blague, une explication banale). Le chapitre ne dit jamais rien de l'appel. Tous les indices s'atteignent en marchant et
+en appuyant sur A ; les scripts de debug `c1_tresor` (`&alone=1`), `c1_boutique`, `c1_frapper` et `c1_colline` posent
+Noa à côté, avec Mina.
+
+| Twist | Indice | Où | Entité / code | Preuve |
+|---|---|---|---|---|
+| T3 | Tête de lit gravée de bâtons « par paquets de cinq », « Tu arrêtes de compter à cent. » ; double : Mina, « compter les dodos jusqu'à Noël » | Prairie, le lit | `dream_bed` → `dreamBed`, `src/game/story/chapter1.ts:159` ; sprite `prop_bed_tally` (`src/data/sprites/props.ts:1610`, carte `src/data/maps/chapter1.ts:70`) | `lot7-prairie` |
+| T3 | Traces de bottes : « C'est ta pointure. » ; Mina : « Un monstre qui a tes pieds ! » | Prairie, buisson | `buisson_bottes` → `bootsBush`, `chapter1.ts:176` | `lot7-prairie` |
+| § 5 | Le Bouton doré, objet clé, donné par Mina : « C'est un bouton secret. Faut appuyer fort. », « Tu le gardes, hein ? Même si on te le demande. » (trouvé seul, Noa ne prend que le biscuit ; Mina le donne quand il revient avec elle) | Prairie, trésor de Mina | `tresor_mina` → `minaTreasure`, `minaButton`, `chapter1.ts:225` ; drapeau `c1_bouton`, objet `bouton_dore` (lu par `final-v2.ts`) | `lot7-prairie`, `lot7-tresor-seul` |
+| — | La boîte de pellicule : « Mes dents de lait. La petite souris est jamais venue à l'hôpital. » | Prairie, trésor de Mina | `chapter1.ts:223` | `lot7-prairie` |
+| T9 | Mina : « Mes couettes ? C'est de la laine, idiot. Ça repousse pas, la laine. » (3ᵉ réplique) | Prairie, parler à Mina | `MINA_LINES.prairie`, `chapter1.ts:1016` | `lot7-prairie` |
+| T3 | Madame Lune, 1ʳᵉ réplique : « Encore t— … *bâille* … Bonsoir, toi. » | Village | `lune`, `chapter1.ts:258` | `lot7-village` |
+| T4 | La Veilleuse de poche ; Mina, pour rire : « C'est toi le peureux. Tu dors avec MA veilleuse, de toute façon. » | Village, Madame Lune (2ᵉ fois) | `chapter1.ts:268` | `lot7-village` |
+| T2 | Madame Lune, 3ᵉ réplique : « Il a beaucoup voyagé, ce mouton… Aller. Et retour. » | Village | `chapter1.ts:273` | `lot7-village` |
+| T8 | Madame Lune : « Il y en a un qui fait semblant. Il respire trop fort. » ; double : Mina, « C'est pas moi ! …Enfin, des fois. » | Village (4ᵉ fois, puis une fois sur quatre) | `chapter1.ts:281` | `lot7-village` |
+| T3 | Le mouton compteur : « …trois cent soixante-quatre… Oh ! Tu me fais perdre le compte. À chaque fois. » | Village | `compteur` → `moutonCompteur`, `chapter1.ts:314` | `lot7-village` |
+| T2 | « Ton mouton, il a changé de maison, non ? Il sent l'hôpital. Et la lessive de chez toi. » | Village, le compteur (3ᵉ fois) | `chapter1.ts:319` | `lot7-village` |
+| — | Humour noir : « si un jour je disparais, quelqu'un le remarquera » ; Mina : « T'es le seul mouton qui compte. » | Village, le compteur (4ᵉ fois) | `chapter1.ts:323` | `lot7-village` |
+| T3 | Le mouton borgne : « C'est Dodo qui me l'a emprunté. Il en avait besoin pour quelqu'un. » ; double : la poupée de Mina, un bouton recousu à la place | Village, au bord de la mare | `borgne` → `moutonBorgne`, `chapter1.ts:347` ; perso `mouton_borgne` (`src/data/sprites/characters.ts:579`, carte `maps/chapter1.ts:215`) | `lot7-village` |
+| T3 | Le banc « M + N » : Mina ne se souvient pas de l'avoir gravé (existant) ; « Le M a une petite boucle, en haut. Tu fais tes M comme ça, toi aussi. » (le bocal de la nuit 40, ch. 6) | Village, banc | `banc_mn` → `benchMN`, `chapter1.ts:411` | `lot7-village` |
+| § 1.1 | Le code des coups : « Un coup, ça veut dire "t'es là ?". Deux, "je suis là". Trois, "bonne nuit". C'est toi qui l'as inventé. » ; frapper 1, 2 ou 3 coups, trois donnent « …Bonne nuit quand même. » | Village, porte du Mouton Noir | `maison_mouton_noir` → `blackSheepHouse`, `chapter1.ts:426` ; drapeaux `c1_code`, `c1_knock` | `lot7-village` |
+| T2 / T9 | Mina : « Dodo, c'est le mouton de N— … le mien. LE MIEN. » (3ᵉ réplique) | Village, parler à Mina | `MINA_LINES.village`, `chapter1.ts:1023` | `lot7-village` |
+| T3 | Chaussette : « Comme d'habitude ? » ; double : « Je te confonds. Toutes les têtes fatiguées se ressemblent. » | Boutique, parler à Chaussette | `chaussette` → `chaussetteTalk`, `chapter1.ts:534` | `lot7-boutique` |
+| — | Nouveau stock : « Yeux de rechange » (deux pour le prix d'un), « Pour les jours où on ne veut pas voir » ; objet de soin (NEUTRE, 10 PV) | Boutique, comptoir | objet `yeux`, `src/data/items.ts:32` | `lot7-boutique` |
+| § 5 | Chaussette rachète le Bouton doré : 50 Boutons au comptoir, puis 60 en lui parlant. Vendre est possible et ferme sans rien dire la fin secrète (`c1_bouton_vendu`, lu par `endings.ts › dawnEnding`) ; Mina : « C'est pas grave. C'était qu'un bouton. » | Boutique | `comptoir` → `chaussetteShop`, `sellButton`, `chapter1.ts:497`, `:521`, `:539` | `lot7-boutique` |
+| — | Le Moutonnier a les yeux cousus en croix : « Je les ai cousus. C'est plus reposant. » ; il compte à l'oreille (« *dresse une oreille* ») | Colline, devant les oreillers | `moutonnierMeet`, `chapter1.ts:787` ; perso `moutonnier` (`characters.ts:565`), locuteur `moutonnier` | `lot7-colline` |
+| T8 | Manche 3 « Les yeux fermés » (existant) ; « Moi, de toute façon, j'ai les yeux fermés » ; « à force de compter, on oublie tout le reste » (existant) | Colline, compter les moutons | `src/game/scenes/sheepcount.ts:69`, `chapter1.ts:636`, `:756` | `v11-sheep` |
+| T9 | Derrière un oreiller géant, une petite silhouette en bonnet, de dos ; quand Noa approche, elle n'y est plus (sans un bruit) ; derrière l'oreiller : « Personne. Rien qu'un oreiller. » | Colline, l'oreiller au chocolat | `c1_bonnet` (sprite `npc_bonnet_loin`, `src/data/sprites/chapter6.ts:372`, carte `maps/chapter1.ts:367`), déclencheur `hillSilhouette` (`maps/chapter1.ts:393`, `chapter1.ts:585`), `oreiller_chocolat` (`chapter1.ts:613`) ; drapeau `c1_bonnet_vu` | `lot7-colline` |
+| T6 | Le coton tombe sur Noa, il tousse ; Mina : « Te mets pas trop près de moi si t'es enrhumé. Maman dit. », puis « Je rigole ! … Ça rend pas malade, le coton. » ; « Ce n'était pas le froid. » (existant) | Colline, assis avec Mina | `sitWithMina`, `chapter1.ts:886` | `lot7-assis` |
+| T8 | « Promis. » (`c1_promesse`, preuve en faveur de la douce, existant) | Colline, assis avec Mina | `chapter1.ts:912` | `lot7-assis` |
+| T4 | Le Placard épargné, dernière réplique : « …Je l'ai gardée pour moi, la lumière. J'avais si peur. » | Sommet | `closetBoss`, `chapter1.ts:977` | `lot7-placard` |
+| — | Le Placard vaincu fond en encre : « L'encre sent le désinfectant. » | Sommet | `chapter1.ts:980` | `lot7-placard-vaincu` |
+| T7 | Dodo : « C'est l'heure de se réveiller… pour l'instant. » (existant) | Fin du chapitre | `chapterEnd`, `chapter1.ts:1002` | `v2_aube` |
 
 ## Encore à faire par les lots suivants
 

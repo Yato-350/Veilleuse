@@ -1,0 +1,77 @@
+# Lot 7 (docs/HISTOIRE.md § 3.4, docs/INDICES.md): chapter 1, the village, with Mina. Lady Moon: « Encore t— … »,
+# the pocket nightlight (« Tu dors avec MA veilleuse »), « Aller. Et retour. », « Il y en a un qui fait semblant ».
+# The counting sheep: 364, « À chaque fois », the smell of the hospital and the laundry, « si je disparais ». The
+# one-eyed sheep. The M + N bench (the M with a loop). The knock code at the Black Sheep's door (one knock, then three).
+# Mina's third line: « le mouton de N— ».
+query: debug=script&name=c1_village&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+# Lady Moon, four times
+go:34/9
+interact:lune
+zuntil: SAW('Encore t—')
+shot:lune
+zuntil: IDLE()
+interact:lune
+zuntil: IDLE()
+assert: V.G.state.keyItems.includes('veilleuse_poche') && SAW('Tu dors avec MA veilleuse')
+interact:lune
+zuntil: IDLE()
+assert: SAW('Aller. Et retour.')
+interact:lune
+zuntil: IDLE()
+assert: SAW('Il y en a un qui fait semblant. Il respire trop fort.') && SAW('Enfin, des fois.')
+# The counting sheep, four times
+go:27/18
+interact:compteur
+zuntil: SAW('trois cent soixante-quatre')
+shot:compteur
+zuntil: IDLE()
+interact:compteur
+zuntil: IDLE()
+interact:compteur
+zuntil: IDLE()
+assert: SAW('Il sent l\'hôpital. Et la lessive de chez toi.')
+interact:compteur
+zuntil: IDLE()
+assert: SAW('quelqu\'un le remarquera') && SAW('le seul mouton qui compte')
+# The one-eyed sheep
+go:36/21
+interact:borgne
+zuntil: SAW('Il en avait besoin pour quelqu\'un.')
+shot:borgne
+zuntil: IDLE()
+assert: SAW('Maman lui a recousu un bouton')
+# The bench
+go:25/19
+interact:banc_mn
+zuntil: IDLE()
+assert: SAW('Le M a une petite boucle')
+# The Black Sheep's door: the code, one knock, then three
+go:34/19
+interact:maison_mouton_noir
+zuntil: V.dialogue.choices && V.dialogue.choices.length === 4
+shot:code
+assert: SAW('C\'est toi qui l\'as inventé.')
+choose:0
+zuntil: IDLE()
+assert: SAW('Je suis toujours là. C\'est chez moi.') && V.G.state.flags.c1_knock === true
+interact:maison_mouton_noir
+zuntil: V.dialogue.choices && V.dialogue.choices.length === 4
+choose:2
+zuntil: IDLE()
+assert: SAW('Bonne nuit quand même.') && SAW('un long soupir')
+# Mina, three times
+interact:mina
+auto
+interact:mina
+auto
+interact:mina
+zuntil: SAW('le mouton de N')
+shot:mina
+zuntil: IDLE()

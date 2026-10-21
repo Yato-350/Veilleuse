@@ -8,6 +8,7 @@ export const DATA: Record<string, string> = {
   'Dodo': 'Dodo',
   'Madame Lune': 'Lady Moon',
   'Moutonnier': 'Shepherd',
+  'Mouton': 'Sheep',
   'Agneau': 'Lamb',
   'Mémé Laine': 'Granny Wool',
   'Hibou': 'Owl',

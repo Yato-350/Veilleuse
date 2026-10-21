@@ -1,0 +1,40 @@
+# Lot 7 (docs/HISTOIRE.md § 2.10, § 3.4): chapter 1, the colline, with Mina. Behind a big pillow, a little silhouette
+# in a knitted hat, her back turned (T9); when Noa comes near she is gone, without a sound; behind the pillow, « Rien
+# qu'un oreiller ». The Shepherd's eyes are sewn shut (« C'est plus reposant »), and he counts by ear.
+query: debug=script&name=c1_colline&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+eval: (V.G.state.cleared.push('c1_pissenlit_2', 'c1_mouton_noir_2', 'c1_duo', 'c1_nuage_2'), V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => V.world.removeEntity(e)), 1)
+ArrowUp:500
+wait:300
+assert: !!V.world.get('c1_bonnet')
+shot:silhouette
+ArrowRight:900
+wait:200
+shot:approche
+ArrowRight:1200
+waitfor: !V.world.get('c1_bonnet')
+assert: V.G.state.flags.c1_bonnet_vu === true
+shot:partie
+interact:oreiller_chocolat
+zuntil: IDLE()
+assert: SAW('Rien qu\'un oreiller.')
+# The Shepherd: his sewn eyes
+go:19/15
+wait:200
+ArrowRight:900
+zuntil: SAW('Je les ai cousus.')
+shot:cousus
+zuntil: V.dialogue.choices && V.dialogue.choices.length === 2
+assert: SAW('Pourquoi t\'as des croix sur les yeux, toi ?') && SAW('Il suffit de les entendre sauter.')
+choose:1
+zuntil: IDLE()
+# Coming back: she is not there again
+load:colline/south
+wait:800
+assert: !V.world.get('c1_bonnet')

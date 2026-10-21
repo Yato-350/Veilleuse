@@ -1,0 +1,43 @@
+# Lot 7 (docs/HISTOIRE.md § 3.4, docs/INDICES.md): chapter 1, the prairie, with Mina. The treasure box: the film
+# canister (« La petite souris est jamais venue à l'hôpital ») and the Golden Button, a key item (« Tu le gardes,
+# hein ? Même si on te le demande. »). The dream bed: tally marks carved on the headboard, « Tu arrêtes de compter à
+# cent », Mina's ordinary double (the sleeps till Christmas). The boot prints, Noa's size. Mina's third line: her
+# pigtails are wool.
+query: debug=script&name=c1_tresor&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+zuntil: SAW('dents de lait')
+shot:dents
+zuntil: SAW('Faut appuyer fort.')
+shot:bouton
+zuntil: !V.dialogue.busy && V.world.busy === 0
+assert: SAW('une boîte de pellicule') && SAW('La petite souris est jamais venue à l\'hôpital.') && SAW('Même si on te le demande.')
+assert: V.G.state.keyItems.includes('bouton_dore') && V.G.state.flags.c1_bouton === true && V.G.state.flags.c1_tresor === true
+# Again: the box without the button
+interact:tresor_mina
+auto
+assert: SAW('Trois billes, une plume et une boîte de pellicule.')
+# The dream bed (first look) and the bush
+interact:dream_bed
+zuntil: SAW('Tu arrêtes de compter à cent.')
+go:7/13
+wait:300
+shot:lit
+zuntil: !V.dialogue.busy && V.world.busy === 0
+assert: SAW('Par paquets de cinq.') && SAW('compter les dodos jusqu\'à Noël')
+interact:buisson_bottes
+zuntil: !V.dialogue.busy && V.world.busy === 0
+assert: SAW('C\'est ta pointure.') && SAW('Un monstre qui a tes pieds !')
+# Mina's lines in the prairie: the third is about her pigtails
+interact:mina
+auto
+interact:mina
+auto
+interact:mina
+zuntil: SAW('Ça repousse pas, la laine.')
+shot:couettes
+auto
