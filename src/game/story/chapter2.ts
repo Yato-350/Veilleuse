@@ -18,23 +18,40 @@ import { shop, wakeUp } from './common';
  * lisiere (Mina on her stump, Dodo, Chaussette's stall) → foret (pencil trees, erased holes, the Owl's library) →
  * clairiere (lantern puzzle, plaid) → sentier_gomme (« c'est grave si on oublie ? ») → atelier (boss Gomme, souvenir 2).
  * Mina starts forgetting; Dodo cracks for the first time (« Chut. »).
+ *
+ * Version 2 clues (docs/HISTOIRE.md § 3.6, docs/INDICES.md): each place keeps at most one false note, and each one has
+ * an ordinary double (a joke or a line of Mina's, a banal explanation). Flags:
+ *   c2_chuchote      the erased hole that whispers numbers was heard (talk counter)
+ *   c2_bonnet_vu     the tiny figure in the other erased hole was seen; she is gone afterwards
+ *   c2_copeaux       the sharpener's shavings were looked at; c2_taille: Noa sharpened a pencil tree (it bled ink)
+ *   c2_illisible     the shelf of unread books was looked at (counter): the book that repeats one sentence
+ *   c2_contes        the shelf of tales was looked at (counter): the tale heard through a telephone
+ *   c2_carnet_hibou  the Owl talked about the notebook (« trois pays »)
+ *   c2_fils          the threads above Mina's wrists were seen in the blue light
+ *   c2_bocal         Gomme's jar of crumbs was looked at
  */
 
 const flag = (k: string): boolean => !!G.state.flags[k];
 const withMina = (): boolean => G.state.party.includes('mina');
+/** Talk counter stored in a flag: returns how many times this was seen before, then increments it. */
+function bump(k: string): number {
+  const n = Number(G.state.flags[k] ?? 0);
+  G.state.flags[k] = n + 1;
+  return n;
+}
 
 /** Tile position of an entity. */
 function tileOf(e: Entity): { x: number; y: number } {
   return { x: Math.floor(e.x / 16), y: Math.floor((e.y - 2) / 16) };
 }
 
-/** Briefly swaps Mina's walking sprite for her glitched pose. */
-async function minaGlitch(d: Director, id: string, frames: number): Promise<void> {
+/** Briefly swaps Mina's walking sprite for a pose (her glitched pose by default). */
+async function minaGlitch(d: Director, id: string, frames: number, pose = 'pose_mina_glitch'): Promise<void> {
   const m = d.find(id);
   if (!m) return;
   const char = m.char;
   m.char = undefined;
-  m.sprite = 'pose_mina_glitch';
+  m.sprite = pose;
   await d.wait(frames);
   m.char = char;
   m.sprite = undefined;
@@ -116,7 +133,7 @@ async function intro(d: Director): Promise<void> {
   d.spawn(dodoDef(p.x, p.y - 2));
   d.sfx('chime', { pitch: 0.8 });
   await d.emote('dodo', '♥');
-  await d.say(['Te revoilà, Noa.', 'La forêt est un peu… abîmée, en ce moment. Restez sur le chemin.'], 'dodo:happy');
+  await d.say(['Te revoilà, Noa.', 'La forêt est un peu… {static}abîmée{/static}, en ce moment. Restez sur le chemin.'], 'dodo:happy');
   await d.say('Dodo ! T\'étais où ?', 'mina:surprised');
   await d.say('Jamais très loin.', 'dodo:neutral');
   await d.wait(30);
@@ -127,7 +144,7 @@ async function intro(d: Director): Promise<void> {
   if (isLateNight()) await d.say('Il est {time}. Chez toi aussi, il fait nuit, hein ?', 'dodo:neutral');
   else if (G.meta.newGames > 1) await d.say('C\'est drôle. J\'ai l\'impression qu\'on s\'est déjà dit tout ça.', 'dodo:neutral');
   if (G.state.encre > 0) await d.say('Tu as un peu d\'encre sur les mains, Noa. Ce n\'est rien. Ça part au lavage.', 'dodo:neutral');
-  await d.say('Si quelque chose vous fait peur, pensez à moi. Bonne promenade !', 'dodo:happy');
+  await d.say('Si quelque chose vous fait peur, pensez à {static}moi{/static}. Bonne promenade !', 'dodo:happy');
   d.sfx('chime');
   d.remove('dodo');
   await d.wait(20);
@@ -261,7 +278,10 @@ export const minaFreeze: Script = async (d) => {
   await d.wait(30);
   await d.emote('player', '?');
   await d.say('…Mina ?', 'noa:surprised');
-  await d.wait(80);
+  await d.wait(70);
+  // For a handful of ticks, facing you, her eyes are two buttons sewn with red thread (§ 2.4, T3). Then the glitch.
+  if (m) m.data.boutons = true;
+  await minaGlitch(d, 'mina', 6, 'pose_mina_boutons');
   fx.pulseGlitch(6);
   await minaGlitch(d, 'mina', 3);
   d.music('forest', 0.3);
@@ -289,13 +309,100 @@ export const erasedDrawing: Script = async (d) => {
   if (withMina()) await d.say('On peut pas rentrer dans une maison sans porte…', 'mina:sad');
 };
 
+/** The erased hole east of the path: something counts, deep in the white (§ 2.4, T3). */
 export const erasedHole: Script = async (d) => {
+  if (bump('c2_chuchote')) {
+    await d.say(['Le trou blanc chuchote toujours, tout au fond.', 'Tu n\'arrives jamais à entendre la fin.']);
+    return;
+  }
   await d.say(['Un trou blanc dans le monde. Pas un trou noir : un trou blanc.', 'Il n\'y a rien dedans. Même pas le vide.']);
+  await d.say('Tu te penches au-dessus du bord. Tout au fond, quelque chose chuchote.');
+  d.sfx('static', { vol: 0.2, pitch: 0.6 });
+  await d.say('{spd:0.5}{c:g}« …trois cent… soixante… »{/c}{/spd}');
+  if (withMina()) {
+    await d.say(['Chut ! C\'est quelqu\'un qui compte les moutons.', 'Faut pas le déranger. Sinon, il doit tout recommencer depuis le début.'], 'mina:neutral');
+  }
 };
 
+/**
+ * The erased hole in the south-west: far away in the white, a tiny figure in grey pencil, seen from behind, in a hat
+ * with sheep ears (§ 2.10, T9). Mina's double: an eraser always misses a little bit. Then she is not there any more.
+ */
+export const erasedHoleFigure: Script = async (d) => {
+  const e = d.find('c2_bonnet');
+  if (!e) {
+    await d.say(['Un trou blanc dans le monde. Pas un trou noir : un trou blanc.', 'Il n\'y a rien dedans. Même pas le vide.']);
+    return;
+  }
+  // Keep her above the dialogue box.
+  await d.cameraTo(Math.floor(e.x / 16), Math.floor((e.y - 8) / 16));
+  await d.say(['Un trou blanc dans le monde. Pas un trou noir : un trou blanc.', 'Tout au fond, très loin, il y a une toute petite figure. De dos.']);
+  await d.wait(30);
+  await d.say('Elle ne bouge pas. Elle a l\'air d\'attendre quelqu\'un.');
+  if (withMina()) await d.say(['C\'est un bout de dessin que Gomme a oublié !', 'Il reste toujours un petit bout, quand on gomme. Toujours.'], 'mina:neutral');
+  d.set('c2_bonnet_vu');
+  e.alpha = 0.5;
+  await d.wait(6);
+  d.remove('c2_bonnet');
+  await d.wait(40);
+  await d.say('Tu regardes encore. Il n\'y a plus rien. Gomme est repassée, sûrement.');
+  d.cameraFollow();
+};
+
+/** The giant sharpener: the shavings (§ 3.6), and in the forest, sharpening a pencil tree that bleeds ink. */
 export const sharpener: Script = async (d) => {
   await d.say(['Un taille-crayon géant, couché dans les copeaux.', 'Des centaines de crayons sont passés par là. Ils en sont ressortis plus courts.']);
+  if (!flag('c2_copeaux')) {
+    d.set('c2_copeaux');
+    await d.say('Par terre, les copeaux sont fins, recourbés, un peu transparents. Comme des rognures d\'ongles.');
+    if (withMina()) await d.say(['Beurk !', '…Moi, je les garde pour faire des jupes aux fleurs. Ça tourne comme une robe de princesse.'], 'mina:happy');
+  }
+  if (G.state.map !== 'foret') return;
+  if (flag('c2_taille')) {
+    await d.say('Le crayon rouge a une coupe toute fraîche. Tu n\'as pas envie de recommencer.');
+    return;
+  }
+  const r = await d.ask('Tailler un arbre-crayon ?', ['Oui', 'Non'], undefined, { cancelIndex: 1 });
+  if (r === 0) await bleedingTree(d);
 };
+
+/**
+ * Sharpening the red pencil tree next to the sharpener: the cut oozes thick dark-red ink down the trunk (§ 3.6). The
+ * double is plain: a red pencil is red inside. With « Réduire les flashs », no shake and no spray, only slow drops.
+ */
+async function bleedingTree(d: Director): Promise<void> {
+  d.set('c2_taille');
+  const gentle = G.settings.reduceFlashes;
+  const sh = d.find('taille_crayon_geant');
+  const ox = sh ? sh.x : d.player.x;
+  const oy = sh ? sh.y : d.player.y;
+  // The nearest red pencil tree (there is one right next to the sharpener).
+  const tree = world.entities
+    .filter((e) => e.sprite === 'prop_pencil_r')
+    .sort((a, b) => Math.hypot(a.x - ox, a.y - oy) - Math.hypot(b.x - ox, b.y - oy))[0];
+  await d.say(['Tu pousses le taille-crayon contre le tronc rouge le plus proche. Il est lourd.', 'Tu tournes.']);
+  for (let i = 0; i < 3; i++) {
+    d.sfx('scratch', { pitch: 0.7 + i * 0.05 });
+    if (!gentle) d.shake(1, 10);
+    if (tree) world.particles.burst(tree.x - 3, tree.y - 26, '#dcb488', 4, 0.8);
+    await d.wait(22);
+  }
+  await d.say('Crrr. Crrr. Le bois s\'enroule en copeaux. Puis quelque chose perle, sous la coupe.');
+  if (tree) world.particles.bleed(tree.x - 3, tree.y - 26, tree.y - 1, { frames: 260, color: '#6a1028', dark: '#2e0816', gentle });
+  d.sfx('pop', { pitch: 0.4, vol: 0.4 });
+  await d.wait(60);
+  await d.say(['Ça coule le long du bois. Lentement. Épais.', 'Rouge sombre, comme d\'une écorchure.']);
+  if (withMina()) {
+    await d.say('Il saigne !', 'mina:surprised');
+    await d.wait(30);
+    await d.say(['…Mais non. C\'est un crayon rouge, gros bêta. C\'est rouge, dedans.', 'Tout le monde sait ça.'], 'mina:neutral');
+    await d.say('Le panneau disait de pas tailler les arbres, quand même.', 'mina:sad');
+  } else {
+    await d.say('De la mine. Un crayon rouge est rouge dedans. C\'est tout.');
+  }
+  await d.wait(30);
+  await d.say('Tu remets le taille-crayon à sa place. Le crayon goutte encore un peu. Puis plus du tout.');
+}
 
 export const greenPencil: Script = async (d) => {
   if (flag('c2_hidden_choc')) {
@@ -373,8 +480,12 @@ export const hibou: Script = async (d) => {
     }
   }
   for (;;) {
-    const r = await d.ask('Hou ? Que veux-tu savoir ?', ['Une devinette', 'Les lanternes', 'Gomme', 'Au revoir'], 'hibou', { cancelIndex: 3 });
+    // Once the notebook on the desk has been looked at, the Owl can talk about it (§ 2.2, T1).
+    const topics = ['Une devinette', 'Les lanternes', 'Gomme', ...(flag('c2_carnet') ? ['Le carnet'] : []), 'Au revoir'];
+    const pick = await d.ask('Hou ? Que veux-tu savoir ?', topics, 'hibou', { cancelIndex: topics.length - 1 });
+    const r = topics[pick] === 'Le carnet' ? 4 : topics[pick] === 'Au revoir' ? 3 : pick;
     if (r === 0) await riddle(d);
+    else if (r === 4) await owlNotebook(d);
     else if (r === 1) {
       d.set('c2_hint');
       await d.say([
@@ -395,6 +506,17 @@ export const hibou: Script = async (d) => {
     }
   }
 };
+
+/** The Owl on the notebook with star stickers: « trois pays » (§ 2.2, T1). The double: children's notebooks end in scribbles. */
+async function owlNotebook(d: Director): Promise<void> {
+  d.set('c2_carnet_hibou');
+  await d.say(['Hou. Le carnet aux étoiles…', 'Ce carnet n\'a que trois pays. Le reste, quelqu\'un d\'autre le gribouille.'], 'hibou');
+  if (withMina()) {
+    await d.say(['Normal ! Les dernières pages d\'un cahier, c\'est toujours pour les gribouillis.', 'Tout le monde sait ça.'], 'mina:happy');
+  } else {
+    await d.say('Les cahiers d\'enfants finissent souvent comme ça. Hou.', 'hibou');
+  }
+}
 
 async function riddle(d: Director): Promise<void> {
   const i = Number(G.state.flags.c2_riddle ?? 0);
@@ -422,6 +544,15 @@ export const shelfUnread: Script = async (d) => {
     '« Lettres jamais envoyées ». « Ce que j\'aurais dû dire ». « Mode d\'emploi d\'une veilleuse ».',
     '« Combien de temps dure un an ». Les pages ne sont même pas coupées.',
   ]);
+  // Looked at again: the one book that has been read, and read, and read (§ 2.4, T3).
+  if (!bump('c2_illisible')) return;
+  await d.say(['Sauf un. Celui-là, on l\'a ouvert souvent : la tranche est toute grise de doigts.', 'Tu l\'ouvres au hasard.']);
+  const page = ['Tu es revenu !', 'Tu as dormi super longtemps.'];
+  await d.paper([...page, ...page, ...page, ...page, 'Tu es revenu !', 'Tu as dormi super lon']);
+  await d.say(['Toutes les pages disent la même chose. Le livre est très épais.', 'Tu ne comptes pas les pages.']);
+  if (withMina()) {
+    await d.say(['C\'est des lignes ! Comme à l\'école, quand on recopie une phrase jusqu\'à ce qu\'elle soit belle.', 'Celle-là, elle est déjà belle, pourtant.'], 'mina:neutral');
+  }
 };
 
 export const shelfTales: Script = async (d) => {
@@ -430,6 +561,11 @@ export const shelfTales: Script = async (d) => {
     '« La Princesse-Chevalière contre le Monstre du Placard ». Écrit en grosses lettres. Ça finit bien.',
   ]);
   if (withMina()) await d.say('Hé ! C\'est mon histoire ! Je suis connue !', 'mina:happy');
+  // Looked at again: a tale that stops in the middle (§ 3.6, T8). The double: phone calls always cut at the best part.
+  if (!bump('c2_contes')) return;
+  await d.say('Tout au bout de l\'étagère, un conte sans couverture. Les pages s\'arrêtent au milieu d\'une phrase.');
+  await d.say(['Hou. Et celui-ci, quelqu\'un l\'a écouté à travers un téléphone.', 'Il ne finit pas.'], 'hibou');
+  if (withMina()) await d.say('Au téléphone, ça coupe toujours au meilleur moment. Saleté de réseau !', 'mina:angry');
 };
 
 export const shelfRhymes: Script = async (d) => {
@@ -564,7 +700,10 @@ async function lanternsSolved(d: Director): Promise<void> {
   }
   d.music('forest');
   await d.say(['Les quatre lanternes brillent ensemble.', 'Une à une, les lucioles sortent des herbes. Elles chantent tout bas, sans paroles.']);
-  if (withMina()) await d.say(['Les lucioles ! Elles sont revenues !', 'Je le savais. Je savais qu\'elles chantaient.'], 'mina:happy');
+  if (withMina()) {
+    await d.say(['Les lucioles ! Elles sont revenues !', 'Je le savais. Je savais qu\'elles chantaient.'], 'mina:happy');
+    await threadsInBlue(d);
+  }
   await d.say(['Tout au nord de la clairière, les crayons serrés comme des barreaux s\'écartent en grinçant.', 'Un chemin apparaît, bordé de petites lumières.']);
   d.sfx('knock', { pitch: 0.6 });
   d.shake(1, 30);
@@ -580,6 +719,35 @@ async function lanternsSolved(d: Director): Promise<void> {
   if (withMina()) {
     await d.say(['C\'est le plaid du canapé ! Celui de la cabane !', 'On se mettait dessous pour regarder les dessins animés. Toi, tu t\'endormais toujours avant la fin.'], 'mina:happy');
   }
+}
+
+/**
+ * In the blue light, for a moment, two threads above Mina's wrists rise out of sight (§ 2.10, T9: the puppet she was).
+ * Doubles: Mina thinks it is a spider; the narrator says the fireflies leave trails of light everywhere.
+ */
+async function threadsInBlue(d: Director): Promise<void> {
+  const m = d.find('mina');
+  if (!m) return;
+  d.set('c2_fils');
+  const t = d.spawn({ id: 'fils_mina', sprite: 'fx_fils_mina', x: 0, y: 0, shadow: false, solid: false });
+  t.x = m.x;
+  t.y = m.y;
+  t.layer = 1;
+  t.alpha = 0;
+  d.sfx('thread', { vol: 0.25, pitch: 1.4 });
+  for (let i = 1; i <= 10; i++) {
+    t.alpha = i / 10;
+    await d.wait(3);
+  }
+  await d.say(['Dans la lumière de la lanterne bleue, quelque chose brille au-dessus des poignets de Mina.', 'Deux fils. Très fins. Ils montent tout droit, jusqu\'où tu ne vois plus.']);
+  await d.say('Quoi ? J\'ai une araignée sur moi ? ENLÈVE-LA !', 'mina:surprised');
+  for (let i = 9; i >= 0; i--) {
+    t.alpha = i / 10;
+    await d.wait(2);
+  }
+  d.remove('fils_mina');
+  await d.say(['Tu passes la main au-dessus de ses poignets. Rien.', 'Un fil de lumière, peut-être. Les lucioles en laissent partout.']);
+  await d.say('Ouf.', 'mina:neutral');
 }
 
 export const rainbowSign: Script = async (d) => {
@@ -824,6 +992,7 @@ async function gommeSpared(d: Director): Promise<void> {
   }
   await d.say(['…D\'accord.', 'On garde.'], 'gomme');
   await d.say(['Même ce qui fait mal.', 'Je crois que… je suis fatiguée d\'effacer.'], 'gomme');
+  await d.say(['On efface pour ne plus avoir mal. Ou pour ne plus être coupable.', 'Ce n\'est pas pareil.'], 'gomme');
   await d.say('Je vais tout rendre. Les fleurs, les lucioles, les dessins. Un trait après l\'autre.', 'gomme');
   d.sfx('chime', { pitch: 0.9 });
   d.flash('#fffaf2', 40);
@@ -905,7 +1074,7 @@ async function dodoHush(d: Director): Promise<void> {
     m.char = 'mina';
     m.moving = false;
   }
-  await d.say('Chut.', 'dododark');
+  await d.say('Ch{static}—{/static}t.', 'dododark');
   await d.wait(50);
   await d.say('On ne parle pas de ça ici.', 'dododark');
   await d.wait(160);
@@ -930,6 +1099,19 @@ export const atelierDesk: Script = async (d) => {
   await d.say(['Le grand bureau à dessin de Gomme.', 'Il est parfaitement propre. Pas une trace. Pas une miette. Rien.']);
 };
 
+/** Gomme's jar of crumbs (§ 3.6): « Certaines ont une bouche. » The double: like seeing faces in clouds. */
+export const crumbJar: Script = async (d) => {
+  if (flag('c2_gomme_spared')) {
+    await d.say(['Le bocal est ouvert. Les miettes sont reparties dessiner.', 'Il en reste une, tout au fond. Elle dort.']);
+    return;
+  }
+  d.set('c2_bocal');
+  await d.say(['Un bocal plein de miettes de gomme, roses. Sur l\'étiquette : « À JETER ».', 'Tu regardes de plus près.']);
+  await d.wait(20);
+  await d.say('Certaines ont une bouche.');
+  if (withMina()) await d.say(['Elles font « o » ! Comme les nuages qui ressemblent à des trucs.', '…Non. Elles bâillent. C\'est l\'heure de dormir, pour les miettes.'], 'mina:happy');
+};
+
 export const atelierEasel: Script = async (d) => {
   if (flag('c2_gomme_spared')) {
     await d.say('Un chevalet. Le dessin est revenu : une maison, avec une porte, cette fois.');
@@ -952,6 +1134,7 @@ export const MINA_LINES: Record<string, string[]> = {
   foret: [
     'Les arbres, c\'est des crayons ! Si on en cassait un, on pourrait dessiner le ciel.|happy',
     'Les trous blancs… Marche pas dedans. Ça me fait bizarre dans le ventre.|sad',
+    'Qui c\'est qui parle, quand c\'est écrit en blanc ? …Le livre, je parie.|neutral',
     'Je connais cette forêt par cœur. Enfin… je la connaissais.|neutral',
     'Tu crois qu\'on peut se perdre dans un dessin ?|neutral',
   ],
@@ -1006,6 +1189,11 @@ export const DEBUG: Record<string, Script> = {
   },
   c2_lanterns: async (d) => {
     setup(d, ['c2_flowers', 'c2_freeze', 'c2_hibou_met'], 'clairiere', 'south');
+    // Next to the blue lantern, the last one of the rhyme (Mina beside Noa, in its light).
+    d.player.x = 10 * 16 + 8;
+    d.player.y = 9 * 16 + 14;
+    d.face('player', 'left');
+    world.resetFollower();
     await d.fadeIn(10);
     // One wrong try, then the order of the nursery rhyme.
     for (const c of ['r', 'g', 'r', 'y', 'g', 'b'] as LanternColor[]) await lantern(c)(d);
@@ -1027,6 +1215,36 @@ export const DEBUG: Record<string, Script> = {
     await gommeSpared(d);
     await chapterEnd(d);
   },
+  // --- Version 2 clues (docs/INDICES.md): each one starts with Mina, next to the place.
+  /** The erased hole that whispers numbers (east of the sharpener). */
+  c2_chuchote: async (d) => {
+    await clueAt(d, 'foret', 37, 21);
+    d.face('player', 'right');
+  },
+  /** The erased hole with the tiny figure seen from behind (south-west). */
+  c2_figure: async (d) => {
+    await clueAt(d, 'foret', 11, 25);
+    d.face('player', 'down');
+  },
+  /** The giant sharpener and the red pencil tree beside it. */
+  c2_taille: async (d) => {
+    await clueAt(d, 'foret', 34, 17);
+    d.face('player', 'up');
+  },
+  /** Mina with button eyes, held still (the frame is only a few ticks long in the freeze). */
+  c2_boutons: async (d) => {
+    await clueAt(d, 'foret', 40, 6);
+    const m = d.find('mina');
+    if (m) {
+      m.char = undefined;
+      m.sprite = 'pose_mina_boutons';
+    }
+  },
+  /** Gomme's workshop, before the fight, next to the jar of crumbs. */
+  c2_bocal: async (d) => {
+    await clueAt(d, 'atelier', 5, 7);
+    d.face('player', 'up');
+  },
   c2_end_erased: async (d) => {
     setup(d, ['c2_flowers', 'c2_freeze', 'c2_lanterns_ok', 'c2_oubli'], 'atelier', 'boss');
     d.set('c2_boss_done');
@@ -1035,3 +1253,12 @@ export const DEBUG: Record<string, Script> = {
     await chapterEnd(d);
   },
 };
+
+/** Debug: chapter 2 with Mina, on `map` at tile (x, y) (the intro and the forest's first scenes already seen). */
+async function clueAt(d: Director, map: string, x: number, y: number): Promise<void> {
+  setup(d, ['c2_flowers', 'c2_freeze'], map, 'default');
+  d.player.x = x * 16 + 8;
+  d.player.y = y * 16 + 14;
+  world.resetFollower();
+  await d.fadeIn(10);
+}

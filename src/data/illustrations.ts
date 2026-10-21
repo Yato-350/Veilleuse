@@ -1436,6 +1436,16 @@ function paintDessin(g: Ctx): void {
   // the two children holding hands — Noa coloured, Mina only outlined
   kidNoa(g, 120, 118, 330, { s: 1.1, armR: [11, -34, 18, -23] });
   kidMina(g, 158, 118, 340, { s: 1.1, colored: false, armL: [-5, -25, -12, -22] });
+  // a little grey cloud by drawn Noa's mouth, puffed towards her: anyone would take it for an empty speech bubble
+  // (version 2, § 2.7, T6)
+  for (const [cx, cy, r, sd] of [
+    [135, 66, 3.2, 361],
+    [139.5, 62, 3.8, 362],
+    [143.5, 65.5, 3, 363],
+    [139, 67, 3, 365],
+  ] as const)
+    crayonEll(g, cx, cy, r, r * 0.9, CR.gray, '#6e6678', sd, { fill: 0.95, spill: 0.1 });
+  pen(g, [130, 71, 133, 69], { c: '#6e6678', seed: 364, wob: 0.1 });
   // title in pencil, in the blank part
   scrawl(g, tr('Noa et moi'), 222, 98, CR.black, { seed: 350 });
   // the yellow crayon, left where it stopped

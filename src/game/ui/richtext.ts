@@ -39,7 +39,7 @@ const PUNCT_PAUSE: Record<string, number> = { '.': 10, '!': 10, '?': 10, '…': 
  *   {as:noa} / {as:noa:sad}  from here on the box belongs to another speaker (name tag, portrait and blip change)
  *   {voice:noa}       from here on only the blip changes
  *   {p:20} / {p}      pause
- *   {spd:0.5}         speed multiplier
+ *   {spd:0.5} … {/spd}  speed multiplier
  *   {anyVar}          variable substitution
  */
 export function parseRich(text: string, vars: Record<string, string> = {}): RichChar[] {
@@ -91,6 +91,9 @@ export function parseRich(text: string, vars: Record<string, string> = {}): Rich
           }
           case 'spd':
             speed = arg ? parseFloat(arg) : 1;
+            break;
+          case '/spd':
+            speed = 1;
             break;
           default:
             // Unknown tag: keep literally.

@@ -1708,6 +1708,16 @@ const POSE_MINA_GLITCH = recolor(
   17,
   19,
 );
+/**
+ * Mina for one frame of her freeze (chapter 2, § 2.4 T3): her eyes are two grey buttons, sewn on with a cross of red
+ * thread. Shown for a few ticks while she is stuck mid-sentence; the rest of her is untouched.
+ */
+const POSE_MINA_BOUTONS = patch(MINA_DOWN[0]!, {
+  10: 'kmpmGGmmmmGGmpMk',
+  11: 'kmpGkrGssGrkGpMk',
+  12: 'kMkGrkGssGkrGkMk',
+  13: '.kkmGGssttGGMkk.',
+});
 /** Silhouette de Mina faite de lumière : tons crème/jaune pâle, contour jaune. */
 const POSE_MINA_LIGHT = recolor(MINA_DOWN[0]!, {
   k: 'y',
@@ -1811,6 +1821,7 @@ export const ART: Record<string, SpriteDef> = {
   pose_noa_sit: POSE_NOA_SIT,
   pose_mina_cry: POSE_MINA_CRY,
   pose_mina_glitch: POSE_MINA_GLITCH,
+  pose_mina_boutons: POSE_MINA_BOUTONS,
   pose_hug: POSE_HUG,
   pose_mina_light: POSE_MINA_LIGHT,
 };

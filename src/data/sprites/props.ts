@@ -1934,6 +1934,83 @@ const DRAWING_ERASED = (() => {
   return p.toString();
 })();
 
+/**
+ * Version 2 (§ 3.6): in one of the erased holes of the forest, a tiny figure in grey pencil, seen from behind — a knitted
+ * hat with two sheep ears, a little coat, two stick legs (T9). A sketch the eraser missed, far away in the white.
+ */
+const BONNET_TROU = (() => {
+  const p = pix([8, 14]);
+  p.stamp(`
+    .G....G.
+    GWG..GWG
+    GWWGGWWG
+    GWWWWWWG
+    gWWWWWWG
+    .GGgGGG.
+    ..GWWG..
+    .GWWWWG.
+    GWWWWWWg
+    GWWWWWWG
+    gWWWWWWG
+    .GGGgGG.
+    ..G..G..
+    ..g..G..
+  `, 0, 0);
+  return p.toString();
+})();
+
+/**
+ * Version 2 (§ 2.10, T9): two threads above Mina's wrists, seen once in the blue light of the clearing. Drawn over her
+ * frame (same width, anchored at her feet): they start at wrist height and rise out of sight, fading as they go.
+ */
+const FILS_MINA = (() => {
+  const h = 112;
+  const p = pix([16, h]);
+  for (const x of [1, 14]) {
+    for (let y = 0; y < h - 7; y++) {
+      if (y < 34 && (y + x) % (y < 16 ? 3 : 2) !== 0) continue;
+      p.px(x, y, y % 23 === 11 ? 'f' : y > 60 ? 'b' : 'a');
+    }
+    p.px(x, h - 7, 'f');
+  }
+  return p.toString();
+})();
+
+/**
+ * Version 2 (§ 3.6): Gomme's jar of crumbs in her workshop, « À JETER ». Pink crumbs heaped in the glass; a few of
+ * them have a tiny dark mouth. `open`: once Gomme is spared, the lid is off and a single crumb is left at the bottom.
+ */
+function bocalMiettes(open: boolean): string {
+  const p = pix([14, 18]);
+  // lid (on the jar, or set down beside it) and glass
+  if (open) p.rect(9, 15, 5, 2, 'P').hl(9, 15, 5, 'p');
+  else p.rect(3, 1, 8, 2, 'P').hl(3, 1, 8, 'p').hl(4, 0, 6, 'P');
+  p.rect(2, 3, 8, 13, 'a').hl(3, 16, 6, 'A').vl(9, 4, 12, 'A');
+  if (open) p.hl(2, 3, 8, 'A');
+  // crumbs, heaped (or the last one, asleep)
+  const crumb = (x: number, y: number, w: number, mouth = false): void => {
+    p.rect(x, y, w, 2, 'p').hl(x, y + 1, w, 'P');
+    if (mouth) p.px(x + Math.floor(w / 2), y + 1, 'R');
+  };
+  if (open) crumb(5, 14, 2);
+  else {
+    crumb(2, 14, 3);
+    crumb(5, 14, 2, true);
+    crumb(7, 14, 3);
+    crumb(3, 12, 3, true);
+    crumb(6, 12, 3);
+    crumb(4, 10, 2);
+    crumb(6, 10, 2, true);
+    p.px(5, 9, 'p').px(7, 9, 'P');
+  }
+  // label: a strip of paper with a scribbled word
+  p.rect(3, 5, 6, 3, 'q').hl(4, 6, 4, 'r');
+  // glint on the glass
+  p.vl(3, 9, 2, 'f').px(8, 4, 'f');
+  p.contour();
+  return p.toString();
+}
+
 const FOREST: Record<string, SpriteDef> = {
   prop_pencil_r: withColors(pencil('6', 'r', 'R'), PENCIL_COLORS),
   prop_pencil_b: String(pencil('b', 'B', 'n')),
@@ -1948,6 +2025,10 @@ const FOREST: Record<string, SpriteDef> = {
   prop_easel: EASEL,
   prop_desk_big: DESK_BIG,
   prop_drawing_erased: DRAWING_ERASED,
+  prop_bonnet_trou: BONNET_TROU,
+  fx_fils_mina: FILS_MINA,
+  prop_bocal_miettes: bocalMiettes(false),
+  prop_bocal_miettes_ouvert: bocalMiettes(true),
 };
 for (const c of ['r', 'b', 'y', 'g'] as const) {
   FOREST[`prop_lantern_${c}_on`] = lantern(true, LANTERN_ON[c]);

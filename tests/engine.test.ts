@@ -102,6 +102,12 @@ describe('rich text', () => {
   it('honors explicit newlines', () => {
     expect(layoutRich(parseRich('a\nb'), 200).length).toBe(2);
   });
+  it('closes a speed change with {/spd} (no literal tag left)', () => {
+    expect(plainText('{spd:0.5}lent{/spd} vite')).toBe('lent vite');
+    const chars = parseRich('{spd:0.5}a{/spd}b');
+    expect(chars.find((c) => c.ch === 'a')?.speed).toBe(0.5);
+    expect(chars.find((c) => c.ch === 'b')?.speed).toBe(1);
+  });
 });
 
 describe('sprites', () => {
