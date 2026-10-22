@@ -42,6 +42,7 @@
     "src/main.ts",
     "src/data/enemies-dev.ts",
     "src/data/enemies.ts",
+    "src/data/enemies-ch3.ts",
     "src/data/enemies-ch4.ts",
     "src/data/enemies-ch5.ts",
     "src/game/battle/final-common.ts",

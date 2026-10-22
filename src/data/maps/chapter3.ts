@@ -313,6 +313,8 @@ const HOPITAL: MapDef = {
     DECO('prop_h_bench', 2, 8, ['Un banc de salle d\'attente.', 'Il est encore tiède, comme si quelqu\'un venait de se lever.'], { w: 2 }),
     DECO('prop_h_bench', 9, 8, ['Un banc. Sur l\'accoudoir, quelqu\'un a gravé au compas : « N + M ».'], { w: 2 }),
     P('prop_h_table', 1, 6, { script: C3.lobbyTray }),
+    // « Le chocolat du robot » (version 2): B4 gives cotton.
+    P('prop_h_robot', 3, 3, { id: 'robot', script: C3.vendingRobot, light: { r: 22, color: '#c8e8ff', dy: -16 } }),
     DECO('prop_h_chair', 2, 6, 'Une chaise de visiteur, tournée vers l\'entrée.'),
     DECO('prop_h_wheelchair', 11, 6, 'Un fauteuil roulant. Un petit nounours en papier est assis dedans.'),
     // Corridor (always).
@@ -323,19 +325,39 @@ const HOPITAL: MapDef = {
     DECO('prop_h_wheelchair', 42, 3, 'Un fauteuil roulant, garé contre le mur.', { cond: () => stage() < 2 }),
     DECO('prop_h_wheelchair', 43, 6, ['Le fauteuil roulant.', 'Tout à l\'heure, il était contre le mur. Tu en es sûr.'], { cond: () => stage() >= 2 }),
     // The doors along the corridor.
-    ...CORRIDOR_DOORS.map((x, i) => P('', x, 2, { script: C3.corridorDoor(i) })),
+    ...CORRIDOR_DOORS.map((x, i) => P('', x, 2, { id: `porte_${x}`, script: C3.corridorDoor(i) })),
     // Mina's drawings: they show the right door.
-    ...[0, 1, 2, 3].map((s) => WALL('prop_h_drawings', DRAWING_AT[s]!, 2, -6, { cond: atStage(s), script: C3.tapedDrawing(s) })),
+    ...[0, 1, 2, 3].map((s) => WALL(`prop_h_dessin_${s}`, DRAWING_AT[s]!, 2, -6, { id: `dessin_${s}`, cond: atStage(s), script: C3.tapedDrawing(s) })),
     WALL('prop_h_drawings@ink', 47, 2, -6, { cond: atStage(2), script: C3.inkDrawing }),
     // The last wing.
     { ...savePoint(52, 3, 'Une veilleuse de couloir, à hauteur d\'enfant. Elle reste allumée toute la nuit. Pour ceux qui ont peur du noir.'), cond: () => stage() >= 3 },
     DECO('prop_h_bench', 47, 6, ['Un banc. Une boîte de mouchoirs y est posée.', 'Dans les salles d\'attente, il y en a toujours une.'], { w: 2, cond: () => stage() >= 3 }),
+    // The window of the last wing (T9: the reflection, see the trigger below).
+    P('', 50, 2, { id: 'fenetre_aile', script: C3.wingWindowLook, cond: () => stage() >= 3 }),
+  ],
+  // The paper nurses, all badged « NADIA » (version 2): in the lobby, in the corridor (a new place at each stage), in
+  // the last wing.
+  npcs: [
+    { id: 'nadia_0', sprite: 'npc_infirmiere_papier', frames: ['npc_infirmiere_papier', 'npc_infirmiere_papier_2'], frameSpeed: 70, x: 10, y: 3, script: C3.paperNurse(0) },
+    ...([[40, 3], [31, 6], [35, 3]] as const).map(([x, y], s) => ({
+      id: `nadia_1_${s}`,
+      sprite: 'npc_infirmiere_papier',
+      frames: ['npc_infirmiere_papier', 'npc_infirmiere_papier_2'],
+      frameSpeed: 70,
+      x,
+      y,
+      cond: atStage(s),
+      script: C3.paperNurse(1),
+    })),
+    { id: 'nadia_2', sprite: 'npc_infirmiere_papier', frames: ['npc_infirmiere_papier', 'npc_infirmiere_papier_2'], frameSpeed: 70, x: 53, y: 6, cond: () => stage() >= 3, script: C3.paperNurse(2) },
   ],
   enemies: [
     { id: 'c3_perfusion_1', enemies: ['perfusion'], x: 5, y: 5, wander: 1 },
     { id: 'c3_bip_1', enemies: ['bip'], x: 34, y: 5, wander: 2, cond: atStage(0) },
     { id: 'c3_perfusion_2', enemies: ['perfusion'], x: 26, y: 5, wander: 2, cond: atStage(1) },
     { id: 'c3_duo_1', enemies: ['bip', 'perfusion'], x: 41, y: 5, wander: 2, cond: atStage(2) },
+    // Version 2: Bracelet (src/data/enemies-ch3.ts).
+    { id: 'c3_bracelet_1', enemies: ['bracelet'], x: 35, y: 5, wander: 2, cond: atStage(1) },
   ],
   triggers: [
     { x: 14, y: 3, w: 1, h: 4, once: 'c3_corridor', script: C3.corridorIntro },
@@ -343,7 +365,11 @@ const HOPITAL: MapDef = {
     { x: 24, y: 3, w: 1, h: 4, once: 'c3_heard_1', cond: atStage(1), script: C3.heardMaman },
     { x: 30, y: 3, w: 1, h: 4, once: 'c3_heard_2', cond: atStage(2), script: C3.heardNight },
     { x: 36, y: 3, w: 1, h: 4, once: 'c3_heard_3', cond: () => stage() >= 3, script: C3.heardMonitor },
+    // T9: someone in a knitted hat at the far end of the looping corridor, turning the corner.
+    { x: 47, y: 3, w: 1, h: 4, cond: () => stage() < 3, script: C3.corridorBonnet },
     { x: 51, y: 3, w: 1, h: 4, cond: () => stage() < 3, script: C3.corridorLoop },
+    // T9: the reflection in the window of the last wing, while Mina stands beside Noa.
+    { x: 50, y: 3, w: 1, h: 4, once: 'c3_reflet', cond: () => stage() >= 3 && !G.state.flags.c3_mina_erased, script: C3.wingWindow },
     { x: 55, y: 3, w: 1, h: 4, once: 'c3_door304', cond: () => stage() >= 3 && !G.state.flags.c3_mina_erased, script: C3.door304 },
   ],
   warps: [

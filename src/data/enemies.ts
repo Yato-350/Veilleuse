@@ -1,5 +1,6 @@
 import type { BattleHooks, EnemyDef } from '../game/battle/types';
 import { DEV_ENEMIES } from './enemies-dev';
+import { CH3_ENEMIES } from './enemies-ch3';
 import { CH4_ENEMIES } from './enemies-ch4';
 import { CH5_ENEMIES } from './enemies-ch5';
 import { CH6_ENEMIES } from './enemies-ch6';
@@ -537,6 +538,9 @@ export const ENEMIES: Record<string, EnemyDef> = {
     rewards: { boutons: 12 },
     bg: 'hospital',
   },
+
+  // Version 2 — Bracelet (src/data/enemies-ch3.ts)
+  ...CH3_ENEMIES,
 
   // -------------------------------------------------------------------------------------------------------------------
   // Chapitre 4 — La Maison Cousue (src/data/enemies-ch4.ts)

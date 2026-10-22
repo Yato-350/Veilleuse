@@ -35,6 +35,12 @@ const withMina = (): boolean => G.state.party.includes('mina');
 /** Corridor stage: 0..2 = looping corridor, 3 = the last wing with door 304. */
 export const stage = (): number => num('c3_loop');
 const tile = (px: number): number => Math.floor(px / TILE);
+/** Increments a talk counter and returns its value before. */
+function bump(k: string): number {
+  const n = num(k);
+  G.state.flags[k] = n + 1;
+  return n;
+}
 
 async function mina(d: Director, text: string | string[], expr = 'neutral'): Promise<void> {
   if (withMina()) await d.say(text, `mina:${expr}`);
@@ -289,6 +295,12 @@ export const placardTalk: Script = async (d) => {
     await placardLights(d);
     return;
   }
+  // T9: what a closet sees, in the evening, through the keyhole.
+  if (bump('c3_placard') % 2 === 0) {
+    await d.say(['Petits… Je vais vous dire un secret de placard.', 'Le soir, une petite fille au bonnet regarde par ta fenêtre.', 'Elle ne frappe pas. Elle regarde si ta lumière est allumée.'], 'placard');
+    await mina(d, ['Les placards, ça voit tout de travers. Par le trou de la serrure.', 'C\'était sûrement la lune.'], 'neutral');
+    return;
+  }
   await d.say(['Allez-y, petits. Je garde la lumière.', 'Si vous avez peur, regardez derrière vous. Je serai là.'], 'placard');
 };
 
@@ -428,6 +440,64 @@ export const lobbyTray: Script = async (d) => {
   await d.give('lait');
 };
 
+// --- The paper nurses and the vending machine (version 2, § 3.8) ----------------
+
+/** Where the paper nurses stand: 0 lobby, 1 corridor (a new place at each stage), 2 the last wing. */
+const NURSES: Array<{ look: string[]; line: string }> = [
+  {
+    look: ['Une infirmière en papier plié, debout près de l\'accueil.', 'Tu ne l\'avais pas vue, en entrant.', 'Elle n\'a pas de visage. Juste un pli, au milieu. Sur son badge, au feutre : « NADIA ».'],
+    line: 'Les visites sont finies, mon grand. Reviens demain.',
+  },
+  {
+    look: ['Une infirmière en papier, plantée au milieu du couloir.', 'Pas de visage, elle non plus. Sur son badge : « NADIA ».'],
+    line: 'Toutes les portes se ressemblent, la nuit. Suis les dessins.',
+  },
+  {
+    look: ['Encore une infirmière en papier, au bout du couloir.', 'Badge : « NADIA ». Elle se tient très droite, tournée vers les portes, comme pour écouter.'],
+    line: 'Chut. Ici, on ne ferme jamais tout à fait les portes. Pour la lumière.',
+  },
+];
+
+export const paperNurse =
+  (i: number): Script =>
+  async (d) => {
+    const nurse = NURSES[i]!;
+    const seen = flag(`c3_nadia_${i}`);
+    if (seen) {
+      await d.say('L\'infirmière en papier. « NADIA ».');
+    } else {
+      d.set(`c3_nadia_${i}`);
+      await d.say(nurse.look);
+      // T6 / § 3.8: every badge says NADIA. The ordinary reason: Mina never saw their faces, and the night was Nadia.
+      const met = bump('c3_nadia');
+      if (met === 0) {
+        await mina(d, ['C\'est Nadia ! …Enfin, une Nadia.', 'On voyait jamais leur visage, ici. Elles avaient toujours un masque.'], 'happy');
+        await mina(d, 'Et la nuit, c\'était toujours Nadia.', 'neutral');
+      } else if (met === 1) {
+        await mina(d, 'Elles s\'appellent toutes Nadia. C\'est plus facile pour se rappeler.', 'neutral');
+      }
+    }
+    await d.say(nurse.line, 'infirmiere');
+  };
+
+/** « Le chocolat du robot », B4 (the bonus chapter tells the real one): here it gives cotton. */
+export const vendingRobot: Script = async (d) => {
+  if (flag('c3_robot')) {
+    await d.say(['Le distributeur. Tu tapes B4.', 'La spirale tourne dans le vide. Ça fait un bruit de ventre vide.']);
+    return;
+  }
+  await d.say(['Un distributeur, en papier comme le reste.', 'Derrière la vitre, des rangées de chocolats et de gâteaux. Tous dessinés.']);
+  await mina(d, ['Le robot ! C\'est le chocolat du robot !', 'Il faut taper B4. Un pour moi, un pour Maman, un pour toi.'], 'happy');
+  const r = await d.ask('Taper B4 ?', ['B4', 'Laisser'], undefined, { cancelIndex: 1 });
+  if (r !== 0) return;
+  d.set('c3_robot');
+  d.sfx('buzz', { pitch: 0.7, vol: 0.5 });
+  await d.wait(40);
+  await d.say(['La spirale tourne. Quelque chose tombe dans le bac, sans un bruit.', 'Une poignée de coton. Gris. Encore tiède.']);
+  await mina(d, ['C\'est de la barbe à papa ! …Elle est grise.', 'Il est en panne, le robot. Il donne ce qu\'il a.'], 'neutral');
+  await d.give('coton_gris');
+};
+
 // ---------------------------------------------------------------------------
 // Salle de jeux (the pediatric playroom)
 // ---------------------------------------------------------------------------
@@ -489,7 +559,8 @@ const DOORS: number[][] = [
   [311, 296, 303, 0],
 ];
 const RIGHT = [1, 0, 2];
-const LAST_WING = [305, 306, 307, 308];
+/** The last wing counts down to 304… and skips it: 307, 306, 305, then 303½ (§ 3.8). */
+const LAST_WING = [307, 306, 305];
 
 export const corridorIntro: Script = async (d) => {
   if (!withMina()) return;
@@ -502,7 +573,8 @@ export const corridorDoor =
   async (d) => {
     const s = stage();
     if (s >= 3) {
-      await d.say([tf('Chambre {0}.', LAST_WING[i]!), 'La porte est fermée. Derrière, il n\'y a pas un bruit.']);
+      if (i >= LAST_WING.length) await room303half(d);
+      else await d.say([tf('Chambre {0}.', LAST_WING[i]!), 'La porte est fermée. Derrière, il n\'y a pas un bruit.']);
       return;
     }
     const n = DOORS[s]![i]!;
@@ -513,6 +585,17 @@ export const corridorDoor =
     if (i === RIGHT[s]) await rightDoor(d, s);
     else await wrongDoor(d);
   };
+
+/** Room 303½, the last door before 304: through its porthole, the airlock (T6: the place he got to, chapter 5). */
+async function room303half(d: Director): Promise<void> {
+  if (bump('c3_sas') > 0) {
+    await d.say(['Chambre 303½. Le sas.', 'La porte n\'a pas de poignée de ce côté.']);
+    return;
+  }
+  await d.say(['Chambre 303½.', 'Le « ½ » a été ajouté à la main. Au crayon, tout petit.']);
+  await d.say(['Par le hublot : une toute petite pièce. Un lavabo, des blouses pendues, une boîte de masques.', 'Et au fond, une autre vitre.']);
+  await mina(d, ['C\'est le sas ! On se lave les mains, on met un masque, et après on a le droit d\'entrer.', 'C\'est pour pas apporter de microbes. Les microbes, c\'est le pire ennemi des chevalières.'], 'happy');
+}
 
 async function rightDoor(d: Director, s: number): Promise<void> {
   d.sfx('door');
@@ -539,6 +622,7 @@ async function wrongDoor(d: Director): Promise<void> {
 }
 
 export const corridorLoop: Script = async (d) => {
+  d.remove('bonnet_couloir');
   d.glitch(10);
   const p = d.player;
   p.x = 15 * TILE + 8;
@@ -555,18 +639,103 @@ export const corridorLoop: Script = async (d) => {
   }
 };
 
-/** Mina's drawings taped next to the right door. */
+/** The pass of the looping corridor the figure in the hat was last shown on (stage, loops, wrong doors). */
+let bonnetPass = '';
+
+/**
+ * T9 (§ 2.10): at the far end of the looping corridor, someone small in a knitted hat turns the corner — always ahead.
+ * Once per pass along the corridor; the first time, the camera lingers and Mina has an ordinary explanation.
+ */
+export const corridorBonnet: Script = async (d) => {
+  const pass = `${stage()}:${num('c3_loops')}:${num('c3_loop_fails')}`;
+  if (pass === bonnetPass || d.find('bonnet_couloir')) return;
+  bonnetPass = pass;
+  const first = !flag('c3_bonnet_vu');
+  d.spawn({ id: 'bonnet_couloir', sprite: 'npc_bonnet_loin', x: 56, y: 4, solid: false, shadow: false });
+  const walkOff = async (): Promise<void> => {
+    const e = d.find('bonnet_couloir');
+    if (!e) return;
+    for (let i = 0; i < 50 && d.find('bonnet_couloir'); i++) {
+      e.x += 0.5;
+      await d.wait(1);
+    }
+    e.sprite = 'npc_bonnet_loin_fondu';
+    for (let i = 0; i < 14 && d.find('bonnet_couloir'); i++) {
+      e.x += 0.5;
+      await d.wait(1);
+    }
+    d.remove('bonnet_couloir');
+  };
+  if (!first) {
+    void (async () => {
+      await d.wait(30);
+      await walkOff();
+    })();
+    return;
+  }
+  d.set('c3_bonnet_vu');
+  await d.cameraTo(52, 4);
+  await d.wait(30);
+  await d.say(['Au bout du couloir, quelqu\'un.', 'Quelqu\'un de petit, avec un bonnet.']);
+  await walkOff();
+  await d.say('Il tourne le coin. Il n\'y a pas de coin.');
+  d.cameraFollow();
+  await mina(d, ['Un autre enfant !', 'Il a pas le droit de se promener, la nuit. Nadia va le gronder.'], 'surprised');
+  await mina(d, 'Ici, y a plein d\'enfants qui ont des bonnets. Même quand il fait chaud.', 'neutral');
+};
+
+/**
+ * T9 (§ 2.10, « room304Window »): the corridor window of the last wing, at night, is a mirror. Beside Noa's reflection,
+ * someone smaller in a knitted hat with sheep's ears, while Mina, in her pigtails, stands right next to him.
+ */
+export const wingWindow: Script = async (d) => {
+  if (!withMina() || flag('c3_mina_erased')) return;
+  d.set('c3_reflet');
+  const m = d.find('mina');
+  // (over the window tile: the sprite is anchored at the bottom of tile row 1, minus the usual 2 px)
+  d.spawn({ id: 'reflet', sprite: 'fx_reflet_vitre', x: 50, y: 1, solid: false, shadow: false }).oy = 2;
+  d.face('player', 'up');
+  await d.wait(30);
+  await d.say(['Tu passes devant la fenêtre. Dehors, il fait tout noir : la vitre fait miroir.', 'Dedans, ton reflet. Et à côté de toi, quelqu\'un de plus petit.', 'Avec un bonnet. Un bonnet à oreilles de mouton.']);
+  d.face('player', m && m.x < d.player.x ? 'left' : 'right');
+  await d.wait(40);
+  await d.say('Tu tournes la tête. Mina est là. Avec ses couettes.');
+  d.remove('reflet');
+  d.face('player', 'up');
+  await d.wait(30);
+  await d.say('Dans la vitre, maintenant, il y a toi, et une petite fille avec des couettes.');
+  await mina(d, ['Quoi ? Pourquoi tu me regardes comme ça ?', '…J\'ai de l\'encre sur le nez ?'], 'surprised');
+};
+
+/** The same window, looked at again. */
+export const wingWindowLook: Script = async (d) => {
+  if (flag('c3_mina_erased')) {
+    await d.say(['La fenêtre du couloir. Dehors, la nuit.', 'Dans la vitre, il n\'y a plus que toi.']);
+    return;
+  }
+  await d.say(['La fenêtre du couloir. Dehors, la nuit.', 'Dans la vitre, ton reflet, et celui de Mina. Rien d\'autre.']);
+};
+
+/**
+ * Mina's drawings taped next to the right door. In a corner of each, a little blue figure comes nearer to a door with
+ * a window, drawing after drawing (§ 3.8, T6); the last one, beside 304, is only that door.
+ */
 export const tapedDrawing =
   (s: number): Script =>
   async (d) => {
     const lines = [
-      ['Un dessin scotché au mur : un mouton avec une couronne.', 'En bas, au feutre : « par ici !! »'],
-      ['Un dessin : une chaussette qui tient un soleil.', 'Une grosse flèche rouge pointe vers la porte d\'à côté.'],
-      ['Un dessin : deux enfants sous une grande lune.', 'Le plus grand a les cheveux bleus. Une flèche, vers la porte.'],
+      ['Un dessin scotché au mur : un mouton avec une couronne.', 'En bas, au feutre : « par ici !! »', 'Dans un coin, tout petit, un bonhomme aux cheveux bleus. Très loin de lui, une porte avec une vitre.'],
+      ['Un dessin : une chaussette qui tient un soleil.', 'Une grosse flèche rouge pointe vers la porte d\'à côté.', 'Dans le coin, le petit bonhomme bleu. Il est plus près de la porte vitrée.'],
+      ['Un dessin : deux enfants sous une grande lune.', 'Le plus grand a les cheveux bleus. Une flèche, vers la porte.', 'Dans le coin, le petit bonhomme est arrivé devant la porte vitrée. Il ne l\'ouvre pas.'],
+      ['Le dernier dessin, à côté de la porte 304.', 'Rien qu\'une porte vitrée, et le petit bonhomme bleu, tout contre.', 'De l\'autre côté de la vitre, une main toute petite, posée à plat.'],
     ];
     await d.say(lines[s] ?? lines[0]!);
     if (s === 0) await mina(d, 'C\'est moi qui l\'ai fait. Le mouton, c\'est Dodo ! Avec une couronne, parce que.', 'happy');
+    else if (s === 1) await mina(d, ['Le petit bonhomme ? C\'est toi.', 'Je te mets dans tous mes dessins. Comme ça, t\'es là.'], 'happy');
     else if (s === 2) await mina(d, 'Celui-là, je l\'ai fini. Tu vois ? Je l\'ai fini.', 'sad');
+    else {
+      await mina(d, ['C\'est toi qui viens me voir. Je l\'ai dessiné avant. Pour que ça arrive.', '…Il manque ta main, de ton côté. J\'avais plus de bleu.'], 'neutral');
+    }
   };
 
 export const inkDrawing: Script = async (d) => {
@@ -588,12 +757,19 @@ async function overhear(d: Director, lines: Array<[string, string]>): Promise<vo
 
 export const heardNurse: Script = async (d) => {
   await overhear(d, [
-    ['narrator', 'Des pas, dans le couloir. Une porte qu\'on entrouvre.'],
+    ['narrator', 'Des pas, dans le couloir. Deux voix, tout bas.'],
+    ['infirmiere', 'Le grand frère qui toussait ? On l\'a renvoyé. Pauvre gamin.'],
+    ['narrator', 'Une porte qu\'on entrouvre.'],
     ['infirmiere', 'Tu ne dors pas, ma puce ? Il est tard.'],
     ['infirmiere', 'Ton frère ? Il viendra. Demain, sûrement.'],
     ['infirmiere', 'Allez. Je laisse la porte entrouverte. Comme ça, il y a un peu de lumière.'],
   ]);
   await mina(d, ['T\'as entendu ?', '…Y a personne, pourtant.'], 'surprised');
+  // T6: Noa coughs. The narrator has an ordinary reason ready.
+  d.sfx('cough', { vol: 0.6 });
+  await d.wait(20);
+  await d.say('Tu tousses. La poussière de papier, sûrement.');
+  await mina(d, 'Mets ta main devant ta bouche ! C\'est la règle, ici.', 'angry');
 };
 
 export const heardMaman: Script = async (d) => {
@@ -603,6 +779,7 @@ export const heardMaman: Script = async (d) => {
     ['mamantel', 'Il ne veut pas venir… Il dit qu\'il a des devoirs. Il dit qu\'il viendra demain.'],
     ['mamantel', 'Il dit ça tous les jours.'],
     ['mamantel', '…Je sais. Je sais qu\'il a peur. Moi aussi, j\'ai peur.'],
+    ['mamantel', 'Il croit que c\'est lui. Je n\'arrive pas à lui dire que non.'],
   ]);
   await mina(d, 'C\'était… la voix de Maman ?', 'sad');
   await d.say('…', 'noa:sad');
@@ -732,7 +909,12 @@ export const room304Bed: Script = async (d) => {
 };
 
 export const room304Window: Script = async (d) => {
-  await d.say(['La fenêtre. Des rideaux verts. La pluie sur la vitre.', 'Tu connais cette fenêtre. Tu l\'as déjà vue, en haut de la Colline aux Couvertures.', 'Une petite main posée contre la vitre, pour attraper les lumières de la ville.']);
+  if (bump('c3_fenetre304') === 0) {
+    await d.say(['La fenêtre. Des rideaux verts. La pluie sur la vitre.', 'Tu connais cette fenêtre. Tu l\'as déjà vue, en haut de la Colline aux Couvertures.', 'Une petite main posée contre la vitre, pour attraper les lumières de la ville.']);
+    return;
+  }
+  // T9: a drawing in the mist, at a child's height.
+  await d.say(['En bas, la vitre est embuée. À hauteur d\'enfant.', 'Quelqu\'un y a dessiné du bout du doigt : un rond, et deux oreilles pointues.', 'Un mouton. Ou un bonnet. C\'est difficile à dire.']);
 };
 
 export const room304Drawing1: Script = async (d) => {
@@ -881,11 +1063,12 @@ const DODO_WORD_LINES: Record<string, string> = {
   reste: 'Je reste. Toujours.',
   oublie: 'On oublie tout, ici. Même ce qui fait mal.',
   chut: 'Chuuut…',
+  demain: 'Demain. Ici, c\'est toujours demain. Il ne vient jamais.',
   encore: 'Encore. Et encore. Et encore.',
   dodo: 'C\'est moi. Je suis là.',
 };
 
-/** Phase 2: five of Dodo's words, and Noa's « pardon » last. */
+/** Phase 2: five of Dodo's words (« dors, reste, oublie, demain, chut »), and Noa's « pardon » last. */
 const P2_WORDS: WordDef[] = [...DODO_WORDS.filter((w) => w.text !== 'dodo').slice(0, 5), PARDON];
 
 function drawFinalOverlay(g: CanvasRenderingContext2D, b: Battle, s: FinalState): void {
@@ -1275,8 +1458,100 @@ function setup(d: Director, flags: string[], party: boolean): void {
   d.follower(party ? 'mina' : null);
 }
 
+/** Debug: Noa (with Mina) standing at tile (x, y) of `map`, corridor stage `stage` (lot 8 clue scripts). */
+async function clueAt(d: Director, map: string, x: number, y: number, stage = 0, flags: string[] = []): Promise<void> {
+  setup(d, ['c3_intro', 'c3_hospital_seen', 'c3_marsh', 'c3_hosp_in', 'c3_corridor', ...flags], true);
+  d.set('c3_loop', stage);
+  d.load(map, 'default');
+  d.player.x = x * TILE + 8;
+  d.player.y = y * TILE + 14;
+  world.snapCamera();
+  world.resetFollower();
+  await d.fadeIn(10);
+}
+
 /** Scripts runnable with ?debug=script&name=… */
 export const DEBUG: Record<string, Script> = {
+  // --- Version 2 clues (lot 8): Noa and Mina are put next to each clue; walk or press A. ---
+  /** The paper nurse of the lobby (A, facing up). */
+  c3_nadia: async (d) => {
+    await clueAt(d, 'hopital', 10, 4);
+    d.face('player', 'up');
+  },
+  /** The vending machine of the lobby, « le chocolat du robot » (A, facing up). */
+  c3_robot: async (d) => {
+    await clueAt(d, 'hopital', 3, 4);
+    d.face('player', 'up');
+  },
+  /** Corridor, stage 0: two steps right and the nurse's voice is heard (« le grand frère qui toussait »). */
+  c3_voix: async (d) => {
+    await clueAt(d, 'hopital', 23, 4, 0, ['c3_heard_1', 'c3_heard_2', 'c3_heard_3']);
+    d.face('player', 'right');
+  },
+  /** Corridor, stage 1: two steps right and Maman's voice on the phone (« Il croit que c'est lui »). */
+  c3_maman: async (d) => {
+    await clueAt(d, 'hopital', 22, 4, 1, ['c3_heard_0']);
+    d.face('player', 'right');
+  },
+  /** Corridor, stage 0, near the end: walk right and someone in a knitted hat turns the corner, then the loop. */
+  c3_bonnet: async (d) => {
+    await clueAt(d, 'hopital', 44, 4, 0, ['c3_heard_0']);
+    d.face('player', 'right');
+  },
+  /** The last wing (stage 3): walk right, the window reflects someone in a hat beside Noa. */
+  c3_aile: async (d) => {
+    await clueAt(d, 'hopital', 48, 4, 3, ['c3_heard_0', 'c3_heard_1', 'c3_heard_2', 'c3_heard_3']);
+    d.face('player', 'right');
+  },
+  /** Room 303½ in the last wing (A, facing up). */
+  c3_sas: async (d) => {
+    await clueAt(d, 'hopital', 46, 3, 3, ['c3_heard_3']);
+    d.face('player', 'up');
+  },
+  /** Mina's taped drawing of stage `?stage` (default 0) next to the right door (A, facing up). */
+  c3_dessin: async (d) => {
+    const st = Number(new URLSearchParams(location.search).get('stage') ?? 0);
+    const x = [29, 20, 38, 56][st] ?? 29;
+    await clueAt(d, 'hopital', x, 3, st, ['c3_heard_0', 'c3_heard_1', 'c3_heard_2', 'c3_heard_3', 'c3_reflet']);
+    d.face('player', 'up');
+  },
+  /** The Closet Monster, spared in chapter 1, after he lit the marsh (A, facing up): « une petite fille au bonnet ». */
+  c3_placard: async (d) => {
+    setup(d, ['c3_intro', 'c1_placard_spared', 'c3_lit', 'c3_marsh'], true);
+    d.load('ruines', 'bed');
+    d.player.x = 31 * TILE + 8;
+    d.player.y = 13 * TILE + 14;
+    world.snapCamera();
+    world.resetFollower();
+    await d.fadeIn(10);
+    d.face('player', 'up');
+  },
+  /** Room 304, under the window (A twice, facing up: the drawing in the mist). */
+  c3_fenetre304: async (d) => {
+    setup(d, ['c3_intro', 'c3_hosp_in', 'c3_door304', 'c3_mina_erased', 'c3_304_in'], false);
+    d.set('c3_loop', 3);
+    d.load('chambre_304', 'door');
+    d.player.x = 9 * TILE + 8;
+    d.player.y = 3 * TILE + 14;
+    world.snapCamera();
+    await d.fadeIn(10);
+    d.face('player', 'up');
+  },
+  /** Bracelet, a real battle (not the tutorial one), with chapter 3 stats; the outcome in flags.debug_battle. */
+  bt_bracelet: async (d) => {
+    setup(d, ['c3_intro', 'c3_hosp_in', 'c3_corridor'], true);
+    const st = G.state;
+    st.etoiles = 12;
+    st.encre = 0;
+    st.weapon = 'plume';
+    st.armor = 'cape';
+    st.items = ['chocolat', 'lait', 'biscuit', 'mouchoir'];
+    st.hp = 32;
+    d.load('hopital', 'start');
+    await d.fadeIn(10);
+    const r = await d.battle(['bracelet']);
+    st.flags.debug_battle = `${r.outcome}:${[...r.spared, ...r.killed].join('+')}`;
+  },
   c3_start: start,
   c3_ruines: async (d) => {
     setup(d, ['c3_intro'], true);

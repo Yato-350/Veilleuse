@@ -64,7 +64,7 @@ export const WORD_POOLS: Record<number, WordDef[]> = {
 };
 
 /** Words Dodo forces into the notebook during the final battle. */
-export const DODO_WORDS: WordDef[] = w('neutre', 'dors', 'reste', 'oublie', 'chut', 'encore', 'dodo');
+export const DODO_WORDS: WordDef[] = w('neutre', 'dors', 'reste', 'oublie', 'demain', 'chut', 'encore', 'dodo');
 
 /** Mina's words, written in her handwriting during the final battle. */
 export const MINA_WORDS: WordDef[] = [
