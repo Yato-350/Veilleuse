@@ -52,7 +52,8 @@ wait:300
 interact:taille_crayon_geant
 zuntil: V.dialogue.choices && V.dialogue.choices.length === 2
 assert: SAW('Comme des rognures d\'ongles.') && SAW('jupes aux fleurs')
-choose:0
+# Z only (the cursor starts on « Oui »): arrow presses can drop under load and wrap onto « Non ».
+zuntil: V.G.state.flags.c2_taille === true
 zuntil: V.world.particles.list.some((p) => p.kind === 'ooze')
 zuntil: V.world.particles.list.some((p) => p.kind === 'pool')
 shot:saigne

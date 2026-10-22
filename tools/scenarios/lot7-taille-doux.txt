@@ -8,7 +8,7 @@ eval: (V.G.state.cleared.push('c2_taille_1', 'c2_avion_1', 'c2_taille_2', 'c2_av
 eval: (window.SHOOK = false, window.SPRAY = false, setInterval(() => { if (V.fx.shakeMag > 0) window.SHOOK = true; if (V.world.particles.list.some((p) => p.kind === 'ooze' && p.vy < 0)) window.SPRAY = true; }, 16), 1)
 interact:taille_crayon_geant
 zuntil: V.dialogue.choices && V.dialogue.choices.length === 2
-choose:0
+zuntil: V.G.state.flags.c2_taille === true
 zuntil: V.world.particles.list.some((p) => p.kind === 'pool')
 shot:doux
 zuntil: !V.dialogue.busy && V.world.busy === 0
