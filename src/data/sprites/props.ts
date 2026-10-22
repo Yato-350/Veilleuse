@@ -2601,6 +2601,34 @@ const DESSIN_CHASSE = `
   kkkkkkkkkkkk
 `;
 
+/**
+ * The finale (docs/HISTOIRE.md § 3.15, T9 § 2.10): the knitted beanie with sheep ears, laid flat on Mina's pillow.
+ * Cream ribbed wool, a little pompom, the two ears drooping on the pillow, pink inside.
+ */
+const BONNET_OREILLER = `
+  .....kkk.....
+  ....kWwWk....
+  ...kkQQQkk...
+  ..kQcQcQcQk..
+  .kQcQcQcQcQk.
+  .kCcCcCcCcCk.
+  kPkCCCCCCCkPk
+  kPkkkkkkkkkPk
+  kPk.......kPk
+  .k.........k.
+`;
+
+/** The same pale patch on Mina's wallpaper (faded pink, the stars rubbed off), kept as is in the real world. */
+const MUR_USE_MINA: SpriteDef = { art: MUR_USE, colors: { '1': '#76596c', '3': '#836879', '4': '#917a89', g: '#9c8996' } };
+
+const FINALE: Record<string, SpriteDef> = {
+  prop_bonnet_oreiller: BONNET_OREILLER,
+  // Mina's bed in the finale: the beanie where her plush rabbit used to sit.
+  prop_bed_mina_bonnet: stamp(BED_MINA, [BONNET_OREILLER, 1, 5]),
+  prop_mur_use_mina: MUR_USE_MINA,
+  'prop_mur_use_mina@real': MUR_USE_MINA,
+};
+
 const NIGHT: Record<string, SpriteDef> = {
   prop_dessin_chasse: DESSIN_CHASSE,
   prop_radiateur: RADIATEUR,
@@ -2643,6 +2671,7 @@ export const ART: Record<string, SpriteDef> = {
   ...HOSPITAL,
   ...VOID_PROPS,
   ...NIGHT,
+  ...FINALE,
 };
 
 export const VARIANTS: string[] = ['real', 'ink'];

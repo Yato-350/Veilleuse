@@ -24,6 +24,9 @@ const phase = (): number => Number(G.state.flags.interlude ?? 0);
 const nuit = N.isNuit;
 const iv = (): boolean => phase() === R.REAL.i4;
 const flag = (k: string) => (): boolean => !!G.state.flags[k];
+/** The finale: the nightlight is cracked (chapter 4, the Little Man beaten) / unplugged and carried to Mina's room. */
+const finaleFele = (): boolean => R.isFinale() && !!G.state.flags.c4_fele;
+const finaleTaken = (): boolean => R.isFinale() && !!G.state.flags.fin_veilleuse_prise;
 
 /** Props of a room as it is by day (and in the other moments): hidden during the night interludes. */
 const DAY = (props: PropDef[]): PropDef[] => props.map((p) => ({ ...p, cond: () => !nuit() && (!p.cond || p.cond()) }));
@@ -147,11 +150,21 @@ const CHAMBRE: MapDef = {
     ...DAY([
     P('prop_bed', 1, 3, { id: 'bed', h: 2, script: R.bed }),
     P('prop_nightstand', 2, 3, { script: R.nightlight }),
-    ON('prop_veilleuse', 2, 3, -9, { id: 'veilleuse', light: NIGHTLIGHT, script: R.nightlight }),
+    // The finale: cracked if the Little Man was beaten (chapter 4), gone once Noa has unplugged it to carry it to her.
+    ON('prop_veilleuse', 2, 3, -9, { id: 'veilleuse', light: NIGHTLIGHT, script: R.nightlight, cond: () => !finaleFele() && !finaleTaken() }),
+    ON('prop_veilleuse_fele', 2, 3, -9, { id: 'veilleuse', light: NIGHTLIGHT, script: R.nightlight, cond: () => finaleFele() && !finaleTaken() }),
     // Interlude I: Dodo is not where he was left (at the foot of the bed, facing the door) until Noa puts him back.
+    // The finale: Noa takes him under his arm on waking.
     PLUSH('prop_dodo_plush', -5, {
       script: R.plush,
-      cond: () => (phase() === 0 ? !G.state.flags.p_dodo : phase() === 2 ? !!G.state.flags.i2_dodo_back : phase() !== 1 || !!G.state.flags.i1_dodo_remis),
+      cond: () =>
+        phase() === 0
+          ? !G.state.flags.p_dodo
+          : phase() === 2
+            ? !!G.state.flags.i2_dodo_back
+            : phase() === 1
+              ? !!G.state.flags.i1_dodo_remis
+              : !(R.isFinale() && G.state.flags.fin_dodo),
     }),
     PLUSH('prop_dodo_plush', 2, { script: R.plush, cond: () => phase() === 1 && !G.state.flags.i1_dodo_remis }),
     WALL('prop_mur_use', 1, 2, -3, { script: R.wall }),
@@ -316,7 +329,7 @@ const APPARTEMENT_NUIT: MapDef = {
   ],
 };
 
-// The apartment at dawn (finale): lighter, Mina's door ajar.
+// The apartment at dawn (finale): lighter. Mina's door stays locked until Noa knocks and turns the key (fin_porte).
 const APPARTEMENT_AUBE: MapDef = {
   ...APPARTEMENT,
   id: 'appartement_aube',
@@ -324,7 +337,11 @@ const APPARTEMENT_AUBE: MapDef = {
   music: 'room_quiet',
   ambience: 'none',
   darkness: 0.3,
-  tiles: APPART_TILES.replace('TWDWWWDWWWMWWWDWWWDW', 'TWDWWWDWWWOWWWDWWWDW').replace('TBdBBBdBBBmBBBdBBBdB', 'TBdBBBdBBBoBBBdBBBdB'),
+  props: [
+    ...(APPARTEMENT.props ?? []),
+    P('t_r_door_open_top', 10, 1, { id: 'a_porte_mina_h', solid: false, under: true, cond: flag('fin_porte') }),
+    P('t_r_door_open', 10, 2, { id: 'a_porte_mina_b', solid: false, under: true, cond: flag('fin_porte') }),
+  ],
 };
 
 // ---------------------------------------------------------------------------
@@ -359,14 +376,24 @@ const CHAMBRE_MINA: MapDef = {
     door: { x: 6, y: 7, dir: 'up' },
   },
   onEnter: R.minaRoomEnter,
+  // Version 2 (docs/HISTOIRE.md § 3.15): the beanie on the pillow, the wall worn at pillow height, the radiator pipe,
+  // the empty nightstand where Noa plugs in the nightlight he carried from his room, Dodo on the windowsill.
   props: [
-    P('prop_bed_mina', 1, 3, { h: 2, text: ['Le lit de Mina. La couette à étoiles est tirée bien droite.', 'Quelqu\'un l\'a faite. Maman, sûrement. Il y a un an.'] }),
+    // The beanie lies on the pillow (sprite prop_bed_mina_bonnet).
+    P('prop_bed_mina_bonnet', 1, 3, { id: 'f_lit', h: 2, script: R.minaBed }),
+    WALL('prop_mur_use_mina', 1, 2, -3),
+    // The worn wall answers at the foot of the bed, like the one in Noa's room.
+    { id: 'f_mur', sprite: '', x: 0, y: 5, script: R.minaWall },
+    P('prop_nightstand', 2, 3, { id: 'f_chevet', script: R.minaNightlight }),
+    ON('prop_veilleuse', 2, 3, -9, { id: 'f_veilleuse', light: NIGHTLIGHT, script: R.minaNightlight, cond: () => !!G.state.flags.fin_plugged && !G.state.flags.c4_fele }),
+    ON('prop_veilleuse_fele', 2, 3, -9, { id: 'f_veilleuse', light: NIGHTLIGHT, script: R.minaNightlight, cond: () => !!G.state.flags.fin_plugged && !!G.state.flags.c4_fele }),
     WALL('prop_drawings', 3, 2, -6, { script: R.minaDrawings }),
+    P('prop_radiateur', 5, 3, { id: 'f_radiateur', script: R.minaRadiator }),
+    ON('prop_dodo_plush', 5, 2, -17, { id: 'f_dodo', cond: () => !!G.state.flags.fin_room && !!G.state.flags.fin_dodo }),
     WALL('prop_poster', 8, 2, -4, { text: ['Un poster de licorne, scotché un peu de travers.', '« LES LICORNES C\'EST VRAI » est écrit en dessous, au crayon violet.'] }),
     P('prop_toybox', 10, 3, { text: ['Son coffre à jouets. Une couronne en papier dépasse.', 'Elle est toute écrasée.'] }),
     P('prop_desk', 7, 3, { w: 2, text: ['Son petit bureau. Des crayons de cire. Un taille-crayon en forme de cochon.'] }),
     ON('prop_carnet', 7, 3, -14, { id: 'carnet', light: { r: 30, color: '#fff3cf', dy: -14 }, script: R.carnet }),
-    P('prop_veilleuse_off', 11, 7, { solid: false, script: R.minaNightlight }),
     P('prop_plant', 11, 3, { text: 'Une petite plante grasse dans un pot peint à la main. Elle a survécu. Toute seule.' }),
   ],
   warps: [{ x: 6, y: 9, to: 'appartement_aube', spawn: 'mina' }],

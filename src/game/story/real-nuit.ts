@@ -285,7 +285,7 @@ const REPLIES: Array<PhoneReply & { id: string }> = [
 ];
 const STRANGER = 'Je ne sais pas qui vous êtes. Ce numéro est à moi maintenant. S\'il vous plaît, arrêtez.';
 /** The day (counted back from tonight) the number answered, in the ninth month. */
-const STRANGER_DAY = 92;
+export const STRANGER_DAY = 92;
 
 /** What Noa wrote some nights (the others: a plain « bonne nuit »). */
 const SOME_NIGHTS: Record<number, string[]> = {
@@ -307,7 +307,7 @@ const PLAIN = ['bonne nuit', 'bonne nuit', 'bn', 'bonne nuit mina', 'bonne nuit.
  * The « Mina 🐑 » thread: Maman's old phone, left to Mina at the hospital. Her messages first (forty-two days), then a
  * « bonne nuit » every night, all « Distribué », until a stranger answers in the ninth month. Then nothing.
  */
-function minaThread(): PhoneMessage[] {
+export function minaThread(): PhoneMessage[] {
   const out: PhoneMessage[] = [];
   const day = (n: number) => out.push({ from: 'info', text: dateLabel(n) });
   const her = (...t: string[]) => t.forEach((text) => out.push({ from: 'them', text }));
@@ -339,11 +339,11 @@ function minaThread(): PhoneMessage[] {
     for (const text of SOME_NIGHTS[n] ?? [PLAIN[n % PLAIN.length]!]) me(text, 'Distribué');
     if (n === STRANGER_DAY) her(STRANGER);
   }
-  // Noa's answer of Interlude III (read by IV: « Lu » if he asked for forgiveness).
+  // Noa's answer of Interlude III (read by IV and the finale: « Lu » if he asked for forgiveness).
   const reply = REPLIES.find((r) => r.id === G.state.flags.i3_reply && r.id !== 'rien');
   if (reply) {
     day(0);
-    me(reply.text, iv() && reply.id === 'pardon' ? 'Lu' : 'Distribué');
+    me(reply.text, (iv() || phase() === REAL.finale) && reply.id === 'pardon' ? 'Lu' : 'Distribué');
   }
   return out;
 }
@@ -357,8 +357,8 @@ function contacts(): PhoneContact[] {
   ];
 }
 
-/** The call log. The 3:14 line is the only one of its night. */
-function calls(): PhoneCall[] {
+/** The call log. The 3:14 line is the only one of its night. (The finale's phone shows it too, real.ts.) */
+export function calls(): PhoneCall[] {
   return [
     { name: 'Maman', dir: 'missed', time: '3:33', date: dateLabel(0) },
     { name: 'Maman', dir: 'in', time: '12:30', duration: '0:12', date: dateLabel(2) },

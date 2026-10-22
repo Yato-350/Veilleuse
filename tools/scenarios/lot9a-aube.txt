@@ -1,0 +1,124 @@
+# Lot 9 (first half): the finale « Le carnet » (5:52), Aube branch, played as a player plays it from wakeUp(6). Noa
+# wakes up with Dodo under his arm; the phone (Maman « Je rentre. », and the stranger's last message since he asked
+# her forgiveness in Interlude III); Mina's door refuses him without the key; the drawer (the key, his faces), one
+# face taped back into the photo; the door again (« elle avait demandé quelque chose »); the nightlight unplugged
+# and carried; three knocks, three knocks back; her room (Dodo on the windowsill, the beanie on the pillow, the
+# worn wall, the radiator); the nightlight plugged in next to her bed; the notebook, its last page re-read, the poem;
+# Maman (« Tu es réveillé. », the coda « Je savais », the call, the cold, « Elle n'était pas dans le noir. »); the
+# radiator knocks three times; the sunrise (fin_aube) and the epilogue.
+query: debug=script&name=finale&lang=fr&flags=i3_tel,i3_reply=pardon,c5_corrige=1
+wait:1500
+auto
+shot:reveil
+assert: window.__veilleuse.G.state.flags.fin_dodo === true && !window.__veilleuse.world.entities.some((e) => e.id === 'dodo_plush')
+interact:phone
+zuntil: window.__veilleuse.game.top.constructor.name === 'PhoneScene' && window.__veilleuse.game.top.mode === 'browse'
+shot:telephone
+KeyZ
+wait:600
+zuntil: window.__veilleuse.game.top.constructor.name === 'PhoneScene' && window.__veilleuse.game.top.mode === 'browse' && !window.__veilleuse.dialogue.busy && window.__veilleuse.G.state.flags.fin_inconnue === true
+shot:inconnue
+KeyX
+wait:400
+ArrowDown
+KeyZ
+zuntil: window.__veilleuse.G.state.flags.fin_tel === true && window.__veilleuse.game.top.mode === 'browse' && !window.__veilleuse.dialogue.busy
+shot:maman-sms
+KeyX
+wait:300
+KeyX
+auto
+assert: window.__veilleuse.game.top === window.__veilleuse.world
+# Mina's door without the key.
+load:appartement_aube/mina
+wait:800
+auto
+interact:a_porte_mina
+auto
+assert: !window.__veilleuse.G.state.flags.fin_porte
+shot:porte-fermee
+load:chambre/door
+wait:800
+auto
+interact:bureau
+zuntil: window.__veilleuse.dialogue.choices
+assert: window.__veilleuse.G.state.flags.fin_tiroir === true
+choose:0
+zuntil: window.__veilleuse.scene() === 'ImageScene' && window.__veilleuse.game.top.key === 'photo_famille'
+wait:1500
+shot:photo-entiere
+auto
+assert: window.__veilleuse.G.state.flags.fin_visage === true
+# The door again: the key, but not the nightlight.
+load:appartement_aube/mina
+wait:800
+auto
+interact:a_porte_mina
+auto
+assert: !window.__veilleuse.G.state.flags.fin_porte
+load:chambre/door
+wait:800
+auto
+interact:veilleuse
+zuntil: window.__veilleuse.dialogue.choices
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.fin_veilleuse_prise === true && !window.__veilleuse.world.entities.some((e) => e.id === 'veilleuse')
+shot:debranchee
+interact:mur
+auto
+# The bedroom door, the hallway at dawn, Mina's door: three knocks, three knocks back.
+go:8/3
+ArrowUp:120
+KeyZ
+waitfor: window.__veilleuse.G.state.map === 'appartement_aube'
+auto
+go:10/3
+ArrowUp:120
+KeyZ
+zuntil: window.__veilleuse.dialogue.choices
+shot:frapper
+choose:0
+zuntil: window.__veilleuse.G.state.map === 'chambre_mina'
+auto
+assert: window.__veilleuse.G.state.flags.fin_porte === true && window.__veilleuse.G.state.flags.fin_room === true
+shot:chambre-mina
+interact:f_lit
+auto
+interact:f_lit
+auto
+interact:f_mur
+auto
+interact:f_radiateur
+auto
+interact:f_chevet
+zuntil: window.__veilleuse.dialogue.choices
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.fin_plugged === true
+shot:branchee
+interact:carnet
+zuntil: window.__veilleuse.scene() === 'ImageScene' && window.__veilleuse.game.top.key === 'carnet_page4'
+wait:1500
+shot:page4
+zuntil: window.__veilleuse.game.top.constructor.name === 'PoemScene'
+KeyZ
+wait:200
+KeyZ
+wait:200
+KeyZ
+wait:200
+KeyZ
+wait:200
+KeyZ
+wait:200
+KeyZ
+zuntil: window.__veilleuse.world.entities.some((e) => e.id === 'maman')
+zuntil: window.__veilleuse.world.entities.some((e) => e.id === 'hug')
+shot:calin
+zuntil: window.__veilleuse.scene() === 'ImageScene' && window.__veilleuse.game.top.key === 'fin_aube'
+assert: window.__veilleuse.G.state.flags.fin_ending === 'aube'
+wait:2000
+shot:fin-aube
+zuntil: window.__veilleuse.G.state.map === 'bazar' && window.__veilleuse.world.busy === 0 && !window.__veilleuse.dialogue.busy
+shot:bazar

@@ -43,7 +43,6 @@ export const MAPS: Record<string, string> = {
   'Chambre de Maman': 'Mom\'s Room',
   'Chambre de Mina': 'Mina\'s Room',
   'Le lit de Mina. La couette à étoiles est tirée bien droite.': 'Mina\'s bed. The star comforter is pulled perfectly straight.',
-  'Quelqu\'un l\'a faite. Maman, sûrement. Il y a un an.': 'Someone made it. Mom, probably. A year ago.',
   'Un poster de licorne, scotché un peu de travers.': 'A unicorn poster, taped up a little crooked.',
   '« LES LICORNES C\'EST VRAI » est écrit en dessous, au crayon violet.': '"UNICORNS ARE TRUE" is written underneath, in purple pencil.',
   'Son coffre à jouets. Une couronne en papier dépasse.': 'Her toy chest. A paper crown sticks out.',

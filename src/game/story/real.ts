@@ -8,7 +8,9 @@ import { isLateNight, setPageTitle } from '../meta';
 import { composePoem } from '../scenes/poem';
 import { dateLabel, PhoneScene, type PhoneContact, type PhoneMessage, type PhoneReply } from '../scenes/phone';
 import { enterDream, isFinale, REAL, realPhase } from './common';
+import { afterFinalBattle, dawnEnding, endingAubeBlanche, endingVeilleuse } from './endings';
 import { epilogue, EPILOGUE_DEBUG } from './epilogue';
+import { calls as callLog, minaThread, STRANGER_DAY } from './real-nuit';
 
 /**
  * Real world thread: prologue, interlude 1 (« Le frigo »), interlude 2 (« La porte ») and the finale (« Le carnet »).
@@ -27,6 +29,18 @@ import { epilogue, EPILOGUE_DEBUG } from './epilogue';
  *   i1_peluche (0–2: Dodo found at the foot of the bed, then the label « N… »), i1_dodo_remis (put back on the pillow)
  * Flags (Interlude II, i2_*): i2_out, i2_coups (three knocks in Mina's wall), i2_voicemail, i2_fil (Maman's thread
  *   read back a year), i2_tv, i2_loop, i2_reflet (the reflection with closed eyes), i2_dodo_gone / i2_dodo_back
+ * Flags (finale « Le carnet », 5:52, § 3.15 and the coda § 2.11, fin_*):
+ *   fin_dodo         Noa took Dodo under his arm on waking (he sits on Mina's windowsill once her room is entered)
+ *   fin_tel          the phone read (Maman: « Je rentre. »); fin_inconnue: the stranger's last message read (i3_reply
+ *                    'pardon' only)
+ *   fin_tiroir       the desk drawer opened: the key of Mina's room, a dozen small faces cut out (his own)
+ *   fin_visage       one face taped back into the hole of the family photo
+ *   fin_veilleuse_prise  the nightlight unplugged in Noa's room, carried (the door of Mina's room asks for it)
+ *   fin_porte        Mina's door: three knocks, silence, three knocks from inside, the key turned
+ *   fin_room         her room entered; fin_plugged: the nightlight plugged in next to her bed
+ *   fin_carnet       the notebook read; fin_poem: the poem written (its French lines)
+ *   fin_ending       'aube' | 'aube_blanche' | 'veilleuse': where the finale hands over (endings.ts dawnEnding();
+ *                    the secret ending only if Noa chooses to unstitch Dodo)
  * Counters <moment>_n_<prop> (moment p, i1, i2, aube) pick the line of each inspection.
  */
 
@@ -489,7 +503,11 @@ export const bed: Script = async (d) => {
     await interlude2Dodo(d);
     return;
   }
-  await d.say(['Dodo est sur ton lit, la tête tournée vers la porte.', 'Tu n\'as plus sommeil. Pour la première fois depuis longtemps.']);
+  await d.say(
+    flag('fin_dodo')
+      ? ['Ton lit. Les draps sont froids.', 'Tu n\'as plus sommeil. Pour la première fois depuis longtemps.']
+      : ['Dodo est sur ton lit, la tête tournée vers la porte.', 'Tu n\'as plus sommeil. Pour la première fois depuis longtemps.'],
+  );
 };
 
 /**
@@ -569,7 +587,7 @@ export const nightlight: Script = async (d) => {
     return;
   }
   if (p === REAL.finale) {
-    await d.savePoint('La veilleuse de Mina. Dehors, le ciel pâlit. Elle n\'a presque plus besoin de briller.');
+    await finaleNightlight(d);
     return;
   }
   if (p === 0 && nth('veilleuse') > 0) {
@@ -626,7 +644,7 @@ export const dodoFloating: Script = async (d) => {
 export const desk: Script = async (d) => {
   const p = phase();
   if (p === REAL.finale) {
-    await d.say(['Ton bureau. Tes cahiers.', 'Peut-être que tu les rouvriras. Un jour. Pas tout de suite.']);
+    await finaleDesk(d);
     return;
   }
   const n = nth('bureau');
@@ -673,12 +691,7 @@ export const phone: Script = async (d) => {
     d.set('i2_voicemail');
     await answerMaman(d, 2);
   } else {
-    await d.say('Un message de « Maman », il y a cinq minutes.');
-    const ph = PhoneScene.open('Maman', PHONE_CLOCK[REAL.finale]!, thread(3, true));
-    await ph.waitKey();
-    await ph.close();
-    if (!sentReplies().length) await d.say(['Tu fais défiler la conversation. Des dizaines de messages.', 'Pas une seule réponse.']);
-    else await d.say(['Tu fais défiler la conversation.', 'Tes réponses sont toutes petites, à côté des siennes. Mais elles sont là.']);
+    await finalePhone(d);
   }
 };
 
@@ -695,7 +708,7 @@ export const clock: Script = async (d) => {
 
 export const closet: Script = async (d) => {
   if (isFinale()) {
-    await d.say(['Ton armoire. Fermée.', 'Il n\'y a pas de monstre dedans. Il n\'y en a jamais eu. Juste des pulls.']);
+    await d.say(['Ton armoire. Fermée.', 'Il n\'y a pas de monstre dedans. Il n\'y en a jamais eu.', 'Juste des pulls. Et, tout au fond, une vieille boîte : « Pour Noa, 4 ans ».']);
     return;
   }
   if (nth('armoire') > 0) {
@@ -733,7 +746,8 @@ export const calendar: Script = async (d) => {
 export const wall: Script = async (d) => {
   const p = phase();
   if (p === REAL.finale) {
-    await d.say(['Le mur contre ton lit.', 'De l\'autre côté, sa chambre. Ce matin, sa porte est ouverte.']);
+    const door = flag('fin_porte') ? 'Sa porte est ouverte, maintenant.' : flag('fin_tiroir') ? 'La clé est dans ta poche.' : 'La clé est dans ton tiroir. Tu l\'as toujours su.';
+    await d.say(['Le mur contre ton lit.', 'De l\'autre côté, sa chambre.', door]);
     return;
   }
   if (p === REAL.i2) {
@@ -762,8 +776,19 @@ export const photo: Script = async (d) => {
     await d.say(['Un cadre photo, posé face contre le sol.', 'Tu ne le retournes pas.']);
     return;
   }
+  // The finale (§ 3.15 item 2): the hole where his face was, until he tapes it back.
+  if (flag('fin_visage')) {
+    await d.say('La photo. Ton visage tient avec un bout de scotch.');
+    await d.image('photo_famille', FAMILY_PHOTO);
+    return;
+  }
   await d.say('Un cadre photo, face contre le sol. Tu le retournes.');
-  await d.image('photo_famille', ['Maman, toi, et Mina avec sa couronne en papier.', 'Tu avais oublié que tu souriais comme ça.']);
+  await d.image('photo_decoupee', ['Maman. Mina, avec sa couronne en papier.', 'Et à ta place, le trou.']);
+  if (!flag('fin_tiroir')) {
+    await d.say(['Le petit morceau qui manque est dans ton tiroir.', 'Avec les autres.']);
+    return;
+  }
+  await offerFace(d, true);
 };
 
 // ---------------------------------------------------------------------------
@@ -868,6 +893,12 @@ export const fridge: Script = async (d) => {
     await d.say('Tu ne peux rien lire.');
     return;
   }
+  if (p === REAL.finale && flag('i4_mot')) {
+    // Read under the hood light in Interlude IV; Maman finishes it in the finale (coda § 2.11).
+    await d.say(['Le mot de Maman, sous l\'aimant fraise.', 'Au dos, sous les ratures : « Je sais que t— ».']);
+    await d.say('Elle rentre bientôt. Tu pourras lui demander la suite.');
+    return;
+  }
   await d.say(['Le frigo. Des yaourts, du jus d\'orange, une boîte de pâtes.', 'Les dessins de Mina tiennent avec des aimants en forme de fruits.']);
 };
 
@@ -909,9 +940,7 @@ export const frontDoor: Script = async (d) => {
 export const minaDoor: Script = async (d) => {
   const p = phase();
   if (p === REAL.finale) {
-    await d.say(['La porte de Mina est entrouverte.', 'Une lumière pâle filtre par l\'interstice.']);
-    const r = await d.ask('Entrer ?', ['Entrer', 'Attendre'], undefined, { cancelIndex: 1 });
-    if (r === 0) await d.warp('chambre_mina', 'door', { sfx: 'door' });
+    await finaleMinaDoor(d);
     return;
   }
   if (nth('porte_mina') > 0) {
@@ -942,7 +971,7 @@ export const bathroomDoor: Script = async (d) => {
     return;
   }
   if (p === REAL.finale) {
-    await d.say(['Tu te passes de l\'eau froide sur le visage.', 'Dans le miroir, tu as les yeux rouges. Mais ce sont tes yeux.']);
+    await d.say(['Tu te passes de l\'eau froide sur le visage.', 'Dans le miroir, tu as les yeux rouges. Ouverts.', 'Ce sont tes yeux.']);
     return;
   }
   await d.say(['La salle de bain.', 'Dans le miroir, quelqu\'un te regarde. Il a l\'air très fatigué.', 'Tu évites ton reflet.']);
@@ -1073,8 +1102,14 @@ async function interlude2Dodo(d: Director): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Finale — « Le carnet »
+// Finale — « Le carnet » (5:52, docs/HISTOIRE.md § 3.15; the coda « Je savais », § 2.11)
 // ---------------------------------------------------------------------------
+//
+// Noa wakes up, Dodo under his arm. The drawer (the key, his faces), the nightlight unplugged and carried, three
+// knocks at Mina's door and three knocks back, her room (the beanie, the worn wall, the radiator), the nightlight
+// plugged in next to her bed, the notebook and the poem, then Maman. The branch points (§ 5): dawnEnding() picks
+// Aube, Aube blanche (the call and the cold drawn over by a white memory) or, every condition met, the offer to
+// unstitch Dodo (Veilleuse). Beaux rêves and Silence never wake up: they leave the final battle (afterFinalBattle).
 
 export async function finale(d: Director): Promise<void> {
   // Reached through wakeUp(6): « Ouvrir les yeux » at the end of chapter 6 (STORY.wake[6]). Also by debug.
@@ -1087,9 +1122,180 @@ export async function finale(d: Director): Promise<void> {
   await d.fadeIn(100);
   await d.wait(30);
   await d.say(['Il fait encore nuit.', 'Mais derrière la fenêtre, le ciel a pâli. Juste un peu.']);
+  d.sfx('static', { vol: 0.12, pitch: 1.8 });
+  await d.say('Sur la table de nuit, la veilleuse grésille.');
   inBed(d, false);
   await d.wait(20);
-  await d.say(['Dodo est sur ton lit.', 'Sa tête est tournée vers la porte.']);
+  await d.say(['Dodo a glissé contre toi pendant la nuit.', 'Tu le prends sous ton bras. Sans y penser. Comme avant.']);
+  d.set('fin_dodo');
+  d.remove('dodo_plush');
+  await d.wait(30);
+  d.sfx('buzz');
+  await d.emote('phone', '!');
+  await d.say('Ton téléphone vibre sur le bureau.');
+}
+
+const FAMILY_PHOTO = ['Maman, toi, et Mina avec sa couronne en papier.', 'Tu avais oublié que tu souriais comme ça.'];
+
+/** The nightlight on Noa's nightstand: it shone every night of the year. He unplugs it to carry it to her. */
+async function finaleNightlight(d: Director): Promise<void> {
+  if (flag('fin_veilleuse_prise')) {
+    await d.say(['Ta table de nuit.', 'Un rond propre dans la poussière, là où était la veilleuse.']);
+    return;
+  }
+  if (flag('c4_fele')) await d.say(['La veilleuse. Une fêlure traverse la lune, d\'un bord à l\'autre.', 'Elle grésille. Elle a brillé toute la nuit.']);
+  else await d.say(['La veilleuse grésille.', 'Elle a brillé toute la nuit. Toutes les nuits, depuis un an.']);
+  const r = await d.ask('La débrancher ?', ['La débrancher', 'Pas encore'], undefined, { cancelIndex: 1 });
+  if (r !== 0) {
+    await d.savePoint('Dehors, le ciel pâlit. Elle n\'a presque plus besoin de briller.');
+    return;
+  }
+  d.set('fin_veilleuse_prise');
+  d.remove('veilleuse');
+  d.sfx('pop', { pitch: 0.6, vol: 0.5 });
+  await d.say(['Tu tires sur le fil. La prise résiste, puis cède.', 'La petite lune s\'éteint.']);
+  await d.wait(40);
+  await d.say(['Il ne fait pas noir.', 'Pas tout à fait. Plus tout à fait.']);
+  await d.say(['Tu enroules le fil autour, bien serré.', 'Quelqu\'un l\'avait enroulé comme ça, il y a un an. Quand elle est revenue de l\'hôpital.']);
+}
+
+/** The drawer (§ 3.15 item 2): the key of her room, and a dozen little faces cut out of the family photos. His. */
+async function finaleDesk(d: Director): Promise<void> {
+  if (!flag('fin_tiroir')) {
+    await d.say('Le tiroir de droite.');
+    await d.say(['Tu sais ce qu\'il y a dedans.', '{p:30}Oui.{p:20} Tu sais.']);
+    d.set('fin_tiroir');
+    d.sfx('door', { pitch: 1.6, vol: 0.25 });
+    await d.say(['Il s\'ouvre.', 'Il n\'a jamais été fermé à clé. Il fallait juste tirer.']);
+    await d.say(['Dedans, une petite clé, avec un porte-clés en forme d\'étoile.', 'La clé de sa chambre.']);
+    await d.say(['Sous la clé, des petits ronds de papier glacé.', 'Une douzaine. Peut-être plus.']);
+    await d.wait(30);
+    await d.say(['Des visages.', 'Le tien, à six ans. À neuf ans. À treize ans. Découpés aux ciseaux, bien nets.']);
+    await d.say('…', 'noa:sad');
+    await d.say('Tu prends la clé.');
+    await offerFace(d, false);
+    return;
+  }
+  if (!flag('fin_visage')) {
+    await d.say(['Les petits visages, dans le tiroir.', 'Les tiens.']);
+    await offerFace(d, false);
+    return;
+  }
+  await d.say(['Ton bureau. Dans le tiroir, il reste les autres visages.', 'Tu les remettras. Un par un. Pas tout de suite.']);
+}
+
+/** [Remettre ton visage sur la photo ?] — from the drawer, or from the photo itself once the drawer is open. */
+async function offerFace(d: Director, fromPhoto: boolean): Promise<void> {
+  const r = await d.ask('Remettre ton visage sur la photo ?', ['Le remettre', 'Pas maintenant'], undefined, { cancelIndex: 1 });
+  if (r !== 0) {
+    if (!fromPhoto) await d.say('Tu refermes le tiroir. Doucement. Comme une porte de chambre.');
+    return;
+  }
+  d.set('fin_visage');
+  if (fromPhoto) await d.say(['Tu ouvres le tiroir.', 'Tu choisis le plus petit visage. Celui de l\'été, au parc.']);
+  else {
+    await d.say(['Tu choisis le plus petit. Celui de l\'été, au parc.', 'Le cadre, sur le parquet, face contre le sol. Tu le retournes.']);
+    await d.image('photo_decoupee', ['Maman. Mina, avec sa couronne en papier.', 'Et à ta place, le trou.']);
+  }
+  d.sfx('pop', { pitch: 1.4, vol: 0.3 });
+  await d.say(['Un bout de scotch, au dos.', 'Le petit visage rentre dans le trou. Il a exactement la bonne forme.']);
+  await d.image('photo_famille', FAMILY_PHOTO);
+  await d.wait(20);
+  await d.say('…', 'noa:neutral');
+}
+
+/** What the stranger who has the number now writes at dawn, if Noa asked her forgiveness in Interlude III (§ 3.15 item 1). */
+const STRANGER_LAST = 'Je suis désolée. Écrivez si ça aide. Je ne répondrai pas. Bonne nuit.';
+
+/** The phone at 5:52: Maman's « Je rentre. », and the « Mina 🐑 » thread (Interlude III), which the stranger answered. */
+function finaleContacts(): PhoneContact[] {
+  const answered = G.state.flags.i3_reply === 'pardon';
+  const mina = minaThread();
+  if (answered) mina.push({ from: 'them', text: STRANGER_LAST });
+  const reply = G.state.flags.i3_reply;
+  return [
+    {
+      id: 'mina',
+      name: 'Mina 🐑',
+      avatar: '🐑',
+      color: '#e0834f',
+      pinned: true,
+      locked: !flag('i3_tel'),
+      when: answered ? '5:46' : reply && reply !== 'rien' ? PHONE_CLOCK[REAL.i3] : shortDate(STRANGER_DAY),
+      unread: answered && !flag('fin_inconnue') ? 1 : 0,
+      messages: mina,
+    },
+    { id: 'maman', name: 'Maman', color: '#c86a8a', when: PHONE_CLOCK[REAL.finale], unread: flag('fin_tel') ? 0 : 1, messages: thread(3, true) },
+    { id: 'leo', name: 'Léo', color: '#5f8fd6', when: shortDate(12), unread: flag('leo_lu') ? 0 : 3, messages: leoThread() },
+  ];
+}
+
+async function finalePhone(d: Director): Promise<void> {
+  const answered = G.state.flags.i3_reply === 'pardon';
+  if (!flag('fin_tel')) await d.say(answered && !flag('fin_inconnue') ? ['Deux messages.', 'Un de « Maman », il y a cinq minutes. Et un autre, tout en haut.'] : 'Un message de « Maman », il y a cinq minutes.');
+  const ph = PhoneScene.home({ clock: PHONE_CLOCK[REAL.finale]!, contacts: finaleContacts(), calls: callLog() });
+  for (;;) {
+    const ev = await ph.browse();
+    if (ev.kind === 'close') break;
+    if (ev.kind === 'locked' && ev.id === 'mina') {
+      await d.say(['« Mina 🐑 ». Le petit cadenas.', 'Tu l\'enlèves. Ce matin, tu peux.']);
+      ph.setLocked('mina', false);
+      ph.showThread('mina');
+    } else if (ev.kind === 'open' && ev.id === 'leo') d.set('leo_lu');
+    else if (ev.kind === 'open' && ev.id === 'maman' && !flag('fin_tel')) {
+      d.set('fin_tel');
+      await d.wait(20);
+      await d.say(['« Je rentre. »', 'Tu restes longtemps sur ces deux mots.']);
+      if (sentReplies().length) await d.say(['Plus haut, tes réponses.', 'Toutes petites, à côté des siennes. Mais elles sont là.']);
+    } else if (ev.kind === 'open' && ev.id === 'mina' && answered && !flag('fin_inconnue')) {
+      d.set('fin_inconnue');
+      await d.wait(40);
+      await d.say(['Sous ton message de cette nuit, une réponse.', 'Elle avait demandé d\'arrêter. Elle a répondu quand même.']);
+      await d.say('…', 'noa:sad');
+      await d.say(['Une inconnue, réveillée à cinq heures du matin, elle aussi.', 'Elle ne répondra pas. Mais tu peux écrire.']);
+    }
+  }
+  await ph.close();
+  d.set('fin_tel');
+}
+
+/** Mina's door at dawn (§ 3.15 item 3): locked. The key is in the drawer; she had asked for something, the last evening. */
+async function finaleMinaDoor(d: Director): Promise<void> {
+  if (flag('fin_porte')) {
+    const r = await d.ask('Sa porte est ouverte. Entrer ?', ['Entrer', 'Attendre'], undefined, { cancelIndex: 1 });
+    if (r === 0) await d.warp('chambre_mina', 'door', { sfx: 'door' });
+    return;
+  }
+  await d.say(['La pancarte en carton, au feutre :', '« CHAMBRE DE MINA — DÉFENSE D\'ENTRER (sauf Noa) »']);
+  if (!flag('fin_tiroir')) {
+    await d.say(['Fermée à clé.', 'La clé est dans ton tiroir. Tu l\'as toujours su.']);
+    return;
+  }
+  if (!flag('fin_veilleuse_prise')) {
+    await d.say(['Tu as la clé dans la main.', 'Mais elle avait demandé quelque chose. Le dernier soir.']);
+    return;
+  }
+  const r = await d.ask('La clé dans une main. La veilleuse dans l\'autre.', ['Frapper', 'Attendre'], undefined, { cancelIndex: 1 });
+  if (r !== 0) return;
+  for (let i = 0; i < 3; i++) {
+    d.sfx('knock1', { vol: 0.7 });
+    await d.wait(28);
+  }
+  await d.wait(70);
+  await d.say('Rien.');
+  await d.wait(50);
+  // Three knocks back. Her wall is the one the old radiator pipe runs along (it knocks when the heating comes on).
+  for (let i = 0; i < 3; i++) {
+    d.sfx('knock1', { vol: 0.4, pitch: 0.85 });
+    await d.wait(30);
+  }
+  await d.emote('player', '!');
+  await d.say('Trois coups. De l\'intérieur.');
+  await d.wait(40);
+  d.set('fin_porte');
+  d.sfx('select', { pitch: 0.5, vol: 0.4 });
+  await d.say(['Tu tournes la clé.', 'La porte s\'ouvre sans un bruit.']);
+  await d.warp('chambre_mina', 'door', { sfx: 'none' });
 }
 
 export const minaRoomEnter: Script = async (d) => {
@@ -1098,6 +1304,10 @@ export const minaRoomEnter: Script = async (d) => {
   if (!flag('fin_room')) {
     d.set('fin_room');
     await d.say(['La chambre de Mina.', 'Ça sent encore la pâte à modeler et les crayons de cire.', 'Rien n\'a bougé depuis un an.']);
+    if (flag('fin_dodo')) {
+      if (!d.find('f_dodo')) d.spawn({ id: 'f_dodo', sprite: 'prop_dodo_plush', x: 5, y: 2, solid: false, shadow: false }).oy = -17;
+      await d.say(['Tu poses Dodo sur le rebord de la fenêtre.', 'De là, il voit toute la chambre.']);
+    }
   }
 };
 
@@ -1105,23 +1315,72 @@ export const minaDrawings: Script = async (d) => {
   await d.say(['Ses dessins, au mur.', 'Un mouton en couronne. Un nuage qui pleure. Une armoire avec des yeux, et, en dessous : « il est gentil en vrai ».']);
 };
 
-export const minaNightlight: Script = async (d) => {
-  if (flag('fin_plugged')) {
-    await d.say('La veilleuse de Mina brille doucement. Elle n\'a plus peur du noir, ici.');
+/** Her bed (§ 3.15 item 4): the knitted beanie with sheep ears on the pillow (T9: the last place the bonnet appears). */
+export const minaBed: Script = async (d) => {
+  const n = nth('lit_mina');
+  if (n === 0) {
+    await d.say(['Le lit de Mina. La couette à étoiles est tirée bien droite.', 'Sur l\'oreiller, il y a un bonnet.']);
+    await d.say(['Un bonnet tricoté, couleur crème, avec deux oreilles de mouton.', 'Tu l\'as déjà vu. Une fois. Derrière une vitre.']);
+    await d.wait(30);
+    await d.say(['Quelqu\'un l\'a posé là, bien à plat.', 'Il sent encore un peu la lessive de l\'hôpital.']);
     return;
   }
-  await d.say(['Sa veilleuse. Celle de l\'hôpital.', 'Quelqu\'un l\'a rapportée. Le cordon est enroulé autour, bien serré.']);
-  const r = await d.ask('La brancher ?', ['La brancher', 'La laisser'], undefined, { cancelIndex: 1 });
+  if (n === 1) {
+    await d.say(['Au-dessus de l\'oreiller, la peinture du mur est usée.', 'Comme si quelqu\'un avait frappé là. Souvent.']);
+    return;
+  }
+  await d.say(['Le bonnet, sur l\'oreiller.', 'Une oreille est plus usée que l\'autre. Celle qu\'elle tortillait entre ses doigts.']);
+};
+
+/** The wall above her bed, worn at pillow height (answers at the foot of the bed). Behind it: Noa's pillow. */
+export const minaWall: Script = async (d) => {
+  if (nth('mur_mina') === 0) {
+    await d.say(['Le mur, au-dessus de son lit.', 'À hauteur d\'oreiller, la peinture est usée.', 'Comme si quelqu\'un avait frappé là. Souvent.']);
+    return;
+  }
+  await d.say(['De l\'autre côté de ce mur, il y a ton lit.', 'Ton oreiller. Exactement là.']);
+};
+
+/** The old radiator under her window: its pipe runs along the wall to Noa's room (the knocks' ordinary double). */
+export const minaRadiator: Script = async (d) => {
+  if (nth('radiateur_mina') === 0) {
+    await d.say(['Un vieux radiateur, sous la fenêtre.', 'Son tuyau longe le mur, jusqu\'à ta chambre.']);
+    return;
+  }
+  await d.say(['Il est froid.', 'Le chauffage ne s\'est pas encore remis en route.']);
+};
+
+/** The nightstand by her bed: where Noa plugs in the nightlight he carried (§ 3.15 item 7). */
+export const minaNightlight: Script = async (d) => {
+  if (flag('fin_plugged')) {
+    await d.say(
+      flag('c4_fele')
+        ? ['La veilleuse brille à côté de son lit.', 'La fêlure traverse la lune. Elle brille quand même.']
+        : ['La veilleuse brille à côté de son lit.', 'Toute petite, dans le jour qui se lève.'],
+    );
+    return;
+  }
+  await d.say(['Sa table de nuit. Une prise, juste au-dessus.', 'Rien de branché. Depuis le soir où elle est partie à l\'hôpital.']);
+  if (!flag('fin_veilleuse_prise')) return;
+  const r = await d.ask('Brancher la veilleuse ?', ['La brancher', 'Pas encore'], undefined, { cancelIndex: 1 });
   if (r !== 0) return;
+  await plugIn(d);
+};
+
+/** « Le geste que tu n'as pas fait. » The nightlight next to her bed, cracked if the Little Man was beaten. */
+async function plugIn(d: Director): Promise<void> {
   d.set('fin_plugged');
-  const e = world.entities.find((x) => x.sprite === 'prop_veilleuse_off');
-  if (e) {
-    e.sprite = 'prop_veilleuse';
-    e.light = { r: 56, color: '#ffe991', flicker: false, dy: -6 };
+  const fele = flag('c4_fele');
+  if (!d.find('f_veilleuse')) {
+    const e = d.spawn({ id: 'f_veilleuse', sprite: fele ? 'prop_veilleuse_fele' : 'prop_veilleuse', x: 2, y: 3, solid: false, shadow: false, light: { r: 52, color: '#ffe991', flicker: true, dy: -10 } });
+    e.oy = -9;
   }
   d.sfx('chime');
-  await d.say(['Tu la branches.', 'La petite lune s\'allume. Elle grésille, puis elle se stabilise.', 'Un an trop tard. Mais elle s\'allume.']);
-};
+  await d.say(['Tu déroules le fil. Tu branches la veilleuse à côté de son lit.', 'La petite lune s\'allume.']);
+  if (fele) await d.say(['Une fêlure la traverse, d\'un bord à l\'autre.', 'Elle brille quand même.']);
+  await d.wait(40);
+  await d.say('Le geste que tu n\'as pas fait.');
+}
 
 export const carnet: Script = async (d) => {
   if (flag('fin_carnet')) {
@@ -1134,9 +1393,13 @@ export const carnet: Script = async (d) => {
   await d.image('carnet_page1', ['Une prairie pleine de coton. Un garçon aux cheveux bleus. Une princesse avec une cape et une couronne.']);
   await d.image('carnet_page2', ['Un village de moutons. Une chaussette marchande. « elle cherche sa paire !! »']);
   await d.image('carnet_page3', ['Une forêt de crayons. Un hibou à lunettes. Des lucioles.']);
-  await d.say('La dernière page.');
+  await d.say(['Puis des pages blanches.', 'Beaucoup de pages blanches. Et la dernière.']);
   await d.image('carnet_page4', []);
   await d.wait(20);
+  // § 3.15 item 5: the last page reads otherwise now — the nightlight on her drawing is plugged in by the boy's bed.
+  await d.say(['Sur le dessin, un garçon dort.', 'La veilleuse est branchée à côté de son lit à lui.']);
+  await d.wait(30);
+  await d.say(['Elle savait.', 'Elle a toujours su qui avait peur du noir.']);
   await d.say('…', 'noa:sad');
   await d.say('Mina.', 'noa:sad');
   await d.wait(30);
@@ -1146,6 +1409,11 @@ export const carnet: Script = async (d) => {
   savePoem(lines, words.map((w) => w.text));
   await d.paper(lines, '');
   d.set('fin_carnet');
+  if (!flag('fin_plugged')) {
+    await d.wait(30);
+    await d.say('Il reste une chose à faire.');
+    await plugIn(d);
+  }
   await mamanComesHome(d);
 };
 
@@ -1157,7 +1425,13 @@ function savePoem(lines: string[], words: string[]): void {
   writeMeta(G.meta);
 }
 
+/**
+ * Maman comes home (§ 3.15 items 8-10). She knew he was awake; she saw the call; she pretended too. Then the branch
+ * points into the endings (§ 5): the secret one offers to unstitch Dodo; otherwise the radiator knocks three times
+ * and the sun rises (Aube: here; Aube blanche: endings.ts).
+ */
 async function mamanComesHome(d: Director): Promise<void> {
+  const end = dawnEnding();
   await d.wait(40);
   d.sfx('door', { pitch: 0.8 });
   await d.wait(30);
@@ -1165,18 +1439,110 @@ async function mamanComesHome(d: Director): Promise<void> {
   d.sfx('step', { pitch: 0.7 });
   await d.wait(20);
   d.sfx('step', { pitch: 0.7 });
-  await d.say('Noa ? Tu es réveillé ?', 'maman:neutral');
+  await d.say('Noa ?', 'maman:neutral');
   d.spawn({ id: 'maman', char: 'maman', x: 6, y: 9, dir: 'up' });
-  await d.walkTo('maman', 6, 6, 0.6);
+  await d.walkTo('maman', 6, 8, 0.6);
   d.face('player', 'down');
+  if (flag('c4_reste')) {
+    // In chapter 4, Noa asked the paper Maman to stay at the table. Here she stops on the threshold.
+    await d.wait(60);
+    await d.say('…', 'maman:sad');
+    await d.say('Je ne savais pas si j\'avais le droit.', 'maman:sad');
+    await d.wait(30);
+  }
+  await d.walkTo('maman', 6, 6, 0.6);
   await d.wait(20);
+  await d.say('Tu es réveillé.', 'maman:neutral');
+  await d.wait(20);
+  d.face('maman', 'left');
   await d.emote('maman', '!');
-  await d.say(['Tu… tu es dans sa chambre.', 'Tu es entré.'], 'maman:sad');
+  await d.say('La veilleuse…', 'maman:sad');
+  await d.wait(40);
+  d.face('maman', 'up');
+  await d.say(['Je l\'avais. La veilleuse.', 'Elle était allumée, sur ma table de nuit.'], 'noa:sad');
+  await d.wait(40);
+  // The coda « Je savais » (§ 2.11). The back of the fridge note, at last (« Je sais que t— », Interlude IV).
+  await d.say(['Je l\'ai vue, la lumière, sous ta porte.', 'Je me suis dit : il dort, enfin.', 'J\'ai mis le réveil à cinq heures. C\'est moi qui ne l\'ai pas prise.'], 'maman:sad');
   await d.wait(30);
-  await d.say(['Maman.', 'Je l\'ai pas apportée. La veilleuse. Le dernier soir.', 'Je voulais pas la voir comme ça. J\'avais peur. Pardon. Pardon…'], 'noa:sad');
+  await d.say(['Et quand je suis venue la chercher…', 'je savais que tu ne dormais pas.'], 'maman:sad');
+  await d.say('…', 'noa:surprised');
+  await d.say(['Je t\'ai laissé faire semblant.', 'Alors j\'ai fait semblant aussi. Un an.'], 'maman:sad');
   await d.wait(30);
-  await d.say('Oh, mon grand…', 'maman:sad');
-  // The hug.
+  await d.say(['Le mot, sur le frigo. Au dos, j\'ai essayé de te l\'écrire.', 'Cent fois. Je l\'ai raturé cent fois.'], 'maman:sad');
+  await d.say('« Je sais que tu ne dormais pas. »', 'maman:sad');
+  await d.wait(40);
+  if (end === 'aube_blanche') await whiteMemory(d);
+  else await theCallAndTheCold(d);
+  hug(d, true);
+  d.music('ending', 2);
+  await d.wait(60);
+  await d.say(
+    end === 'aube_blanche'
+      ? ['Elle n\'était pas dans le noir.', 'La porte était ouverte sur le couloir. Il y avait de la lumière.']
+      : ['Elle n\'était pas dans le noir.', 'Nadia lui tenait la main. La porte était ouverte sur le couloir.', 'Il y avait de la lumière.'],
+    'maman:sad',
+  );
+  await d.say(['Elle t\'aimait tellement.', 'Elle parlait de toi tout le temps.'], 'maman:sad');
+  if (flag('i1_ate')) await d.say('Et tu as mangé les pâtes, l\'autre jour. Je l\'ai vu. … C\'est bien. C\'est bien, mon grand.', 'maman:happy');
+  else if (replyOf(1) === 'oui')
+    await d.say(['Tu m\'avais écrit « oui », pour les pâtes.', 'La casserole était encore pleine.', 'C\'est pas grave. Moi aussi, je dis que ça va quand ça ne va pas.'], 'maman:sad');
+  await mamanOnMessages(d);
+  await mamanInvites(d);
+  if (end === 'veilleuse') {
+    hug(d, false);
+    if (await offerUnstitch(d)) {
+      d.set('fin_ending', 'veilleuse');
+      await endingVeilleuse(d);
+      return;
+    }
+  }
+  await radiatorKnocks(d);
+  d.set('fin_ending', end === 'aube_blanche' ? 'aube_blanche' : 'aube');
+  if (end === 'aube_blanche') {
+    await endingAubeBlanche(d);
+    return;
+  }
+  await d.fadeOut(120, '#fff3e0');
+  await d.image('fin_aube', ['Le soleil se lève sur la chambre de Mina.', 'Pour la première fois depuis un an, il fait jour.']);
+  d.remove('hug');
+  await epilogue(d);
+}
+
+/** § 3.15 item 8: the call, the cold. Neither of them knows; both of them wonder. */
+async function theCallAndTheCold(d: Director): Promise<void> {
+  await d.say('Elle m\'a appelé.', 'noa:sad');
+  await d.wait(20);
+  await d.say(['Je sais.', 'J\'ai vu le téléphone. Trois heures quatorze.'], 'maman:sad');
+  await d.wait(30);
+  await d.say('Je lui ai dit « dors ».', 'noa:sad');
+  await d.wait(70);
+  await d.say('…C\'est ce que je lui disais tous les soirs.', 'maman:sad');
+  await d.wait(40);
+  await d.say(['J\'avais le rhume.', 'Quand j\'y suis allé.'], 'noa:sad');
+  await d.say(['Je sais. Les médecins l\'ont dit cent fois :', 'avec ses globules, ça pouvait venir de partout.', 'De partout, Noa.'], 'maman:sad');
+  await d.wait(30);
+  await d.say('Mais tu sais pas.', 'noa:sad');
+  await d.wait(60);
+  await d.say(['…Non. Je sais pas.', 'Moi aussi je me demande. Pour la veilleuse. Pour être rentrée dormir.', 'Tous les jours.'], 'maman:sad');
+}
+
+/** Aube blanche (§ 5): the call and the cold give way to a memory drawn in white. She lies for him, a second time. */
+async function whiteMemory(d: Director): Promise<void> {
+  await d.say(['J\'étais là, à la fin.', 'Je lui tenais la main.'], 'noa:neutral');
+  await d.wait(80);
+  await d.say('…Oui. Oui, mon grand.', 'maman:sad');
+}
+
+/** Maman and Noa in each other's arms (one sprite between them), or apart again. */
+function hug(d: Director, on: boolean): void {
+  if (!on) {
+    d.remove('hug');
+    d.show('maman', true);
+    d.show('player', true);
+    d.face('player', 'down');
+    d.face('maman', 'up');
+    return;
+  }
   const m = d.get('maman');
   const p = d.player;
   const hx = Math.round((m.x + p.x) / 2 / 16 - 0.5);
@@ -1184,19 +1550,29 @@ async function mamanComesHome(d: Director): Promise<void> {
   d.show('maman', false);
   d.show('player', false);
   d.spawn({ id: 'hug', sprite: 'pose_hug', x: hx, y: hy, solid: false });
-  d.music('ending', 2);
+}
+
+/** The secret ending's branch point (§ 5, Veilleuse): every condition holds. Noa may choose to unstitch Dodo. */
+async function offerUnstitch(d: Director): Promise<boolean> {
+  await d.wait(40);
+  await d.say(['Sur le rebord de la fenêtre, Dodo.', 'Dans sa patte gauche, sous le tissu, quelque chose de rond. Comme un bouton.']);
+  const r = await d.ask('Découdre Dodo ?', ['Le découdre', 'Le laisser'], undefined, { cancelIndex: 1 });
+  return r === 0;
+}
+
+/** § 3.15 item 9: the radiator knocks three times. The heating, or her. */
+async function radiatorKnocks(d: Director): Promise<void> {
   await d.wait(60);
-  await d.say(['Ce n\'est pas ta faute.', 'Tu m\'entends ? Ce n\'est la faute de personne.', 'Elle t\'aimait tellement. Elle parlait de toi tout le temps.'], 'maman:sad');
-  if (flag('fin_plugged')) await d.say('Tu as rallumé sa veilleuse…', 'maman:sad');
-  if (flag('i1_ate')) await d.say('Et tu as mangé les pâtes, l\'autre jour. Je l\'ai vu. … C\'est bien. C\'est bien, mon grand.', 'maman:happy');
-  else if (replyOf(1) === 'oui')
-    await d.say(['Tu m\'avais écrit « oui », pour les pâtes.', 'La casserole était encore pleine.', 'C\'est pas grave. Moi aussi, je dis que ça va quand ça ne va pas.'], 'maman:sad');
-  await mamanOnMessages(d);
-  await mamanInvites(d);
-  await d.fadeOut(120, '#fff3e0');
-  await d.image('fin_aube', ['Le soleil se lève sur la chambre de Mina.', 'Pour la première fois depuis un an, il fait jour.']);
-  d.remove('hug');
-  await epilogue(d);
+  for (let i = 0; i < 3; i++) {
+    d.sfx('pipe', { vol: 0.5 });
+    await d.wait(30);
+  }
+  await d.wait(20);
+  await d.say('Dans le mur, le tuyau du radiateur cogne. Trois fois.');
+  await d.say(['C\'est le chauffage.', 'Mina disait que c\'était toi.'], 'maman:happy');
+  await d.wait(30);
+  await d.say('Tu souris. Un tout petit peu.');
+  await d.say('…Je sais.', 'noa:neutral');
 }
 
 /** Maman on the messages of the last days (what Noa answered, or his silence). */
@@ -1286,21 +1662,30 @@ export const DEBUG: Record<string, Script> = {
     d.load('appartement_nuit', 'noa');
     await d.fadeIn(10);
   },
+  /** Mina's room at dawn, door just opened, nightlight in hand (not plugged yet), Dodo set on the windowsill. */
   finale_room: async (d) => {
-    G.state.flags.interlude = REAL.finale;
-    G.state.chapter = 3;
+    finaleBase();
+    G.state.flags.fin_room = true;
     d.load('chambre_mina', 'door');
     await d.fadeIn(10);
   },
+  /** The notebook and the poem, then Maman (add &flags=… for a given history: c5_corrige=3, c4_reste, c4_fele…). */
   finale_poem: async (d) => {
-    G.state.flags.interlude = REAL.finale;
-    G.state.chapter = 3;
+    finaleBase();
     G.state.flags.i1_ate = true;
     // The room's entrance cutscene already happened (otherwise it would run alongside the notebook).
     G.state.flags.fin_room = true;
     d.load('chambre_mina', 'door');
     await d.fadeIn(10);
     await carnet(d);
+  },
+  /** The hallway at dawn in front of Mina's door, the key and the nightlight in hand: the knocks. */
+  finale_porte: async (d) => {
+    finaleBase();
+    G.state.flags.fin_porte = false;
+    d.load('appartement_aube', 'mina');
+    d.face('player', 'up');
+    await d.fadeIn(10);
   },
   // Maman's messages (add &flags=p_reply=aime,i1_ate,… to replay a given history).
   reply_prologue: async (d) => {
@@ -1322,24 +1707,68 @@ export const DEBUG: Record<string, Script> = {
     await d.fadeIn(10);
     await phone(d);
   },
+  /** The phone at 5:52 (add &flags=i3_tel,i3_reply=pardon for the stranger's last message). */
   finale_phone: async (d) => {
     G.state.flags.interlude = REAL.finale;
+    G.state.flags.fin_dodo = true;
     d.load('chambre', 'bed');
     await d.fadeIn(10);
     await phone(d);
   },
-  /** Maman comes home (the finale's reactions to the replies), then the epilogue. */
+  /** Maman comes home (the coda, the finale's reactions to the replies); the ending follows from the flags. */
   finale_maman: async (d) => {
-    G.state.flags.interlude = REAL.finale;
-    G.state.chapter = 3;
-    if (!G.state.flags.fin_poem) G.state.flags.fin_poem = composePoem(DEBUG_WORDS).join('\n');
-    G.state.flags.fin_room = true;
-    d.load('chambre_mina', 'door');
+    await finaleMaman(d);
+  },
+  /** One entry per branch of the finale (§ 5): Aube, the threshold of c4_reste, Aube blanche, Veilleuse. */
+  finale_aube: async (d) => {
+    await finaleMaman(d, { c5_corrige: 1 });
+  },
+  finale_reste: async (d) => {
+    await finaleMaman(d, { c4_maman: 'reste', c4_reste: true });
+  },
+  finale_aube_blanche: async (d) => {
+    await finaleMaman(d, { c5_corrige: 3 });
+  },
+  /** Every condition of the secret ending (a first Aube in the memory, « Je ne sais pas » at the corridor…). */
+  finale_veilleuse: async (d) => {
+    if (!G.meta.endings.includes('aube')) G.meta.endings.push('aube');
+    G.meta.callVersion = 'sais_pas';
+    await finaleMaman(d, { c5_fievre: true, c5_corrige: 0, c6_pile: true, i4_pile: true, c1_bouton: true });
+  },
+  /** The two routes that never wake up (they leave the final battle): Beaux rêves and Silence. */
+  finale_beaux_reves: async (d) => {
+    G.state.chapter = 6;
+    G.state.flags.c6_voix_vue = true;
+    d.load('voix', 'seuil');
     await d.fadeIn(10);
-    await mamanComesHome(d);
+    await afterFinalBattle(d, 'beaux_reves');
+  },
+  finale_silence: async (d) => {
+    G.state.chapter = 6;
+    G.state.flags.c6_voix_vue = true;
+    d.load('voix', 'seuil');
+    await d.fadeIn(10);
+    await afterFinalBattle(d, 'silence');
   },
   ...EPILOGUE_DEBUG,
 };
+
+/** The finale reached for real: the eyes open, Dodo carried, the drawer opened, the nightlight carried, the door opened. */
+function finaleBase(): void {
+  Object.assign(G.state.flags, { interlude: REAL.finale, fin_route: 'aube', fin_dodo: true, fin_tiroir: true, fin_veilleuse_prise: true, fin_porte: true });
+  G.state.chapter = 6;
+}
+
+/** Maman comes home in Mina's room, the poem written and the nightlight plugged in (extra flags first). */
+async function finaleMaman(d: Director, flags: Record<string, string | number | boolean> = {}): Promise<void> {
+  finaleBase();
+  Object.assign(G.state.flags, { fin_room: true, fin_plugged: true, fin_carnet: true }, flags);
+  if (!G.state.flags.fin_poem) G.state.flags.fin_poem = composePoem(DEBUG_WORDS).join('\n');
+  d.load('chambre_mina', 'door');
+  d.face('player', 'up');
+  await d.fadeIn(10);
+  await mamanComesHome(d);
+}
 
 const DEBUG_WORDS = [
   { text: 'lune', emotion: 'joie' as const },
