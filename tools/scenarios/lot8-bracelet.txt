@@ -1,0 +1,34 @@
+# Lot 8 (§ 2.7 T6, § 3.8): Bracelet, a real battle with chapter 3 stats. Its label reads « MINA — 304 »; « prénom » written
+# too early gets « Il y en a déjà un. C'est écrit. M… I… N… A. » (it still counts as sad); once the sadness is answered it
+# turns over: « NOA — ??? »; « prénom » again prints « NOA ». Spared, it closes round Noa's wrist (key item bracelet_noa,
+# flags.c3_bracelet = 'epargne'). Attacks: the band coils round the box and tightens it (bracelet_wrap), the holed end
+# sweeps the box (bracelet_holes).
+query: debug=script&name=bt_bracelet&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; const b = V.game.top; const j = (cs) => cs.map((l) => l.map((c) => c.ch).join('')).join(' '); if (D.busy) return j(D.pages[D.pageIdx]?.lines || []); if (!b || !b.enemies) return ''; return [b.text ? j(b.text.chars) : '', ...(b.bubbles || []).map((x) => j(x.chars))].join(' | '); }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+god
+until:menu
+assert: SAW('« MINA — 304 »') && V.game.top.enemies[0].def.id === 'bracelet'
+shot:mina304
+write:prénom
+zuntil: SAW('M… I… N… A.')
+until:menu
+write:prénom
+until:menu
+assert: SAW('« NOA — ??? »')
+shot:noa
+write:prénom
+zuntil: SAW('N… O… A.')
+until:menu
+assert: V.game.top.enemies[0].spareable
+shot:nomme
+menu:3
+choose:0
+zuntil: SAW('L\'étiquette dit « NOA »')
+auto
+assert: V.G.state.flags.debug_battle === 'spare:bracelet' && V.G.state.flags.c3_bracelet === 'epargne' && V.G.state.keyItems.includes('bracelet_noa')

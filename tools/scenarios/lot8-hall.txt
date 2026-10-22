@@ -1,0 +1,31 @@
+# Lot 8 (docs/HISTOIRE.md § 3.8, T6): the paper nurses all badged « NADIA » (faceless; Mina's double: they always wore
+# masks, and at night it was always Nadia) and « le chocolat du robot »: B4 gives a handful of grey, still warm cotton
+# (Mina: cotton candy, the robot is broken), then only the sound of an empty stomach.
+query: debug=script&name=c3_nadia&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+shot:lobby
+interact:nadia_0
+zuntil: SAW('NADIA')
+shot:nadia
+zuntil: SAW('Reviens demain')
+shot:nadialine
+zuntil: IDLE()
+assert: SAW('toujours un masque') && SAW('toujours Nadia') && V.G.state.flags.c3_nadia === 1
+go:3/4
+interact:robot
+zuntil: V.dialogue.choices && V.dialogue.choices.length === 2
+shot:robot
+KeyZ
+zuntil: SAW('Encore tiède')
+shot:coton
+zuntil: IDLE()
+assert: V.G.state.items.includes('coton_gris') && SAW('barbe à papa')
+interact:robot
+zuntil: IDLE()
+assert: SAW('ventre vide')

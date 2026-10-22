@@ -11,7 +11,7 @@ import { director, type Director } from '../director';
 import { isLateNight, setPageTitle } from '../meta';
 import type { Script } from '../overworld/types';
 import { world } from '../overworld/world';
-import { G } from '../state';
+import { G, maxHp } from '../state';
 import { tf, tr } from '../../i18n';
 import { isSilenceRoute, shop, wakeUp } from './common';
 import { endingAube, endingBeauxReves } from './endings';
@@ -27,6 +27,12 @@ import { makeCrack } from '../battle/final-common';
  * c3_loop (corridor stage 0..3), c3_loop_fails, c3_loops, c3_heard_0..3, c3_plume, c3_cape, c3_door304,
  * c3_mina_erased, c3_veilleuse, c3_dawn_ready (Dodo gave in: the door of light leads to the false dawn), fa_reste
  * ([Rester] was chosen at the end of the battle; read by the false dawn, fausse-aube.ts).
+ *
+ * Version 2 clues (lot 8, docs/HISTOIRE.md § 3.8, checklist docs/INDICES.md): c3_nadia (paper nurses met, 0..3) and
+ * c3_nadia_0..2 (each one looked at), c3_robot (B4 gave the grey cotton), c3_sas (room 303½ looked at, counter),
+ * c3_bonnet_vu (the figure in the hat at the end of the loop), c3_reflet (the reflection in the last wing's window),
+ * c3_placard (the Closet Monster's talk counter: even = his secret), c3_fenetre304 (room 304's window, counter: the
+ * mist drawing from the second look), c3_bracelet ('epargne' | 'coupe', set by the battle, src/data/enemies-ch3.ts).
  */
 
 const flag = (k: string): boolean => !!G.state.flags[k];
@@ -1444,6 +1450,8 @@ export const MINA_LINES: Record<string, string[]> = {
     'Pourquoi on chuchote ? Y a personne. …Hein ?|sad',
     'Je me souviens de ce couloir. Je sais pas pourquoi.|sad',
     'Tiens-moi la main. Juste dans le couloir.|sad',
+    // (Balance, lot 8: a nudge towards the playroom and the Cape de Mina before chapter 4.)
+    'La porte à côté de l\'accueil… J\'ai l\'impression qu\'il y a un truc à moi, derrière.|neutral',
   ],
   salle_jeux: [
     'Je jouais ici ! Avec des feutres qui sentent la fraise.|happy',
@@ -1462,6 +1470,8 @@ function setup(d: Director, flags: string[], party: boolean): void {
 async function clueAt(d: Director, map: string, x: number, y: number, stage = 0, flags: string[] = []): Promise<void> {
   setup(d, ['c3_intro', 'c3_hospital_seen', 'c3_marsh', 'c3_hosp_in', 'c3_corridor', ...flags], true);
   d.set('c3_loop', stage);
+  // (no wandering enemy next to the clue)
+  G.state.cleared.push('c3_perfusion_1', 'c3_bip_1', 'c3_perfusion_2', 'c3_duo_1', 'c3_bracelet_1');
   d.load(map, 'default');
   d.player.x = x * TILE + 8;
   d.player.y = y * TILE + 14;
@@ -1537,6 +1547,28 @@ export const DEBUG: Record<string, Script> = {
     await d.fadeIn(10);
     d.face('player', 'up');
   },
+  /**
+   * Balance (lot 8): a real battle with the stats expected at the end of act I — 14 Étoiles, no Encre, the Plume
+   * dorée and the Cape de Mina, Mina at Noa's side. URL: &enemies=bip,perfusion (default bracelet), &chapter=4 and
+   * &ally=mina366 for La Couseuse, &armor=plaid, &etoiles=N, &encre=N. The outcome in flags.debug_battle.
+   */
+  bt_acte1: async (d) => {
+    const p = new URLSearchParams(location.search);
+    setup(d, ['c3_intro', 'c3_hosp_in', 'c3_corridor'], true);
+    const st = G.state;
+    st.chapter = Number(p.get('chapter') ?? 3);
+    st.etoiles = Number(p.get('etoiles') ?? 14);
+    st.encre = Number(p.get('encre') ?? 0);
+    st.weapon = 'plume';
+    st.armor = p.get('armor') ?? 'cape';
+    st.items = ['chocolat', 'lait', 'biscuit', 'mouchoir'];
+    st.party = [p.get('ally') ?? 'mina'].filter((a) => a !== 'none');
+    st.hp = maxHp(st);
+    d.load('hopital', 'start');
+    await d.fadeIn(10);
+    const r = await d.battle((p.get('enemies') ?? 'bracelet').split(','));
+    st.flags.debug_battle = `${r.outcome}:${[...r.spared, ...r.killed].join('+')}`;
+  },
   /** Bracelet, a real battle (not the tutorial one), with chapter 3 stats; the outcome in flags.debug_battle. */
   bt_bracelet: async (d) => {
     setup(d, ['c3_intro', 'c3_hosp_in', 'c3_corridor'], true);
@@ -1606,6 +1638,11 @@ export const DEBUG: Record<string, Script> = {
     G.state.spares.nuage = 1;
     G.state.keyItems.push('veilleuse_poche');
     G.state.items.push('lait', 'chocolat');
+    if (new URLSearchParams(location.search).has('acte1')) {
+      // Balance (lot 8): the stats expected at the end of act I (see bt_acte1).
+      Object.assign(G.state, { etoiles: 14, weapon: 'plume', armor: 'cape' });
+      G.state.hp = maxHp(G.state);
+    }
     d.load('vide', 'center');
     await d.fadeIn(10);
     await finalBattle(d);

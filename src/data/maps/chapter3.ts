@@ -357,7 +357,7 @@ const HOPITAL: MapDef = {
     { id: 'c3_perfusion_2', enemies: ['perfusion'], x: 26, y: 5, wander: 2, cond: atStage(1) },
     { id: 'c3_duo_1', enemies: ['bip', 'perfusion'], x: 41, y: 5, wander: 2, cond: atStage(2) },
     // Version 2: Bracelet (src/data/enemies-ch3.ts).
-    { id: 'c3_bracelet_1', enemies: ['bracelet'], x: 35, y: 5, wander: 2, cond: atStage(1) },
+    { id: 'c3_bracelet_1', enemies: ['bracelet'], x: 31, y: 5, wander: 2, cond: atStage(2) },
   ],
   triggers: [
     { x: 14, y: 3, w: 1, h: 4, once: 'c3_corridor', script: C3.corridorIntro },
@@ -467,7 +467,7 @@ const CHAMBRE_304: MapDef = {
     WALL('prop_h_drawings', 6, 2, -6, { id: 'r304_draw1', script: C3.room304Drawing1 }),
     WALL('prop_calendar', 7, 2, -8, { id: 'r304_cal', script: C3.room304Calendar }),
     WALL('prop_h_drawings', 11, 2, -6, { id: 'r304_draw2', script: C3.room304Drawing2 }),
-    P('', 9, 2, { script: C3.room304Window }),
+    P('', 9, 2, { id: 'fenetre304', script: C3.room304Window }),
     P('prop_h_plant', 11, 3, { id: 'r304_plant', text: ['Une plante en papier. Quelqu\'un l\'a arrosée.', 'Le papier a gondolé. C\'est l\'intention qui compte, aurait dit Maman.'] }),
     P('', 6, 8, { script: C3.room304Door }),
   ],

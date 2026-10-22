@@ -1,6 +1,6 @@
 # Liste de contrôle des indices
 
-Chaque indice que la bible (`docs/HISTOIRE.md`, § 2.2 à § 2.11, § 3.3, § 3.5, § 3.7, § 4 « Monde réel », § 5) place
+Chaque indice que la bible (`docs/HISTOIRE.md`, § 2.2 à § 2.11, § 3.3, § 3.5, § 3.7, § 3.8, § 4 « Monde réel », § 5) place
 dans le monde réel : prologue, interludes I à IV, fausse aube, final, épilogue, bonus et mémoire méta. Pour chacun :
 où il se trouve dans le jeu (fichier:ligne au moment du lot 6, identifiant d'entité pour le bot) et le scénario du bot
 qui le prouve (`tools/scenarios/`). Les indices des chapitres 1 à 3 (lots 7 et 8) suivent, après ceux des interludes
@@ -141,6 +141,41 @@ yeux-boutons à l'arrêt). Les entités portent des ids pour le bot (`trou_chuch
 | § 3.6 | Le bocal de miettes de gomme, « À JETER » : « Certaines ont une bouche. » ; double : Mina, « Elles bâillent. C'est l'heure de dormir, pour les miettes. » ; Gomme épargnée, le bocal est ouvert, une miette dort au fond | Atelier de Gomme | `bocal_miettes` (`maps/chapter2.ts:681`, `:682`, sprites `bocalMiettes`, `props.ts:1983`) → `crumbJar`, `chapter2.ts:1103` ; drapeau `c2_bocal` | `lot7-atelier` |
 | — | Gomme épargnée : « On efface pour ne plus avoir mal. Ou pour ne plus être coupable. Ce n'est pas pareil. » (contrepoint : elle rend les dessins, existant) | Atelier, après le combat | `gommeSpared`, `chapter2.ts:995` | `lot7-gomme` |
 | T6 | Souvenir 2, le dessin inachevé : un petit nuage gris près de la bouche du Noa dessiné, soufflé vers elle (on le prend pour une bulle vide) ; « parce que… PARCE QUE » (existant) | Fin du chapitre | `paintDessin`, `src/data/illustrations.ts:1439` | `lot7-gomme` |
+
+## Chapitre 3 — « L'Hôpital de Papier » (§ 3.8, lot 8)
+
+Fin de l'acte I : l'hôpital est le lieu le plus sombre du carnet de Mina, mais chaque indice garde son double ordinaire
+(un masque, une règle d'hygiène, de la barbe à papa, un reflet, un autre enfant). Rien sur l'appel. Tout s'atteint en
+marchant et en appuyant sur A ; les scripts de debug `c3_nadia`, `c3_robot`, `c3_voix`, `c3_maman`, `c3_bonnet`,
+`c3_aile`, `c3_sas`, `c3_dessin` (`&stage=0..3`), `c3_placard`, `c3_fenetre304`, `bt_bracelet` posent Noa (et Mina) à
+côté, sans ennemi errant. Entités pour le bot : `nadia_0`, `nadia_1_0`…`nadia_1_2`, `nadia_2`, `robot`, `porte_19`,
+`porte_28`, `porte_37`, `porte_46`, `dessin_0`…`dessin_3`, `fenetre_aile`, `fenetre304`, `placard`.
+
+| Twist | Indice | Où | Entité / code | Preuve |
+|---|---|---|---|---|
+| T6 | L'infirmière entendue : « Le grand frère qui toussait ? On l'a renvoyé. Pauvre gamin. » ; puis Noa tousse, et le narrateur a une raison toute prête (« La poussière de papier, sûrement. ») ; double : Mina, « Mets ta main devant ta bouche ! C'est la règle, ici. » | Couloir, boucle 1 | `heardNurse`, `src/game/story/chapter3.ts:764`, `:767`, `:777` | `lot8-voix` |
+| T6 | Maman au téléphone, nouvelle dernière réplique : « Il croit que c'est lui. Je n'arrive pas à lui dire que non. » | Couloir, boucle 2 | `heardMaman`, `chapter3.ts:781`, `:788` | `lot8-maman` |
+| T6 / § 3.8 | Les infirmières en papier, sans visage (un pli au milieu), toutes badgées « NADIA » ; doubles : Mina, « On voyait jamais leur visage, ici. Elles avaient toujours un masque. Et la nuit, c'était toujours Nadia. » ; leurs répliques : « Les visites sont finies, mon grand. Reviens demain. » (accueil), « Suis les dessins. » (couloir), « Ici, on ne ferme jamais tout à fait les portes. Pour la lumière. » (dernière aile : elle n'était pas dans le noir) | Accueil, couloir (une place par boucle), dernière aile | `nadia_0`, `nadia_1_*`, `nadia_2` (`src/data/maps/chapter3.ts:341`) → `paperNurse`, `chapter3.ts:467` ; sprite `npc_infirmiere_papier` (`src/data/sprites/chapter3.ts:34`) ; drapeaux `c3_nadia`, `c3_nadia_0..2` | `lot8-hall`, `lot8-voix`, `lot8-aile` |
+| § 3.8 (T2) | « Le chocolat du robot », B4 : le distributeur en papier donne une poignée de coton gris, encore tiède ; double : Mina, « C'est de la barbe à papa ! … Il est en panne, le robot. » ; l'objet `coton_gris` « sent l'hôpital. Et un peu la lessive de chez toi » (la phrase du mouton compteur sur Dodo, ch. 1) ; ensuite, « un bruit de ventre vide » | Accueil, contre le mur | `robot` (`maps/chapter3.ts:317`, sprite `prop_h_robot`) → `vendingRobot`, `chapter3.ts:490` ; objet `coton_gris` (`src/data/items.ts:40`) ; drapeau `c3_robot` | `lot8-hall` |
+| § 3.8 (T6) | Les numéros déraillent dans la dernière aile : 307, 306, 305… puis 303½ (le « ½ » ajouté au crayon) : par le hublot, le sas (lavabo, blouses, masques, une autre vitre) ; double : Mina, les règles d'hygiène, « les microbes, c'est le pire ennemi des chevalières » | Dernière aile | `porte_19`…`porte_46` → `corridorDoor`, `LAST_WING`, `room303half`, `chapter3.ts:569`, `:596` ; glyphe `½` (`src/engine/font-data.ts:113`) ; compteur `c3_sas` | `lot8-aile` |
+| T6 | Les dessins scotchés : dans un coin de chacun, un petit bonhomme aux cheveux bleus s'approche d'une porte vitrée ; au dernier (à côté de la 304), il est collé contre la vitre, et de l'autre côté une toute petite main est posée à plat ; doubles : Mina, « Je te mets dans tous mes dessins. Comme ça, t'es là. », « Je l'ai dessiné avant. Pour que ça arrive. … Il manque ta main, de ton côté. J'avais plus de bleu. » | Couloir, à côté de la bonne porte, à chaque boucle | `dessin_0`…`dessin_3` → `tapedDrawing`, `chapter3.ts:729` ; sprites `prop_h_dessin_0..3` (`sprites/chapter3.ts:165`) | `lot8-voix`, `lot8-maman`, `lot8-dessin`, `lot8-aile` |
+| T9 | Au bout de la boucle, quelqu'un de petit, en bonnet, de dos, tourne le coin (« Il n'y a pas de coin. »), toujours devant, à chaque passage ; double : Mina, un autre enfant, « Ici, y a plein d'enfants qui ont des bonnets. Même quand il fait chaud. » | Couloir, boucles 1 à 3 | déclencheur `x 47` (`maps/chapter3.ts:369`) → `corridorBonnet`, `chapter3.ts:655` ; sprites `npc_bonnet_loin`, `_fondu` ; drapeau `c3_bonnet_vu` | `lot8-bonnet` |
+| T9 | « room304Window » : Mina est effacée avant la chambre 304, la vitre est donc celle du couloir de la dernière aile, la nuit : le reflet de Noa, et à côté quelqu'un de plus petit en bonnet à oreilles de mouton, alors que Mina, avec ses couettes, est à côté de lui ; il tourne la tête, le reflet redevient Mina ; double : « J'ai de l'encre sur le nez ? » | Dernière aile, fenêtre à côté de la veilleuse | déclencheur `x 50` (`maps/chapter3.ts:372`) → `wingWindow`, `chapter3.ts:697` ; sprite `fx_reflet_vitre` (`sprites/chapter3.ts:209`) ; drapeau `c3_reflet` | `lot8-aile` |
+| T9 | La fenêtre de la 304, 2ᵉ examen : en bas, la buée, à hauteur d'enfant, un dessin du bout du doigt, « Un mouton. Ou un bonnet. C'est difficile à dire. » | Chambre 304 | `fenetre304` → `room304Window`, `chapter3.ts:917`, `:923` ; compteur `c3_fenetre304` | `lot8-fenetre304` |
+| T9 | Le Placard épargné : « Le soir, une petite fille au bonnet regarde par ta fenêtre. Elle ne frappe pas. Elle regarde si ta lumière est allumée. » ; double : Mina, « Les placards, ça voit tout de travers. Par le trou de la serrure. C'était sûrement la lune. » | Ruines, marais | `placard` → `placardTalk`, `chapter3.ts:299`, `:305` ; compteur `c3_placard` | `lot8-placard` |
+| T6 | Nouvel ennemi, Bracelet (bracelet d'hôpital-ver, Peur) : l'étiquette « MINA — 304 », retournée après la tristesse : « NOA — ??? » ; le mot spécial « prénom » (trop tôt : « Il y en a déjà un. C'est écrit. M… I… N… A. ») imprime « NOA » ; épargné, il se referme sur le poignet de Noa (objet clé cosmétique `bracelet_noa`, « Il n'y a pas de numéro de chambre ») ; vaincu, « Sur aucun des deux, il n'y a plus de nom » | Couloir, boucle 3 (`c3_bracelet_1`) | `src/data/enemies-ch3.ts` (`BRACELET_HOOKS`, `bracelet`) ; motifs `bracelet_wrap`, `bracelet_holes` (`src/game/battle/patterns-ch3.ts`) ; sprites `b_bracelet`, `ow_bracelet` ; drapeau `c3_bracelet` (`epargne` / `coupe`) | `lot8-bracelet`, `lot8-bracelet-coupe`, `lot8-couloir` |
+| T8 | Les mots de Dodo dans le combat court sont ceux de l'appel : « dors, reste, oublie, demain, chut » ; « demain » : « Demain. Ici, c'est toujours demain. Il ne vient jamais. » | Le vide, combat contre Dodo, phase 2 | `DODO_WORDS` (`src/data/words.ts:67`), `P2_WORDS`, `DODO_WORD_LINES`, `chapter3.ts:1072`, `:1078` | `lot8-dodo-demain` |
+| T4 / T8 | La voix de nuit : « Ton frère va te l'apporter, c'est ça ? » (existant, preuve de la version douce) | Couloir, boucle 3 | `heardNight`, `chapter3.ts:794` | `lot8-existants` |
+| T4 | La veilleuse de la 304 : « Elle n'a jamais été branchée. » (existant : c'est Maman qui l'a posée là, après) | Chambre 304 | `nightlight304`, `chapter3.ts:947` | `lot8-existants` |
+| T1 | Dodo, trop gentil : « Tu vois ? Tu peux partir quand tu veux. » (lot 5) ; puis le faux message d'erreur (existant) | Le vide ; porte 304 | `dodoReveal`, `chapter3.ts:1011` ; `door304`, `:875` | `lot8-existants`, `v2_aube` |
+
+Équilibrage (lot 8, mesuré avec le bot : esquive au hasard, 14 Étoiles, Plume dorée, Cape de Mina, 32 PV, PV rendus
+après chaque tour ennemi ; `bt_acte1`, `c3_battle&acte1`) : PV perdus par combat — Perfusion 2,3 · Bip 5 · Bip +
+Perfusion 5,3 (7 tours) · Bracelet 8,5 (après : ATQ 5, cage plus serrée, boucle 3 ; avant : 7,8) · Dodo, combat court,
+12,8 sur 6 tours (on ne peut pas y perdre) · chapitre 4 : Pâte Froide 1,8, Dé Chevalier 6 · **La Couseuse 21** (2,5,
+3,5 puis 15 au tour de la cage). Sans la cape (plaid) : Bracelet 8,5, Bip + Perfusion 14,8, La Couseuse 46 (mortelle
+pour ce bot) ; d'où un coup de pouce vers la salle de jeux dans les répliques de Mina à l'hôpital
+(`MINA_LINES.hopital`, `chapter3.ts:1454`).
 
 ## Encore à faire par les lots suivants
 

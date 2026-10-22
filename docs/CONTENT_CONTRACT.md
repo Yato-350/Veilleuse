@@ -384,6 +384,7 @@ Sprites : `b_<id>` et `b_<id>_2` (combat, ~32–64 px, contour `k` conseillé), 
 | `gomme` (boss, fém.) | colère | gomme rose géante | `[{ emotion: 'tristesse', count: 2 }, { word: 'garder' }]`, `specialWords: [{text:'garder', emotion:'tristesse'}, {text:'souvenir', emotion:'tristesse'}]` | `eraser_sweep`, `eraser_shrink` |
 | `bip` | peur | moniteur cardiaque vivant | `[{ emotion: 'tristesse', count: 3 }]` | `ecg` |
 | `perfusion` (fém.) | tristesse | pied à perfusion à tête de poche | `[{ emotion: 'joie', count: 3 }]` | `drip` |
+| `bracelet` (v2, `src/data/enemies-ch3.ts`) | peur | bracelet d'hôpital qui rampe comme un ver ; l'étiquette « MINA — 304 », retournée « NOA — ??? », puis « NOA » | `[{ emotion: 'tristesse', count: 2 }, { word: 'prénom' }]`, `specialWords: [{text:'prénom', emotion:'tristesse'}]`, déteste `joie` | `bracelet_wrap`, `bracelet_holes` (`src/game/battle/patterns-ch3.ts`) |
 | `dodo` (boss final) | neutre | Dodo géant | scénarisé par le chapitre 3 (`needs: [{ emotion: 'joie', count: 6 }]` par défaut) | `sheep_count`, `lullaby`, `dodo_rings`, `dodo_storm` |
 
 Note `gribouille` : c'est l'ennemi du tutoriel ; `needs: [{ emotion: 'joie' }]` et pas de `hates`, ou tout autre
@@ -391,8 +392,13 @@ besoin simple — le tutoriel guide le joueur.
 
 Équilibrage (Noa : 20 PV, ATQ 4, DÉF 1 au départ ; +4 PV max toutes les 4 Étoiles) :
 chapitre 1 → PV 12–20, ATQ 0–2 ; boss 1 → PV 60, ATQ 2 ; chapitre 2 → PV 20–30, ATQ 2–3 ; boss 2 → PV 90, ATQ 3 ;
-chapitre 3 → PV 30–40, ATQ 3–4 ; Dodo → PV 999 (ne peut pas être vaincu par la force).
+chapitre 3 → PV 30–40, ATQ 3–4 (Bracelet, dernière boucle du couloir : PV 38, ATQ 5, le pont vers le chapitre 4) ;
+Dodo → PV 999 (ne peut pas être vaincu par la force).
 Récompenses en Boutons : 3–8 (ch. 1), 6–12 (ch. 2), 10–15 (ch. 3), boss 20–40.
+Mesure de la fin de l'acte I (lot 8) : `?debug=script&name=bt_acte1&enemies=bip,perfusion` lance un vrai combat avec
+les stats attendues à la fin du chapitre 3 (14 Étoiles, Plume dorée, Cape de Mina, Mina à côté ; `&chapter=4&ally=mina366`
+pour La Couseuse, `&armor=plaid` sans la cape) ; `c3_battle&acte1` fait de même pour le combat court contre Dodo.
+Combat de debug du Bracelet : `?debug=script&name=bt_bracelet`.
 
 Textes (`EnemyDef`) : `check` (Observer), `flavor` (3–5 lignes « * … »), `flavorCalm`, `talk` (4–6 répliques de
 bulle), `reactGood`/`reactBad`/`reactNeutral` (2–4 chacun), `reactSpecial` (mot → réplique), `spareText`, `killText`.

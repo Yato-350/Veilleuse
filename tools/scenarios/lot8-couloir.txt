@@ -1,0 +1,13 @@
+# Lot 8 (balance, § 3.8): in the last loop of the corridor (stage 2), Bracelet crawls about with the Bip + Perfusion
+# duo: the end of act I's harder stretch (Bracelet ATQ 5, its band tightens the box like La Couseuse's cage).
+query: debug=script&name=c3_hopital&lang=fr
+wait:1500
+auto
+flag:c3_loop=2
+load:hopital/start
+wait:600
+auto
+go:27/4
+wait:300
+shot:bracelet
+assert: window.__veilleuse.world.entities.some((e) => e.id === 'c3_bracelet_1' && e.kind === 'enemy' && e.sprite === 'ow_bracelet') && window.__veilleuse.world.entities.some((e) => e.id === 'c3_duo_1')

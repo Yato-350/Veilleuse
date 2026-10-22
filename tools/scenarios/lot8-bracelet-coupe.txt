@@ -1,0 +1,24 @@
+# Lot 8: Bracelet struck down: it snaps at the clasp, « Sur aucun des deux, il n'y a plus de nom. »
+# (flags.c3_bracelet = 'coupe', no key item).
+query: debug=script&name=bt_bracelet&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; const b = V.game.top; const j = (cs) => cs.map((l) => l.map((c) => c.ch).join('')).join(' '); if (D.busy) return j(D.pages[D.pageIdx]?.lines || []); if (!b || !b.enemies) return ''; return [b.text ? j(b.text.chars) : '', ...(b.bubbles || []).map((x) => j(x.chars))].join(' | '); }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+god
+until:menu
+hit
+until:menu
+hit
+until:menu
+hit
+until:menu
+hit
+until:menu
+hit
+zuntil: SAW('plus de nom') || V.G.state.flags.debug_battle
+auto
+assert: V.G.state.flags.c3_bracelet === 'coupe' && !V.G.state.keyItems.includes('bracelet_noa') && V.G.state.flags.debug_battle === 'win:bracelet'

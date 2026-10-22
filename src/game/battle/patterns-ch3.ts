@@ -142,16 +142,16 @@ export const CH3_PATTERNS: Record<string, Pattern> = {
       if (t < 300) {
         // The clasp crawls round; a full lap tightens the box, and it starts again on the new border.
         const per = 2 * (b.w + b.h);
-        c.mem.s = (c.mem.s ?? 0) + 3.4 + c.power * 0.4;
+        c.mem.s = (c.mem.s ?? 0) + 4.4 + c.power * 0.4;
         if ((c.mem.s ?? 0) >= per) {
           c.mem.s = 0;
           c.mem.lap = (c.mem.lap ?? 0) + 1;
           audio.sfx('stitch', { pitch: 0.7 + (c.mem.lap ?? 0) * 0.1, vol: 0.6 });
-          if ((c.mem.lap ?? 0) <= 3) {
-            b.x += 6;
-            b.w -= 12;
-            b.y += 3;
-            b.h -= 6;
+          if ((c.mem.lap ?? 0) <= 4) {
+            b.x += 7;
+            b.w -= 14;
+            b.y += 4;
+            b.h -= 8;
           }
         }
         const [hx, hy] = onBorder(b, c.mem.s ?? 0, 2);

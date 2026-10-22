@@ -504,7 +504,7 @@ pas pour l'appel : elle est faite des souvenirs de Noa, et Noa ne sait pas.
 | Interlude II | `tvWakes` | Une image saute pendant la vidéo de famille : une petite fille en bonnet. Puis la neige. |
 | Ch. 3, ruines | `placardTalk` | Le Placard épargné : « Une petite fille au bonnet regarde par ta fenêtre, le soir. » |
 | Ch. 3, couloir | `corridorLoop` | Au bout de la boucle, quelqu'un en bonnet tourne le coin, toujours devant. |
-| Ch. 3, chambre 304 | `room304Window` | Derrière la vitre, une silhouette en bonnet, alors que Mina est à côté de toi. |
+| Ch. 3, devant la 304 | `wingWindow` (Mina est effacée avant d'entrer dans la 304 : c'est la vitre du couloir de la dernière aile) ; `room304Window` | Dans la vitre, une silhouette en bonnet, alors que Mina est à côté de toi. Dans la 304, la buée garde un dessin : un mouton, ou un bonnet. |
 | Ch. 4, nuit | `maison_stylo` | Dans le rectangle noir de la chambre de Mina, un bonnet griffonné dans les hachures. |
 | Ch. 5 | boss La Vitre | La silhouette qui dessine derrière la vitre, et ses mains. |
 | Ch. 5–6 | écran de game over | Après trois défaites, c'est la main de la fillette au bonnet qui chasse le murmure de Dodo. |
@@ -686,7 +686,7 @@ chambre 304, le souvenir « La veilleuse ».
 - Le distributeur (« le chocolat du robot », B4) donne du coton.
 - Les dessins de Mina scotchés montrent, d'un dessin à l'autre, un bonhomme qui s'approche d'une porte vitrée.
 - Voix entendues : l'infirmière (« le grand frère qui toussait ») et Maman (« Il croit que c'est lui ») (T6).
-- La silhouette au bonnet derrière la fenêtre de la 304 (T9).
+- La silhouette au bonnet dans la vitre de la dernière aile, devant la 304, pendant que Mina est à côté (T9).
 - **Nouvel ennemi : Bracelet.**
 
 | Ennemi | Émotion | Besoin | Attaques | Détail |

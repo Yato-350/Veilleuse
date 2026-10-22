@@ -1,0 +1,28 @@
+# Lot 8 (§ 2.10 T9, corridorLoop): at the far end of the looping corridor, someone small in a knitted hat, seen from
+# behind, turns the corner (« Il n'y a pas de coin. »); Mina's ordinary double: another child, and lots of kids here
+# wear hats, even when it's warm. Then the loop. The figure comes back on later passes, always ahead (no text).
+query: debug=script&name=c3_bonnet&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+eval: V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => (V.G.state.cleared.push(e.id), V.world.removeEntity(e.id)))
+ArrowRight:900
+zuntil: SAW('avec un bonnet')
+shot:bonnet1
+zuntil: SAW('Il n\'y a pas de coin')
+shot:bonnet2
+zuntil: IDLE()
+assert: SAW('Même quand il fait chaud') && V.G.state.flags.c3_bonnet_vu === true
+ArrowRight:1500
+wait:500
+zuntil: IDLE()
+assert: V.G.state.flags.c3_loops === 1
+go:46/4
+ArrowRight:300
+waitfor: V.world.entities.some((e) => e.id === 'bonnet_couloir')
+shot:encore
+waitfor: !V.world.entities.some((e) => e.id === 'bonnet_couloir')

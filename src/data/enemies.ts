@@ -8,7 +8,7 @@ import { CH6_ENEMIES } from './enemies-ch6';
 /**
  * Enemy registry. See docs/CONTENT_CONTRACT.md § 5.
  * Balance (Noa: 20 PV, ATQ 4, DÉF 1): ch1 PV 12–20 / ATQ 0–2, boss 1 PV 60; ch2 PV 20–30 / ATQ 2–3, boss 2 PV 90;
- * ch3 PV 30–40 / ATQ 3–4; ch4 PV 38–42 / ATQ 5; ch5 PV 40–46 / ATQ 5, La Vitre 180; ch6 PV 30–48 / ATQ 5–6; Dodo PV 999 (cannot be beaten by force).
+ * ch3 PV 30–40 / ATQ 3–4 (Bracelet, the last stretch of the corridor, ATQ 5: the bridge to chapter 4); ch4 PV 38–42 / ATQ 5; ch5 PV 40–46 / ATQ 5, La Vitre 180; ch6 PV 30–48 / ATQ 5–6; Dodo PV 999 (cannot be beaten by force).
  * The `check` text hints at what the enemy needs (Plume & Cœur) without naming the rule.
  */
 /**

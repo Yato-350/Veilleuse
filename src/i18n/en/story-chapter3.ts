@@ -611,6 +611,7 @@ export const STORY_CHAPTER3: Record<string, string> = {
   'Pourquoi on chuchote ? Y a personne. …Hein ?|sad': 'Why are we whispering? There\'s nobody here. …Right?|sad',
   'Je me souviens de ce couloir. Je sais pas pourquoi.|sad': 'I remember this hallway. I don\'t know why.|sad',
   'Tiens-moi la main. Juste dans le couloir.|sad': 'Hold my hand. Just in the hallway.|sad',
+  'La porte à côté de l\'accueil… J\'ai l\'impression qu\'il y a un truc à moi, derrière.|neutral': 'The door next to the front desk… I feel like there\'s something of mine behind it.|neutral',
   'Je jouais ici ! Avec des feutres qui sentent la fraise.|happy': 'I used to play here! With markers that smell like strawberries.|happy',
   'La télé, c\'était que le mercredi. C\'était la règle.|neutral': 'TV was only on Wednesdays. That was the rule.|neutral',
   'Les autres enfants… je me rappelle plus leurs noms. C\'est pas gentil, d\'oublier.|sad': 'The other kids… I don\'t remember their names anymore. It\'s not nice, forgetting.|sad',
