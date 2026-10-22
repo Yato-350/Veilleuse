@@ -40,8 +40,16 @@ export const STORY_EPILOGUE: Record<string, string> = {
   'Un an. Jour pour jour.': 'One year. To the day.',
 
   // The shop
-  'Tu as mis Dodo dans ton sac.': 'You put Dodo in your bag.',
-  'Tu ne sais pas trop pourquoi.': 'You\'re not quite sure why.',
+  // Dodo in the bag: mute now (§ 3.16), or sewn back with blue thread (Veilleuse)
+  'Dodo est dans ton sac.': 'Dodo is in your bag.',
+  'Sur son ventre, une couture bleue, de travers. Elle tient.': 'Across his belly, a crooked blue seam. It holds.',
+  'Avant de partir, tu as pris Dodo.': 'Before leaving, you took Dodo.',
+  'Les oreilles écrasées, comme toujours.': 'Ears squashed flat, as always.',
+  'Son ventre, sous ton pouce.': 'His belly, under your thumb.',
+  'Appuyer': 'Press',
+  'Pas un grésillement. La pile est morte.': 'Not a crackle. The battery is dead.',
+  'Il ne dit plus rien.': 'He doesn\'t say anything anymore.',
+  'Tu le prends quand même.': 'You take him anyway.',
   'Bonjour ! Oh, vous êtes matinaux, dites donc.': 'Good morning! My, you two are early birds.',
   'Bonjour… On cherche une veilleuse.': 'Good morning… We\'re looking for a nightlight.',
   'Les veilleuses ? Sur la grande table, au milieu.': 'Nightlights? On the big table, in the middle.',
@@ -186,4 +194,22 @@ export const STORY_EPILOGUE: Record<string, string> = {
   'Pour de vrai, cette fois.': 'For real, this time.',
   'Merci, {player}.': 'Thank you, {player}.',
   '{c:y}Bonne nuit. Et bonjour.{/c}': '{c:y}Good night. And good morning.{/c}',
+
+  // Version 2 (§ 3.16, § 5): the stranger's last message, the 42nd shell, Dodo sewn back, the white lie
+  'Ton téléphone vibre dans ta poche.': 'Your phone buzzes in your pocket.',
+  'Le numéro de Mina. Celui de l\'inconnue, maintenant.': 'Mina\'s number. The stranger\'s, now.',
+  '« Bonne journée. »': '"Have a good day."',
+  'Rien d\'autre.': 'Nothing else.',
+  'Tu ne réponds pas. Tu gardes le message.': 'You don\'t reply. You keep the message.',
+  'Dans ta poche, un petit coquillage blanc.': 'In your pocket, a small white shell.',
+  'Tu ne sais plus quand tu l\'as pris. Dans sa chambre, peut-être.': 'You don\'t remember when you took it. From her room, maybe.',
+  'Tu le poses sur la pierre, à côté de la veilleuse.': 'You set it on the stone, next to the nightlight.',
+  'Le quarante-deuxième.': 'The forty-second.',
+  'Sa couture bleue est de travers.': 'His blue seam is crooked.',
+  'Elle tiendra.': 'It\'ll hold.',
+  'Il ne dira plus rien.': 'He won\'t say anything ever again.',
+  'Tu le laisses là.': 'You leave him there.',
+  'Je venais tous les jours.': 'I came every day.',
+  'Maman regarde la pierre. Elle ne dit rien.': 'Mom looks at the stone. She doesn\'t say anything.',
+  'Beaux rêves, {player}.': 'Sweet dreams, {player}.',
 };

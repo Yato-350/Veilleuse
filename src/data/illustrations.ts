@@ -21,6 +21,7 @@ import { CH5_ILLUSTRATIONS } from './illustrations-ch5';
 import { CH6_ILLUSTRATIONS } from './illustrations-ch6';
 import { FAUX_ILLUSTRATIONS } from './illustrations-faux';
 import { NUIT_ILLUSTRATIONS } from './illustrations-nuit';
+import { FINS_ILLUSTRATIONS } from './illustrations-fins';
 
 export type Illustration = (g: CanvasRenderingContext2D, t: number) => void;
 
@@ -1372,14 +1373,21 @@ function paintPage4(g: Ctx): void {
 // Souvenir — the unfinished drawing
 // ---------------------------------------------------------------------------------------------------------------
 
-function paintDessin(g: Ctx): void {
-  // hospital tray table (pale laminate in the dark)
+/**
+ * The drawing of the two children under the big moon. Unfinished (souvenir_dessin): on the hospital tray table, at
+ * night, coloured only on the left. `finished` (lune_finie, the secret ending § 5): the same sheet as Mina finished
+ * it alone — coloured to the edges, her own figure too, no grey cloud by the boy's mouth — folded in four to fit in
+ * Dodo's belly, unfolded on her desk at dawn, signed « FINI. (sans toi mais avec toi) ».
+ */
+function paintDessin(g: Ctx, finished = false): void {
+  // hospital tray table (pale laminate in the dark) — or her wooden desk, at dawn
   field(g, 0, 0, SW, SH, (x, y) => {
-    const n = noise2(x * 0.03, y * 0.03, 300);
+    const n = noise2(x * 0.03, y * (finished ? 0.3 : 0.03), 300);
+    if (finished) return n < 0.4 ? '#8a6448' : n > 0.7 ? '#a07858' : '#966e50';
     return n < 0.4 ? '#4c5a66' : n > 0.7 ? '#5a6a74' : '#52606c';
   });
-  rect(g, 0, 172, SW, 8, '#3a4550');
-  rect(g, 0, 171, SW, 1, '#6d7f88');
+  rect(g, 0, 172, SW, 8, finished ? '#6e4a3a' : '#3a4550');
+  rect(g, 0, 171, SW, 1, finished ? '#b48a68' : '#6d7f88');
   // the sheet (slightly offset shadow)
   const sx = 26;
   const sy = 8;
@@ -1393,12 +1401,14 @@ function paintDessin(g: Ctx): void {
     if (e === 0) return PAPER3;
     return PAPER;
   });
-  // night sky, coloured only on the left — it stops
-  const limit = (y: number): number => 132 + noise1(y * 0.09, 302) * 10 + (y > 60 ? -18 : 0);
-  const sky = wob((x, y) => x > sx + 6 && y > sy + 6 && y < 96 && x < limit(y), 1.5, 303);
-  scribble(g, sky, [sx + 4, sy + 4, 170, 98], CR.navy, { seed: 304, angle: -0.5, c2: CR.blue, mix: 0.25, fill: 0.3 });
+  // night sky, coloured only on the left — it stops (finished: to the edge)
+  const limit = (y: number): number => (finished ? sx + sw - 7 : 132 + noise1(y * 0.09, 302) * 10 + (y > 60 ? -18 : 0));
+  // (finished: a corner left blank, top left, for the words)
+  const blankCorner = (x: number, y: number): boolean => finished && ((x - sx) / 128) ** 2 + ((y - sy) / 40) ** 2 < 1;
+  const sky = wob((x, y) => x > sx + 6 && y > sy + 6 && y < 96 && x < limit(y) && !blankCorner(x, y), 1.5, 303);
+  scribble(g, sky, [sx + 4, sy + 4, finished ? sx + sw - 4 : 170, 98], CR.navy, { seed: 304, angle: -0.5, c2: CR.blue, mix: 0.25, fill: 0.3 });
   // the strokes trail off
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < (finished ? 0 : 7); i++) {
     const y = 18 + i * 11;
     const x = limit(y) - 6;
     pen(g, [x, y, x + 10 + hash(i, 0, 305) * 12, y - 6], { c: CR.navy, seed: 306 + i, wob: 0.5, grain: 0.3 });
@@ -1408,8 +1418,12 @@ function paintDessin(g: Ctx): void {
   const my = 54;
   const mr = 34;
   const moon = wob(ell(mx, my, mr, mr), 0.8, 310);
-  scribble(g, inter(moon, (x) => x < mx - 4 + noise1(my, 3) * 3), [mx - mr - 3, my - mr - 3, mx + 2, my + mr + 3], CR.yellow, { seed: 311, angle: 0.7, c2: CR.yellowD, mix: 0.12 });
-  for (let i = 0; i < 5; i++) {
+  if (finished) {
+    // the sky went round the moon; the moon itself, all yellow
+    fillP(g, moon, [mx - mr - 3, my - mr - 3, mx + mr + 3, my + mr + 3], PAPER);
+    scribble(g, moon, [mx - mr - 3, my - mr - 3, mx + mr + 3, my + mr + 3], CR.yellow, { seed: 311, angle: 0.7, c2: CR.yellowD, mix: 0.12 });
+  } else scribble(g, inter(moon, (x) => x < mx - 4 + noise1(my, 3) * 3), [mx - mr - 3, my - mr - 3, mx + 2, my + mr + 3], CR.yellow, { seed: 311, angle: 0.7, c2: CR.yellowD, mix: 0.12 });
+  for (let i = 0; i < (finished ? 0 : 5); i++) {
     const y = my - 24 + i * 12;
     pen(g, [mx - 6, y, mx + 4 + hash(i, 1, 312) * 6, y - 5], { c: CR.yellow, seed: 313 + i, w: 2, wob: 0.4, grain: 0.3 });
   }
@@ -1425,17 +1439,37 @@ function paintDessin(g: Ctx): void {
     [160, 22, 4],
     [282, 116, 3],
   ];
-  st.forEach(([x, y, r], i) => kidStar(g, x, y, r, CR.yellowD, 320 + i));
-  kidStar(g, 60, 26, 5, CR.yellowD, 325, CR.yellow);
+  st.forEach(([x, y, r], i) => kidStar(g, x, y, r, CR.yellowD, 320 + i, finished ? CR.yellow : undefined));
+  if (!finished) kidStar(g, 60, 26, 5, CR.yellowD, 325, CR.yellow);
   kidStar(g, 100, 44, 4, CR.yellowD, 326, CR.yellow);
   // ground line: green on the left, outline only after
   const hill = (x: number): number => 112 + Math.sin(x * 0.03) * 4;
-  const gr = wob((x, y) => x > sx + 6 && x < 150 + noise1(y * 0.2, 9) * 8 && y > hill(x) && y < sy + sh - 6, 1, 327);
-  scribble(g, gr, [sx + 4, 100, 162, sy + sh - 4], CR.green, { seed: 328, angle: -0.3, c2: CR.greenD, mix: 0.2, fill: 0.3 });
+  const gr = wob((x, y) => x > sx + 6 && x < (finished ? sx + sw - 7 : 150 + noise1(y * 0.2, 9) * 8) && y > hill(x) && y < sy + sh - 6, 1, 327);
+  scribble(g, gr, [sx + 4, 100, finished ? sx + sw - 4 : 162, sy + sh - 4], CR.green, { seed: 328, angle: -0.3, c2: CR.greenD, mix: 0.2, fill: 0.3 });
   pen(g, Array.from({ length: 27 }, (_, i) => [sx + 6 + i * 10, hill(sx + 6 + i * 10)]).flat(), { c: CR.greenD, seed: 329, wob: 0.6 });
   // the two children holding hands — Noa coloured, Mina only outlined
   kidNoa(g, 120, 118, 330, { s: 1.1, armR: [11, -34, 18, -23] });
-  kidMina(g, 158, 118, 340, { s: 1.1, colored: false, armL: [-5, -25, -12, -22] });
+  kidMina(g, 158, 118, 340, { s: 1.1, colored: finished, armL: [-5, -25, -12, -22] });
+  if (finished) {
+    // signed, in her biggest letters, where the crayon had been left; a heart; the folds of the sheet
+    scrawl(g, tr('Noa et moi'), 40, 98, CR.black, { seed: 350 });
+    scrawl(g, tr('FINI.'), 194, 96, CR.red, { seed: 351, bold: true, scale: 2, jit: 1 });
+    kidHeart(g, 258, 103, 4, CR.red, CR.redD, 353);
+    // up in the corner she left blank
+    scrawl(g, tr('(sans toi'), 36, 13, CR.navy, { seed: 352, jit: 1 });
+    scrawl(g, tr('mais avec toi)'), 40, 24, CR.navy, { seed: 354, jit: 1 });
+    withAlpha(g, 0.18, () => {
+      rect(g, sx + sw / 2 - 1, sy, 1, sh, '#5a4a3a');
+      rect(g, sx, sy + Math.floor(sh / 2) - 1, sw, 1, '#5a4a3a');
+    });
+    withAlpha(g, 0.35, () => {
+      rect(g, sx + sw / 2 + 1, sy, 1, sh, '#ffffff');
+      rect(g, sx, sy + Math.floor(sh / 2) + 1, sw, 1, '#ffffff');
+    });
+    // dawn on the desk
+    withAlpha(g, 0.1, () => rect(g, 0, 0, SW, SH, '#ffd8a0'));
+    return;
+  }
   // a little grey cloud by drawn Noa's mouth, puffed towards her: anyone would take it for an empty speech bubble
   // (version 2, § 2.7, T6)
   for (const [cx, cy, r, sd] of [
@@ -1868,9 +1902,14 @@ function drawTv(g: Ctx, t: number): void {
 
 // --- Fin : l'aube -------------------------------------------------------------------------------------------------
 
-function paintAube(g: Ctx): void {
+/**
+ * The dawn in Mina's room, Maman and Noa in each other's arms. `blanc` (Aube blanche, § 5): the same picture, but
+ * the sun is a round of correction fluid ringed in blue pen — it gives no light, so no beams cross the room — and
+ * a few dabs of correction fluid cover her drawings on the wall.
+ */
+function paintAube(g: Ctx, blanc = false): void {
   // Mina's room wall, warmed by dawn
-  field(g, 0, 0, SW, SH, (x, y) => ramp(['#3a2c4c', '#4e3a5a', '#6a4a62', '#8a5a66'], (x / SW) * 0.6 + (y / SH) * 0.2, x, y));
+  field(g, 0, 0, SW, SH, (x, y) => ramp(blanc ? ['#3a3650', '#4a4660', '#5a5670', '#6a6680'] : ['#3a2c4c', '#4e3a5a', '#6a4a62', '#8a5a66'], (x / SW) * 0.6 + (y / SH) * 0.2, x, y));
   // Star wallpaper, faded
   for (let i = 0; i < 26; i++) {
     const sx = Math.floor(hash(i, 1, 33) * 180);
@@ -1882,9 +1921,16 @@ function paintAube(g: Ctx): void {
   const wy = 14;
   const ww = 110;
   const wh = 96;
-  vgrad(g, wx, wy, ww, wh, ['#5a5a9a', '#9a7aaa', '#e09a9a', '#f8b888', '#ffe0a0']);
+  vgrad(g, wx, wy, ww, wh, blanc ? ['#8a90b8', '#a8acc8', '#c4c6d8', '#d8d8e4', '#e8e8f0'] : ['#5a5a9a', '#9a7aaa', '#e09a9a', '#f8b888', '#ffe0a0']);
   // Rising sun
-  fillP(g, ell(wx + 64, wy + wh - 6, 18, 18), [wx + 44, wy + wh - 26, wx + 84, wy + wh], (x, y) => ramp(['#fff8d8', '#ffe8a0'], Math.hypot(x - wx - 64, y - wy - wh + 6) / 18, x, y));
+  if (blanc) {
+    // Correction fluid: flat white, a lumpy edge where the brush went over, a blue pen ring under it, a crack.
+    const cx = wx + 64;
+    const cy = wy + wh - 30;
+    fillP(g, wob(ell(cx, cy, 19, 19), 1.2, 77), [cx - 22, cy - 22, cx + 22, cy + 22], '#3b5bd0');
+    fillP(g, wob(ell(cx, cy, 17.5, 17.5), 1.6, 78), [cx - 21, cy - 21, cx + 21, cy + 21], (x, y) => (hash(x, y, 79) < 0.06 ? '#eef0f6' : '#fbfcff'));
+    pen(g, [cx - 9, cy - 4, cx - 4, cy - 2, cx + 1, cy - 5], { c: '#dde2ee', w: 1, seed: 80, wob: 0.3, grain: 0 });
+  } else fillP(g, ell(wx + 64, wy + wh - 6, 18, 18), [wx + 44, wy + wh - 26, wx + 84, wy + wh], (x, y) => ramp(['#fff8d8', '#ffe8a0'], Math.hypot(x - wx - 64, y - wy - wh + 6) / 18, x, y));
   // Rooftops
   field(g, wx, wy + wh - 18, ww, 18, (x, y) => (y > wy + wh - 6 - Math.floor(hash(Math.floor((x - wx) / 12), 0, 8) * 12) ? '#5a3a52' : null));
   // Frame
@@ -1914,15 +1960,18 @@ function paintAube(g: Ctx): void {
     rect(g, dx + 11, dy - 2, 6, 3, '#d8d0bc');
     pen(g, [dx + 4, dy + 16, dx + 10, dy + 6, dx + 16, dy + 14, dx + 24, dy + 5], { c, w: 1, seed: 40 + i });
     fillP(g, ell(dx + 20, dy + 7, 3, 3), [dx, dy, dx + 28, dy + 22], i % 2 ? '#f9cf3a' : '#e2404c');
+    // Aube blanche: a dab of correction fluid over part of each drawing.
+    if (blanc) fillP(g, wob(ell(dx + 10 + (i % 2) * 8, dy + 11, 7, 5), 1, 90 + i), [dx, dy, dx + 28, dy + 22], '#fbfcff');
   });
   // Floor
   vgrad(g, 0, 140, SW, 40, ['#6a4a5a', '#5a3e4e', '#4a3442']);
-  // Light beams from the window across the room
-  field(g, 0, 0, SW, SH, (x, y) => {
-    const u = x + y * 0.9;
-    const inBeam = (u > 150 && u < 196) || (u > 210 && u < 236);
-    return inBeam && x < wx && bayer(x, y) < 0.07 ? '#ffe8b0' : null;
-  });
+  // Light beams from the window across the room (none from a sun of correction fluid)
+  if (!blanc)
+    field(g, 0, 0, SW, SH, (x, y) => {
+      const u = x + y * 0.9;
+      const inBeam = (u > 150 && u < 196) || (u > 210 && u < 236);
+      return inBeam && x < wx && bayer(x, y) < 0.07 ? '#ffe8b0' : null;
+    });
   // Bed (left) and desk with the open sketchbook
   rect(g, 6, 116, 60, 30, '#e07ba5');
   rect(g, 6, 112, 60, 6, '#f8b6cf');
@@ -1952,100 +2001,10 @@ function paintAube(g: Ctx): void {
   field(g, bb[0], bb[1], bb[2] - bb[0], bb[3] - bb[1], (x, y) => {
     const inside = all(x + 0.5, y + 0.5);
     if (!inside) return null;
-    if (!all(x + 1.5, y + 0.5) || !all(x + 0.5, y - 0.5)) return '#f8b888';
-    if (!all(x + 2.5, y + 0.5) && bayer(x, y) < 0.5) return '#c87a6a';
+    if (!all(x + 1.5, y + 0.5) || !all(x + 0.5, y - 0.5)) return blanc ? '#e8ecf8' : '#f8b888';
+    if (!all(x + 2.5, y + 0.5) && bayer(x, y) < 0.5) return blanc ? '#9aa0c0' : '#c87a6a';
     return null;
   });
-}
-
-// --- Fin : beaux rêves --------------------------------------------------------------------------------------------
-
-function paintBeauxReves(g: Ctx): void {
-  // Deep blue room, frozen
-  field(g, 0, 0, SW, SH, (x, y) => ramp(['#0e1430', '#121a3a', '#162044', '#1a244a'], noise2(x * 0.02, y * 0.02, 70) * 0.5 + y / 360, x, y));
-  // Window with stars
-  const wx = 30;
-  const wy = 16;
-  vgrad(g, wx, wy, 70, 58, ['#060a1e', '#0a1028', '#101836']);
-  for (let i = 0; i < 18; i++) px(g, wx + 2 + Math.floor(hash(i, 1, 90) * 66), wy + 2 + Math.floor(hash(i, 2, 90) * 54), '#a7b4e0');
-  fillP(g, minus(ell(wx + 50, wy + 16, 7, 7), ell(wx + 54, wy + 13, 6, 6)), [wx + 40, wy + 6, wx + 60, wy + 26], '#e8e0b8');
-  rect(g, wx - 3, wy - 3, 76, 3, '#2a3460');
-  rect(g, wx - 3, wy + 58, 76, 4, '#2a3460');
-  rect(g, wx - 3, wy, 3, 58, '#2a3460');
-  rect(g, wx + 70, wy, 3, 58, '#2a3460');
-  rect(g, wx + 34, wy, 2, 58, '#2a3460');
-  // Clock stopped at 3:33
-  fillP(g, ell(150, 34, 11, 11), [138, 22, 162, 46], '#c8cce8');
-  fillP(g, ell(150, 34, 9, 9), [140, 24, 160, 44], '#e8ecf8');
-  line(g, 150, 34, 154, 34, '#1a2040');
-  line(g, 150, 34, 148, 41, '#1a2040');
-  // Bed, Noa asleep
-  rect(g, 120, 104, 120, 40, '#3a3a7a');
-  rect(g, 120, 100, 120, 6, '#4a4a8a');
-  rect(g, 120, 140, 120, 12, '#262650');
-  rect(g, 124, 92, 26, 14, '#d8dcf0');
-  fillP(g, ell(140, 96, 8, 7), [130, 88, 150, 104], '#c8b0b0');
-  fillP(g, ell(140, 92, 9, 5), [130, 86, 150, 98], '#2b2946');
-  pen(g, [136, 98, 138, 99, 140, 98], { c: '#3a2a3a', w: 1, seed: 3, wob: 0, grain: 0 });
-  pen(g, [142, 98, 144, 99, 146, 98], { c: '#3a2a3a', w: 1, seed: 4, wob: 0, grain: 0 });
-  // blanket folds
-  for (let i = 0; i < 5; i++) line(g, 156 + i * 16, 106, 150 + i * 16, 138, '#2e2e6a');
-  // Nightstand + veilleuse glow
-  rect(g, 248, 112, 26, 32, '#2a2448');
-  rect(g, 248, 112, 26, 3, '#3a3460');
-  fillP(g, minus(ell(261, 104, 6, 6), ell(264, 102, 5, 5)), [254, 97, 268, 111], '#ffe991');
-  // Dodo, big, sitting at the bedside, watching
-  const dx = 92;
-  const dy = 132;
-  fillP(g, union(ell(dx, dy, 22, 18), ell(dx - 14, dy - 8, 10, 10), ell(dx + 14, dy - 8, 10, 10), ell(dx, dy - 16, 14, 10)), [dx - 26, dy - 28, dx + 26, dy + 20], (x, y) => (hash(x, y, 4) < 0.15 ? '#d8d4e8' : '#ece8f8'));
-  fillP(g, ell(dx, dy - 4, 11, 9), [dx - 12, dy - 14, dx + 12, dy + 6], '#9a94b0');
-  // button eyes that catch the light
-  fillP(g, ell(dx - 5, dy - 6, 2, 2), [dx - 8, dy - 9, dx - 2, dy - 3], '#0b0710');
-  fillP(g, ell(dx + 5, dy - 6, 2, 2), [dx + 2, dy - 9, dx + 8, dy - 3], '#0b0710');
-  rect(g, dx - 1, dy - 1, 3, 1, '#f8b6cf');
-  rect(g, dx + 12, dy - 22, 6, 3, '#f8b6cf');
-  // Floor
-  rect(g, 0, 152, SW, 28, '#0c1028');
-}
-
-// --- Fin : silence ------------------------------------------------------------------------------------------------
-
-function paintSilence(g: Ctx): void {
-  // Grey, colourless sky
-  vgrad(g, 0, 0, SW, 96, ['#2a2830', '#3a3842', '#4a4852', '#5a5862']);
-  // Ink sea
-  field(g, 0, 96, SW, 84, (x, y) => {
-    const n = noise2(x * 0.05, y * 0.2, 31);
-    return n > 0.82 ? '#2a2632' : n > 0.7 ? '#151218' : '#0b0710';
-  });
-  // Drowned landmarks: tree tops, a roof, sheep silhouettes
-  const tops: Array<[number, number, number]> = [
-    [40, 96, 18],
-    [84, 98, 12],
-    [250, 96, 20],
-    [292, 99, 10],
-  ];
-  for (const [x, y, r] of tops) fillP(g, minus(ell(x, y, r, r * 0.7), boxP(x - r - 1, y, r * 2 + 2, r)), [x - r - 1, y - r, x + r + 1, y + 1], '#3e3a46');
-  fillP(g, poly([150, 97, 170, 80, 190, 97]), [148, 78, 192, 98], '#4a4652');
-  rect(g, 162, 88, 4, 9, '#2a2630');
-  for (const [x, y] of [
-    [110, 104],
-    [214, 110],
-    [128, 120],
-  ] as Array<[number, number]>) {
-    fillP(g, minus(ell(x, y, 7, 5), boxP(x - 8, y + 1, 16, 6)), [x - 8, y - 6, x + 8, y + 2], '#c8c4d0');
-    px(g, x - 2, y - 2, '#0b0710');
-    px(g, x + 2, y - 2, '#0b0710');
-  }
-  // A broken paper crown floating in the foreground
-  const cx = 160;
-  const cy = 150;
-  fillP(g, poly([cx - 26, cy, cx - 22, cy - 16, cx - 14, cy - 6, cx - 6, cy - 20, cx - 2, cy - 8, cx + 2, cy - 4, cx - 2, cy + 2]), [cx - 28, cy - 22, cx + 4, cy + 3], '#c8a848');
-  fillP(g, poly([cx + 6, cy + 2, cx + 8, cy - 10, cx + 14, cy - 18, cx + 18, cy - 6, cx + 26, cy - 14, cx + 28, cy + 2]), [cx + 4, cy - 20, cx + 30, cy + 3], '#b8983e');
-  rect(g, cx - 26, cy, 24, 2, '#8a7230');
-  rect(g, cx + 6, cy + 2, 22, 2, '#8a7230');
-  // ink stains on the crown
-  for (let i = 0; i < 14; i++) px(g, cx - 24 + Math.floor(hash(i, 1, 3) * 50), cy - 14 + Math.floor(hash(i, 2, 3) * 14), '#0b0710');
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -2131,30 +2090,22 @@ export const ILLUSTRATIONS: Record<string, Illustration> = {
     motes(g, t, 22, 12, [100, 20, 190, 150], '#ffe8b0');
     withAlpha(g, 0.08 + 0.04 * Math.sin(t * 0.02), () => fillP(g, ell(252, 104, 40, 30), [210, 70, 296, 136], '#fff0c0'));
   },
-  fin_beaux_reves: (g, t) => {
-    g.drawImage(layer('fin_beaux_reves', paintBeauxReves), 0, 0);
-    // Nightlight glow, perfectly steady; a single star twinkles
-    withAlpha(g, 0.22, () => fillP(g, ell(261, 104, 20, 16), [240, 86, 284, 122], (x, y) => (bayer(x, y) < 0.5 ? '#ffe991' : null)));
-    if (Math.floor(t / 40) % 3 === 0) sparkle(g, 52, 30, 1, '#ffffff');
-    // Dodo's eyes catch the light, now and then
-    if (t % 200 < 8) {
-      px(g, 86, 125, '#fffaf2');
-      px(g, 96, 125, '#fffaf2');
-    }
+  // Aube blanche (§ 5): the sun is a round of correction fluid. It does not shine, it does not move; nothing floats.
+  fin_aube_blanche: (g) => {
+    g.drawImage(
+      layer('fin_aube_blanche', (c) => paintAube(c, true)),
+      0,
+      0,
+    );
   },
-  fin_silence: (g, t) => {
-    g.drawImage(layer('fin_silence', paintSilence), 0, 0);
-    // Slow ripples on the ink and drips from above
-    for (let i = 0; i < 6; i++) {
-      const y = 104 + i * 12;
-      const x = ((t * (0.2 + i * 0.05) + i * 53) % 360) - 20;
-      withAlpha(g, 0.35, () => rect(g, x, y, 14 + i * 2, 1, '#3a3442'));
-    }
-    for (let i = 0; i < 5; i++) {
-      const x = 30 + i * 62;
-      const len = (t * 0.3 + i * 17) % 40;
-      rect(g, x, 0, 1, Math.floor(len), '#0b0710');
-    }
+  // The secret ending: the drawing Mina finished alone, unfolded out of Dodo's belly.
+  lune_finie: (g, t) => {
+    g.drawImage(
+      layer('lune_finie', (c) => paintDessin(c, true)),
+      0,
+      0,
+    );
+    motes(g, t, 10, 16, [30, 10, 290, 120], '#ffe8c0');
   },
   // Bonus chapter « Les rêves des autres » (see illustrations-bonus.ts).
   ...BONUS_ILLUSTRATIONS,
@@ -2164,6 +2115,8 @@ export const ILLUSTRATIONS: Record<string, Illustration> = {
   ...CH6_ILLUSTRATIONS,
   // La fausse aube (see illustrations-faux.ts).
   ...FAUX_ILLUSTRATIONS,
+  // The endings, version 2: Beaux rêves, Silence, Veilleuse (see illustrations-fins.ts).
+  ...FINS_ILLUSTRATIONS,
 };
 
 export interface Souvenir {

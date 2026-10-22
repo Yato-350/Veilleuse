@@ -1,5 +1,5 @@
 import type { Script } from '../overworld/types';
-import { STORY } from './common';
+import { STORY, enterDream } from './common';
 import { world } from '../overworld/world';
 import { G } from '../state';
 import { tr } from '../../i18n';
@@ -14,6 +14,7 @@ import * as chapter5 from './chapter5';
 import * as chapter6 from './chapter6';
 import * as bonus from './bonus';
 import * as socle from './socle';
+import * as endings from './endings';
 import * as battleDebug from '../battle/debug-battles';
 
 /** Talking to Mina while she follows Noa: a line depending on where you are. */
@@ -73,8 +74,12 @@ export const DEBUG_SCRIPTS: Record<string, Script> = {
   ...chapter6.DEBUG,
   ...bonus.DEBUG,
   ...socle.DEBUG,
+  ...endings.DEBUG,
   ...battleDebug.DEBUG,
 };
+
+/** After Beaux rêves, « Continuer » on the title: a new run that starts in chapter 1 (flags.br_retour). */
+export const dreamAgain: Script = (d) => enterDream(d, 1);
 
 /** Entry point of the bonus chapter (title screen, after the dawn ending). */
 export const startBonus: Script = bonus.start;

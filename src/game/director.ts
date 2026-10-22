@@ -19,7 +19,7 @@ import { ImageScene } from './scenes/image';
 import { openMenu } from './scenes/menu';
 import { PaperScene } from './scenes/paper';
 import { CrashScene } from './scenes/crash';
-import { PoemScene } from './scenes/poem';
+import { PoemScene, type PoemOptions } from './scenes/poem';
 import type { WordDef } from './battle/types';
 import { ScriptAbort } from './flow';
 import { tf, tr } from '../i18n';
@@ -368,9 +368,9 @@ export class Director {
     return CrashScene.show(lines, minFrames, style);
   }
 
-  /** DDLC-style poem: the player picks words. */
-  poem(title: string): Promise<WordDef[]> {
-    return PoemScene.write(title);
+  /** DDLC-style poem: the player picks words (`opts.extra`: a line that writes itself after them). */
+  poem(title: string, opts: PoemOptions = {}): Promise<WordDef[]> {
+    return PoemScene.write(title, opts);
   }
 
   /** Runs another script inline. */

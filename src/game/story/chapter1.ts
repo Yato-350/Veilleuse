@@ -21,6 +21,8 @@ import { tf, tr } from '../../i18n';
  *   c1_code          Mina explained the knock code at the Mouton Noir's door; c1_knock: Noa knocked (any number)
  *   c1_bonnet_vu     the little silhouette in a hat behind the pillow of the colline has vanished (seen once)
  *   c1_bed_baton, c1_chaussette_vue, c1_borgne, c1_lune_voyage, c1_lune_cycle: talk counters
+ *   br_retour        this run started from the Beaux rêves title (« Continuer », no prologue): Mina « Tu es revenu ! »,
+ *                    the 365 marks on the dream bed counted to the end (set by main.ts flow.dreamAgain)
  */
 
 const flag = (k: string): boolean => !!G.state.flags[k];
@@ -135,7 +137,9 @@ export const meetMina: Script = async (d) => {
   await d.say('… Oh. C\'est toi, Noa !', 'mina:surprised');
   await d.wait(30);
   await d.say('…Mina ?', 'noa:surprised');
-  await d.say(['Ben oui ! Qui d\'autre ?', 'Tu en as mis, du temps ! Je t\'attends depuis super longtemps.'], 'mina:happy');
+  // After Beaux rêves (the title's « Continuer »): he never left.
+  if (flag('br_retour')) await d.say(['Ben oui ! Qui d\'autre ?', 'Tu es revenu ! Tu as dormi super longtemps.'], 'mina:happy');
+  else await d.say(['Ben oui ! Qui d\'autre ?', 'Tu en as mis, du temps ! Je t\'attends depuis super longtemps.'], 'mina:happy');
   await d.say('…', 'noa:sad');
   await d.say(['Pourquoi tu fais cette tête ?', 'On dirait que t\'as vu un fantôme.'], 'mina:neutral');
   await d.wait(20);
@@ -156,7 +160,8 @@ export const meetMina: Script = async (d) => {
 
 export const dreamBed: Script = async (d) => {
   await d.say(['Un lit, posé au milieu de la prairie.', 'Les draps sont tièdes. Ils sentent la lessive de Maman.']);
-  if (!bump('c1_bed_baton')) await d.say(['Sur la tête de lit, des petits bâtons gravés. Par paquets de cinq.', 'Tu arrêtes de compter à cent.']);
+  if (!bump('c1_bed_baton'))
+    await d.say(['Sur la tête de lit, des petits bâtons gravés. Par paquets de cinq.', flag('br_retour') ? 'Cette fois, tu les comptes tous. Trois cent soixante-cinq.' : 'Tu arrêtes de compter à cent.']);
   if (withMina() && !bump('c1_bed_mina')) {
     await d.say(['C\'est ton lit ? Il ressemble à celui de la maison !', 'Sauf qu\'il grince pas. Et qu\'il y a pas tes chaussettes sales dessous.'], 'mina:happy');
     await d.say('Et les petits traits, c\'est pour compter les dodos jusqu\'à Noël ? Moi aussi, je fais ça !', 'mina:happy');

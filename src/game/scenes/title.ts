@@ -31,8 +31,21 @@ type Item = { label: string; action: () => void; color?: string };
 export type TitleVariant = 'night' | 'dawn' | 'dream' | 'point_de_croix' | 'continuer_seul' | 'soleil_blanc' | 'silence_v2' | 'veilleuse';
 export const TITLE_VARIANTS: TitleVariant[] = ['night', 'dawn', 'dream', 'point_de_croix', 'continuer_seul', 'soleil_blanc', 'silence_v2', 'veilleuse'];
 
-/** The title look from the endings seen (v1.1 rule; the v2 endings choose their variant explicitly). */
-export function defaultTitleVariant(endings: string[] = G.meta.endings): TitleVariant {
+/** The title look of each ending (docs/HISTOIRE.md § 5). */
+export const ENDING_TITLE: Record<string, TitleVariant> = {
+  aube: 'dawn',
+  aube_blanche: 'soleil_blanc',
+  beaux_reves: 'continuer_seul',
+  silence: 'silence_v2',
+  veilleuse: 'veilleuse',
+};
+
+/**
+ * The title look: the one of the ending reached last (`meta.lastEnding`, version 2), else the v1.1 rule on the endings
+ * seen (a memory carried over from version 1.1).
+ */
+export function defaultTitleVariant(endings: string[] = G.meta.endings, last: string = G.meta.lastEnding): TitleVariant {
+  if (last && ENDING_TITLE[last]) return ENDING_TITLE[last]!;
   return endings.includes('aube') ? 'dawn' : endings.includes('beaux_reves') ? 'dream' : 'night';
 }
 
@@ -96,7 +109,8 @@ export class TitleScene implements Scene {
   private buildItems(): void {
     const save = hasSave() ? readSave() : null;
     this.items = [];
-    const single = this.opts.single ?? (this.variant === 'continuer_seul' ? { label: 'Continuer', onPick: () => (save ? flow.continueGame() : game.replace(new NameEntryScene())) } : null);
+    // Beaux rêves: « Continuer » goes back into the dream (chapter 1, « Tu es revenu ! ») — or on with the run, if any.
+    const single = this.opts.single ?? (this.variant === 'continuer_seul' ? { label: 'Continuer', onPick: () => (save ? flow.continueGame() : flow.dreamAgain()) } : null);
     if (single) {
       this.items.push({ label: single.label, action: () => this.leave(single.onPick) });
       this.idx = 0;

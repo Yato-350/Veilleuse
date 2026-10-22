@@ -117,9 +117,20 @@ export async function wakeUp(d: Director, n: DreamNo): Promise<void> {
   d.save();
 }
 
-/** Records an ending, plays the credits and returns to the title screen. The run is over: the save is deleted. */
+/** The endings after which the credits end on the help card (docs/HISTOIRE.md § 6.4). */
+export const HELP_CARD_ENDINGS: readonly EndingId[] = ['beaux_reves', 'silence', 'aube_blanche'];
+
+/**
+ * Records an ending, plays the credits and returns to the title screen. The run is over: the save is deleted.
+ * The memory keeps it (§ 5 « Méta »): `endings`, `lastEnding` (it picks the title screen), one more night
+ * (`nuits`), the date of Beaux rêves (its title counts the days), and after Veilleuse Dodo stays silent for good.
+ */
 export async function finishGame(d: Director, ending: EndingId): Promise<void> {
   if (!G.meta.endings.includes(ending)) G.meta.endings.push(ending);
+  G.meta.lastEnding = ending;
+  G.meta.nuits++;
+  if (ending === 'beaux_reves') G.meta.beauxRevesAt = Date.now();
+  if (ending === 'veilleuse') G.meta.dodoSilent = true;
   G.meta.runInProgress = false;
   writeMeta(G.meta);
   deleteSave();
@@ -128,7 +139,7 @@ export async function finishGame(d: Director, ending: EndingId): Promise<void> {
   fx.setBars(false);
   await d.fadeOut(90);
   game.remove(world);
-  await CreditsScene.play();
+  await CreditsScene.play({ helpCard: HELP_CARD_ENDINGS.includes(ending) });
   await flow.toTitle();
 }
 

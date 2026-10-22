@@ -7,16 +7,33 @@ import { finishGame, REAL } from './common';
 import { trLine, translated } from '../../i18n';
 
 /*
- * Epilogue of the dawn route (« aube »): the morning after. Noa and Maman buy a new nightlight at the little shop
- * of the street (map `bazar`), then take it to the garden where Mina rests (map `jardin`). Noa places it on her
- * stone and reads the poem he wrote in the night (flag fin_poem). Dodo, in Noa's bag, has a last silent moment.
+ * Epilogue of the dawn routes (docs/HISTOIRE.md § 3.16): the morning after. Noa and Maman buy a new nightlight at
+ * the little shop of the street (map `bazar`), then take it to the garden where Mina rests (map `jardin`). Noa places
+ * it on her stone and reads the poem he wrote in the night (flag fin_poem). Dodo, in Noa's bag, has a last silent
+ * moment.
+ *
+ * Version 2: the finale's ending (flags.fin_ending, see dawn()) shapes it, and the epilogue records it.
+ *   all     Dodo is mute: his belly gives nothing any more (the battery is dead) — except after the secret ending,
+ *           when he is sewn back with blue thread; the forty-second shell (c5_coquillage42) goes on the stone; if Noa
+ *           asked her forgiveness (i3_reply = pardon), the stranger who has Mina's number writes « Bonne journée. »
+ *           at the garden gate. The closing voice keeps Dodo's name with Noa's blip.
+ *   aube_blanche  « Je venais tous les jours. » at the stone, and Maman does not contradict him; the last line is
+ *           « Beaux rêves, {player}. ».
+ *   veilleuse     Dodo, sewn back, is left on her stone (no choice); Mina's drawings replace the closing voice.
  *
  * Everything after the intro is driven by map scripts and flags, so a suspend save made anywhere resumes cleanly:
- *   ep_vl (chosen nightlight id) · ep_paid · ep_garden · ep_maman_wait · ep_water / ep_watered · ep_placed ·
- *   ep_poem · ep_dodo ('laisse' | 'garde').
+ *   ep_vl (chosen nightlight id) · ep_paid · ep_garden · ep_inconnue · ep_maman_wait · ep_water / ep_watered ·
+ *   ep_placed · ep_coquillage · ep_poem · ep_dodo ('laisse' | 'garde').
  */
 
 const flag = (k: string): boolean => !!G.state.flags[k];
+
+/** The dawn the finale closed on (flags.fin_ending, set by real.ts and endings.ts): the ending this epilogue records. */
+export type Dawn = 'aube' | 'aube_blanche' | 'veilleuse';
+export function dawn(): Dawn {
+  const e = G.state.flags.fin_ending;
+  return e === 'aube_blanche' || e === 'veilleuse' ? e : 'aube';
+}
 
 export type VlId = 'lune' | 'etoile' | 'mouton' | 'nuage' | 'couronne';
 
@@ -98,7 +115,7 @@ async function shopIntro(d: Director): Promise<void> {
   await d.fadeOut(1, '#000000');
   d.load('bazar', 'door');
   d.face('player', 'up');
-  await d.narrate(['Tu as mis Dodo dans ton sac.', 'Tu ne sais pas trop pourquoi.']);
+  await dodoInBag(d);
   d.sfx('chime', { pitch: 1.6, vol: 0.6 });
   await d.fadeIn(60);
   await d.wait(20);
@@ -109,6 +126,20 @@ async function shopIntro(d: Director): Promise<void> {
   await d.say(['Choisis, toi.', 'C\'est toi qui sais.'], 'maman:happy');
   d.face('maman', 'up');
   d.set('ep_shop');
+}
+
+/** § 3.16: Dodo is mute now. After the secret ending, he wears Noa's blue stitches instead. */
+async function dodoInBag(d: Director): Promise<void> {
+  if (dawn() === 'veilleuse') {
+    await d.narrate(['Dodo est dans ton sac.', 'Sur son ventre, une couture bleue, de travers. Elle tient.']);
+    return;
+  }
+  await d.narrate(['Avant de partir, tu as pris Dodo.', 'Les oreilles écrasées, comme toujours.']);
+  await d.ask('Son ventre, sous ton pouce.', ['Appuyer'], undefined, { style: 'none', pos: 'center', center: true });
+  d.sfx('pop', { pitch: 0.6, vol: 0.3 });
+  await d.wait(60);
+  await d.narrate(['Rien.', 'Pas un grésillement. La pile est morte.']);
+  await d.narrate(['Il ne dit plus rien.', 'Tu le prends quand même.']);
 }
 
 // ---------------------------------------------------------------------------
@@ -223,7 +254,22 @@ export const jardinEnter: Script = async (d) => {
     await d.say(['Le jardin est au bout de la rue, derrière un vieux mur.', 'Il y a des oiseaux.', 'Tu avais oublié qu\'il y avait des oiseaux, le matin.']);
     await d.say(['C\'est tout au fond. Sous le grand arbre.', 'On y va doucement.'], 'maman:neutral');
   }
+  if (G.state.flags.i3_reply === 'pardon' && !flag('ep_inconnue')) await strangerGoodDay(d);
 };
+
+/**
+ * § 3.16: the stranger who has Mina's number now. She asked him to stop; then, at dawn, she answered anyway and said
+ * she would not answer again (real.ts). One last message. He does not write back: she asked him to stop.
+ */
+async function strangerGoodDay(d: Director): Promise<void> {
+  d.set('ep_inconnue');
+  await d.wait(30);
+  d.sfx('buzz', { vol: 0.5 });
+  await d.say(['Ton téléphone vibre dans ta poche.', 'Le numéro de Mina. Celui de l\'inconnue, maintenant.']);
+  await d.say('« Bonne journée. »', undefined, { style: 'real' });
+  await d.wait(30);
+  await d.say(['Rien d\'autre.', 'Tu ne réponds pas. Tu gardes le message.']);
+}
 
 const mamanWalking: Script = async (d) => {
   const n = Number(G.state.flags.ep_walk_talk ?? 0);
@@ -335,7 +381,21 @@ async function placeVeilleuse(d: Director): Promise<void> {
   d.flash('#fff3cf', 8);
   await d.say(['Tu appuies sur le petit bouton.', 'En plein jour, on la voit à peine.', 'Mais elle brille.']);
   await d.say(v.placed);
+  await shell42(d);
   if (flag('ep_water') && !flag('ep_watered')) await waterFlowers(d);
+}
+
+/** § 3.16: the forty-second shell (chapter 5, where the small footprints stop), if it was found. */
+async function shell42(d: Director): Promise<void> {
+  if (!flag('c5_coquillage42') || flag('ep_coquillage')) return;
+  d.set('ep_coquillage');
+  await d.wait(30);
+  await d.say(['Dans ta poche, un petit coquillage blanc.', 'Tu ne sais plus quand tu l\'as pris. Dans sa chambre, peut-être.']);
+  const e = d.spawn({ id: 'coquillage', sprite: 'prop_coquillage', x: STONE.x, y: STONE.y, solid: false, shadow: false });
+  e.ox = 6;
+  e.oy = 1;
+  d.sfx('pop', { pitch: 1.6, vol: 0.4 });
+  await d.say(['Tu le poses sur la pierre, à côté de la veilleuse.', 'Le quarante-deuxième.']);
 }
 
 async function waterFlowers(d: Director): Promise<void> {
@@ -389,10 +449,22 @@ function defaultPoem(): string {
 async function dodoMoment(d: Director): Promise<void> {
   await d.wait(30);
   await d.say(['Ton sac pèse sur ton épaule.', 'Dodo. Les oreilles écrasées, les yeux-boutons tournés vers le ciel.']);
-  const e = d.spawn({ id: 'dodo_plush', sprite: 'prop_dodo_plush', x: STONE.x + 1, y: STONE.y, solid: false, shadow: false });
+  const sewn = dawn() === 'veilleuse';
+  const e = d.spawn({ id: 'dodo_plush', sprite: sewn ? 'prop_dodo_recousu' : 'prop_dodo_plush', x: STONE.x + 1, y: STONE.y, solid: false, shadow: false });
   e.oy = 2;
   e.ox = -2;
   await d.say('Tu l\'assois sur la pierre, à côté de la veilleuse.');
+  if (sewn) {
+    // The secret ending (§ 5): he is left on her stone. He will never speak again.
+    await d.say(['Sa couture bleue est de travers.', 'Elle tiendra.']);
+    await d.wait(60);
+    await d.say(['Il ne dit rien.', 'Il ne dira plus rien.']);
+    await d.wait(40);
+    d.set('ep_dodo', 'laisse');
+    await d.say('Veille sur elle, maintenant.', 'noa:sad');
+    await d.say(['Tu l\'appuies bien contre la pierre, pour qu\'il ne tombe pas.', 'Tu le laisses là.']);
+    return;
+  }
   await d.wait(60);
   await d.say('Il ne dit rien.');
   await d.wait(50);
@@ -422,6 +494,14 @@ async function mamanJoins(d: Director): Promise<void> {
   await d.wait(20);
   await d.say(['Elle l\'aurait accroché sur le frigo.', 'Avec l\'aimant en forme de fraise.'], 'maman:sad');
   await d.say('… Elle l\'aurait corrigé, aussi. Au feutre violet.', 'maman:happy');
+  if (dawn() === 'aube_blanche') {
+    // § 5: the white lie, a second time. She does not contradict him.
+    await d.wait(40);
+    await d.say('Je venais tous les jours.', 'noa:neutral');
+    await d.wait(90);
+    await d.say('Maman regarde la pierre. Elle ne dit rien.');
+    await d.say('…', 'maman:sad');
+  }
   await d.wait(30);
   await d.say('Vous restez là un moment, sans rien dire. Ce n\'est pas un silence lourd.');
   d.face('player', 'up');
@@ -451,16 +531,31 @@ async function goHome(d: Director): Promise<void> {
   await d.image('fin_jardin', ['Derrière vous, la veilleuse brille en plein jour.', 'Personne ne la remarque vraiment.', 'Mais elle brille.']);
   await d.fadeOut(1, '#000000');
   await d.wait(40);
-  if (G.state.flags.ep_dodo === 'laisse') {
-    await d.narrate('Je veillerai sur elle.', { voice: 'dodo' });
-    await d.narrate('Lui, il n\'a plus peur du noir. Plus autant.', { voice: 'dodo' });
-  } else {
-    await d.narrate('Je veillerai sur lui.', { voice: 'dodo' });
-    await d.narrate('Pour de vrai, cette fois.', { voice: 'dodo' });
+  const end = dawn();
+  if (end === 'veilleuse') {
+    // § 5: no voice at all. Her drawings.
+    for (const key of ['carnet_page1', 'carnet_page4', 'lune_finie']) await d.image(key, []);
+    await finishGame(d, end);
+    return;
   }
-  await d.narrate('Merci, {player}.', { voice: 'dodo' });
-  await d.narrate('{c:y}Bonne nuit. Et bonjour.{/c}', { voice: 'dodo' });
-  await finishGame(d, 'aube');
+  // § 3.16: the closing voice keeps Dodo's name, with Noa's blip (it always was his voice). Once Dodo has fallen
+  // silent for good (meta.dodoSilent, after the secret ending), it is only Noa's.
+  const voice = (text: string): Promise<void> => d.narrate(text, G.meta.dodoSilent ? { voice: 'noa' } : { who: 'dodoreel', voice: 'noa', style: 'dream' });
+  if (G.state.flags.ep_dodo === 'laisse') {
+    await voice('Je veillerai sur elle.');
+    await voice('Lui, il n\'a plus peur du noir. Plus autant.');
+  } else {
+    await voice('Je veillerai sur lui.');
+    await voice('Pour de vrai, cette fois.');
+  }
+  if (end === 'aube_blanche') {
+    await d.wait(40);
+    await voice('Beaux rêves, {player}.');
+  } else {
+    await voice('Merci, {player}.');
+    await voice('{c:y}Bonne nuit. Et bonjour.{/c}');
+  }
+  await finishGame(d, end);
 }
 
 // ---------------------------------------------------------------------------
@@ -493,6 +588,16 @@ export const EPILOGUE_DEBUG: Record<string, Script> = {
     G.state.flags.ep_paid = true;
     d.load('jardin', 'gate');
     await d.fadeIn(20);
+  },
+  /**
+   * Version 2, the whole epilogue from the card: mute Dodo, the stranger's « Bonne journée. » at the gate, the 42nd
+   * shell on the stone. &flags=fin_ending=aube_blanche or =veilleuse for the variants (default: Aube).
+   */
+  epilogue_v2: async (d) => {
+    debugBase();
+    Object.assign(G.state.flags, { c5_coquillage42: true, i3_tel: true, i3_reply: 'pardon' }, { ...G.state.flags });
+    d.load('chambre_mina', 'door');
+    await epilogue(d);
   },
   /** In front of Mina's stone, Maman waiting on the side. */
   epilogue_stone: async (d) => {

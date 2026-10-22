@@ -2,7 +2,7 @@ import { drawText, measure } from '../../engine/font';
 import { drawSprite, makeCanvas } from '../../engine/sprite';
 import { hasSpr, spr } from '../assets';
 import { isNative, toast } from '../pwa';
-import type { SavedPoem } from '../state';
+import { G, type SavedPoem } from '../state';
 import { lang, tf, tr, trLine } from '../../i18n';
 
 /**
@@ -30,15 +30,23 @@ export function poemDate(at: number): string {
   return `le ${d.getDate() === 1 ? '1er' : d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`; // i18n-ignore
 }
 
+/**
+ * After the Silence ending (it is the last one reached: `meta.lastEnding`), Mina's name is a blank in the notebook
+ * of memories and the poems (docs/HISTOIRE.md § 5). Any other ending gives it back.
+ */
+export function silenced(text: string): string {
+  return G.meta.lastEnding === 'silence' ? text.replace(/Mina/g, '______') : text;
+}
+
 /** Lines for display. Saved poems keep their French text (the source) and are translated line by line. */
 export function poemLines(poem: SavedPoem): string[] {
-  return poem.text.split('\n').map(trLine);
+  return poem.text.split('\n').map((l) => silenced(trLine(l)));
 }
 
 /** The finale's poems open with « Pour Mina. »: the title is then already on the page. */
 function needsTitle(poem: SavedPoem): boolean {
   const first = (poemLines(poem)[0] ?? '').replace(/[.!…,]+$/, '').trim().toLowerCase();
-  return !!poem.title && first !== tr(poem.title).trim().toLowerCase();
+  return !!poem.title && first !== silenced(tr(poem.title)).trim().toLowerCase();
 }
 
 const TEXT_X = 24;
@@ -77,7 +85,7 @@ export function drawPoemPage(g: CanvasRenderingContext2D, poem: SavedPoem, x: nu
   g.fillRect(x + 16, y, 1, h);
   // Mina's star stickers were on everything she owned.
   star(g, x + w - 12, y + 4, '#f9cf3a', '#d89a1a');
-  if (title) drawText(g, tr(poem.title), x + w / 2, y + 5, { align: 'center', color: RED });
+  if (title) drawText(g, silenced(tr(poem.title)), x + w / 2, y + 5, { align: 'center', color: RED });
   lines.slice(0, shown).forEach((line, i) => drawText(g, line, x + TEXT_X, top + i * lh - 8, { color: INK }));
   if (shown >= lines.length) drawText(g, poemDate(poem.at), x + w - 6, y + h - 11, { align: 'right', color: FADED });
 }

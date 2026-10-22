@@ -145,6 +145,8 @@ export interface Meta {
   beauxRevesAt: number;
   /** Endings seen with version 1.1 of the game (copied by the migration): the fake credits remember them. */
   endingsV1: string[];
+  /** The ending reached last ('' = none since version 2): it picks the title screen (scenes/title.ts). */
+  lastEnding: string;
   /** Format version of this memory (see META_VERSION). */
   metaVersion: number;
 }
@@ -182,6 +184,7 @@ export function newMeta(): Meta {
     fauxGenerique: 0,
     beauxRevesAt: 0,
     endingsV1: [],
+    lastEnding: '',
     metaVersion: META_VERSION,
   };
 }

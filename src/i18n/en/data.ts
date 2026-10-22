@@ -118,6 +118,8 @@ export const DATA: Record<string, string> = {
   'chaise': 'chair',
   'lit': 'bed',
   'lumière': 'light',
+  // Aube blanche: the line that writes itself after the six words (real.ts carnet).
+  'j\'étais là': 'I was there',
   'printemps': 'spring',
   'chanson': 'song',
   'goûter': 'teatime',
@@ -743,6 +745,9 @@ export const DATA: Record<string, string> = {
   'Moi je serai': 'I\'ll be',
   'ta veilleuse.': 'your nightlight.',
   'Noa et moi': 'Noa and me',
+  'FINI.': 'DONE.',
+  '(sans toi': '(without you',
+  'mais avec toi)': 'but with you)',
   // night interludes (illustrations-nuit.ts): Maman's ballpoint under the polaroid, Mina's drawing on the mirror
   'Noa prête Dodo à Mina.': 'Noa lends Dodo to Mina.',
   '"Il veillera sur toi."': '"He\'ll watch over you."',

@@ -14,7 +14,7 @@ import { world } from '../overworld/world';
 import { G, maxHp } from '../state';
 import { tf, tr } from '../../i18n';
 import { isSilenceRoute, shop, wakeUp } from './common';
-import { endingAube, endingBeauxReves } from './endings';
+import { endingAubeV1, endingBeauxReves } from './endings';
 import { makeCrack } from '../battle/final-common';
 
 /**
@@ -1668,7 +1668,7 @@ export const DEBUG: Record<string, Script> = {
     setup(d, ['c3_intro', 'c3_mina_erased', 'c3_veilleuse'], false);
     d.load('vide', 'center');
     await d.fadeIn(10);
-    await endingAube(d);
+    await endingAubeV1(d);
   },
   c3_beaux_reves: async (d) => {
     setup(d, ['c3_intro', 'c3_mina_erased', 'c3_veilleuse'], false);

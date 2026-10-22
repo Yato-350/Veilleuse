@@ -8,6 +8,8 @@ export const flow = {
   continueGame: async (): Promise<void> => {},
   /** Bonus chapter « Les rêves des autres » (title screen, after the dawn ending). */
   startBonus: async (): Promise<void> => {},
+  /** After Beaux rêves, the title's single « Continuer »: a new run straight into chapter 1 (docs/HISTOIRE.md § 5). */
+  dreamAgain: async (): Promise<void> => {},
 };
 
 /** Thrown to stop a running cutscene script (e.g. after loading a save from the game over screen). */

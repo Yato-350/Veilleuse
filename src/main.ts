@@ -18,7 +18,7 @@ import { dialogue } from './game/ui/dialogue';
 import { applySettings } from './game/ui/options';
 import { TitleScene } from './game/scenes/title';
 import { WarningScene } from './game/scenes/warning';
-import { startBonus, startPrologue } from './game/story';
+import { dreamAgain, startBonus, startPrologue } from './game/story';
 import { setupMeta } from './game/meta';
 import { startDebug } from './game/debug';
 import { openMenu } from './game/scenes/menu';
@@ -86,6 +86,22 @@ function boot(): void {
     game.replace(world);
     await runScript(async (d) => {
       await startBonus(d);
+    });
+  };
+  flow.dreamAgain = async () => {
+    // Beaux rêves: he never woke up. The same name, no prologue, back to the Pays de Coton (flags.br_retour).
+    const name = G.meta.names[G.meta.names.length - 1] ?? '';
+    if (G.meta.runInProgress) G.meta.resets++;
+    G.meta.newGames++;
+    G.meta.runInProgress = true;
+    writeMeta(G.meta);
+    deleteSave();
+    G.state = newState(name);
+    G.state.flags.br_retour = true;
+    G.state.hp = maxHp(G.state);
+    game.replace(world);
+    await runScript(async (d) => {
+      await dreamAgain(d);
     });
   };
   flow.continueGame = async () => {

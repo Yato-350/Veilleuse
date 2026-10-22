@@ -8,8 +8,8 @@ import { isLateNight, setPageTitle } from '../meta';
 import { composePoem } from '../scenes/poem';
 import { dateLabel, PhoneScene, type PhoneContact, type PhoneMessage, type PhoneReply } from '../scenes/phone';
 import { enterDream, isFinale, REAL, realPhase } from './common';
-import { afterFinalBattle, dawnEnding, endingAubeBlanche, endingVeilleuse } from './endings';
-import { epilogue, EPILOGUE_DEBUG } from './epilogue';
+import { afterFinalBattle, dawnEnding, endingAube, endingAubeBlanche, endingVeilleuse } from './endings';
+import { EPILOGUE_DEBUG } from './epilogue';
 import { calls as callLog, minaThread, STRANGER_DAY } from './real-nuit';
 
 /**
@@ -1404,10 +1404,13 @@ export const carnet: Script = async (d) => {
   await d.say('Mina.', 'noa:sad');
   await d.wait(30);
   await d.say(['Dans sa trousse, il reste un crayon.', 'Tu tournes la page. Elle est blanche.', 'Tu écris.']);
-  const words = await d.poem('Pour Mina');
+  // Aube blanche (§ 5): once the six words are written, a seventh line writes itself, in blue pen.
+  const blanche = dawnEnding() === 'aube_blanche';
+  const words = await d.poem('Pour Mina', blanche ? { extra: 'j\'étais là' } : {});
   const lines = composePoem(words);
   savePoem(lines, words.map((w) => w.text));
   await d.paper(lines, '');
+  if (blanche) await d.say(['La dernière ligne est au stylo bleu.', 'Tu ne te souviens pas de l\'avoir écrite. Elle a l\'air vraie.']);
   d.set('fin_carnet');
   if (!flag('fin_plugged')) {
     await d.wait(30);
@@ -1506,10 +1509,7 @@ async function mamanComesHome(d: Director): Promise<void> {
     await endingAubeBlanche(d);
     return;
   }
-  await d.fadeOut(120, '#fff3e0');
-  await d.image('fin_aube', ['Le soleil se lève sur la chambre de Mina.', 'Pour la première fois depuis un an, il fait jour.']);
-  d.remove('hug');
-  await epilogue(d);
+  await endingAube(d);
 }
 
 /** § 3.15 item 8: the call, the cold. Neither of them knows; both of them wonder. */

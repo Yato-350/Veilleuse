@@ -619,4 +619,7 @@ export const STORY_REAL: Record<string, string> = {
   'Mina disait que c\'était toi.': 'Mina used to say it was you.',
   'Tu souris. Un tout petit peu.': 'You smile. Just a tiny bit.',
   '…Je sais.': '…I know.',
+  // Aube blanche: the poem's last line, in blue pen
+  'La dernière ligne est au stylo bleu.': 'The last line is in blue pen.',
+  'Tu ne te souviens pas de l\'avoir écrite. Elle a l\'air vraie.': 'You don\'t remember writing it. It looks true.',
 };
