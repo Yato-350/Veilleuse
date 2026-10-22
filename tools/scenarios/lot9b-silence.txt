@@ -1,0 +1,42 @@
+# Lot 9 (second half): Silence v2 (docs/HISTOIRE.md § 5), the route of the ink. « Dors, maintenant. »; Noa slept the
+# whole night and remembers no dream; a bright school morning: Mina's door is a plain door with a card « DÉBARRAS »,
+# her chair and toy box gone; « Ta sœur aurait eu neuf ans cette année. » — « Qui ? »; three knocks from the
+# storeroom, « Personne ne bouge. »; off to school (fin_silence). Recorded (silence), the help card (3114), the title:
+# the family photo with a child-shaped blank. In the « Carnet de souvenirs », Mina's name is now « ______ ».
+query: debug=script&name=fin_silence&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: (window.__nuits0 = V.G.meta.nuits, 1)
+zuntil: V.G.state.map === 'appartement_silence'
+zuntil: SAW('DÉBARRAS')
+shot:debarras
+assert: V.world.entities.some((e) => e.id === 's_pancarte') && !V.world.entities.some((e) => e.sprite === 'prop_toybox')
+zuntil: TXT().includes('Qui ?')
+shot:qui
+zuntil: SAW('Personne ne bouge.')
+zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'fin_silence'
+wait:1500
+shot:fin-silence
+zuntil: V.scene() === 'CreditsScene'
+assert: V.G.meta.endings.includes('silence') && V.G.meta.lastEnding === 'silence' && V.G.meta.nuits === window.__nuits0 + 1
+KeyZ:15000
+waitfor: V.game.top.phase === 'end'
+KeyZ
+waitfor: V.game.top.phase === 'help'
+wait:1500
+shot:aide
+KeyZ
+waitfor: V.scene() === 'TitleScene'
+wait:2500
+shot:titre
+assert: V.game.top.variant === 'silence_v2'
+ArrowDown
+KeyZ
+waitfor: V.game.top.constructor.name === 'GalleryScene'
+wait:800
+shot:carnet
+assert: V.game.top.entries.some((e) => e.captions.some((c) => c.includes('______'))) && !V.game.top.entries.some((e) => [e.title, e.kind, ...e.captions].some((c) => c.includes('Mina')))

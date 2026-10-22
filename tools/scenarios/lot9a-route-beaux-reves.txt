@@ -1,6 +1,10 @@
 # Lot 9 (first half): the route that never wakes up, « Rester » at the end of the final battle: afterFinalBattle plays
-# Beaux rêves (endings.ts, rewritten by lot 9b) and records it.
+# Beaux rêves (endings.ts, lot 9b; the whole ending is lot9b-beaux-reves) and records it.
 query: debug=script&name=finale_beaux_reves&lang=fr
 wait:1500
+zuntil: window.__veilleuse.G.state.map === 'appartement_br'
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('16.')
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('toujours là')
+zuntil: window.__veilleuse.scene() === 'ImageScene'
 zuntil: window.__veilleuse.G.meta.endings.includes('beaux_reves')
 assert: window.__veilleuse.G.state.flags.fin_route === 'beaux_reves'

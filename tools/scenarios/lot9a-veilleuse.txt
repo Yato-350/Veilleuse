@@ -1,7 +1,8 @@
 # Lot 9 (first half): the finale's Veilleuse branch. Every condition of the secret ending holds (an Aube already in
 # the memory, the Golden Button kept, « J'ai de la fièvre », fewer than three corrections, the Pile spared, « Je ne
 # sais pas » at the corridor, the alarm clock's battery): after Maman's words, Dodo on the windowsill, something round
-# in his left paw, [Découdre Dodo ?]; « Le découdre » hands over to endingVeilleuse (lot 9b) instead of the radiator.
+# in his left paw, [Découdre Dodo ?]; « Le découdre » hands over to endingVeilleuse (lot 9b, played to the end by
+# lot9b-veilleuse) instead of the radiator.
 query: debug=script&name=finale_veilleuse&lang=fr
 wait:1500
 zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('Je sais que tu ne dormais pas')
@@ -11,5 +12,5 @@ assert: window.__veilleuse.dialogue.choices[0] === 'Le découdre' && (window.__v
 assert: !window.__veilleuse.world.entities.some((e) => e.id === 'hug') && window.__veilleuse.world.entities.some((e) => e.id === 'f_dodo')
 shot:decoudre
 choose:0
-zuntil: window.__veilleuse.G.meta.endings.includes('veilleuse')
-assert: window.__veilleuse.G.state.flags.fin_ending === 'veilleuse' || window.__veilleuse.readSave() === null
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('Je vais le réparer')
+assert: window.__veilleuse.G.state.flags.fin_decousu === true && !window.__veilleuse.world.entities.some((e) => e.id === 'f_dodo')

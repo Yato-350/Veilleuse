@@ -1,5 +1,8 @@
-# Lot 9 (first half): the route of the ink: afterFinalBattle plays Silence (endings.ts, rewritten by lot 9b) and records it.
+# Lot 9 (first half): the route of the ink: afterFinalBattle plays Silence (endings.ts, lot 9b; the whole ending is lot9b-silence) and records it.
 query: debug=script&name=finale_silence&lang=fr
 wait:1500
+zuntil: window.__veilleuse.G.state.map === 'appartement_silence'
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('Qui ?')
+zuntil: window.__veilleuse.scene() === 'ImageScene'
 zuntil: window.__veilleuse.G.meta.endings.includes('silence')
 assert: window.__veilleuse.G.state.flags.fin_route === 'silence'

@@ -272,10 +272,14 @@ export async function endingVeilleuse(d: Director): Promise<void> {
     await d.wait(22);
   }
   await d.say(['Tes points sont gros, de travers.', 'Ils ne ressemblent pas du tout aux siens.', 'Ils tiennent.']);
-  d.spawn({ id: 'f_dodo_recousu', sprite: 'prop_dodo_recousu', x: 1, y: 4, solid: false, shadow: false });
   d.set('fin_recousu');
   d.set('fin_ending', 'veilleuse');
   await d.wait(30);
+  await d.walkTo('player', 2, 5, 0.8);
+  d.face('player', 'left');
+  // On the bed, against the pillow (one row lower, drawn up: in front of the bed in the draw order).
+  const sewn = d.spawn({ id: 'f_dodo_recousu', sprite: 'prop_dodo_recousu', x: 1, y: 5, solid: false, shadow: false });
+  sewn.oy = -24;
   await d.say('Tu l\'assois sur le lit, contre le bonnet.');
   d.music('ending', 2);
   await d.wait(60);
@@ -386,6 +390,8 @@ async function hallwayYears(d: Director): Promise<void> {
     }
     await d.walkTo('maman', 12, KNOCK_AT.y + 1, 0.6);
     d.remove('maman');
+    // The last time, the door stays in view a moment: three notes, a line of light underneath.
+    if (i === NOTES.length - 1) await d.wait(120);
     await d.fadeOut(50);
   }
 }
@@ -411,6 +417,8 @@ export async function endingSilence(d: Director): Promise<void> {
   world.hideBanner();
   d.face('player', 'down');
   d.spawn({ id: 'maman', char: 'maman', x: 29, y: 5, dir: 'left' });
+  // A morning too bright: a pale wash over everything (lifted before the illustration).
+  fx.tint = { color: '#fff6e8', alpha: 0.2 };
   await d.fadeIn(60);
   d.sfx('bird', { vol: 0.3 });
   await d.wait(30);
@@ -452,6 +460,7 @@ export async function endingSilence(d: Director): Promise<void> {
   await d.wait(60);
   await d.emote('maman', '…', 80);
   await d.fadeOut(120);
+  fx.tint = null;
   d.remove('maman');
   await d.image('fin_silence', [
     'Noa va bien.',

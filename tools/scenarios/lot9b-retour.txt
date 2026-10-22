@@ -1,0 +1,18 @@
+# Lot 9 (second half): after Beaux rêves, « Continuer » starts a run straight in chapter 1 (flags.br_retour, set by
+# main.ts flow.dreamAgain). Mina: « Tu es revenu ! Tu as dormi super longtemps. »; the dream bed's marks, counted to
+# the end this time: « Trois cent soixante-cinq. »
+query: debug=script&name=c1_mina&lang=fr&flags=br_retour
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+zuntil: SAW('Tu es revenu !')
+shot:revenu
+zuntil: !V.dialogue.busy && V.world.busy === 0
+assert: !SAW('Je t\'attends depuis super longtemps.')
+interact:dream_bed
+zuntil: SAW('Trois cent soixante-cinq.')
+shot:lit
+auto

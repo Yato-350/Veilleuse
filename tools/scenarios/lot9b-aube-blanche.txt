@@ -1,0 +1,87 @@
+# Lot 9 (second half): Aube blanche (docs/HISTOIRE.md § 5), three drawings corrected in chapter 5. In Mina's room the
+# poem's six words are picked, then a seventh line writes itself in blue pen, « j'étais là » (the counter says 7/6),
+# and the narrator notes it; the nightlight plugged in; Maman's white memory (« Je lui tenais la main. » — « …Oui.
+# Oui, mon grand. »); the radiator; the sun is a round of correction fluid (fin_aube_blanche); the epilogue: Dodo mute,
+# the poem read aloud ends on « j'étais là. », « Je venais tous les jours. » at the stone and Maman says nothing;
+# the last line « Beaux rêves, {player}. ». Recorded as aube_blanche (not aube), the help card (3114) after the
+# credits, then the title with the white sun.
+query: debug=script&name=finale_poem&lang=fr&flags=c5_corrige=3
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+zuntil: V.game.top.constructor.name === 'PoemScene'
+KeyZ
+wait:200
+KeyZ
+wait:200
+KeyZ
+wait:200
+KeyZ
+wait:200
+KeyZ
+wait:200
+KeyZ
+wait:2400
+shot:poeme
+waitfor: V.game.top.constructor.name !== 'PoemScene'
+assert: V.G.state.flags.fin_poem.split('\n').includes('j\'étais là.') && V.G.meta.poems[V.G.meta.poems.length - 1].words.length === 7
+zuntil: SAW('stylo bleu')
+zuntil: V.world.entities.some((e) => e.id === 'maman')
+zuntil: TXT().includes('Je lui tenais la main')
+zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'fin_aube_blanche'
+wait:1500
+shot:soleil-blanc
+assert: V.G.state.flags.fin_ending === 'aube_blanche' && SAW('Oui, mon grand.') && !SAW('Trois heures quatorze')
+zuntil: V.G.state.map === 'bazar' && V.world.busy === 0 && !V.dialogue.busy
+interact:vl_etoile
+zuntil: V.dialogue.choices
+choose:0
+auto
+go:10/5
+ArrowUp:150
+KeyZ
+zuntil: V.dialogue.choices
+choose:0
+auto
+go:7/7
+ArrowDown:600
+waitfor: V.G.state.map === 'jardin'
+auto
+go:19/5
+ArrowUp:300
+wait:300
+auto
+go:19/4
+interact:mina_stone
+zuntil: V.dialogue.choices
+choose:0
+zuntil: V.dialogue.choices
+choose:0
+zuntil: TXT().includes('j\'étais là.')
+shot:lecture
+zuntil: V.dialogue.choices
+choose:0
+zuntil: SAW('Je venais tous les jours.')
+shot:tous-les-jours
+zuntil: SAW('Elle ne dit rien.') && !V.dialogue.busy && V.world.busy === 0
+interact:maman
+zuntil: V.dialogue.choices
+choose:0
+zuntil: TXT().includes('Beaux rêves,')
+shot:beaux-reves
+zuntil: V.scene() === 'CreditsScene'
+assert: V.G.meta.endings.includes('aube_blanche') && !V.G.meta.endings.includes('aube') && V.G.meta.lastEnding === 'aube_blanche'
+KeyZ:15000
+waitfor: V.game.top.phase === 'end'
+KeyZ
+waitfor: V.game.top.phase === 'help'
+wait:1500
+shot:aide
+KeyZ
+waitfor: V.scene() === 'TitleScene'
+wait:2500
+shot:titre
+assert: V.game.top.variant === 'soleil_blanc'

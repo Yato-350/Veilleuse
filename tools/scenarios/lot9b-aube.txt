@@ -1,0 +1,73 @@
+# Lot 9 (second half): Aube, the true ending (docs/HISTOIRE.md § 5, § 3.16). The sunrise in Mina's room (fin_aube),
+# then the epilogue: Dodo is mute (his belly gives nothing, « Il ne dit plus rien. Tu le prends quand même. »); the
+# shop; at the garden gate the stranger who has Mina's number writes « Bonne journée. » (Noa asked her forgiveness in
+# Interlude III) and he does not write back; on the stone, the nightlight, then the forty-second shell (chapter 5);
+# the poem, Dodo kept; going home; the closing voice keeps Dodo's name with Noa's blip. Recorded in the memory: the
+# ending, one more night, the last ending (the dawn title), and no help card after the credits.
+query: debug=script&name=fin_aube&lang=fr&flags=c5_coquillage42,i3_tel,i3_reply=pardon
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: (window.__nuits0 = V.G.meta.nuits, 1)
+zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'fin_aube'
+wait:1500
+shot:fin-aube
+zuntil: V.dialogue.choices && V.dialogue.choices[0] === 'Appuyer'
+shot:ventre
+zuntil: V.G.state.map === 'bazar' && V.world.busy === 0 && !V.dialogue.busy
+assert: SAW('La pile est morte.') && SAW('Tu le prends quand même.')
+interact:vl_lune
+zuntil: V.dialogue.choices
+choose:0
+auto
+go:10/5
+ArrowUp:150
+KeyZ
+zuntil: V.dialogue.choices
+choose:0
+auto
+assert: V.G.state.flags.ep_paid === true
+go:7/7
+ArrowDown:600
+waitfor: V.G.state.map === 'jardin'
+zuntil: SAW('Bonne journée.')
+shot:inconnue
+auto
+assert: V.G.state.flags.ep_inconnue === true && SAW('Tu ne réponds pas.')
+go:19/5
+ArrowUp:300
+wait:300
+auto
+go:19/4
+interact:mina_stone
+zuntil: V.dialogue.choices
+choose:0
+zuntil: SAW('Le quarante-deuxième.')
+shot:coquillage
+assert: V.world.entities.some((e) => e.id === 'coquillage') && V.G.state.flags.ep_coquillage === true
+zuntil: V.dialogue.choices
+choose:0
+zuntil: V.dialogue.choices
+choose:1
+auto
+assert: V.G.state.flags.ep_poem === true && V.G.state.flags.ep_dodo === 'garde'
+interact:maman
+zuntil: V.dialogue.choices
+choose:0
+zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'fin_jardin'
+zuntil: TXT().includes('Je veillerai sur lui.')
+shot:voix
+assert: V.dialogue.speaker.name === 'Dodo' && V.dialogue.opts.voice === 'noa'
+zuntil: V.scene() === 'CreditsScene'
+assert: V.G.meta.endings.includes('aube') && V.G.meta.lastEnding === 'aube' && V.G.meta.nuits === window.__nuits0 + 1 && !V.G.meta.runInProgress && V.readSave() === null
+KeyZ:15000
+waitfor: V.game.top.phase === 'end'
+wait:500
+KeyZ
+waitfor: V.scene() === 'TitleScene'
+wait:1500
+shot:titre
+assert: V.game.top.variant === 'dawn' && !SAW('idées noires')
