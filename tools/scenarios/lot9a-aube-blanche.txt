@@ -1,0 +1,20 @@
+# Lot 9 (first half): the finale's Aube blanche branch (chapter 5: three drawings corrected or more, c5_corrige ≥ 3).
+# Maman comes home: « Tu es réveillé. », the coda « Je savais » and the back of the fridge note, then the call and the
+# cold give way to a memory drawn in white (« J'étais là, à la fin. Je lui tenais la main. » — « …Oui. Oui, mon
+# grand. »); Nadia is not named (« Elle n'était pas dans le noir. »); the radiator knocks three times; the finale
+# hands over to endingAubeBlanche (lot 9b), which records the ending.
+query: debug=script&name=finale_aube_blanche&lang=fr
+wait:1500
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('Je sais que tu ne dormais pas')
+shot:mot
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('Je lui tenais la main')
+shot:blanc
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('Oui, mon grand')
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('pas dans le noir')
+assert: !(window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('Nadia')
+shot:noir
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('Une neuve')
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('radiateur cogne')
+assert: window.__veilleuse.G.state.flags.fin_ending === 'aube_blanche'
+zuntil: window.__veilleuse.G.meta.endings.includes('aube_blanche')
+assert: !window.__veilleuse.G.meta.endings.includes('aube')

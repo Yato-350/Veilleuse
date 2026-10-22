@@ -177,13 +177,40 @@ Perfusion 5,3 (7 tours) · Bracelet 8,5 (après : ATQ 5, cage plus serrée, bouc
 pour ce bot) ; d'où un coup de pouce vers la salle de jeux dans les répliques de Mina à l'hôpital
 (`MINA_LINES.hopital`, `chapter3.ts:1454`).
 
+## Final — « Le carnet », 5 h 52 (§ 3.15, coda § 2.11, lot 9)
+
+Le narrateur dit la vérité (règle 4, à partir du chapitre 6) ; chaque objet garde son double ordinaire (une veilleuse,
+un tiroir, des photos, un bonnet, un radiateur). Tout s'atteint en marchant et en appuyant sur A. Scripts de debug :
+`finale` (le réveil), `finale_porte` (devant la porte de Mina, clé et veilleuse en main), `finale_room`, `finale_poem`,
+`finale_phone` (`&flags=i3_tel,i3_reply=pardon`), `finale_maman`, et une entrée par branche : `finale_aube`,
+`finale_reste`, `finale_aube_blanche`, `finale_veilleuse`, `finale_beaux_reves`, `finale_silence`. Entités pour le bot :
+`veilleuse`, `bureau`, `photo`, `phone`, `mur` (chambre de Noa) ; `a_porte_mina` (couloir) ; `f_lit`, `f_mur`,
+`f_chevet`, `f_veilleuse`, `f_radiateur`, `f_dodo`, `carnet` (chambre de Mina).
+
+| Twist | Indice | Où | Entité / code | Preuve |
+|---|---|---|---|---|
+| T2 | Au réveil, Dodo a glissé contre Noa : « Tu le prends sous ton bras. Sans y penser. Comme avant. » ; dans la chambre de Mina, il est posé sur le rebord de la fenêtre (comme sur l'illustration `fin_aube`) | Lit de Noa ; fenêtre de Mina | `finale`, `src/game/story/real.ts:1114` ; `minaRoomEnter`, `:1301` ; `f_dodo` (`src/data/maps/real.ts:392`) ; drapeau `fin_dodo` | `lot9a-aube` |
+| T4 | La veilleuse a brillé « toutes les nuits, depuis un an » ; débranchée : « Il ne fait pas noir. Pas tout à fait. Plus tout à fait. » (le contraire de 3 h 38) ; « Quelqu'un l'avait enroulé comme ça, il y a un an. Quand elle est revenue de l'hôpital. » ; fêlée si `c4_fele` | Table de nuit de Noa | `veilleuse` → `finaleNightlight`, `real.ts:1141` ; sprites `prop_veilleuse` / `prop_veilleuse_fele` (`maps/real.ts:154`) ; drapeau `fin_veilleuse_prise` | `lot9a-aube`, `lot9a-fele` |
+| T8 | Le tiroir : « Tu sais ce qu'il y a dedans. Oui. Tu sais. » (le prologue disait « Non. Tu ne sais pas. ») ; « Il n'a jamais été fermé à clé. Il fallait juste tirer. » ; la clé de la chambre de Mina, une douzaine de petits visages découpés, les siens ; [Remettre ton visage sur la photo ?] → `photo_decoupee` puis `photo_famille`, « Tu avais oublié que tu souriais comme ça. » (double : des photos) | Bureau ; photo au sol | `bureau` → `finaleDesk`, `real.ts:1163` ; `offerFace`, `:1188` ; `photo`, drapeaux `fin_tiroir`, `fin_visage` | `lot9a-aube`, `lot9a-fele` |
+| § 3.15 | Le téléphone : Maman, « Je rentre. » ; si `i3_reply` = `pardon`, l'inconnue : « Je suis désolée. Écrivez si ça aide. Je ne répondrai pas. Bonne nuit. » (une adulte qui pose une limite, puis répond avec gentillesse) | Téléphone | `phone` → `finalePhone`, `finaleContacts`, `real.ts:1208`, `:1233` ; fil « Mina 🐑 » repris de `real-nuit.ts` (`minaThread`) ; drapeaux `fin_tel`, `fin_inconnue` | `lot9a-aube` |
+| T4 | La porte de Mina, fermée à clé ; sans la veilleuse : « Mais elle avait demandé quelque chose. Le dernier soir. » ; Noa frappe trois coups, silence, trois coups de l'intérieur (double : le tuyau du radiateur longe son mur) | Couloir à l'aube | `a_porte_mina` → `finaleMinaDoor`, `real.ts:1263` ; porte ouverte `a_porte_mina_h/_b` (`maps/real.ts:342`) ; drapeau `fin_porte` | `lot9a-aube` |
+| T9 | Le bonnet tricoté à oreilles de mouton, posé sur l'oreiller : « Tu l'as déjà vu. Une fois. Derrière une vitre. » | Lit de Mina | `f_lit` → `minaBed`, `real.ts:1319` ; sprite `prop_bed_mina_bonnet` (`src/data/sprites/props.ts:2608`) | `lot9a-aube` |
+| — | La peinture usée à hauteur d'oreiller : « Comme si quelqu'un avait frappé là. Souvent. » ; « De l'autre côté de ce mur, il y a ton lit. » | Mur au-dessus du lit (répond au pied du lit) | `f_mur` → `minaWall`, `real.ts:1336` ; sprite `prop_mur_use_mina` | `lot9a-aube` |
+| — | Le radiateur sous la fenêtre, son tuyau longe le mur jusqu'à la chambre de Noa ; « Le chauffage ne s'est pas encore remis en route. » | Sous la fenêtre de Mina | `f_radiateur` → `minaRadiator`, `real.ts:1345` | `lot9a-aube` |
+| T4 | La prise de sa table de nuit : « Rien de branché. Depuis le soir où elle est partie à l'hôpital. » ; la veilleuse branchée : « Le geste que tu n'as pas fait. » ; fêlée, elle brille quand même | Table de nuit de Mina | `f_chevet` → `minaNightlight`, `plugIn`, `real.ts:1354`, `:1371` ; drapeau `fin_plugged` | `lot9a-aube`, `lot9a-fele` |
+| T4 | La dernière page du carnet se relit : « Sur le dessin, un garçon dort. La veilleuse est branchée à côté de son lit à lui. » — « Elle savait. Elle a toujours su qui avait peur du noir. » | Bureau de Mina | `carnet`, `real.ts:1400` | `lot9a-aube` |
+| Coda | Maman : « Tu es réveillé. » ; Noa : « Je l'avais. La veilleuse. » ; « Je savais » (la lumière sous la porte, le réveil à cinq heures, « je savais que tu ne dormais pas », « Alors j'ai fait semblant aussi. Un an. ») ; le dos du mot du frigo complété : « Je sais que tu ne dormais pas. » | Chambre de Mina | `mamanComesHome`, `real.ts:1433`, `:1466`, `:1469`, `:1476` ; au frigo, après l'Interlude IV : « Au dos, sous les ratures : « Je sais que t— ». », `real.ts:898` | `lot9a-aube`, `lot9a-aube-blanche` |
+| T6 / T8 | L'appel et le rhume : « J'ai vu le téléphone. Trois heures quatorze. » ; « Je lui ai dit « dors ». » — « …C'est ce que je lui disais tous les soirs. » ; « avec ses globules, ça pouvait venir de partout » ; « Mais tu sais pas. » — « …Non. Je sais pas. Moi aussi je me demande. » ; « Elle n'était pas dans le noir. Nadia lui tenait la main. » | Chambre de Mina | `theCallAndTheCold`, `real.ts:1516` | `lot9a-aube` |
+| § 5 | Aube blanche : l'appel et le rhume remplacés par « J'étais là, à la fin. Je lui tenais la main. » — « …Oui. Oui, mon grand. » (elle ment pour lui, une deuxième fois ; Nadia n'est plus nommée) | Chambre de Mina | `whiteMemory`, `real.ts:1534` | `lot9a-aube-blanche` |
+| § 3.15 | `c4_reste` : Maman s'arrête sur le seuil, « Je ne savais pas si j'avais le droit. » | Seuil de la chambre de Mina | `real.ts:1454` | `lot9a-reste` |
+| § 5 | Veilleuse : toutes les conditions réunies, Dodo sur le rebord, « Dans sa patte gauche, sous le tissu, quelque chose de rond. Comme un bouton. » [Découdre Dodo ?] → `endingVeilleuse` ; « Le laisser » → l'Aube | Chambre de Mina | `offerUnstitch`, `real.ts:1560` ; `dawnEnding()` (`src/game/story/endings.ts:131`) ; drapeau `fin_ending` | `lot9a-veilleuse`, `lot9a-veilleuse-laisser` |
+| — | Le radiateur cogne trois fois : « C'est le chauffage. Mina disait que c'était toi. » — « …Je sais. » | Chambre de Mina | `radiatorKnocks`, `real.ts:1568` | `lot9a-veilleuse-laisser`, `v2_aube` |
+
 ## Encore à faire par les lots suivants
 
 | Twist | Indice | Où | Lot |
 |---|---|---|---|
 | T2 | Épilogue : « Je veillerai sur lui. Pour de vrai, cette fois. » (existant, `src/game/story/epilogue.ts:459`) | Épilogue | 9 |
-| T9 | Le bonnet posé sur l'oreiller | Final, `chambre_mina` | 9 |
-| Coda | Maman complète le dos du mot du frigo ; « Je savais » | Final | 9 |
 | T4 / T5 / coda | `bonus.ts` › `noaDoor` : la lumière sous la porte, « Il dort. Enfin. Cinq heures, ça ira. », Maman frappe et personne ne répond | Bonus | 11 |
 | T7 | Le bip de Dodo pour le narrateur entre minuit et 5 h (heure réelle) | Méta | 10 |
 | § 5 | La vibration de 3 h 14 pendant un interlude (« Mina 🐑 — appel entrant », puis « appel manqué ») | Méta | 10 |

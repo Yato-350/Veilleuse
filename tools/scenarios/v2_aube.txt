@@ -2,7 +2,7 @@
 # screen to the end credits through the six chapters, crossing every transition for real — prologue ─ enterDream(1) ─▶
 # ch. 1 ─ wakeUp(1) ─▶ I ─▶ ch. 2 ─▶ II ─▶ ch. 3 ─ wakeUp(3) ─▶ the false dawn ─▶ III ─ enterDream(4) ─▶ ch. 4 ─
 # wakeUp(4) ─▶ IV ─ enterDream(5) ─▶ ch. 5 ─ fallInto(6) ─▶ ch. 6 ─ « Ouvrir les yeux » ─ wakeUp(6) ─▶ the finale
-# (v1.1 « Le carnet » until lot 9) ─▶ the epilogue ─▶ finishGame('aube') ─▶ the credits. God mode; inside the chapters,
+# (« Le carnet », rewritten by lot 9) ─▶ the epilogue ─▶ finishGame('aube') ─▶ the credits. God mode; inside the chapters,
 # long walks and the middle of each chapter are skipped with flags and loads (each skip is commented), never a
 # transition. Every chapter entry checks its autosave. Takes about 25 minutes: run it alone (--jobs 1).
 query: debug=title&sheep=auto&lang=fr
@@ -586,11 +586,34 @@ menu:3
 auto
 shot:ouvrir
 choose:0
-# --- Finale « Le carnet » (5:52): wakeUp(6), the version 1.1 finale until production lot 9 rewrites it
+# --- Finale « Le carnet » (5:52, lot 9): wakeUp(6), Dodo under his arm; the phone (the stranger answered: Noa asked
+# her forgiveness in Interlude III); the drawer (the key, his faces) and one face taped back; the nightlight unplugged
+# and carried; three knocks at Mina's door, three knocks back; the nightlight plugged in next to her bed; the notebook
+# and the poem; Maman (« Je savais », the call, the cold); the radiator; the sunrise
 zuntil: V.G.state.flags.interlude === 9 && V.G.state.map === 'chambre'
 assert: V.G.state.flags.fin_route === 'aube' && V.G.state.flags.c6_final
 auto
 shot:finale
+assert: V.G.state.flags.fin_dodo === true
+interact:phone
+zuntil: V.game.top.constructor.name === 'PhoneScene' && V.game.top.mode === 'browse'
+KeyZ
+zuntil: V.G.state.flags.fin_inconnue === true && V.game.top.mode === 'browse' && !V.dialogue.busy
+KeyX
+wait:300
+KeyX
+auto
+interact:bureau
+zuntil: V.dialogue.choices
+choose:0
+zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'photo_famille'
+auto
+assert: V.G.state.flags.fin_tiroir === true && V.G.state.flags.fin_visage === true
+interact:veilleuse
+zuntil: V.dialogue.choices
+choose:0
+auto
+assert: V.G.state.flags.fin_veilleuse_prise === true
 go:8/3
 ArrowUp:120
 KeyZ
@@ -601,8 +624,16 @@ ArrowUp:120
 KeyZ
 zuntil: V.dialogue.choices
 choose:0
-waitfor: V.G.state.map === 'chambre_mina'
+zuntil: V.G.state.map === 'chambre_mina'
 auto
+assert: V.G.state.flags.fin_porte === true
+interact:f_chevet
+zuntil: V.dialogue.choices
+choose:0
+auto
+assert: V.G.state.flags.fin_plugged === true
+go:7/4
+ArrowUp:60
 interact:carnet
 zuntil: V.game.top.constructor.name === 'PoemScene'
 shot:poeme
@@ -617,7 +648,12 @@ wait:200
 KeyZ
 wait:200
 KeyZ
+zuntil: V.world.entities.some((e) => e.id === 'maman')
+zuntil: (V.dialogue.pages[V.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('Je sais que tu ne dormais pas')
+zuntil: (V.dialogue.pages[V.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('pas dans le noir')
+zuntil: (V.dialogue.pages[V.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('Une neuve')
 zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'fin_aube'
+assert: V.G.state.flags.fin_ending === 'aube'
 wait:2000
 shot:fin-aube
 # --- Épilogue « Une veilleuse neuve »

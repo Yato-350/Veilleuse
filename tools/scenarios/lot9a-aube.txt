@@ -97,6 +97,8 @@ choose:0
 auto
 assert: window.__veilleuse.G.state.flags.fin_plugged === true
 shot:branchee
+go:7/4
+ArrowUp:60
 interact:carnet
 zuntil: window.__veilleuse.scene() === 'ImageScene' && window.__veilleuse.game.top.key === 'carnet_page4'
 wait:1500

@@ -1,0 +1,46 @@
+# Lot 9 (first half): the finale when the Little Man was beaten in chapter 4 (c4_fele): the nightlight on Noa's
+# nightstand is cracked; « Pas encore » keeps it there (save point); the drawer opened but the face left (« Pas
+# maintenant »), then put back from the photo itself; the nightlight unplugged, Mina's door, and once plugged in next
+# to her bed it still glows, the crack across the moon.
+query: debug=script&name=finale&lang=fr&flags=c4_fele
+wait:1500
+auto
+assert: window.__veilleuse.world.entities.find((e) => e.id === 'veilleuse').sprite === 'prop_veilleuse_fele'
+interact:veilleuse
+zuntil: window.__veilleuse.dialogue.choices
+choose:1
+zuntil: window.__veilleuse.dialogue.choices
+choose:1
+auto
+assert: !window.__veilleuse.G.state.flags.fin_veilleuse_prise && window.__veilleuse.world.entities.some((e) => e.id === 'veilleuse')
+interact:bureau
+zuntil: window.__veilleuse.dialogue.choices
+choose:1
+auto
+assert: window.__veilleuse.G.state.flags.fin_tiroir === true && !window.__veilleuse.G.state.flags.fin_visage
+interact:photo
+zuntil: window.__veilleuse.dialogue.choices
+choose:0
+zuntil: window.__veilleuse.scene() === 'ImageScene' && window.__veilleuse.game.top.key === 'photo_famille'
+auto
+assert: window.__veilleuse.G.state.flags.fin_visage === true
+interact:veilleuse
+zuntil: window.__veilleuse.dialogue.choices
+choose:0
+auto
+load:appartement_aube/mina
+wait:800
+auto
+interact:a_porte_mina
+zuntil: window.__veilleuse.dialogue.choices
+choose:0
+zuntil: window.__veilleuse.G.state.map === 'chambre_mina'
+auto
+interact:f_chevet
+zuntil: window.__veilleuse.dialogue.choices
+choose:0
+auto
+assert: window.__veilleuse.world.entities.find((e) => e.id === 'f_veilleuse').sprite === 'prop_veilleuse_fele'
+go:3/4
+wait:400
+shot:fele

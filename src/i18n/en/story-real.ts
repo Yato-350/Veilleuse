@@ -459,7 +459,7 @@ export const STORY_REAL: Record<string, string> = {
   'Le couloir est plein de poussière.': 'The hallway is full of dust.',
   'Cette fois, tu sais que ça ne s\'arrête pas au générique.': 'This time, you know it doesn\'t stop at the credits.',
   // Finale « Le carnet » (version 2, production lot 9).
-  'Ton lit. Les draps sont froids.': 'Your bed. The sheets are cold.',
+  'Ton lit. Les draps sont encore tièdes.': 'Your bed. The sheets are still warm.',
   'Il n\'y a pas de monstre dedans. Il n\'y en a jamais eu.': 'There\'s no monster inside. There never was.',
   'Juste des pulls. Et, tout au fond, une vieille boîte : « Pour Noa, 4 ans ».': 'Just sweaters. And, way at the back, an old box: "For Noa, age 4".',
   'Sa porte est ouverte, maintenant.': 'Her door is open, now.',

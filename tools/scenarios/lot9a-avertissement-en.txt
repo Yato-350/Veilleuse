@@ -1,0 +1,5 @@
+# Lot 9 (first half): the content warning in English (988 / Samaritans instead of the 3114), same layout.
+query: lang=en
+wait:2500
+assert: window.__veilleuse.game.top.constructor.name === 'WarningScene'
+shot:en

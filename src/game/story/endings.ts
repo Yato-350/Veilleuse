@@ -16,10 +16,13 @@ import { finishGame, wakeUp, type EndingId } from './common';
  *   endingAubeBlanche, endingVeilleuse           version 2, placeholders: production lot 9 writes them (and the v2
  *                                                 Aube, Beaux rêves and Silence) in this file.
  *   afterFinalBattle(d, route)                   where the v2 final battle (chapter 6, src/data/enemies-ch6.ts) leads:
- *                                                 « Ouvrir les yeux » wakes up into the finale (STORY.wake[6], still the
- *                                                 v1.1 « Le carnet » until lot 9), « Rester » is Beaux rêves, the
- *                                                 route of the ink is Silence.
- *   dawnEnding()                                 which ending the finale closes on, once the eyes are open (§ 5).
+ *                                                 « Ouvrir les yeux » wakes up into the finale « Le carnet » (real.ts,
+ *                                                 STORY.wake[6]), « Rester » is Beaux rêves, the route of the ink is
+ *                                                 Silence.
+ *   dawnEnding()                                 which ending the finale closes on, once the eyes are open (§ 5). The
+ *                                                 finale (real.ts mamanComesHome) plays Aube itself (sunrise, epilogue),
+ *                                                 calls endingAubeBlanche after the radiator, and endingVeilleuse when
+ *                                                 Noa chooses to unstitch Dodo (flags.fin_ending says which).
  *
  * Flags: fin_route 'aube' | 'beaux_reves' | 'silence' (set by the final battles).
  */
@@ -151,12 +154,19 @@ export async function afterFinalBattle(d: Director, route: FinalRoute): Promise<
   else await wakeUp(d, 6);
 }
 
-/** Aube blanche (§ 5) — placeholder until production lot 9: records the ending and rolls the credits. */
+/**
+ * Aube blanche (§ 5) — placeholder until production lot 9b: records the ending and rolls the credits. Called by the
+ * finale in Mina's room after the radiator (Maman and Noa still in each other's arms: entity 'hug').
+ */
 export async function endingAubeBlanche(d: Director): Promise<void> {
   await finishGame(d, 'aube_blanche');
 }
 
-/** Veilleuse, the secret ending (§ 5) — placeholder until production lot 9: records the ending and rolls the credits. */
+/**
+ * Veilleuse, the secret ending (§ 5) — placeholder until production lot 9b: records the ending and rolls the credits.
+ * Called by the finale in Mina's room once Noa chose « Le découdre » (Maman 'maman' and Noa standing, Dodo 'f_dodo'
+ * on the windowsill, the nightlight plugged in; the radiator has not knocked yet).
+ */
 export async function endingVeilleuse(d: Director): Promise<void> {
   await finishGame(d, 'veilleuse');
 }

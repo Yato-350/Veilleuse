@@ -294,6 +294,10 @@ enroulé), `prop_desk_tiroir` (bureau, tiroir entrouvert), `prop_mur_use` (mur, 
 `prop_postit`, `prop_boite_couture`, `prop_kit_vocal`, `prop_boite_dents`, `prop_commode` (2×1), `prop_miroir_dessin`
 (mur), `prop_panier`. Planche : `?debug=sheet&filter=prop_casque,prop_lit_maman,…&base`.
 
+**Monde réel, le final** (« Le carnet », v2 — `FINALE` dans `props.ts`) : `prop_bed_mina_bonnet` (16×32, 1×2 : le lit
+de Mina, le bonnet à oreilles de mouton posé sur l'oreiller), `prop_bonnet_oreiller` (le bonnet seul, 13×10),
+`prop_mur_use_mina` (la peinture usée sur le papier peint de Mina ; sa variante `@real` garde ses couleurs).
+
 **Rêve — Pays de Coton**
 
 | Clé | Taille | Empreinte | Description |

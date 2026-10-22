@@ -505,7 +505,7 @@ export const bed: Script = async (d) => {
   }
   await d.say(
     flag('fin_dodo')
-      ? ['Ton lit. Les draps sont froids.', 'Tu n\'as plus sommeil. Pour la première fois depuis longtemps.']
+      ? ['Ton lit. Les draps sont encore tièdes.', 'Tu n\'as plus sommeil. Pour la première fois depuis longtemps.']
       : ['Dodo est sur ton lit, la tête tournée vers la porte.', 'Tu n\'as plus sommeil. Pour la première fois depuis longtemps.'],
   );
 };
@@ -1440,17 +1440,21 @@ async function mamanComesHome(d: Director): Promise<void> {
   await d.wait(20);
   d.sfx('step', { pitch: 0.7 });
   await d.say('Noa ?', 'maman:neutral');
+  // She comes in up to the middle of the room, or stays on the threshold if Noa stands in her way.
+  const px = Math.floor(d.player.x / 16);
+  const py = Math.floor((d.player.y - 1) / 16);
+  const near = py >= 6 && Math.abs(px - 6) <= 1;
   d.spawn({ id: 'maman', char: 'maman', x: 6, y: 9, dir: 'up' });
-  await d.walkTo('maman', 6, 8, 0.6);
+  if (py < 8) await d.walkTo('maman', 6, 8, 0.6);
   d.face('player', 'down');
   if (flag('c4_reste')) {
     // In chapter 4, Noa asked the paper Maman to stay at the table. Here she stops on the threshold.
     await d.wait(60);
-    await d.say('…', 'maman:sad');
-    await d.say('Je ne savais pas si j\'avais le droit.', 'maman:sad');
+    await d.say('…', 'maman:sad', { pos: 'top' });
+    await d.say('Je ne savais pas si j\'avais le droit.', 'maman:sad', { pos: 'top' });
     await d.wait(30);
   }
-  await d.walkTo('maman', 6, 6, 0.6);
+  if (!near) await d.walkTo('maman', 6, 6, 0.6);
   await d.wait(20);
   await d.say('Tu es réveillé.', 'maman:neutral');
   await d.wait(20);
@@ -1496,8 +1500,8 @@ async function mamanComesHome(d: Director): Promise<void> {
       return;
     }
   }
-  await radiatorKnocks(d);
   d.set('fin_ending', end === 'aube_blanche' ? 'aube_blanche' : 'aube');
+  await radiatorKnocks(d);
   if (end === 'aube_blanche') {
     await endingAubeBlanche(d);
     return;
@@ -1765,7 +1769,11 @@ async function finaleMaman(d: Director, flags: Record<string, string | number | 
   Object.assign(G.state.flags, { fin_room: true, fin_plugged: true, fin_carnet: true }, flags);
   if (!G.state.flags.fin_poem) G.state.flags.fin_poem = composePoem(DEBUG_WORDS).join('\n');
   d.load('chambre_mina', 'door');
+  // At the desk, where the notebook was read.
+  d.player.x = 7 * 16 + 8;
+  d.player.y = 4 * 16 + 14;
   d.face('player', 'up');
+  world.snapCamera();
   await d.fadeIn(10);
   await mamanComesHome(d);
 }

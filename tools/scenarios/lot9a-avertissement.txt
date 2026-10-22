@@ -1,0 +1,9 @@
+# Lot 9 (first half): the content warning before the title screen is the text of the story bible § 6.3 (grief, a
+# child's illness and death, guilt, withdrawal, dark thoughts; psychological horror, unstitched dolls and plushies,
+# ink that runs like blood, fake crashes; the 3114, free, day and night). A press goes on to the title screen.
+query: lang=fr
+wait:2500
+assert: window.__veilleuse.game.top.constructor.name === 'WarningScene'
+shot:fr
+KeyZ
+waitfor: window.__veilleuse.scene() === 'TitleScene'
