@@ -512,7 +512,7 @@ async function owlNotebook(d: Director): Promise<void> {
   d.set('c2_carnet_hibou');
   await d.say(['Hou. Le carnet aux étoiles…', 'Ce carnet n\'a que trois pays. Le reste, quelqu\'un d\'autre le gribouille.'], 'hibou');
   if (withMina()) {
-    await d.say(['Normal ! Les dernières pages d\'un cahier, c\'est toujours pour les gribouillis.', 'Tout le monde sait ça.'], 'mina:happy');
+    await d.say(['Normal ! Les dernières pages d\'un cahier, c\'est toujours pour les gribouillis.', 'Tout le monde fait ça.'], 'mina:happy');
   } else {
     await d.say('Les cahiers d\'enfants finissent souvent comme ça. Hou.', 'hibou');
   }

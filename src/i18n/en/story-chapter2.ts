@@ -383,6 +383,7 @@ export const STORY_CHAPTER2: Record<string, string> = {
   'Ce carnet n\'a que trois pays. Le reste, quelqu\'un d\'autre le gribouille.': 'This notebook only has three lands. The rest, someone else scribbles in.',
   'Normal ! Les dernières pages d\'un cahier, c\'est toujours pour les gribouillis.': 'Of course! The last pages of a notebook are always for scribbles.',
   'Les cahiers d\'enfants finissent souvent comme ça. Hou.': 'Children\'s notebooks often end like that. Hoo.',
+  'Tout le monde fait ça.': 'Everybody does that.',
   // The book that repeats one sentence
   'Sauf un. Celui-là, on l\'a ouvert souvent : la tranche est toute grise de doigts.': 'Except one. That one has been opened a lot: its edge is all grey with fingerprints.',
   'Tu l\'ouvres au hasard.': 'You open it at random.',
