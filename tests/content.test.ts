@@ -23,7 +23,9 @@ import { daysSince, defaultTitleVariant, TITLE_VARIANTS } from '../src/game/scen
 import { parseRich, plainText } from '../src/game/ui/richtext';
 import { nightNarratorVoice } from '../src/game/ui/dialogue';
 import { DEBUG_SCRIPTS } from '../src/game/story';
-import { fallInto, REAL, STORY } from '../src/game/story/common';
+import { fallInto, HELP_CARD_ENDINGS, REAL, STORY } from '../src/game/story/common';
+import { composePoem } from '../src/game/scenes/poem';
+import { silenced } from '../src/game/ui/share';
 import { PHONE_CLOCK } from '../src/game/story/real';
 import { interlude3, interlude4, isNuit } from '../src/game/story/real-nuit';
 import * as chapter5 from '../src/game/story/chapter5';
@@ -405,9 +407,30 @@ describe('v2 scenes', () => {
     expect(defaultTitleVariant([])).toBe('night');
     expect(defaultTitleVariant(['beaux_reves'])).toBe('dream');
     expect(defaultTitleVariant(['silence', 'aube'])).toBe('dawn');
+    // Version 2: the ending reached last picks the title (§ 5).
+    expect(defaultTitleVariant(['aube', 'silence'], 'silence')).toBe('silence_v2');
+    expect(defaultTitleVariant(['aube'], 'aube_blanche')).toBe('soleil_blanc');
+    expect(defaultTitleVariant(['aube'], 'beaux_reves')).toBe('continuer_seul');
+    expect(defaultTitleVariant(['aube'], 'veilleuse')).toBe('veilleuse');
+    expect(defaultTitleVariant(['silence'], 'aube')).toBe('dawn');
     const day = 86400000;
     expect(daysSince(0)).toBe(0);
     expect(daysSince(1000, 1000 + 23 * day + 5)).toBe(23);
+  });
+
+  it('endings (lot 9): the help card after the darker three, the debug entries, the self-written line, the blank name', () => {
+    expect([...HELP_CARD_ENDINGS].sort()).toEqual(['aube_blanche', 'beaux_reves', 'silence']);
+    for (const name of ['fin_aube', 'fin_aube_blanche', 'fin_beaux_reves', 'fin_silence', 'fin_veilleuse', 'epilogue_v2']) expect(DEBUG_SCRIPTS[name], name).toBeTypeOf('function');
+    for (const key of ['fin_aube_blanche', 'fin_veilleuse', 'lune_finie', 'fin_beaux_reves', 'fin_silence']) expect(ILLUSTRATIONS[key], key).toBeTypeOf('function');
+    for (const map of ['appartement_br', 'appartement_silence']) expect(MAPS[map], map).toBeDefined();
+    const poem = composePoem([{ text: 'lune', emotion: 'joie' }, { text: 'j\'étais là', emotion: 'neutre' }]);
+    expect(poem).toContain('j\'étais là.');
+    const before = G.meta.lastEnding;
+    G.meta.lastEnding = 'silence';
+    expect(silenced('Le carnet de Mina')).toBe('Le carnet de ______');
+    G.meta.lastEnding = 'aube';
+    expect(silenced('Le carnet de Mina')).toBe('Le carnet de Mina');
+    G.meta.lastEnding = before;
   });
 
   it('dialogue: {as:…} switches the speaker mid-box, {voice:…} only the blip, {static} crackles', () => {

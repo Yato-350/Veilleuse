@@ -43,5 +43,8 @@ write:observe
 menu:1
 wait:400
 KeyZ
+zuntil: window.__veilleuse.G.state.map === 'appartement_silence'
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('Qui ?')
+zuntil: window.__veilleuse.scene() === 'ImageScene'
 zuntil: window.__veilleuse.G.meta.endings.includes('silence')
 assert: window.__veilleuse.G.state.flags.fin_route === 'silence'

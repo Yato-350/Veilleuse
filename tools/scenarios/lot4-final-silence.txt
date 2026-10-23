@@ -1,6 +1,6 @@
 # Lot 4: the final battle on the route of the ink (nothing spared, 12 Ink). Phase 3: nobody knocks, only the radiator;
 # phase 4: every word is drowned (« Regarde ce que tu as fait. Il n'y a plus personne à qui dire au revoir. »):
-# flags.fin_route = 'silence', and afterFinalBattle plays Silence (version 1.1 until lot 9).
+# flags.fin_route = 'silence', and afterFinalBattle plays Silence (version 2 since lot 9: the storeroom).
 query: debug=script&name=dodo_v2_fin_silence&lang=fr
 god
 wait:1500
@@ -17,5 +17,8 @@ menu:1
 wait:400
 shot:carnet
 KeyZ
+zuntil: window.__veilleuse.G.state.map === 'appartement_silence'
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('Qui ?')
+zuntil: window.__veilleuse.scene() === 'ImageScene'
 zuntil: window.__veilleuse.G.meta.endings.includes('silence')
 assert: window.__veilleuse.G.state.flags.fin_route === 'silence'

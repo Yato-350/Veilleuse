@@ -13,6 +13,7 @@ import { ARMORS, attack, defense, formatPlaytime, G, level, maxHp, WEAPONS } fro
 import { dialogue } from '../ui/dialogue';
 import { bar, box, heart } from '../ui/draw';
 import { OptionsPanel } from '../ui/options';
+import { silenced } from '../ui/share';
 import { ImageScene } from './image';
 import { tf, tr, translated } from '../../i18n';
 
@@ -327,13 +328,14 @@ export class MenuScene implements Scene {
       hits.add(this, `item:${i}`, px + 4, y - 2, pw - 8, 12);
       if (sel) heart(g, px + 8, y + 3, '#ff4a5a');
       const isKey = i >= G.state.items.length;
-      drawText(g, tr(def?.name ?? items[i]!), px + 19, y, { color: sel ? '#ffd84a' : isKey ? '#a7c7f0' : '#fffaf2' });
+      drawText(g, silenced(tr(def?.name ?? items[i]!)), px + 19, y, { color: sel ? '#ffd84a' : isKey ? '#a7c7f0' : '#fffaf2' });
     }
     const cur = ITEMS[items[Math.min(this.itemIdx, items.length - 1)]!];
     if (cur && this.focus === 'items') {
       g.fillStyle = '#3a2c4c';
       g.fillRect(px + 6, py + ph - 40, pw - 12, 1);
-      drawWrapped(g, tr(cur.desc), px + 10, py + ph - 36, pw - 20, { color: '#d8cfe0' });
+      // After the Silence ending, Mina's name is a blank in the menus too (ui/share.ts silenced).
+      drawWrapped(g, silenced(tr(cur.desc)), px + 10, py + ph - 36, pw - 20, { color: '#d8cfe0' });
     }
   }
 
@@ -366,8 +368,8 @@ export class MenuScene implements Scene {
       ['Étoiles', `${s.etoiles}`, '#ffd84a'],
       ['Encre', `${s.encre}`, '#b06aff'],
       ['Boutons', `${s.boutons}`, '#f5c04f'],
-      ['Arme', tr(WEAPONS[s.weapon]?.name ?? '-')],
-      ['Tenue', tr(ARMORS[s.armor]?.name ?? '-')],
+      ['Arme', silenced(tr(WEAPONS[s.weapon]?.name ?? '-'))],
+      ['Tenue', silenced(tr(ARMORS[s.armor]?.name ?? '-'))],
       ['Temps de jeu', formatPlaytime(s.playtime)],
     ];
     rows.forEach(([k, v, c], i) => {

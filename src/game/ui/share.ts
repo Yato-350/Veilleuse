@@ -31,8 +31,9 @@ export function poemDate(at: number): string {
 }
 
 /**
- * After the Silence ending (it is the last one reached: `meta.lastEnding`), Mina's name is a blank in the notebook
- * of memories and the poems (docs/HISTOIRE.md § 5). Any other ending gives it back.
+ * After the Silence ending (it is the last one reached: `meta.lastEnding`), Mina's name is a blank in the menus (item
+ * names and descriptions), the notebook of memories and the poems (docs/HISTOIRE.md § 5). The dialogue keeps it. The
+ * next ending reached gives it back.
  */
 export function silenced(text: string): string {
   return G.meta.lastEnding === 'silence' ? text.replace(/Mina/g, '______') : text;

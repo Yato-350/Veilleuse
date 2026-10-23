@@ -14,5 +14,9 @@ assert: window.__veilleuse.game.top.menuLabels[0] === 'RESTER'
 menu:0
 auto
 choose:0
+zuntil: window.__veilleuse.G.state.map === 'appartement_br'
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('16.')
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('toujours là')
+zuntil: window.__veilleuse.scene() === 'ImageScene'
 zuntil: window.__veilleuse.G.meta.endings.includes('beaux_reves')
 assert: window.__veilleuse.G.state.flags.fin_route === 'beaux_reves'

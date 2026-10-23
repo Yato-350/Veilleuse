@@ -206,11 +206,28 @@ un tiroir, des photos, un bonnet, un radiateur). Tout s'atteint en marchant et e
 | § 5 | Veilleuse : toutes les conditions réunies, Dodo sur le rebord, « Dans sa patte gauche, sous le tissu, quelque chose de rond. Comme un bouton. » [Découdre Dodo ?] → `endingVeilleuse` ; « Le laisser » → l'Aube | Chambre de Mina | `offerUnstitch`, `real.ts:1560` ; `dawnEnding()` (`src/game/story/endings.ts:131`) ; drapeau `fin_ending` | `lot9a-veilleuse`, `lot9a-veilleuse-laisser` |
 | — | Le radiateur cogne trois fois : « C'est le chauffage. Mina disait que c'était toi. » — « …Je sais. » | Chambre de Mina | `radiatorKnocks`, `real.ts:1568` | `lot9a-veilleuse-laisser`, `v2_aube` |
 
+## Fins et épilogue (§ 5, § 3.16, lot 9)
+
+Les cinq fins se rejouent par debug : `fin_aube`, `fin_aube_blanche`, `fin_veilleuse`, `fin_beaux_reves`,
+`fin_silence` (`src/game/story/endings.ts`, `DEBUG`), et l'épilogue v2 entier par `epilogue_v2`
+(`&flags=fin_ending=aube_blanche|veilleuse`). Entités pour le bot : `coquillage`, `dodo_plush` (sur la pierre),
+`f_dodo_recousu` (chambre de Mina), `br_mot_0…2` (les mots sur la porte), `s_pancarte` (le débarras).
+
+| Twist | Indice | Où | Entité / code | Preuve |
+|---|---|---|---|---|
+| T2 / T7 | La voix off de fin garde le nom « Dodo » avec le bip de Noa (« Je veillerai sur lui. Pour de vrai, cette fois. ») ; après la fin secrète (`meta.dodoSilent`), elle n'a plus de nom | Épilogue, écran noir | `goHome`, `src/game/story/epilogue.ts:543` | `lot9b-aube` |
+| T7 | Dodo muet : « Rien. Pas un grésillement. La pile est morte. » — « Il ne dit plus rien. Tu le prends quand même. » (double : une pile morte) | Avant la boutique | `dodoInBag`, `epilogue.ts:132` | `lot9b-aube` |
+| § 5 | Aube blanche : le poème écrit tout seul « j'étais là » au stylo bleu (« 7/6 ») ; « Tu ne te souviens pas de l'avoir écrite. Elle a l'air vraie. » (double : écrit à moitié endormi) ; le soleil est un rond de correcteur (`fin_aube_blanche`) ; « Je venais tous les jours. », Maman ne dit rien ; « Beaux rêves, {player}. » | Chambre de Mina ; pierre | `PoemScene` (`opts.extra`, `src/game/scenes/poem.ts`) ; `carnet`, `src/game/story/real.ts:1409` ; `endingAubeBlanche`, `endings.ts:154` ; `mamanJoins`, `epilogue.ts:500` | `lot9b-aube-blanche` |
+| Secret | Le découd-vite (« Tu vas l'abîmer. » — « Je vais le réparer. »), le dessin fini `lune_finie` (« FINI. (sans toi mais avec toi) », le grand frère sans masque), la piste 1 nette avec la pile du réveil, la piste 2 sous le bouton doré (« C'est pas toi qui m'as rendue malade, gros bêta. », enregistrée avant la dernière nuit), « Elle savait pas, pour l'appel. » — « Non. Mais elle te connaissait. », trois coups au mur et le radiateur répond, Dodo recousu au fil bleu ; à l'épilogue, laissé sur la pierre, puis les dessins de Mina | Chambre de Mina ; pierre | `endingVeilleuse`, `endings.ts:173` ; `dodoMoment`, `epilogue.ts:452` ; drapeaux `fin_decousu`, `fin_piste1`, `fin_piste2`, `fin_recousu` | `lot9b-veilleuse` |
+| § 5 | Beaux rêves : « Tu n'auras plus mal. » puis, à l'écran, le contraire (« Ce n'était pas vrai. Ça fait mal pareil. ») ; les mots sur la porte (15 ans, « 16. », « Je t'aime. »), « …Merci. » à travers la porte, la pile qui meurt sur « beaux rê— », un garçon de seize ans vivant (`fin_beaux_reves`) ; le titre « Continuer » ramène au chapitre 1 : « Tu es revenu ! Tu as dormi super longtemps. », 365 bâtons comptés | Couloir (`appartement_br`) ; prairie | `endingBeauxReves`, `hallwayYears`, `endings.ts:307`, `:343` ; `meetMina`, `dreamBed` (`chapter1.ts`, drapeau `br_retour`) | `lot9b-beaux-reves`, `lot9b-retour` |
+| § 5 | Silence : la porte de Mina devenue « DÉBARRAS » (sans plaque, la trace des lettres décollées sur `fin_silence`), sa chaise et son coffre disparus, « Ta sœur aurait eu neuf ans cette année. » — « Qui ? », trois coups dans le débarras (double : le radiateur), « Personne ne bouge. » ; son prénom devient « ______ » dans les menus, le Carnet de souvenirs et les poèmes tant que Silence est la dernière fin | Couloir (`appartement_silence`) ; titre | `endingSilence`, `endings.ts:403` ; `silenced`, `src/game/ui/share.ts:38` | `lot9b-silence` |
+| § 3.16 | L'inconnue, au portail : « Bonne journée. » (Noa ne répond pas : elle avait demandé d'arrêter) ; le quarante-deuxième coquillage posé sur la pierre (« Dans sa chambre, peut-être. ») | Jardin | `strangerGoodDay`, `epilogue.ts:264` ; `shell42`, `:389` | `lot9b-aube` |
+| § 5 | La « Fin heureuse » (laisser défiler le faux générique) n'est jamais enregistrée : ni `endings`, ni `lastEnding`, ni `nuits` | Faux générique | `fausse-aube.ts` (aucun `finishGame`) | `lot9b-fin-heureuse` |
+
 ## Encore à faire par les lots suivants
 
 | Twist | Indice | Où | Lot |
 |---|---|---|---|
-| T2 | Épilogue : « Je veillerai sur lui. Pour de vrai, cette fois. » (existant, `src/game/story/epilogue.ts:459`) | Épilogue | 9 |
 | T4 / T5 / coda | `bonus.ts` › `noaDoor` : la lumière sous la porte, « Il dort. Enfin. Cinq heures, ça ira. », Maman frappe et personne ne répond | Bonus | 11 |
 | T7 | Le bip de Dodo pour le narrateur entre minuit et 5 h (heure réelle) | Méta | 10 |
 | § 5 | La vibration de 3 h 14 pendant un interlude (« Mina 🐑 — appel entrant », puis « appel manqué ») | Méta | 10 |

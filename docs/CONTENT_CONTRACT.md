@@ -553,8 +553,11 @@ hachures, couleurs vives sur papier), style pixel sombre pour les souvenirs rée
 | `carnet_page3` | dessin de la forêt de crayons et du hibou |
 | `carnet_page4` | dernière page : la lune, une veilleuse, et l'écriture « Si tu as peur du noir, regarde la lune. Moi je serai ta veilleuse. — Mina » |
 | `fin_aube` | aube à la fenêtre de la chambre de Mina, silhouettes de Maman et Noa enlacés |
-| `fin_beaux_reves` | Noa endormi dans son lit, Dodo veille, tout est bleu nuit, immobile |
-| `fin_silence` | le Pays de Coton noyé d'encre, vide |
+| `fin_aube_blanche` | la même aube, mais le soleil est un rond de correcteur blanc cerclé de stylo bleu (pas de rayons) |
+| `lune_finie` | le dessin des deux enfants sous la lune, fini par Mina seule, plié en quatre, « FINI. (sans toi mais avec toi) » |
+| `fin_veilleuse` | la chambre de Mina à l'aube : la veilleuse branchée près de son lit, Dodo recousu au fil bleu, le dessin au mur |
+| `fin_beaux_reves` | Noa à seize ans, assis dans son lit, réveillé, casque, Dodo dans les bras ; 14, 15, 16 au crayon sur le chambranle |
+| `fin_silence` | la porte de Mina en plein jour, une pancarte « DÉBARRAS », la trace des lettres décollées, pas de lumière dessous |
 | `tv_mina` | image de vidéo familiale à la télé : Mina qui montre un dessin, lignes de balayage |
 
 `SOUVENIRS` : `fenetre` (titre « La fenêtre », image `souvenir_fenetre`), `dessin` (« Le dessin inachevé »),
@@ -565,6 +568,8 @@ v2 : une illustration par fichier de chapitre, autonome (ses propres petites pri
 par décomposition comme `illustrations-bonus.ts`. Chapitre 4 : `src/data/illustrations-ch4.ts` →
 `souvenir_lumiere` (le couloir la nuit, le trait de lumière sous la porte, l'ombre d'une main posée à plat, le
 radiateur). Toute nouvelle illustration va aussi dans `CATALOG` de `src/game/scenes/gallery.ts`.
+Fins v2 (lot 9) : `fin_aube_blanche` et `lune_finie` reprennent les peintures de `fin_aube` et `souvenir_dessin` dans
+`illustrations.ts` ; `fin_beaux_reves`, `fin_silence` et `fin_veilleuse` sont dans `src/data/illustrations-fins.ts`.
 Interludes III et IV : `src/data/illustrations-nuit.ts` → `polaroid_dodo` (T2, le polaroïd au fond du sac) et
 `dessin_chut` (T5, le dessin du miroir de Maman) ; `photo_decoupee` (la photo de l'été, le visage de Noa découpé) est
 dessinée à côté de `photo_famille` dans `illustrations.ts`, dont elle reprend la peinture.
@@ -602,7 +607,12 @@ Les chapitres ne se connectent **que** via `src/game/story/common.ts` :
   main. La fin du chapitre (après le boss et le souvenir) appelle `await wakeUp(d, n)`.
 - `chapter3` gère le combat (court, v2) contre Dodo : toutes ses issues mènent à `wakeUp(d, 3)`, la fausse aube. Les
   fins (`finishGame(d, 'aube' | 'aube_blanche' | 'beaux_reves' | 'silence' | 'veilleuse')`) sont dans `endings.ts`
-  et suivent le combat final du chapitre 6 (route du silence : `isSilenceRoute()` de `common.ts`).
+  et suivent le combat final du chapitre 6 (route du silence : `isSilenceRoute()` de `common.ts`). Aube, Aube
+  blanche et Veilleuse passent par l'épilogue (`epilogue.ts`, variante lue dans `flags.fin_ending`), qui appelle
+  `finishGame`. `finishGame` retient la fin dans la mémoire (`endings`, `lastEnding` qui choisit l'écran titre,
+  `nuits` + 1, `beauxRevesAt`, `dodoSilent`) et ajoute la carte d'aide (3114) après Beaux rêves, Silence et Aube
+  blanche. La « Fin heureuse » du faux générique n'appelle jamais `finishGame`. Cartes des fins :
+  `appartement_br`, `appartement_silence` (`src/data/maps/endings.ts`).
 - Un `start` de chapitre commence écran noir (`fx` à 1) : il doit faire `d.load(...)` puis `await d.fadeIn()`, et
   peut d'abord appeler `await d.chapter('Chapitre 1', 'Le Pays de Coton', 'sous-titre')`.
 

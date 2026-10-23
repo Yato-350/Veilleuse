@@ -1,5 +1,5 @@
 # Lot 4: the final battle, phase 4, then « Rester »: after two of her words, DORMIR becomes RESTER; staying is Beaux
-# rêves (flags.fin_route = 'beaux_reves'), and afterFinalBattle plays that ending (version 1.1 until lot 9).
+# rêves (flags.fin_route = 'beaux_reves'), and afterFinalBattle plays that ending (version 2 since lot 9: the years behind his door).
 query: debug=script&name=dodo_v2_fin&lang=fr
 god
 wait:1500
@@ -13,5 +13,9 @@ assert: window.__veilleuse.game.top.menuLabels[0] === 'RESTER'
 menu:0
 auto
 choose:0
+zuntil: window.__veilleuse.G.state.map === 'appartement_br'
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('16.')
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('toujours là')
+zuntil: window.__veilleuse.scene() === 'ImageScene'
 zuntil: window.__veilleuse.G.meta.endings.includes('beaux_reves')
 assert: window.__veilleuse.G.state.flags.fin_route === 'beaux_reves'

@@ -212,7 +212,7 @@ export async function endingVeilleuse(d: Director): Promise<void> {
   // Track 1, clear for the first time in a year: the battery of Maman's alarm clock (Interlude IV, i4_pile).
   await d.say(['Dans le boîtier, trois piles plates. Mortes.', 'Dans ta poche, la pile du réveil de Maman. Celle de cette nuit.']);
   d.sfx('pop', { pitch: 0.7, vol: 0.5 });
-  await d.say('Tu la glisses dans le boîtier. Elle rentre. Juste.');
+  await d.say('Tu la glisses dans le boîtier, à la place d\'une morte. Elle rentre. Juste.');
   await d.ask('Le ventre de Dodo.', ['Appuyer']);
   d.sfx('pop', { pitch: 1.4, vol: 0.4 });
   await d.wait(30);
