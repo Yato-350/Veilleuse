@@ -9,6 +9,7 @@ import { SPEAKERS, type Speaker } from '../../data/speakers';
 import { lang, tr, trAll } from '../../i18n';
 import { hasSpr, spr } from '../assets';
 import { G, TEXT_SPEEDS } from '../state';
+import { now as clockNow } from '../clock';
 import { box, heart, nextArrow, type BoxStyle } from './draw';
 import { layoutRich, parseRich, type RichChar } from './richtext';
 
@@ -94,7 +95,7 @@ export class Dialogue {
   }
 
   private vars(): Record<string, string> {
-    const now = new Date();
+    const now = clockNow();
     return {
       player: G.state.playerName || '…',
       PLAYER: (G.state.playerName || '…').toUpperCase(),

@@ -55,7 +55,7 @@ export const STORY_CHAPTER1: Record<string, string> = {
   'Sauf qu\'il grince pas. Et qu\'il y a pas tes chaussettes sales dessous.': 'Except it doesn\'t squeak. And there\'s no dirty socks under it.',
   'Sur la tête de lit, des petits bâtons gravés. Par paquets de cinq.': 'On the headboard, little tally marks carved into the wood. In bundles of five.',
   'Tu arrêtes de compter à cent.': 'You stop counting at a hundred.',
-  'Cette fois, tu les comptes tous. Trois cent soixante-cinq.': 'This time, you count them all. Three hundred and sixty-five.',
+  'Cette fois, tu les comptes tous. {0}.': 'This time, you count them all. {0}.',
   'Et les petits traits, c\'est pour compter les dodos jusqu\'à Noël ? Moi aussi, je fais ça !': 'And the little lines, is that to count the sleeps till Christmas? I do that too!',
   'Un rocher. Quelqu\'un a dessiné un smiley dessus.': 'A rock. Someone drew a smiley face on it.',
   'C\'est moi qui l\'ai dessiné ! Il te ressemble.': 'I drew that! It looks like you.',

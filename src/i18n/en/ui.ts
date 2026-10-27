@@ -338,4 +338,18 @@ export const UI: Record<string, string> = {
   'toi': 'you',
   'Pour Mina': 'For Mina',
   '{0} !': '{0}!',
+  // Meta (meta.ts, docs/HISTOIRE.md § 5): the save slot, the 3:14 call, the page « Pendant ton absence ».
+  'Nuit {0}': 'Night {0}',
+  'Tu n\'as pas pu décrocher.': 'You couldn\'t pick up.',
+  'Tu ne l\'ouvres pas.': 'You don\'t open it.',
+  'Pendant ton absence': 'While you were away',
+  'Noa a dit :': 'Noa said:',
+  '« …t\'es là ? »': '"…you there?"',
+  '« … »': '"…"',
+  '« {0} ? »': '"{0}?"',
+  '« Toc. »': '"Knock."',
+  '« Je compte les moutons. J\'en suis à cent. »': '"I\'m counting sheep. I\'m up to a hundred."',
+  '« C\'est pas grave. J\'ai l\'habitude. »': '"It\'s okay. I\'m used to it."',
+  '« Je laisse la lumière. Pour quand tu reviendras. »': '"I\'ll leave the light on. For when you come back."',
+  '« Tu reviens, hein ? »': '"You\'re coming back, right?"',
 };

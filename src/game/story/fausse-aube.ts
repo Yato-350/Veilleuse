@@ -533,12 +533,17 @@ async function hug(d: Director): Promise<void> {
 /** The stuck line of each pass: one more « introuvable » every time. */
 export const minaCredit = (pass: number): string => ['Mina ………', ...Array.from({ length: pass }, () => 'introuvable')].join(' ');
 
-/** Laid out exactly like the real credits, with a cast where Mina cannot be found (and the player can). */
+/**
+ * Laid out exactly like the real credits, with a cast where Mina cannot be found (and the player can). A memory that
+ * saw the end of version 1.1 (meta.endingsV1: its credits came right here, after chapter 3) reads one more line under
+ * the title, before the stop, so that every path sees it (§ 5 « Méta »).
+ */
 export function fauxCreditLines(pass: number): { lines: CreditLine[]; stop: number } {
   const mina: CreditLine = [minaCredit(pass)];
   const memory: CreditLine[] = G.meta.endingsV1.length ? [['Tu croyais que c\'était fini, la dernière fois.', '#8a7f96'], ['']] : [];
   const lines: CreditLine[] = [
     ...CREDIT_LINES.slice(0, 4),
+    ...memory,
     ['— Distribution —', '#8a7f96'],
     ['Noa ……… Noa'],
     ['Maman ……… Maman'],
@@ -549,7 +554,6 @@ export function fauxCreditLines(pass: number): { lines: CreditLine[]; stop: numb
     ['Toi ……… {player}'],
     [''],
     ...CREDIT_LINES.slice(4, -1),
-    ...memory,
     CREDIT_LINES[CREDIT_LINES.length - 1]!,
   ];
   return { lines, stop: lines.indexOf(mina) };

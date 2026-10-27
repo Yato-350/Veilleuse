@@ -213,12 +213,20 @@ async function lastWordIII(d: Director): Promise<void> {
     d.set('i3_fin_dit');
     await d.say(['Dodo est sur l\'oreiller. Exactement là où tu l\'as laissé.', 'Tu t\'assois au bord du lit.']);
     await d.wait(40);
-    d.sfx('static', { vol: 0.15, pitch: 1.2 });
-    await d.wait(30);
-    await d.say('Tu vois ?', 'dodoreel');
-    await d.wait(20);
-    await d.say('Tu reviens toujours.', 'dodoreel');
-    await d.wait(30);
+    if (G.meta.dodoSilent) {
+      // Dodo is silent for good (after the secret ending): not even static. Only the question, in Noa's voice.
+      await d.say('Il ne dit rien.');
+      await d.wait(30);
+      await d.say('Tu reviens toujours.', undefined, { voice: 'noa' });
+      await d.wait(30);
+    } else {
+      d.sfx('static', { vol: 0.15, pitch: 1.2 });
+      await d.wait(30);
+      await d.say('Tu vois ?', 'dodoreel');
+      await d.wait(20);
+      await d.say('Tu reviens toujours.', 'dodoreel');
+      await d.wait(30);
+    }
   }
   const r = await d.ask('Dormir ?', ['Dormir', 'Pas encore'], undefined, { cancelIndex: 1 });
   if (r !== 0) {

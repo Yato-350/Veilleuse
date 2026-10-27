@@ -15,7 +15,8 @@ import { CreditsScene } from './credits';
 import { install } from '../pwa';
 import { NameEntryScene } from './nameentry';
 import { GalleryScene } from './gallery';
-import { lang, tf, tr } from '../../i18n';
+import { lang, tf, tn, tr } from '../../i18n';
+import { now as clockNow } from '../clock';
 
 type Item = { label: string; action: () => void; color?: string };
 
@@ -52,6 +53,15 @@ export function defaultTitleVariant(endings: string[] = G.meta.endings, last: st
 /** Real days since `since` (ms timestamp), for the Beaux rêves title (« Ça fait 23 jours, … »). */
 export function daysSince(since: number, now: number = Date.now()): number {
   return since > 0 ? Math.max(0, Math.floor((now - since) / 86400000)) : 0;
+}
+
+/**
+ * The save slot's label: the night it is (« Nuit 366 »), the name, the play time. The name goes first when it does not
+ * fit in `width` pixels.
+ */
+export function saveSlotLabel(night: number, name: string, time: string, width = W / 2 - 14): string {
+  const full = [tf('Nuit {0}', night), name, time].filter(Boolean).join(' · ');
+  return measure(full) <= width ? full : [tf('Nuit {0}', night), time].join(' · ');
 }
 
 export interface TitleOptions {
@@ -250,12 +260,10 @@ export class TitleScene implements Scene {
       drawText(g, tr(it.label), W / 2 - 40, y, { color: sel ? '#ffd84a' : (it.color ?? '#fffaf2'), shadow: '#0b0710' });
       g.globalAlpha = 1;
     });
-    // Save info
-    if (hasSave() && this.idx === 0 && !this.opts.single && this.variant !== 'continuer_seul') {
+    // The save slot, named after the night it is (« Nuit 366 »: meta.nuits, one more per ending), beside « Continuer ».
+    if (hasSave() && this.idx === 0 && !this.opts.single) {
       const s = readSave();
-      if (s) {
-        drawText(g, `${s.playerName ? s.playerName + ' · ' : ''}${formatPlaytime(s.playtime)}`, W / 2 + 10, startY, { color: '#8a7f96' });
-      }
+      if (s) drawText(g, saveSlotLabel(G.meta.nuits, s.playerName, formatPlaytime(s.playtime)), W / 2 + 10, startY, { color: '#8a7f96' });
     }
     drawText(g, `v${VERSION}`, W - 4, H - 11, { color: '#4e4359', align: 'right' });
     this.drawMeta(g);
@@ -267,12 +275,12 @@ export class TitleScene implements Scene {
       const days = daysSince(G.meta.beauxRevesAt);
       const name = G.meta.names[G.meta.names.length - 1] ?? G.state.playerName ?? '';
       g.globalAlpha = 0.8;
-      const text = tf(days === 1 ? 'Ça fait {0} jour, {1}. Il est toujours dans sa chambre.' : 'Ça fait {0} jours, {1}. Il est toujours dans sa chambre.', days, name || '…');
+      const text = tn(days, 'Ça fait {0} jour, {1}. Il est toujours dans sa chambre.', 'Ça fait {0} jours, {1}. Il est toujours dans sa chambre.', name || '…');
       drawWrapped(g, text, 40, H - 27, W - 80, { color: '#9a7bd0', align: 'center', lineHeight: 10, shadow: '#0b0710' });
       g.globalAlpha = 1;
       return;
     }
-    const h = new Date().getHours();
+    const h = clockNow().getHours();
     if (h >= 0 && h < 5) {
       const a = 0.5 + 0.3 * Math.sin(this.t * 0.03);
       g.globalAlpha = a;

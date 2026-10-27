@@ -19,7 +19,8 @@ import { applySettings } from './game/ui/options';
 import { TitleScene } from './game/scenes/title';
 import { WarningScene } from './game/scenes/warning';
 import { dreamAgain, startBonus, startPrologue } from './game/story';
-import { setupMeta } from './game/meta';
+import { cameBack, setupMeta } from './game/meta';
+import { nowMs, resetClock, setClock, shiftClock } from './game/clock';
 import { startDebug } from './game/debug';
 import { openMenu } from './game/scenes/menu';
 import { bindLanguage, isLang, missing } from './i18n';
@@ -164,6 +165,9 @@ function boot(): void {
     flow,
     readSave,
     readMeta,
+    // The real clock as the game reads it (set: 'h:mm', shift: ms), and the return to the tab (from, to: ms).
+    clock: { set: setClock, shift: shiftClock, reset: resetClock, now: nowMs },
+    cameBack,
   };
 }
 

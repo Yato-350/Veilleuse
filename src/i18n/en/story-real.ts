@@ -622,4 +622,8 @@ export const STORY_REAL: Record<string, string> = {
   // Aube blanche: the poem's last line, in blue pen
   'La dernière ligne est au stylo bleu.': 'The last line is in blue pen.',
   'Tu ne te souviens pas de l\'avoir écrite. Elle a l\'air vraie.': 'You don\'t remember writing it. It looks true.',
+  // Interlude II once Dodo is silent for good (meta.dodoSilent): his words are the narrator's
+  'Dodo est sur l\'oreiller, là où tu l\'as reposé.': 'Dodo is on the pillow, where you put him back.',
+  'Il ne dit rien. Il ne dira plus rien.': 'He says nothing. He will never say anything again.',
+  'Tu sais ce qui se passe quand on se réveille ?': 'You know what happens when you wake up?',
 };

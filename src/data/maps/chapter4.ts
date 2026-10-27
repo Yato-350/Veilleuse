@@ -314,6 +314,18 @@ const MANNEQUINS: Array<[string, number, number]> = [
   ['mq_364', 13, 8],
 ];
 
+/** The newest crowns, fallen apart from the pile: one per run that reached an ending (C4.extraCrown). [x, y, ox, oy] */
+const EXTRA_CROWNS: Array<[number, number, number, number]> = [
+  [2, 11, -2, 1],
+  [6, 10, 5, -3],
+  [1, 10, 4, 3],
+  [4, 11, 3, 2],
+  [7, 11, -4, 0],
+  [2, 9, 6, 5],
+  [6, 9, 1, 6],
+  [3, 11, -6, 4],
+];
+
 const GRENIER: MapDef = {
   id: 'grenier',
   name: 'Le grenier',
@@ -352,6 +364,7 @@ const GRENIER: MapDef = {
     // The crowns, the tally marks, the patterns, the dormer.
     P('prop_c4_couronnes', 3, 10, { id: 'couronnes', w: 3, script: C4.crownsPile }),
     P('prop_c4_couronne', 6, 11, { solid: false, script: C4.crownsPile }),
+    ...EXTRA_CROWNS.map(([x, y, ox, oy], i) => P('prop_c4_couronne', x, y, { id: `couronne_${i + 1}`, ox, oy, solid: false, cond: C4.extraCrown(i + 1), script: C4.crownsPile })),
     SPOT(5, 2, C4.tallyMarks, { w: 4, h: 2 }),
     SPOT(13, 2, C4.tallyMarks, { w: 4, h: 2 }),
     WALL('prop_drawings', 9, 3, -4, { script: C4.look(['Des patrons de couture, épinglés au mur, en papier de soie.', 'Une robe, taille 8 ans. Une cape. Une couronne.', 'Le même patron, trois cent soixante-cinq fois, l\'un sur l\'autre. Le papier est devenu épais comme du carton.'], 'C\'est ma taille, ça. …C\'est ma taille ?') }),

@@ -19,6 +19,8 @@ import { DEBUG_SCRIPTS } from './story';
 import { CreditsScene } from './scenes/credits';
 import { GalleryScene } from './scenes/gallery';
 import { composePoem } from './scenes/poem';
+import { applyMetaSpec } from './meta';
+import { setClock } from './clock';
 
 /**
  * Developer entry points, driven by URL parameters (used by tools/shot.mjs for visual checks):
@@ -34,6 +36,12 @@ import { composePoem } from './scenes/poem';
  *   ?debug=credits&mode=faux   the fake credits of the false dawn (stop, choice, rewind / let roll, cross-stitch)
  *   ?debug=credits&mode=aide   the credits followed by the help card
  *   ?debug=gallery&seen=some|all|none&poems=3&open=1   title screen + « Carnet de souvenirs » with sample memories
+ * With any mode:
+ *   &meta=endings:aube,callVersion:douce   a simulated memory (docs/HISTOIRE.md § 5): any Meta field, lists with « | »
+ *                                          (endings:aube|silence), booleans alone (dodoSilent), beauxRevesAt in days ago,
+ *                                          nights following the endings unless given (nuits:367). See meta.ts applyMetaSpec.
+ *                                          In memory only: a script that saves the memory (an ending…) writes it.
+ *   &clock=3:14                            the real clock reads 3:14 from now on (the night narrator, the 3:14 call…)
  */
 export function startDebug(p: URLSearchParams): void {
   const mode = p.get('debug') ?? '';
@@ -47,6 +55,11 @@ export function startDebug(p: URLSearchParams): void {
   }
   for (const it of (p.get('items') ?? '').split(',').filter(Boolean)) G.state.items.push(it);
   for (const it of (p.get('keys') ?? '').split(',').filter(Boolean)) G.state.keyItems.push(it);
+  if (p.get('meta')) {
+    const unknown = applyMetaSpec(G.meta, p.get('meta')!);
+    if (unknown.length) console.error(`Unknown meta fields: ${unknown.join(', ')}`);
+  }
+  if (p.get('clock') && !setClock(p.get('clock')!)) console.error(`Bad clock: ${p.get('clock')} (expected h:mm)`);
   fx.setFade(0);
   switch (mode) {
     case 'sheet':

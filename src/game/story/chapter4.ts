@@ -14,6 +14,7 @@ import { world } from '../overworld/world';
 import { CountingScene, type SheepKind, type SheepRound } from '../scenes/sheepcount';
 import { G, maxHp } from '../state';
 import { wakeUp } from './common';
+import { NumberWords, runsBefore } from '../meta';
 
 /**
  * Chapter 4 — « La Maison Cousue » (docs/HISTOIRE.md § 3.11, T3 § 2.4, T4 § 2.5).
@@ -1311,11 +1312,20 @@ export const tallyMarks: Script = async (d) => {
   await mina(d, 'C\'est quelqu\'un qui compte les nuits. Moi, je compte les moutons. C\'est pareil ?', 'neutral');
 };
 
-/** The pile of crowns. */
+/**
+ * The pile of crowns: one per night already dreamt (meta.nuits − 1: 364 on a first run, one more for every run that
+ * reached an ending, docs/HISTOIRE.md § 5). The newest ones lie apart from the pile (maps/chapter4.ts, EXTRA_CROWNS).
+ */
 export const crownsPile: Script = async (d) => {
-  await d.say(['Des couronnes de papier, en tas. Des centaines.', 'Toutes pliées pareil. Toutes un peu écrasées sur le côté gauche, là où une tête s\'appuie sur l\'oreiller.', 'Trois cent soixante-quatre. Tu n\'as pas besoin de compter. Tu le sais.']);
+  const extra = runsBefore();
+  await d.say(['Des couronnes de papier, en tas. Des centaines.', 'Toutes pliées pareil. Toutes un peu écrasées sur le côté gauche, là où une tête s\'appuie sur l\'oreiller.', tf('{0}. Tu n\'as pas besoin de compter. Tu le sais.', NumberWords(G.meta.nuits - 1, true))]);
+  if (extra === 1) await d.say(['Une de plus que la dernière fois.', 'Celle-là n\'est pas encore écrasée.']);
+  else if (extra > 1) await d.say([tf('{0} de plus que la première fois.', NumberWords(extra, true)), 'Les dernières ne sont pas encore écrasées.']);
   await mina(d, 'C\'est des déguisements.{p:40} …Hein ?', 'neutral', '…');
 };
+
+/** The newest crowns, apart from the pile: the `k`-th is there after `k` runs that reached an ending. */
+export const extraCrown = (k: number) => (): boolean => runsBefore() >= k;
 
 /** The curtain of threads before the seamstress's corner. */
 export const curtain: Script = async (d) => {

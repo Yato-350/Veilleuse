@@ -1090,6 +1090,10 @@ export const minaDoorAjar: Script = async (d) => {
  */
 async function interlude2Dodo(d: Director): Promise<void> {
   await d.emote('player', '…', 50);
+  if (G.meta.dodoSilent) {
+    await interlude2Silent(d);
+    return;
+  }
   d.music('dodo');
   await d.say('Tu sais ce qui se passe quand on se réveille, {player} ?', 'dodoreel');
   await d.say(['On perd tout.', 'Les rêves s\'en vont. Les gens dedans aussi.'], 'dodoreel');
@@ -1097,6 +1101,20 @@ async function interlude2Dodo(d: Director): Promise<void> {
   if (G.meta.fauxGenerique > 0) await d.say('Cette fois, tu sais que ça ne s\'arrête pas au générique.', 'dodoreel');
   setPageTitle('Ne pars pas');
   await d.say('Dors, Noa. {spd:0.5}Mina t\'attend.{/spd}', 'dodoreel');
+  await d.ask('Tes paupières sont si lourdes.', ['Dormir']);
+  await enterDream(d, 3);
+}
+
+/**
+ * The same moment once Dodo is silent for good (meta.dodoSilent, after the secret ending): the plush says nothing.
+ * His words come back as the narrator's, with Noa's blip: they were always his (T7, rule 4 of § 1.5).
+ */
+async function interlude2Silent(d: Director): Promise<void> {
+  await d.say(['Dodo est sur l\'oreiller, là où tu l\'as reposé.', 'Il ne dit rien. Il ne dira plus rien.']);
+  await d.wait(40);
+  await d.say(['Tu sais ce qui se passe quand on se réveille ?', 'On perd tout.'], undefined, { voice: 'noa' });
+  if (G.meta.fauxGenerique > 0) await d.say('Cette fois, tu sais que ça ne s\'arrête pas au générique.', undefined, { voice: 'noa' });
+  setPageTitle('Ne pars pas');
   await d.ask('Tes paupières sont si lourdes.', ['Dormir']);
   await enterDream(d, 3);
 }

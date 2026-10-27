@@ -8,6 +8,7 @@ import { SOUVENIRS } from '../../data/illustrations';
 import { SheepCountScene } from '../scenes/sheepcount';
 import { shop, wakeUp } from './common';
 import { tf, tr } from '../../i18n';
+import { NumberWords } from '../meta';
 
 /**
  * Chapter 1 — « Le Pays de Coton ».
@@ -161,7 +162,7 @@ export const meetMina: Script = async (d) => {
 export const dreamBed: Script = async (d) => {
   await d.say(['Un lit, posé au milieu de la prairie.', 'Les draps sont tièdes. Ils sentent la lessive de Maman.']);
   if (!bump('c1_bed_baton'))
-    await d.say(['Sur la tête de lit, des petits bâtons gravés. Par paquets de cinq.', flag('br_retour') ? 'Cette fois, tu les comptes tous. Trois cent soixante-cinq.' : 'Tu arrêtes de compter à cent.']);
+    await d.say(['Sur la tête de lit, des petits bâtons gravés. Par paquets de cinq.', flag('br_retour') ? tf('Cette fois, tu les comptes tous. {0}.', NumberWords(G.meta.nuits - 1)) : 'Tu arrêtes de compter à cent.']);
   if (withMina() && !bump('c1_bed_mina')) {
     await d.say(['C\'est ton lit ? Il ressemble à celui de la maison !', 'Sauf qu\'il grince pas. Et qu\'il y a pas tes chaussettes sales dessous.'], 'mina:happy');
     await d.say('Et les petits traits, c\'est pour compter les dodos jusqu\'à Noël ? Moi aussi, je fais ça !', 'mina:happy');
