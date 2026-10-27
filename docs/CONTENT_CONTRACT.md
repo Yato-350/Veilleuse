@@ -31,6 +31,8 @@ Requêtes utiles pour `tools/shot.mjs` (la capture PNG peut ensuite être **lue*
 | `debug=image&key=souvenir_fenetre` | affiche une illustration |
 | `debug=script&name=<nom>&map=<carte>` | joue un script de `DEBUG` (voir § 8) |
 | `debug=title` | écran titre |
+| `…&meta=endings:aube,callVersion:douce` | avec n'importe quel mode : simule une mémoire (§ 5 de `HISTOIRE.md` ; tout champ de `Meta`, listes séparées par `\|`, booléen seul = vrai, `beauxRevesAt` en jours, nuits = 365 + une par fin sauf `nuits:N` ; voir `applyMetaSpec` dans `src/game/meta.ts`) |
+| `…&clock=3:14` | avec n'importe quel mode : l'horloge réelle du jeu lit 3 h 14 (narrateur de nuit, appel de 3 h 14, `{time}`) |
 
 Touches : flèches = déplacement, `KeyZ`/`Enter` = A (valider), `KeyX`/`Escape` = B, `KeyC` = menu.
 Exemple : `node tools/shot.mjs "debug=map&map=village" /tmp/v.png --keys "ArrowUp:800,KeyZ,wait:600"`.
@@ -692,6 +694,12 @@ const mots = await d.poem('Pour Mina');              // poème à la DDLC → Wo
 Effets visuels directs : `import { fx } from '../../engine/fx'` (`fx.glitch = 0.3`, `fx.gray`, `fx.tint`,
 `fx.vignette`), `import { setPageTitle } from '../meta'` (titre d'onglet inquiétant), `G.state` / `G.meta` pour la
 mémoire (`G.meta.newGames`, `G.meta.deaths`, `G.meta.endings`), `isLateNight()` de `src/game/meta.ts`.
+Mémoire v2 (§ 5 « Méta et nouvelle partie+ ») : `G.meta.nuits` (365, +1 par fin ; `runsBefore()` = parties finies),
+`numberWords(n, feminine)` / `NumberWords` (nombre en toutes lettres dans la langue du jeu), `sawV2Ending()`
+(`real.ts`, ouvre les répliques NG+), `G.meta.dodoSilent`, `G.meta.fauxGenerique`, `G.meta.callVersion`. L'heure
+réelle passe par `src/game/clock.ts` (`now()`), jamais par `new Date()`, pour que `&clock=` et le bot la règlent.
+Le bip de Dodo pour le narrateur la nuit, la page « Pendant ton absence » et l'appel de 3 h 14 sont gérés par
+`meta.ts` (rien à faire dans les scripts : ils attendent que le joueur soit libre).
 
 **Combats de boss** : passer des `hooks` (`BattleHooks` de `src/game/battle/types.ts`) — `onMenu(b, i)` (intercepter
 un bouton du menu principal, ex. « DORMIR »), `beforeTurn` (dialogues
@@ -717,7 +725,8 @@ de poche pour le Placard), `onWord`, `words` (remplacer le carnet), `menuLabels`
 
 ### 8.5 Drapeaux (flags)
 
-Préfixes : `p_` (prologue), `i1_`, `i2_` (interludes), `c1_`, `c2_`, `c3_` (chapitres), `fin_` (finale).
+Préfixes : `p_` (prologue), `i1_`, `i2_` (interludes), `c1_`, `c2_`, `c3_` (chapitres), `fin_` (finale), `m_` (posés
+par la méta, `src/game/meta.ts` : `m_appel_314`, `m_absence`).
 Drapeaux partagés :
 
 | Drapeau | Posé par | Lu par | Sens |

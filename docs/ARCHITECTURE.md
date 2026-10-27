@@ -37,9 +37,10 @@ index.html ─ main.ts ─┬─ engine/   (indépendant du jeu)
 | `ui/` | Boîte de dialogue (machine à écrire, texte enrichi, portraits, choix), dessins d'interface, options |
 | `scenes/` | Avertissement, titre (qui évolue selon les fins vues), saisie du nom, menu pause, boutique, game over, cartes de chapitre, illustrations, poème, crédits |
 | `story/` | Scénario : `common.ts` relie les modules (`enterDream`, `wakeUp`, `finishGame`), un module par fil narratif |
-| `meta.ts` | Quatrième mur : changement de titre d'onglet, retour sur la page, heure réelle |
+| `meta.ts` | Quatrième mur : changement de titre d'onglet, retour sur la page, heure réelle. v2 (§ 5 « Méta ») : bip de Dodo pour le narrateur entre minuit et 5 h, page « Pendant ton absence » dès le ch. 4, appel de 3 h 14 pendant un interlude (chacun attend un moment libre), nombres en toutes lettres (`numberWords`), mémoire simulée pour le debug (`applyMetaSpec`) |
+| `clock.ts` | L'horloge réelle telle que le jeu la lit (`{time}`, narrateur de nuit, 3 h 14, titre) ; réglable par `&clock=` et par le bot (`__veilleuse.clock`) |
 | `pwa.ts` | Service worker, invite d'installation, notification de mise à jour |
-| `debug.ts` | Points d'entrée de développement par URL (`?debug=map&map=…`, `?debug=battle&…`, planches de sprites) |
+| `debug.ts` | Points d'entrée de développement par URL (`?debug=map&map=…`, `?debug=battle&…`, planches de sprites ; avec tout mode, `&meta=…` simule une mémoire et `&clock=h:mm` règle l'heure) |
 
 ## `src/data` — contenu
 

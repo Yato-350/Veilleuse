@@ -17,7 +17,11 @@ import { REAL, realPhase } from './story/common';
  * - the narrator's blip becomes Dodo's between midnight and 5 a.m., real time (`dialogue.narratorVoice`);
  * - from chapter 4 on, coming back to the tab after a while brings a page: « Pendant ton absence, Noa a dit : … »;
  * - at 3:14, real time, during an interlude, Noa's phone rings (« Mina 🐑 ») and cannot be answered.
- * Each waits for a free moment (exploring, no dialogue): never mid-cutscene, never mid-battle.
+ * Each waits for a free moment (exploring, no dialogue): never mid-cutscene, never mid-battle. None in the bonus run.
+ *
+ * Flags set in the run:
+ *   m_appel_314   the 3:14 call rang (once a real night)
+ *   m_absence     number of « Pendant ton absence » pages shown
  */
 let creepyTitle: string | null = null;
 let leftAt = 0;

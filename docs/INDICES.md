@@ -224,10 +224,31 @@ Les cinq fins se rejouent par debug : `fin_aube`, `fin_aube_blanche`, `fin_veill
 | § 3.16 | L'inconnue, au portail : « Bonne journée. » (Noa ne répond pas : elle avait demandé d'arrêter) ; le quarante-deuxième coquillage posé sur la pierre (« Dans sa chambre, peut-être. ») | Jardin | `strangerGoodDay`, `epilogue.ts:264` ; `shell42`, `:389` | `lot9b-aube` |
 | § 5 | La « Fin heureuse » (laisser défiler le faux générique) n'est jamais enregistrée : ni `endings`, ni `lastEnding`, ni `nuits` | Faux générique | `fausse-aube.ts` (aucun `finishGame`) | `lot9b-fin-heureuse` |
 
+## Mémoire méta et nouvelle partie+ (§ 5 « Méta et nouvelle partie+ », lot 10)
+
+Chaque ligne du tableau du § 5 se vérifie par debug : `?debug=…&meta=…` simule une mémoire (n'importe quel champ de
+`Meta`, listes séparées par `|`, booléen seul = vrai, `beauxRevesAt` en jours, nuits = 365 + une par fin si `nuits`
+n'est pas donné : `applyMetaSpec`, `src/game/meta.ts:312`) et `&clock=3:14` règle l'horloge réelle du jeu
+(`src/game/clock.ts`). Le bot dispose aussi de `__veilleuse.clock` (`set`, `shift`) et de `__veilleuse.cameBack`.
+Drapeaux de partie posés par la méta : `m_appel_314`, `m_absence` (nombre de pages).
+
+| Ligne du § 5 | Ce qu'on voit | Où | Entité / code | Preuve |
+|---|---|---|---|---|
+| `meta.nuits` | L'emplacement de sauvegarde porte le nom de la nuit : « Nuit 366 · nom · temps », à côté de « Continuer » (aussi sur le titre de *Beaux rêves*) | Titre | `saveSlotLabel`, `src/game/scenes/title.ts:62`, `:127` | `lot10-titre` |
+| `meta.nuits` | Une couronne de plus dans le grenier à chaque partie finie : le tas compte `nuits − 1` (« Trois cent soixante-quatre. » la première fois), « Une de plus que la dernière fois. », les nouvelles tombées à côté du tas, pas encore écrasées (double : des couronnes de papier pour se déguiser) | Ch. 4, grenier | `crownsPile`, `chapter4.ts:1319` ; `couronne_1…8` (`EXTRA_CROWNS`, `src/data/maps/chapter4.ts:318`) | `lot10-couronnes`, `lot10-couronnes-meta` |
+| `meta.nuits` | La tête de lit du chapitre 1 après *Beaux rêves* : « Cette fois, tu les comptes tous. » (`nuits − 1` en toutes lettres, `numberWords`) | Ch. 1, prairie | `dreamBed`, `chapter1.ts:165` | `lot9b-retour` |
+| `meta.callVersion` | En NG+, au bout du couloir des 41 portes : « La dernière fois, tu as choisi la douce. » — « C'est pratique, la mémoire. On la range comme on veut. » ; la nouvelle réponse remplace l'ancienne. Personne ne dit laquelle est vraie | Ch. 6 | `question`, `chapter6.ts:1130` | `lot10-appel-rappel` |
+| Une fin v1.1 déjà vue | « Tu croyais que c'était fini, la dernière fois. », sous le titre du faux générique, avant l'arrêt sur Mina (donc vu par tous les chemins) | Faux générique | `fauxCreditLines`, `fausse-aube.ts:543` | `lot10-faux-generique` |
+| `meta.fauxGenerique` | Interlude II, Dodo dans le réel : « Cette fois, tu sais que ça ne s'arrête pas au générique. » | Chambre, Interlude II | `interlude2Dodo`, `real.ts:1101` | `lot10-ngplus`, `lot6-interlude2` |
+| `meta.deaths` | Les moutons de la phase 1 du combat final : un par mort (« Ce sont tes morts, {player}. Je les ai comptées. ») | Combat final | `sheepFor`, `final-v2.ts:150`, `:985` | `lot10-morts` |
+| Départ d'onglet (dès le ch. 4) | Au retour, une page : « Pendant ton absence », « Noa a dit : », puis l'heure réelle de chaque réplique, une de plus par doublement du temps (« …t'es là ? », « … », « {player} ? », « Toc. », « J'en suis à cent moutons. », « J'ai l'habitude. », « Je laisse la lumière. », « Tu reviens, hein ? ») ; jamais en plein combat ni en pleine scène (double : un garçon qui parle tout seul dans le noir) | Chapitres 4 à 6, Interlude IV, final | `cameBack`, `absenceLines`, `absencePage`, `meta.ts:57`, `:174`, `:218` | `lot10-absence` |
+| Heure réelle 3:14, pendant un interlude | Le téléphone sonne : « Mina 🐑 », appel entrant ; le bouton vert ne répond pas ; il sonne quarante et une secondes (quelques-unes avec « Réduire les attentes »), puis « manqué — 3:14 » dans le journal ; « Tu n'as pas pu décrocher. » Une fois par nuit (double : le numéro a été réattribué) | Interludes I à IV | `metaTick`, `ring314`, `meta.ts:112`, `:151` | `lot10-appel-314` |
+| `meta.dodoSilent` | Prologue sans Dodo (§ 3.3) ; à l'Interlude II la peluche ne dit rien et ses mots reviennent au narrateur, avec le bip de Noa ; à l'Interlude III, plus de « Tu vois ? », seulement « Tu reviens toujours. » avec la voix de Noa ; la nuit, le narrateur garde son bip | Chambre | `bedAlone` (`real.ts`), `interlude2Silent`, `real.ts:1112` ; `lastWordIII`, `real-nuit.ts:216` | `lot10-dodo-silencieux`, `lot10-dodo-silencieux-i3`, `lot6-seul` |
+| Toute fin v2 | Prologue : « Tu reviens. Tu sais, toi. … Tu ne lui diras rien, hein ? » (une mémoire 1.1 seule n'est pas une fin v2) | Chambre, prologue | `prologueDodo`, `real.ts:620`, `sawV2Ending` | `lot10-ngplus`, `lot10-ngplus-v11`, `lot6-ngplus` |
+| T7 (§ 2.8) | Entre minuit et 5 h (heure réelle), les boîtes du narrateur ont le bip de Dodo (celui de Noa, transposé) ; pas dans le bonus, plus après la fin secrète ; après T7, le narrateur du ch. 6 garde le bip de Noa | Partout | `metaTick`, `meta.ts:116` ; `nightNarratorVoice` (`src/game/ui/dialogue.ts`) | `lot10-narrateur-nuit`, `lot10-narrateur-t7`, `lot10-appel-314` |
+
 ## Encore à faire par les lots suivants
 
 | Twist | Indice | Où | Lot |
 |---|---|---|---|
 | T4 / T5 / coda | `bonus.ts` › `noaDoor` : la lumière sous la porte, « Il dort. Enfin. Cinq heures, ça ira. », Maman frappe et personne ne répond | Bonus | 11 |
-| T7 | Le bip de Dodo pour le narrateur entre minuit et 5 h (heure réelle) | Méta | 10 |
-| § 5 | La vibration de 3 h 14 pendant un interlude (« Mina 🐑 — appel entrant », puis « appel manqué ») | Méta | 10 |
