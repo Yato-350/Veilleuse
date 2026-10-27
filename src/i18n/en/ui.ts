@@ -348,8 +348,8 @@ export const UI: Record<string, string> = {
   '« … »': '"…"',
   '« {0} ? »': '"{0}?"',
   '« Toc. »': '"Knock."',
-  '« Je compte les moutons. J\'en suis à cent. »': '"I\'m counting sheep. I\'m up to a hundred."',
-  '« C\'est pas grave. J\'ai l\'habitude. »': '"It\'s okay. I\'m used to it."',
-  '« Je laisse la lumière. Pour quand tu reviendras. »': '"I\'ll leave the light on. For when you come back."',
+  '« J\'en suis à cent moutons. »': '"I\'m up to a hundred sheep."',
+  '« J\'ai l\'habitude. »': '"I\'m used to it."',
+  '« Je laisse la lumière. »': '"I\'ll leave the light on."',
   '« Tu reviens, hein ? »': '"You\'re coming back, right?"',
 };

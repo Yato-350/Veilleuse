@@ -79,6 +79,10 @@ export class TitleScene implements Scene {
   private confirmNew = false;
   private leaving = false;
   private mood: 'night' | 'dawn' | 'dream' = 'night';
+  /** The save slot's label (« Nuit 366 · name · time », '' without a save) and the Beaux rêves line, as last drawn. */
+  slot = '';
+  daysText = '';
+  private slotX = W / 2 + 10;
   private variant: TitleVariant;
 
   constructor(private opts: TitleOptions = {}) {
@@ -118,6 +122,9 @@ export class TitleScene implements Scene {
 
   private buildItems(): void {
     const save = hasSave() ? readSave() : null;
+    // The save slot is named after the night it is (« Nuit 366 »: meta.nuits, one more per ending, § 5 « Méta »).
+    this.slotX = W / 2 - 40 + measure(tr('Continuer')) + 7;
+    this.slot = save && !this.opts.single ? saveSlotLabel(G.meta.nuits, save.playerName, formatPlaytime(save.playtime), W - 4 - this.slotX) : '';
     this.items = [];
     // Beaux rêves: « Continuer » goes back into the dream (chapter 1, « Tu es revenu ! ») — or on with the run, if any.
     const single = this.opts.single ?? (this.variant === 'continuer_seul' ? { label: 'Continuer', onPick: () => (save ? flow.continueGame() : flow.dreamAgain()) } : null);
@@ -260,11 +267,8 @@ export class TitleScene implements Scene {
       drawText(g, tr(it.label), W / 2 - 40, y, { color: sel ? '#ffd84a' : (it.color ?? '#fffaf2'), shadow: '#0b0710' });
       g.globalAlpha = 1;
     });
-    // The save slot, named after the night it is (« Nuit 366 »: meta.nuits, one more per ending), beside « Continuer ».
-    if (hasSave() && this.idx === 0 && !this.opts.single) {
-      const s = readSave();
-      if (s) drawText(g, saveSlotLabel(G.meta.nuits, s.playerName, formatPlaytime(s.playtime)), W / 2 + 10, startY, { color: '#8a7f96' });
-    }
+    // The save slot, beside « Continuer ».
+    if (this.slot && this.idx === 0) drawText(g, this.slot, this.slotX, startY, { color: '#8a7f96', shadow: '#0b0710' });
     drawText(g, `v${VERSION}`, W - 4, H - 11, { color: '#4e4359', align: 'right' });
     this.drawMeta(g);
   }
@@ -276,6 +280,7 @@ export class TitleScene implements Scene {
       const name = G.meta.names[G.meta.names.length - 1] ?? G.state.playerName ?? '';
       g.globalAlpha = 0.8;
       const text = tn(days, 'Ça fait {0} jour, {1}. Il est toujours dans sa chambre.', 'Ça fait {0} jours, {1}. Il est toujours dans sa chambre.', name || '…');
+      this.daysText = text;
       drawWrapped(g, text, 40, H - 27, W - 80, { color: '#9a7bd0', align: 'center', lineHeight: 10, shadow: '#0b0710' });
       g.globalAlpha = 1;
       return;

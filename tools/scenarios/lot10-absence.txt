@@ -1,0 +1,36 @@
+# Lot 10 (docs/HISTOIRE.md § 5 « Méta », row « Départ d'onglet (dès le ch. 4) »): from chapter 4 on, coming back to
+# the tab after a while brings a page, « Pendant ton absence », « Noa a dit : », then what he said, with the real time
+# of each line: one line per doubling of the time away (15 s: « …t'es là ? » alone; five minutes: five lines). It waits
+# for a free moment. Before chapter 4, nothing (the tab title « Ne pars pas… » only, from chapter 2).
+# The bot hides the tab (document.hidden + visibilitychange) and moves the game's clock forward while it is away.
+query: debug=script&name=chapter4_grenier&lang=fr&clock=3:02
+wait:1500
+auto
+eval: window.V = window.__veilleuse
+eval: window.AWAY = (ms) => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); document.dispatchEvent(new Event('visibilitychange')); V.clock.shift(ms); Object.defineProperty(document, 'hidden', { configurable: true, get: () => false }); document.dispatchEvent(new Event('visibilitychange')); return 1; }
+# Chapter 3: no page.
+eval: (V.G.state.chapter = 3, window.__leaves = V.G.meta.tabLeaves, AWAY(300000))
+wait:1500
+assert: V.scene() === 'WorldScene' && !V.G.state.flags.m_absence && V.G.meta.tabLeaves === window.__leaves + 1
+# Chapter 4: five minutes away, five lines.
+eval: (V.G.state.chapter = 4, AWAY(300000))
+waitfor: V.scene() === 'PaperScene'
+assert: V.game.top.title === 'Pendant ton absence' && V.game.top.lines[0] === 'Noa a dit :' && V.game.top.lines.length === 6
+# (The clock went on by five minutes during the first absence; in debug the player's name is the script's.)
+assert: V.game.top.lines[1] === '3h07 — « …t\'es là ? »' && V.game.top.lines[3] === '3h09 — « chapter4_grenier ? »' && V.game.top.lines[5] === '3h11 — « J\'en suis à cent moutons. »'
+wait:6000
+shot:page
+KeyZ
+waitfor: V.scene() === 'WorldScene' && V.world.controllable
+assert: V.G.state.flags.m_absence === 1
+# Twenty seconds away, a minute and a half later: one line.
+eval: (V.clock.shift(90000), AWAY(20000))
+waitfor: V.scene() === 'PaperScene'
+assert: V.game.top.lines.length === 2 && V.game.top.lines[1].endsWith('« …t\'es là ? »')
+wait:2500
+KeyZ
+waitfor: V.scene() === 'WorldScene' && V.world.controllable
+# Five seconds: too short, no page.
+eval: (V.clock.shift(90000), AWAY(5000))
+wait:1500
+assert: V.scene() === 'WorldScene' && V.G.state.flags.m_absence === 2

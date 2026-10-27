@@ -1,5 +1,6 @@
 import { audio } from '../engine/audio';
-import { GAME_TITLE } from '../engine/constants';
+import { GAME_TITLE, W } from '../engine/constants';
+import { measure } from '../engine/font';
 import { game } from '../engine/game';
 import { G, newMeta, writeMeta, type Meta } from './state';
 import { lang, tf, tr, translated } from '../i18n';
@@ -175,11 +176,14 @@ export const ABSENCE_LINES = [
   '« … »',
   '« {0} ? »',
   '« Toc. »',
-  '« Je compte les moutons. J\'en suis à cent. »',
-  '« C\'est pas grave. J\'ai l\'habitude. »',
-  '« Je laisse la lumière. Pour quand tu reviendras. »',
+  '« J\'en suis à cent moutons. »',
+  '« J\'ai l\'habitude. »',
+  '« Je laisse la lumière. »',
   '« Tu reviens, hein ? »',
 ];
+
+/** Width of a line on the notebook page (scenes/paper.ts); longer lines go on under the quote. */
+const PAGE_WIDTH = W - 100 - 30;
 
 /** How many lines of ABSENCE_LINES an absence of `ms` earns. */
 export function absenceCount(ms: number): number {
@@ -187,12 +191,27 @@ export function absenceCount(ms: number): number {
   return Math.max(1, Math.min(ABSENCE_LINES.length, 1 + Math.floor(Math.log2(ms / 15_000))));
 }
 
-/** The page's lines: the real time each one was said, then the line (French source, translated piece by piece). */
+/**
+ * The page's lines: the real time each one was said, then the line (French source, translated piece by piece). A line
+ * too wide for the page (a long name, a longer language) goes on below, under its quote.
+ */
 export function absenceLines(from: number, to: number, name = G.state.playerName || '…'): string[] {
   const n = absenceCount(to - from);
-  return ABSENCE_LINES.slice(0, n).map((line, i) => {
+  return ABSENCE_LINES.slice(0, n).flatMap((line, i) => {
     const at = new Date(from + ((to - from) * (i + 0.3)) / n);
-    return translated(`${clockLabel(at)} — ${tf(line, name)}`);
+    const head = `${clockLabel(at)} — `;
+    const indent = ' '.repeat(Math.ceil(measure(head) / Math.max(1, measure(' '))));
+    const [first = '', ...words] = tf(line, name).split(' ');
+    const rows: string[] = [];
+    let row = head + first;
+    for (const word of words) {
+      if (measure(`${row} ${word}`) > PAGE_WIDTH) {
+        rows.push(row);
+        row = indent + word;
+      } else row = `${row} ${word}`;
+    }
+    rows.push(row);
+    return rows.map(translated);
   });
 }
 

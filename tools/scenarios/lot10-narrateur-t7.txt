@@ -1,0 +1,13 @@
+# Lot 10 (T7, § 2.8): after T7 the narrator of chapter 6 speaks with Noa's blip, at any hour: at 2:30 (Dodo's blip for
+# the other narrator boxes) its lines keep Noa's.
+query: debug=script&name=chapter6_bocaux&lang=fr&clock=2:30
+god
+wait:1500
+eval: window.V = window.__veilleuse
+eval: window.VOICES = []
+eval: (setInterval(() => { if (V.dialogue.busy && V.dialogue.speaker?.name === '') VOICES.push(V.dialogue.blipVoice()); }, 50), 1)
+auto
+assert: V.G.state.flags.c6_t7 && V.dialogue.narratorVoice === 'dodo'
+interact:bocal_ce_soir
+auto
+assert: VOICES.length > 0 && VOICES.every((v) => v === 'noa')

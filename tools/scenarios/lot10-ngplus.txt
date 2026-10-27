@@ -1,0 +1,30 @@
+# Lot 10 (docs/HISTOIRE.md § 5 « Méta », rows « Toute fin v2 » and « meta.fauxGenerique »): a new game with a memory
+# simulated by &meta=. After a version 2 ending (meta=endings:aube: 366 nights), Dodo knows the player knows:
+# « Tu reviens. Tu sais, toi. … Tu ne lui diras rien, hein ? ». The fake credits already reached (fauxGenerique:1): in
+# Interlude II, Dodo in the real world (his blip, no portrait) adds « Cette fois, tu sais que ça ne s'arrête pas au
+# générique. ». A version 1.1 memory alone (endingsV1) is not a version 2 ending.
+query: debug=script&name=prologue_chambre&lang=fr&meta=endings:aube,fauxGenerique:1
+wait:1500
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: window.WHO = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) { SEEN.push(t); WHO.push([V.dialogue.speaker?.name ?? '', V.dialogue.portrait]); } }, 50), 1)
+eval: window.BY = (s) => WHO[SEEN.findIndex((t) => t.includes(s))] ?? []
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+assert: V.G.meta.nuits === 366 && V.G.meta.endings.join() === 'aube' && V.G.meta.endingsV1.length === 0
+interact:bed
+zuntil: SAW('Tu ne lui diras rien, hein ?')
+shot:ngplus
+auto
+assert: SAW('Tu sais, toi.') && !SAW('On s\'est déjà dit bonne nuit') && V.G.state.flags.p_dodo === true
+# Interlude II, back in bed with everything seen.
+eval: (Object.assign(V.G.state.flags, { interlude: 2, i2_voicemail: true, i2_tv: true, i2_dodo_back: true }), 1)
+load:chambre/bed
+wait:600
+interact:bed
+zuntil: V.dialogue.choices
+shot:i2
+assert: SAW('Cette fois, tu sais que ça ne s\'arrête pas au générique.') && BY('ça ne s\'arrête pas au générique')[0] === 'Dodo' && BY('ça ne s\'arrête pas au générique')[1] === null
+choose:0
+zuntil: V.G.state.chapter === 3

@@ -1,0 +1,15 @@
+# Lot 10 (docs/HISTOIRE.md § 5 « Méta »): a version 1.1 memory alone (&meta=endingsV1:aube, as the migration leaves it:
+# endings ['aube'], 366 nights) is not a version 2 ending: Dodo says the old line (« On s'est déjà dit bonne nuit »),
+# not « Tu sais, toi. ».
+query: debug=script&name=prologue_chambre&lang=fr&meta=endingsV1:aube
+wait:1500
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+assert: V.G.meta.nuits === 366 && V.G.meta.endings.join() === 'aube' && V.G.meta.endingsV1.join() === 'aube'
+interact:bed
+zuntil: SAW('Moi, je me souviens de tout.')
+auto
+assert: SAW('On s\'est déjà dit bonne nuit') && !SAW('Tu sais, toi.')

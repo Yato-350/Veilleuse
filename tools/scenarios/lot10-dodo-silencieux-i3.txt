@@ -1,0 +1,16 @@
+# Lot 10 (docs/HISTOIRE.md § 5, row « meta.dodoSilent »): Interlude III after the secret ending. Back in bed after the
+# bag, Dodo's only words of the night (« Tu vois ? Tu reviens toujours. ») are gone: « Il ne dit rien. », then the
+# words in Noa's voice. No static.
+query: debug=script&name=interlude3_fin&lang=fr&meta=dodoSilent
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: window.WHO = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) { SEEN.push(t); WHO.push([V.dialogue.speaker?.name ?? '', V.dialogue.blipVoice()]); } }, 50), 1)
+eval: window.BY = (s) => WHO[SEEN.findIndex((t) => t.includes(s))] ?? []
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+zuntil: V.dialogue.choices
+assert: SAW('Il ne dit rien.') && !SAW('Tu vois ?') && BY('Tu reviens toujours.')[0] === '' && BY('Tu reviens toujours.')[1] === 'noa'
+choose:0
+zuntil: V.G.state.chapter === 4

@@ -1,7 +1,8 @@
 # Lot 9 (second half): after Beaux rêves, « Continuer » starts a run straight in chapter 1 (flags.br_retour, set by
 # main.ts flow.dreamAgain). Mina: « Tu es revenu ! Tu as dormi super longtemps. »; the dream bed's marks, counted to
-# the end this time: « Trois cent soixante-cinq. »
-query: debug=script&name=c1_mina&lang=fr&flags=br_retour
+# the end this time: « Trois cent soixante-cinq. » (meta.nuits − 1: the memory after a first Beaux rêves holds 366
+# nights, simulated by &meta=, lot 10).
+query: debug=script&name=c1_mina&lang=fr&flags=br_retour&meta=endings:beaux_reves,lastEnding:beaux_reves
 wait:1200
 eval: window.V = window.__veilleuse
 eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }

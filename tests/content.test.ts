@@ -19,7 +19,12 @@ import type { World } from '../src/game/overworld/types';
 import { COUNT_ROUNDS, KNOCK_ROUNDS, SHEEP_ROUNDS, TOOTH_ROUNDS, validCount } from '../src/game/scenes/sheepcount';
 import { dateLabel } from '../src/game/scenes/phone';
 import { CREDIT_LINES, HELP_CARD } from '../src/game/scenes/credits';
-import { daysSince, defaultTitleVariant, TITLE_VARIANTS } from '../src/game/scenes/title';
+import { daysSince, defaultTitleVariant, saveSlotLabel, TITLE_VARIANTS } from '../src/game/scenes/title';
+import { ABSENCE_LINES, absenceCount, absenceLines, applyMetaSpec, NumberWords, numberWords } from '../src/game/meta';
+import { sawV2Ending } from '../src/game/story/real';
+import { bindLanguage } from '../src/i18n';
+import { measure } from '../src/engine/font';
+import { W } from '../src/engine/constants';
 import { parseRich, plainText } from '../src/game/ui/richtext';
 import { nightNarratorVoice } from '../src/game/ui/dialogue';
 import { DEBUG_SCRIPTS } from '../src/game/story';
@@ -32,7 +37,7 @@ import * as chapter5 from '../src/game/story/chapter5';
 import * as fausseAube from '../src/game/story/fausse-aube';
 import { finale } from '../src/game/story/real';
 import * as chapter6 from '../src/game/story/chapter6';
-import { G } from '../src/game/state';
+import { G, newMeta } from '../src/game/state';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -668,11 +673,93 @@ describe('the false dawn (lot 5)', () => {
     expect(fausseAube.fauxCreditLines(1).lines.some(([t]) => t.startsWith('Tu croyais'))).toBe(false);
     G.meta.endingsV1 = ['aube'];
     expect(fausseAube.fauxCreditLines(1).lines.some(([t]) => t === 'Tu croyais que c\'était fini, la dernière fois.')).toBe(true);
+    // Before the stop on Mina's line (lot 10): « Regarder » rewinds from there, so every path reads it.
+    const v11 = fausseAube.fauxCreditLines(1);
+    expect(v11.lines.findIndex(([t]) => t.startsWith('Tu croyais'))).toBeLessThan(v11.stop);
     G.meta.endingsV1 = [];
   });
 
   it('keeps the rule of the 41 seconds in the false dawn and chapter 3', () => {
     const src = ['src/game/story/fausse-aube.ts', 'src/data/maps/fausse-aube.ts', 'src/game/story/chapter3.ts'].map((f) => readFileSync(f, 'utf8')).join('\n');
     expect(src).not.toMatch(/vraie version|version vraie|true version|real version|true call/i);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Production lot 10: meta and new game+ (docs/HISTOIRE.md § 5 « Méta et nouvelle partie+ »).
+// ---------------------------------------------------------------------------
+
+describe('meta and new game+ (lot 10)', () => {
+  it('spells the nights out in words, in both languages', () => {
+    const cases: Array<[number, string]> = [
+      [364, 'trois cent soixante-quatre'],
+      [365, 'trois cent soixante-cinq'],
+      [71, 'soixante et onze'],
+      [80, 'quatre-vingts'],
+      [81, 'quatre-vingt-un'],
+      [97, 'quatre-vingt-dix-sept'],
+      [200, 'deux cents'],
+      [201, 'deux cent un'],
+      [1000, 'mille'],
+      [2380, 'deux mille trois cent quatre-vingts'],
+    ];
+    for (const [n, w] of cases) expect(numberWords(n), String(n)).toBe(w);
+    expect(numberWords(21, true)).toBe('vingt et une');
+    expect(numberWords(381, true)).toBe('trois cent quatre-vingt-une');
+    expect(NumberWords(364, true)).toBe('Trois cent soixante-quatre');
+    bindLanguage(() => 'en');
+    try {
+      expect(NumberWords(365)).toBe('Three hundred and sixty-five');
+      expect(numberWords(1004)).toBe('one thousand and four');
+    } finally {
+      bindLanguage(() => 'fr');
+    }
+  });
+
+  it('simulates a memory from ?debug=…&meta=', () => {
+    const m = newMeta();
+    expect(applyMetaSpec(m, 'endings:aube,callVersion:douce')).toEqual([]);
+    expect(m).toMatchObject({ endings: ['aube'], callVersion: 'douce', nuits: 366 });
+    const v11 = newMeta();
+    applyMetaSpec(v11, 'endingsV1:aube|silence');
+    expect(v11).toMatchObject({ endings: ['aube', 'silence'], endingsV1: ['aube', 'silence'], nuits: 367 });
+    const before = G.meta;
+    try {
+      G.meta = v11;
+      expect(sawV2Ending()).toBe(false);
+      G.meta = m;
+      expect(sawV2Ending()).toBe(true);
+    } finally {
+      G.meta = before;
+    }
+    const other = newMeta();
+    expect(applyMetaSpec(other, 'dodoSilent,fauxGenerique:2,nuits:370,endings:veilleuse,beauxRevesAt:23,deaths=4,oops:1')).toEqual(['oops']);
+    expect(other).toMatchObject({ dodoSilent: true, fauxGenerique: 2, nuits: 370, deaths: 4 });
+    expect(daysSince(other.beauxRevesAt)).toBe(23);
+    applyMetaSpec(other, 'reset,callVersion:sais_pas');
+    expect(other).toMatchObject({ dodoSilent: false, nuits: 365, callVersion: 'sais_pas', endings: [] });
+  });
+
+  it('writes what Noa said while the player was away: one line per doubling of the time', () => {
+    expect([5_000, 15_000, 30_000, 60_000, 300_000, 7_200_000].map(absenceCount)).toEqual([0, 1, 2, 3, 5, 8]);
+    const from = new Date(2026, 9, 27, 3, 2).getTime();
+    const lines = absenceLines(from, from + 300_000, 'Sacha');
+    expect(lines).toHaveLength(5);
+    expect(lines[0]).toBe('3h02 — « …t\'es là ? »');
+    expect(lines[2]).toBe('3h04 — « Sacha ? »');
+    expect(ABSENCE_LINES[0]).toBe('« …t\'es là ? »');
+    // The page fits: every line within the notebook page, the longest name included.
+    for (const l of absenceLines(from, from + 7_200_000, 'Alexandrine-Lou')) expect(measure(l), l).toBeLessThanOrEqual(W - 130);
+  });
+
+  it('names the save slot after the night: « Nuit 366 »', () => {
+    expect(saveSlotLabel(366, 'Sacha', '1:02')).toBe('Nuit 366 · Sacha · 1:02');
+    expect(saveSlotLabel(366, '', '0:10')).toBe('Nuit 366 · 0:10');
+    expect(saveSlotLabel(370, 'Alexandrine-Lou-Marie', '12:40', 100)).toBe('Nuit 370 · 12:40');
+  });
+
+  it('keeps the rule of the 41 seconds in the meta', () => {
+    const src = readFileSync(join('src', 'game', 'meta.ts'), 'utf8');
+    expect(src).not.toMatch(/vraie version|version vraie|true version|real version|true call|la vraie/i);
   });
 });

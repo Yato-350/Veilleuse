@@ -1,0 +1,23 @@
+# Lot 10 (docs/HISTOIRE.md § 5 « Méta », row « meta.nuits » and the Beaux rêves title): the save slot is named after
+# the night it is, meta.nuits (365 on a first run, one more per ending): « Nuit 366 · name · time » beside « Continuer ».
+# After Beaux rêves the title offers only « Continuer » and counts the real days: « Ça fait 0 jour » (French: 0 and 1
+# are singular), « Ça fait 23 jours ». Its save slot also reads « Nuit 366 » once the dream run has saved.
+query: debug=title&lang=fr&meta=endings:aube,names:Sacha
+wait:1200
+eval: window.V = window.__veilleuse
+eval: (localStorage.setItem('veilleuse.save.v1', JSON.stringify({ version: 2, playerName: 'Sacha', chapter: 1, map: 'prairie', x: 10, y: 8, dir: 'down', hp: 20, playtime: 3720, flags: { br_retour: true } })), V.flow.toTitle(), 1)
+wait:1500
+assert: V.scene() === 'TitleScene' && V.G.meta.nuits === 366 && V.game.top.slot === 'Nuit 366 · Sacha · 1:02'
+shot:slot
+# Beaux rêves: the same save, the single « Continuer », 0 days.
+eval: (V.G.meta.endings.push('beaux_reves'), V.G.meta.lastEnding = 'beaux_reves', V.G.meta.nuits = 367, V.G.meta.beauxRevesAt = Date.now(), V.flow.toTitle(), 1)
+wait:1500
+assert: V.game.top.variant === 'continuer_seul' && V.game.top.slot === 'Nuit 367 · Sacha · 1:02' && V.game.top.daysText === 'Ça fait 0 jour, Sacha. Il est toujours dans sa chambre.'
+shot:zero
+eval: (V.G.meta.beauxRevesAt = Date.now() - 23 * 86400000, 1)
+wait:300
+assert: V.game.top.daysText === 'Ça fait 23 jours, Sacha. Il est toujours dans sa chambre.'
+# No save: no slot.
+eval: (localStorage.removeItem('veilleuse.save.v1'), V.flow.toTitle(), 1)
+wait:1500
+assert: V.game.top.slot === ''

@@ -1,0 +1,15 @@
+# Lot 10 (docs/HISTOIRE.md § 5 « Méta », row « meta.nuits »): one completed run in the memory, given by &meta=
+# (endings:veilleuse, 366 nights): « Trois cent soixante-cinq. », « Une de plus que la dernière fois. », one crown
+# apart from the pile.
+query: debug=script&name=chapter4_grenier&lang=fr&meta=endings:veilleuse
+wait:1500
+auto
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+assert: V.G.meta.nuits === 366 && V.world.entities.some((e) => e.id === 'couronne_1') && !V.world.entities.some((e) => e.id === 'couronne_2')
+interact:couronnes
+auto
+assert: SAW('Trois cent soixante-cinq. Tu n\'as pas besoin de compter.') && SAW('Une de plus que la dernière fois.') && SAW('Celle-là n\'est pas encore écrasée.')

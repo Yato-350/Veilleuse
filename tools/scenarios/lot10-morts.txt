@@ -1,0 +1,18 @@
+# Lot 10 (docs/HISTOIRE.md § 5 « Méta », row « meta.deaths »): phase 1 of the final battle counts the player's deaths
+# as sheep (&meta=deaths:3: three sheep, « Ce sont tes morts, {player}. Je les ai comptées. »). With no death in the
+# memory, it counts her forty-one nights instead (lot4-final-* scenarios).
+query: debug=script&name=dodo_v2_objets&lang=fr&meta=deaths:3&sheep=auto
+god
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+assert: V.G.meta.deaths === 3
+auto
+write:joie
+zuntil: SAW('Ce sont tes morts')
+assert: !SAW('Alors je compte ses nuits.')
+auto
+wait:2500
+shot:moutons
