@@ -39,6 +39,11 @@ let ringDue: { at: number; time: string } | null = null;
 let rangOn = '';
 /** A call that could not ring within this time (a long cutscene) is dropped. */
 const RING_STALE = 600_000;
+/** Debug runs without &clock= never ring (a bot run at 3:14 a.m. would otherwise be interrupted). */
+let ringEnabled = true;
+export function enableRing(on: boolean): void {
+  ringEnabled = on;
+}
 /** Last narrator voice set by the clock (undefined = never set), so that a script's own setting stays until it changes. */
 let clockVoice: string | null | undefined;
 let tick = 0;
@@ -124,7 +129,7 @@ function metaTick(): void {
   }
   // 3:14, once a night, during an interlude.
   const night = `${t.getFullYear()}-${t.getMonth()}-${t.getDate()}`;
-  if (t.getHours() === 3 && t.getMinutes() === 14 && rangOn !== night && inInterlude()) {
+  if (ringEnabled && t.getHours() === 3 && t.getMinutes() === 14 && rangOn !== night && inInterlude()) {
     rangOn = night;
     ringDue = { at: nowMs(), time: clockLabel(t, ':') };
   }

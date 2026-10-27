@@ -1129,8 +1129,13 @@ async function question(d: Director): Promise<void> {
   await tell(d, ['Le bout du couloir. Une petite pièce sans fenêtre.', 'Ça sent le plastique chaud et la nuit.']);
   const before = G.meta.callVersion;
   if (before) {
-    const said: Record<CallAnswer, string> = { douce: 'la douce', dure: 'la dure', sais_pas: 'que tu ne savais pas' };
-    await d.say([`La dernière fois, tu as choisi ${said[before]}.`, 'C\'est pratique, la mémoire. On la range comme on veut.'], 'dodonoa:creepy');
+    // Nouvelle partie+ (docs/HISTOIRE.md § 5): the answer of the last run (whole lines, for the translation).
+    const said: Record<CallAnswer, string> = {
+      douce: 'La dernière fois, tu as choisi la douce.',
+      dure: 'La dernière fois, tu as choisi la dure.',
+      sais_pas: 'La dernière fois, tu as dit que tu ne savais pas.',
+    };
+    await d.say([said[before], 'C\'est pratique, la mémoire. On la range comme on veut.'], 'dodonoa:creepy');
   }
   await d.say(['Tu as entendu les deux.', 'Alors ?'], 'dodonoa:neutral');
   const c = await d.ask('Laquelle est vraie ?', ['La douce', 'La dure', 'Je ne sais pas'], 'dodonoa:neutral');

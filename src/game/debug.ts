@@ -19,7 +19,7 @@ import { DEBUG_SCRIPTS } from './story';
 import { CreditsScene } from './scenes/credits';
 import { GalleryScene } from './scenes/gallery';
 import { composePoem } from './scenes/poem';
-import { applyMetaSpec } from './meta';
+import { applyMetaSpec, enableRing } from './meta';
 import { setClock } from './clock';
 
 /**
@@ -60,6 +60,8 @@ export function startDebug(p: URLSearchParams): void {
     if (unknown.length) console.error(`Unknown meta fields: ${unknown.join(', ')}`);
   }
   if (p.get('clock') && !setClock(p.get('clock')!)) console.error(`Bad clock: ${p.get('clock')} (expected h:mm)`);
+  // The 3:14 call only rings in debug when the clock is given (a bot run at 3:14 a.m. stays deterministic).
+  enableRing(p.has('clock'));
   fx.setFade(0);
   switch (mode) {
     case 'sheet':
