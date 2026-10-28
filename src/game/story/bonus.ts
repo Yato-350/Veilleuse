@@ -3,6 +3,7 @@ import { H, TILE, W } from '../../engine/constants';
 import { fx } from '../../engine/fx';
 import { game, type Scene } from '../../engine/game';
 import { ILLUSTRATIONS } from '../../data/illustrations';
+import { TILES } from '../../data/tiles';
 import type { Battle } from '../battle/battle';
 import type { EnemyRuntime } from '../battle/enemy';
 import type { BattleHooks, WordDef } from '../battle/types';
@@ -19,22 +20,29 @@ import { tf, tr } from '../../i18n';
 /**
  * Bonus chapter « Les rêves des autres » — Maman's dream. Unlocked on the title screen after the « aube » ending.
  *
- * The same night as Noa's last one, seen from Maman's side. 3:33, at the care home where she works nights « pour ne
- * pas penser »: she leaves Noa the voicemail he hears in interlude II, closes her eyes « juste une seconde », and
- * dreams. Her old alarm clock — the one she set for 5:00 on Mina's last night, to bring back the nightlight before
- * Mina woke up, and that never rang because the phone rang first, at 3:33 — has come alive: Le Réveil, her Dodo.
- * It wants her never to sleep again.
+ * The same night as Noa's last one (night 365), seen from Maman's side. 3:33, at the care home where she works nights
+ * « pour ne pas penser »: she leaves Noa the voicemail he hears in interlude II, closes her eyes « juste une
+ * seconde », and dreams. Her old alarm clock — the one on her nightstand at home (Interlude IV), set for 5:00 on
+ * Mina's last night under its post-it « 5h — veilleuse (chambre de Noa) », that never rang because the phone rang
+ * first, at 3:33 — has come alive in the dream: Le Réveil, her Dodo. It wants her never to sleep again. (The alarm
+ * clock on the break-room table is another one, the care home's.)
+ *
+ * What she hides (docs/HISTOIRE.md § 1.2, T5 § 2.6, coda § 2.11, § 3.17): she saw the light under Noa's door and let
+ * him sleep (« Il dort. Enfin. Cinq heures, ça ira. »); at 3:38 she unplugged the nightlight and saw his eyelids
+ * tremble (« Tu l'as laissé faire semblant. »); she saw the call on the old phone. She never asks what was said.
  *
  *   b_service (the night corridor of « Les Glycines », looping until she sits down for five minutes)
- *   → b_appart (home at night: Noa's door, the fridge note, the laundry basket in front of Mina's door)
+ *   → b_appart (home at night: she always stops at Noa's door — the memory of that night, 23:20 and 3:33, then 3:38 in
+ *     b_noa, his room a year ago; the fridge note and its back; the laundry basket in front of Mina's door)
  *   → b_hopital (behind Mina's door, the paper hospital: the vending machine, Mina at 3 a.m., Nadia the night nurse)
  *   → b_304 (the parents' armchair: boss Le Réveil, then she sleeps; Mina watches over her)
  *   → dawn at the care home, « Je rentre. » (5:52, the message Noa reads in the finale) → « Noa ? Tu es réveillé ? »
  *
  * The player controls Maman (G.state.playerChar = 'maman'). Separate run: it never touches the main story flags.
  * Flags (prefix b_): b_intro, b_corridor, b_loop (corridor loops), b_sat (sat on the bench: the way home opens),
- * b_sabine / b_albert (talk counts), b_room_<n>, b_cafe, b_phone, b_home, b_noa_door, b_note, b_panier_done,
- * b_hosp, b_choco, b_mina_mem, b_nadia, b_boss_done.
+ * b_sabine / b_albert (talk counts), b_room_<n>, b_cafe, b_phone, b_home, b_noa_door ('frappe' | 'laisse'), b_338
+ * (3:38 in his room: 'reveiller' | 'laisser' — the memory ends the same), b_note, b_panier_done, b_hosp, b_choco,
+ * b_mina_mem, b_nadia, b_boss_done.
  */
 
 const flag = (k: string): boolean => !!G.state.flags[k];
@@ -90,7 +98,7 @@ export async function start(d: Director): Promise<void> {
   await d.say(['Ça fait un an, cette nuit.', 'Je rentre tout à l\'heure. Plus tôt. J\'ai demandé.'], 'maman:sad');
   await d.say(['On ira la voir ensemble, d\'accord ?', 'Je t\'aime, mon grand.'], 'maman:sad');
   await d.wait(40);
-  await d.narrate(['Tu raccroches.', 'Sur la table, à côté du téléphone, ton vieux réveil fait tic.', 'Puis tac.']);
+  await d.narrate(['Tu raccroches.', 'Sur la table, à côté du téléphone, le réveil de la salle de pause fait tic.', 'Puis tac.']);
   await d.narrate(['Tu fermes les yeux.', 'Juste une seconde.']);
   d.ambience('none');
   await d.wait(30);
@@ -111,7 +119,7 @@ export async function start(d: Director): Promise<void> {
   await d.say(['Tu as fermé les yeux. Je t\'ai vue.'], 'reveil:neutral');
   await d.say('Je ne dormais pas.', 'maman:neutral');
   await d.say(['Bien sûr que non. Tu ne dors jamais.', 'C\'est pour ça qu\'on s\'entend si bien, toi et moi.'], 'reveil:happy');
-  await d.say(['Ton vieux réveil. Celui de ta table de nuit, que tu emportes partout depuis un an.', 'Il a des yeux, maintenant. Et il parle.']);
+  await d.say(['Ton vieux réveil. Celui de ta table de nuit, à la maison. Pas celui de la salle de pause.', 'Il a des yeux, maintenant. Et il parle.']);
   await d.say('…Je rêve.', 'maman:neutral');
   await d.say(['Tu rêves ? Non, non, non. Tu travailles.', 'Écoute.'], 'reveil:neutral');
   d.music('garde', 1);
@@ -363,6 +371,10 @@ export const noaShoes: Script = async (d) => {
   await d.say(['Les baskets de Noa. Il a encore grandi.', 'Tu les as remplacées deux fois cette année, sans rien dire. Il n\'a rien dit non plus.']);
 };
 
+/**
+ * Noa's door (T5 § 2.6, § 3.17): the light under it, tonight like every night. Her hand flat on the door, as on Mina's
+ * last night at 23:20 — « Il dort. Enfin. Cinq heures, ça ira. » — then the call at 3:33, and 3:38 in his room.
+ */
 export const noaDoor: Script = async (d) => {
   if (flag('b_noa_door')) {
     await d.say(['La porte de Noa. La lumière, dessous.', 'Tu restes là un moment. Tu restes toujours là un moment.']);
@@ -376,11 +388,140 @@ export const noaDoor: Script = async (d) => {
     await d.wait(20);
     d.sfx('knock');
     await d.wait(60);
-    await d.say(['Pas de réponse.', 'Derrière la porte, le grésillement d\'une veilleuse. Une petite musique, dans des écouteurs.']);
-    await d.say(['Tu poses ta main à plat sur la porte.', 'Comme le soir où il avait de la fièvre, à trois ans, et où tu as dormi par terre à côté de son lit.']);
+    await d.say(['Pas de réponse.', 'Derrière la porte, le grésillement d\'une veilleuse.']);
   } else {
     await d.say(['Tu ne frappes pas. S\'il dort, au moins, il dort.', 'Tu te dis ça tous les matins.']);
   }
+  await d.say(['Tu poses ta main à plat sur la porte.', 'Comme cette nuit-là.']);
+  await thatNight(d);
+};
+
+/** b_appart: walking down the hallway, she always stops at Noa's door (the first time: the memory of that night). */
+export const noaStop: Script = async (d) => {
+  if (flag('b_noa_door')) return;
+  await d.walkTo('player', 6, 3, 0.8);
+  d.face('player', 'up');
+  await noaDoor(d);
+};
+
+/** Mina's last night, from the hallway (§ 1.1): 23:20, the light under his door and the alarm clock; 3:33; 3:38. */
+async function thatNight(d: Director): Promise<void> {
+  d.music(null, 2);
+  await d.fadeOut(60);
+  await d.wait(30);
+  await d.narrate('Vingt-trois heures vingt.');
+  await d.narrate(['Tu rentrais de l\'hôpital. Nadia t\'avait renvoyée dormir.', 'Dans l\'entrée, pas de veilleuse.']);
+  await d.narrate(['Sous sa porte, la lumière. Une petite musique, dans des écouteurs.', 'Tu avais frappé doucement. Personne n\'avait répondu.']);
+  await d.wait(20);
+  await d.say('Il dort. Enfin.{p:30} Cinq heures, ça ira.', 'maman:sad');
+  await d.narrate(['Tu as assis Dodo contre sa porte. Mina te l\'avait confié pour lui.', 'Tu as réglé ton vieux réveil sur cinq heures. Tu t\'es endormie tout habillée.']);
+  await d.wait(50);
+  d.sfx('buzz', { vol: 0.6 });
+  await d.wait(26);
+  d.sfx('buzz', { vol: 0.6 });
+  await d.wait(40);
+  await d.narrate('Trois heures trente-trois.');
+  await d.narrate('« Venez. Maintenant. »');
+  await d.narrate(['Cinq minutes. Ton manteau, tes clés.', 'Et la veilleuse : tu l\'avais promise pour l\'aube.']);
+  await d.wait(30);
+  await d.narrate('Trois heures trente-huit.');
+  await enterNoaRoom(d);
+}
+
+/** Swaps tiles of the loaded map (the door of Noa's room opening). */
+function retile(cells: Array<[number, number, string]>): void {
+  const tm = world.tilemap;
+  for (const [x, y, id] of cells) {
+    tm.ids[y]![x] = id;
+    tm.defs[y]![x] = TILES[id] ?? null;
+  }
+  tm.render();
+}
+
+// ---------------------------------------------------------------------------
+// b_noa — his room at 3:38, a year ago (chapter 6 shows the same minute from the floor, through Dodo's eyes)
+// ---------------------------------------------------------------------------
+
+/** The plush on the threshold, where it fell. */
+const plush338: Script = async (d) => {
+  await d.say(['Dodo, tombé sur le côté, la tête vers le lit.', 'Tu le ramasseras en rentrant.']);
+};
+
+/** The door opens; the plush she sat against it falls over on its side, toward the bed. */
+async function enterNoaRoom(d: Director): Promise<void> {
+  d.load('b_noa', 'porte');
+  d.show('player', false);
+  const plush = d.spawn({ id: 'dodo_338', sprite: 'prop_dodo_plush', x: 8, y: 3, solid: false, shadow: false, script: plush338 });
+  plush.oy = -4;
+  await d.fadeIn(40);
+  await d.wait(20);
+  d.sfx('door', { pitch: 0.9, vol: 0.6 });
+  retile([
+    [8, 1, 'r_door_open_top'],
+    [8, 2, 'r_door_open'],
+  ]);
+  await d.wait(14);
+  plush.sprite = 'prop_c6_dodo_tombe';
+  plush.oy = 0;
+  d.sfx('step', { pitch: 0.4, vol: 0.4 });
+  await d.wait(10);
+  d.show('player', true);
+  d.face('player', 'down');
+  await d.walkTo('player', 7, 4, 0.45);
+  d.face('player', 'left');
+  await d.say(['La porte s\'ouvre. Contre ton pied, quelque chose bascule.', 'Dodo. Il tombe sur le côté, la tête tournée vers le lit.']);
+  await d.say(['Tu n\'allumes pas.', 'Sur la table de nuit, la veilleuse fait une petite lune dans le noir.']);
+}
+
+export const noaBed: Script = async (d) => {
+  await d.say(['Noa, sous sa couette. Les yeux fermés.', 'Il a l\'air de dormir.']);
+};
+
+export const noaRoomDoor = ['Pas sans la veilleuse.', 'Tu l\'as promise pour l\'aube.'];
+
+/** 3:38: she unplugs the nightlight, « Noa ? », his eyelids tremble. Whatever she chooses, the memory ends the same. */
+export const noaNightlight: Script = async (d) => {
+  if (flag('b_338')) return;
+  await d.say(['La veilleuse. La lune en plastique que tu lui avais achetée quand il avait quatre ans.', 'Pour les monstres du placard.']);
+  await d.say('Tu tires sur le fil.');
+  d.sfx('pop', { vol: 0.5, pitch: 0.6 });
+  const lamp = d.find('veilleuse');
+  if (lamp) lamp.light = undefined;
+  world.extraDarkness = 0.36;
+  world.playerLight = 0;
+  await d.wait(40);
+  await d.say('Le noir, d\'un coup.');
+  await d.wait(40);
+  await d.say('{spd:0.6}Noa ?{/spd}', 'maman:neutral');
+  await d.wait(70);
+  // The phone in her hand, its screen still lit: just enough light for his face.
+  const glow = d.spawn({ id: 'ecran_338', x: tileOf(d.player.x), y: tileOf(d.player.y - 2), solid: false, shadow: false, light: { r: 30, color: '#a7c7f0', dy: -6 } });
+  glow.x = d.player.x - 6;
+  await d.say(['Rien.', 'L\'écran de ton téléphone éclaire encore un peu. Juste assez pour son visage.']);
+  await d.wait(30);
+  await d.say('Ses paupières tremblent.');
+  const r = await d.ask('Il ne dort pas.', ['Le réveiller', 'Le laisser'], undefined, { cancelIndex: 1 });
+  d.set('b_338', r === 0 ? 'reveiller' : 'laisser');
+  if (r === 0) {
+    await d.say(['Tu tends la main vers son épaule.', 'Elle s\'arrête au-dessus de la couverture.']);
+    await d.say('Cette nuit-là, elle s\'est arrêtée là. Elle s\'arrête là chaque fois.');
+  } else {
+    await d.say(['Tu ne dis rien.', 'Lui non plus.']);
+  }
+  await d.say(['Tu restes là. Longtemps.', 'Le fil de la veilleuse enroulé autour de ta main.']);
+  d.remove('ecran_338');
+  await d.walkTo('player', 7, 4, 0.45);
+  await d.walkTo('player', 8, 3, 0.45);
+  d.face('player', 'up');
+  await d.say('Tu sors. Tu ne refermes pas tout à fait.');
+  await d.fadeOut(80);
+  await d.wait(30);
+  await d.narrate('Tu l\'as laissé faire semblant.');
+  await d.wait(40);
+  d.load('b_appart', 'noa');
+  world.hideBanner();
+  await d.fadeIn(60);
+  await d.say(['Le couloir. Trois heures trente-trois.', 'Sous la porte de Noa, la lumière. Il l\'a rebranchée. Il la rebranche toutes les nuits, depuis un an.']);
 };
 
 export const hallClock: Script = async (d) => {
@@ -397,7 +538,7 @@ export const familyPhoto: Script = async (d) => {
 };
 
 export const sofa: Script = async (d) => {
-  await d.say(['Le canapé. Ton côté est creusé.', 'Le jour, tu dors là, quand tu dors. Devant la télé éteinte.']);
+  await d.say(['Le canapé. Ton côté est creusé.', 'Le soir, avant de partir, tu t\'y assois. Devant la télé éteinte.']);
 };
 
 export const tvOff: Script = async (d) => {
@@ -413,7 +554,8 @@ export const minaChair: Script = async (d) => {
 };
 
 export const mamanRoom: Script = async (d) => {
-  await d.say(['Ta chambre.', 'Ton lit n\'a pas été défait depuis des mois.']);
+  await d.say(['Ta chambre. Les volets sont fermés : tu y dors le jour, quand tu dors.', 'D\'ici, tu vois ta table de nuit. La place du réveil est vide.']);
+  await d.say('Ben oui. Je suis là, moi. Dans ta poche.', 'reveil:happy');
 };
 
 /** The fridge: the note she writes Noa every night (whatever she starts with, it ends the same). */
@@ -422,13 +564,15 @@ export const fridge: Script = async (d) => {
     await d.say('Ton mot est sur le frigo, sous l\'aimant en forme de fraise.');
     return;
   }
-  await d.say(['Le frigo. Les dessins de Mina, l\'aimant en forme de fraise.', 'Tu prends un post-it. Tu écris un mot pour Noa, comme tous les soirs.']);
+  await d.say(['Le frigo. Les dessins de Mina, l\'aimant en forme de fraise.', 'Tu prends une feuille. Tu écris un mot pour Noa, comme tous les soirs.']);
   const r = await d.ask('Écrire…', ['Mange quelque chose.', 'Pardon.', 'Je t\'aime.']);
   if (r === 0) await d.say(['« Mange quelque chose. »', 'Comme si c\'était ça, le plus important. C\'est un peu ça, le plus important.']);
   else if (r === 1) await d.say(['« Pardon. » Tu le barres.', 'Pardon de quoi ? Il ne comprendrait pas. Ou il comprendrait trop bien.']);
   else await d.say(['« Je t\'aime. »', 'Ça, tu le gardes. Tu le gardes toujours.']);
   await d.say('Tu recommences. Tu barres. Tu recommences. À la fin, il y a tout, en petit :');
-  await d.paper(['Noa, mange quelque chose', 's\'il te plaît.', 'Je t\'aime.', '— Maman'], '');
+  await d.paper(['Noa,', '', 'Mange quelque chose,', 's\'il te plaît.', 'Il y a des pâtes.', '', 'Je t\'aime.', '— Maman'], '');
+  // Its back (coda § 2.11): crossed out in Interlude I, « Je sais que t— » in Interlude IV, finished in the finale.
+  await d.say(['Tu la retournes. Au dos, tu essaies encore, comme tous les soirs.', '« Je sais que t— »', 'Tu ratures si fort que le stylo troue le papier. Tu déchires le bas.']);
   d.set('b_note', ['mange', 'pardon', 'aime'][r] ?? 'mange');
 };
 
@@ -457,7 +601,7 @@ export const minaDoor: Script = async (d) => {
     return;
   }
   d.sfx('door', { pitch: 0.8 });
-  await d.say(['Tu tournes la poignée.', 'Derrière la porte de Mina, il n\'y a pas sa chambre.', 'Il y a un couloir d\'hôpital. Évidemment.']);
+  await d.say(['Tu tournes la poignée. D\'habitude, elle est fermée à clé.', 'Derrière la porte de Mina, il n\'y a pas sa chambre.', 'Il y a un couloir d\'hôpital. Évidemment.']);
   await d.warp('b_hopital', 'mina', { sfx: 'whoosh', fade: 40, color: '#ffffff' });
 };
 
@@ -533,6 +677,12 @@ export const nadiaTalk: Script = async (d) => {
   await d.say('…Nadia.', 'maman:sad');
   await d.say(['Ce soir-là, c\'est moi qui vous ai dit de rentrer dormir.', '« Rentrez, madame. Elle est calme, ce soir. Je reste avec elle. »'], 'nadia');
   await d.say('Je sais.', 'maman:sad');
+  await d.say('Le vieux téléphone… vous avez vu l\'appel ?', 'nadia');
+  await d.say('Oui.', 'maman:sad');
+  await d.say('Vous lui en parlerez ?', 'nadia');
+  await d.wait(40);
+  await d.say('…Un jour.', 'maman:sad');
+  await d.wait(20);
   await d.say('Vous m\'en voulez ?', 'nadia');
   await d.say('Non. Pas à vous.', 'maman:neutral');
   await d.say('…À qui, alors ?', 'nadia');
@@ -599,6 +749,8 @@ async function bossFight(d: Director, from: 1 | 3): Promise<void> {
   if (from === 1) {
     await d.say(['Tu te souviens de moi ?', 'Cette nuit-là, tu m\'as remonté. Tu m\'as réglé sur cinq heures.'], 'reveil:neutral');
     await d.say(['Tu voulais revenir avant qu\'elle se réveille. Avec sa veilleuse.', 'Tu avais tout prévu.'], 'reveil:neutral');
+    await d.say(['Tu savais où elle était. Tu avais vu la lumière, sous sa porte.', 'Tu m\'as remonté pour avoir le droit de le laisser dormir.'], 'reveil:neutral');
+    await d.wait(30);
     await d.say(['Je n\'ai jamais sonné.', 'Le téléphone a sonné avant moi. À trois heures trente-trois.'], 'reveil:sad');
     await d.say('…', 'maman:sad');
     await d.say(['Alors maintenant, je sonne. Tout le temps.', 'Pour que tu ne dormes plus jamais.'], 'reveildark:angry');
@@ -980,12 +1132,16 @@ async function rest(d: Director): Promise<void> {
   await d.fadeIn(90);
   await d.wait(40);
   await d.say('Chuuut. Elle dort. Enfin.', 'mina:happy');
-  await d.say('T\'étais pas là, le dernier soir. Je sais.', 'mina:sad');
-  await d.say(['Mais t\'étais là tous les autres soirs.', 'Quarante et un. Je les ai comptés, moi aussi.'], 'mina:happy');
+  await d.say('T\'étais pas là, la dernière nuit. Je sais.', 'mina:sad');
+  await d.say(['Mais t\'étais là toutes les autres.', 'Quarante et une. Je les ai comptées, moi aussi.'], 'mina:happy');
   await d.say(['Nadia m\'a tenu la main. Elle m\'a raconté le mouton qui voulait pas dormir.', 'Elle le raconte moins bien que toi. Elle fait pas les voix.'], 'mina:neutral');
   await d.say(['J\'avais un peu peur. Mais la porte était entrouverte.', 'Il y avait de la lumière.'], 'mina:neutral');
   await d.say(['Et puis je voulais que tu dormes, Maman. Tu dormais jamais.', 'T\'avais des valises sous les yeux. Des énormes valises.'], 'mina:happy');
-  await d.say(['Ma veilleuse, tu l\'as rapportée à la maison. Avec le fil tout enroulé.', 'Un jour, quelqu\'un va la rebrancher. Tu verras.'], 'mina:neutral');
+  await d.say(['Le téléphone, c\'est moi qui ai demandé à Nadia.', 'Je voulais entendre Noa.'], 'mina:neutral');
+  await d.wait(40);
+  await d.say(['Tu ne lui demandes pas ce qu\'il a dit.', 'Tu ne l\'as jamais demandé à personne.']);
+  await d.say(['Tu lui as dit que j\'allais mieux. Merci.', 'C\'était pour qu\'il ait pas peur.'], 'mina:neutral');
+  await d.say(['Ma veilleuse, tu la lui as rendue. Avec le fil tout enroulé.', 'C\'était la sienne, d\'abord. Il me l\'avait donnée quand j\'avais peur du noir.'], 'mina:happy');
   await d.say(['Et Noa…', 'Il a peur, Maman. Comme toi. Vous faites pareil, tous les deux : vous fermez les portes.'], 'mina:sad');
   await d.say('Frappe quand même. Même s\'il répond pas. Surtout s\'il répond pas.', 'mina:neutral');
   await d.wait(30);
@@ -1056,7 +1212,7 @@ async function dawn(d: Director): Promise<void> {
   game.push(back);
   await d.fadeIn(90);
   const paper = { style: 'paper' as const };
-  await d.say(['Tu as dormi. Deux heures, d\'une traite.', 'Quelqu\'un a posé une couverture sur tes épaules. Le Réveil est face contre la table.'], undefined, paper);
+  await d.say(['Tu as dormi. Deux heures, d\'une traite.', 'Quelqu\'un a posé une couverture sur tes épaules et retourné le réveil, face contre la table.'], undefined, paper);
   await d.say(['Je t\'ai laissée dormir. Tu ronflais un peu.', 'Les sonnettes, j\'ai fait. Tout le monde est vivant. Toi aussi, on dirait.'], 'sabine');
   await d.say('…Merci, Sabine.', 'maman:happy');
   await d.say('Dehors, le ciel pâlit. Juste un peu. Tu prends ton téléphone.', undefined, paper);
@@ -1146,6 +1302,19 @@ export const DEBUG: Record<string, Script> = {
     debugSetup(['b_intro', 'b_corridor', 'b_sat']);
     d.load('b_appart', 'entree');
     await d.fadeIn(10);
+  },
+  /** In front of Noa's door: « Il dort. Enfin. Cinq heures, ça ira. », the call, then 3:38 in his room. */
+  bonus_porte_noa: async (d) => {
+    debugSetup(['b_intro', 'b_corridor', 'b_sat', 'b_home']);
+    d.load('b_appart', 'noa');
+    await d.fadeIn(10);
+    await noaDoor(d);
+  },
+  /** Straight into his room at 3:38 (the nightlight, the choice, « Tu l'as laissé faire semblant. »). */
+  bonus_338: async (d) => {
+    debugSetup(['b_intro', 'b_corridor', 'b_sat', 'b_home']);
+    G.state.flags.b_noa_door = 'frappe';
+    await enterNoaRoom(d);
   },
   bonus_panier: async (d) => {
     debugSetup(['b_intro', 'b_corridor', 'b_sat', 'b_home']);

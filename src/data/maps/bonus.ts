@@ -6,8 +6,9 @@ import { Grid } from './build';
 
 /*
  * Bonus chapter « Les rêves des autres » — Maman's dream (see src/game/story/bonus.ts):
- *   b_service (the night corridor of the care home, looping) → b_appart (home, real-world look) → b_hopital (the
- *   paper hospital behind Mina's door) → b_304 (the parents' armchair, boss Le Réveil).
+ *   b_service (the night corridor of the care home, looping) → b_appart (home, real-world look; b_noa: Noa's room at
+ *   3:38, a year ago, the memory behind his door) → b_hopital (the paper hospital behind Mina's door) → b_304 (the
+ *   parents' armchair, boss Le Réveil).
  */
 
 const P = (sprite: string, x: number, y: number, o: Partial<PropDef> = {}): PropDef => ({ sprite, x, y, ...o });
@@ -18,6 +19,8 @@ const WALL = (sprite: string, x: number, y: number, oy = -6, o: Partial<PropDef>
 const LIGHT = (x: number, y: number, r: number, color: string, flicker = true, dy = -6): PropDef => P('', x, y, { solid: false, light: { r, color, flicker, dy } });
 
 const NEON = '#dff7ec';
+/** Same lamp as in the real bedroom (src/data/maps/real.ts). */
+const NIGHTLIGHT = { r: 52, color: '#ffe991', flicker: true, dy: -10 };
 const MOON = '#a7c7f0';
 const CALL_RED = '#ff4a5a';
 
@@ -175,28 +178,31 @@ const APPART: MapDef = {
     entree: { x: 2, y: 3, dir: 'down' },
     panier: { x: 10, y: 4, dir: 'up' },
     mina: { x: 10, y: 4, dir: 'down' },
+    noa: { x: 6, y: 3, dir: 'up' },
   },
   onEnter: B.homeEnter,
+  // She always stops at Noa's door (the first time: « Il dort. Enfin. Cinq heures, ça ira. » and 3:38).
+  triggers: [{ x: 6, y: 3, w: 1, h: 5, cond: nf('b_noa_door'), script: B.noaStop }],
   props: [
     // Entrance and hallway.
     P('prop_coat', 1, 3, { script: B.coatRack }),
     P('prop_shoes', 3, 3, { solid: false, script: B.noaShoes }),
     P('', 2, 2, { text: ['La porte d\'entrée.', 'Derrière, il y a le couloir des Glycines. Tu n\'as pas envie d\'y retourner. Pas tout de suite.'] }),
-    P('', 6, 2, { script: B.noaDoor, light: { r: 22, color: '#ffe0a0', flicker: true, dy: 0 } }),
+    P('', 6, 2, { id: 'porte_noa', script: B.noaDoor, light: { r: 22, color: '#ffe0a0', flicker: true, dy: 0 } }),
     P('prop_shelf', 7, 3, { w: 2, script: B.familyPhoto }),
-    P('', 10, 2, { script: B.minaDoor }),
+    P('', 10, 2, { id: 'porte_mina', script: B.minaDoor }),
     P('ow_panier', 10, 3, { id: 'panier', frames: ['ow_panier', 'ow_panier_2'], frameSpeed: 50, script: B.basket, cond: nf('b_panier_done') }),
     WALL('prop_clock', 12, 2, -10, { script: B.hallClock }),
-    P('', 14, 2, { script: B.mamanRoom }),
+    P('', 14, 2, { id: 'porte_maman', script: B.mamanRoom }),
     // Living room.
     P('prop_tv_off', 15, 3, { w: 2, script: B.tvOff }),
-    P('prop_sofa', 13, 6, { w: 2, script: B.sofa }),
+    P('prop_sofa', 13, 6, { id: 'canape', w: 2, script: B.sofa }),
     P('prop_lamp', 16, 6, {
       light: { r: 30, color: '#ffe0a0' },
       text: ['Le lampadaire. Tu le laisses allumé, la nuit.', 'Pour que Noa ne traverse pas l\'appartement dans le noir. Il ne le traverse jamais.'],
     }),
     // Kitchen.
-    P('prop_fridge', 19, 3, { script: B.fridge }),
+    P('prop_fridge', 19, 3, { id: 'frigo', script: B.fridge }),
     WALL('prop_drawings', 20, 2, -6, { text: ['Les dessins de Mina, au-dessus du plan de travail.', 'Un soleil à lunettes, un mouton à vélo, et Noa avec des cheveux tout bleus.'] }),
     P('prop_counter', 20, 3, { w: 2, text: ['Le plan de travail. Des factures, une liste de courses.', 'En haut de la liste, de ta main : « yaourts (Noa) ». Ça fait des semaines qu\'il est en haut de la liste.'] }),
     P('prop_stove', 22, 3, { script: B.stove }),
@@ -206,6 +212,52 @@ const APPART: MapDef = {
     P('prop_chair', 23, 6, { script: B.minaChair }),
   ],
   enemies: [{ id: 'b_cafe_2', enemies: ['cafe'], x: 21, y: 4, wander: 1 }],
+};
+
+// ---------------------------------------------------------------------------
+// Chambre de Noa — 3:38, a year ago: the memory behind his door (the same room as src/data/maps/real.ts, the same
+// minute as chapter 6's button windows, seen from the doorway). The nightlight is on; Noa is in bed, eyes shut.
+// ---------------------------------------------------------------------------
+
+const NOA_ROOM: MapDef = {
+  id: 'b_noa',
+  name: 'Chambre de Noa',
+  world: 'real',
+  music: null,
+  ambience: 'rain',
+  particles: 'dust',
+  darkness: 0.55,
+  playerLight: 22,
+  tiles: `
+    TTTTTTTTTTTTTT
+    TWWwWWWWDWWwWT
+    TBBBBBBBdBBBBT
+    TFFFFFFFFFFFFT
+    TFFCCCCCCCCFFT
+    TFFCCCCCCCCFFT
+    TFFCCCCCCCCFFT
+    TFFFFFFFFFFFFT
+    TTTTTTTTTTTTTT
+  `,
+  legend: REAL_LEGEND,
+  spawns: { default: { x: 8, y: 3, dir: 'down' }, porte: { x: 8, y: 3, dir: 'down' } },
+  props: [
+    P('prop_bed_sleeping', 1, 3, { id: 'lit_noa', h: 2, script: B.noaBed }),
+    P('prop_nightstand', 2, 3, { id: 'table_noa', script: B.noaNightlight }),
+    P('prop_veilleuse', 2, 3, { id: 'veilleuse', solid: false, oy: -9, light: NIGHTLIGHT, script: B.noaNightlight }),
+    WALL('prop_mur_use', 1, 2, -3),
+    P('prop_desk', 3, 3, { w: 2 }),
+    P('prop_casque', 3, 3, { solid: false, oy: -14, ox: 6 }),
+    P('prop_chair', 4, 4, { solid: false }),
+    WALL('prop_poster', 5, 2, -4),
+    P('prop_shelf', 6, 3, { w: 2 }),
+    P('', 8, 2, { id: 'porte_338', text: B.noaRoomDoor }),
+    WALL('prop_clock', 10, 2, -10),
+    P('prop_closet', 10, 3, { w: 2 }),
+    WALL('prop_calendar', 12, 2, -8),
+    P('prop_plant', 12, 4),
+    P('prop_trash', 12, 7),
+  ],
 };
 
 // ---------------------------------------------------------------------------
@@ -313,6 +365,7 @@ const ROOM_304: MapDef = {
 export const BONUS_MAPS: Record<string, MapDef> = {
   b_service: SERVICE,
   b_appart: APPART,
+  b_noa: NOA_ROOM,
   b_hopital: HOPITAL,
   b_304: ROOM_304,
 };
