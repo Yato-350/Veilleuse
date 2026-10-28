@@ -3,7 +3,7 @@
 # and set no story flag but its own b_*). The care home at 3:33 (the break room's alarm clock; in the dream, her old
 # one from home), the corridor loop, the bench; home: she stops at Noa's door (« Il dort. Enfin. Cinq heures, ça
 # ira. », 23:20, the call at 3:33), 3:38 in his room (Dodo falls toward the bed, the nightlight unplugged, his eyelids
-# tremble, « Le laisser », « Tu l'as laissé faire semblant. »); her room (the alarm clock's empty spot), the fridge
+# tremble, « Le laisser dormir », « Tu l'as laissé faire semblant. »); her room (the alarm clock's empty spot), the fridge
 # note and its back « Je sais que t— », the Basket spared, Mina's door (« D'habitude, elle est fermée à clé »); the
 # paper hospital: Mina at 3 a.m., Nadia (« Le vieux téléphone… vous avez vu l'appel ? » — « Oui. » — « Vous lui en
 # parlerez ? » — « …Un jour. »); room 304: the Alarm Clock (« Tu m'as remonté pour avoir le droit de le laisser
@@ -40,7 +40,7 @@ zuntil: V.dialogue.choices
 zuntil: V.G.state.flags.b_sat === true && !V.dialogue.busy
 auto
 go:43/3
-eval: (V.world.player.dir = 'up', 1)
+ArrowUp:300
 KeyZ
 wait:1500
 auto
@@ -67,7 +67,7 @@ go:2/4
 eval: (V.world.player.dir = 'up', 1)
 KeyZ
 zuntil: V.dialogue.choices
-assert: window.LOG.includes('Il ne dort pas. [Le réveiller|Le laisser]') && window.LOG.includes('Ses paupières tremblent.')
+assert: window.LOG.includes('Il ne dort pas. [Le réveiller|Le laisser dormir]') && window.LOG.includes('Ses paupières tremblent.')
 shot:paupieres
 choose:1
 zuntil: V.dialogue.busy && window.LOG.includes('Tu l\'as laissé faire semblant.')
@@ -104,6 +104,7 @@ auto
 write:plier
 auto
 menu:3
+choose:0
 auto
 assert: V.G.state.flags.b_panier_done === 'spare'
 interact:porte_mina
@@ -126,7 +127,7 @@ shot:nadia
 auto
 assert: V.G.state.flags.b_nadia === true && window.LOG.includes('Le vieux téléphone… vous avez vu l\'appel ?') && window.LOG.includes('Oui.') && window.LOG.includes('…Un jour.')
 go:32/3
-eval: (V.world.player.dir = 'up', 1)
+ArrowUp:300
 KeyZ
 zuntil: V.G.state.map === 'b_304' && V.dialogue.busy && window.LOG.includes('Tu savais où elle était. Tu avais vu la lumière, sous sa porte. Tu m\'as remonté pour avoir le droit de le laisser dormir.')
 wait:1500
@@ -160,9 +161,10 @@ zuntil: V.scene() !== 'Battle'
 zuntil: V.dialogue.busy && window.LOG.includes('Le téléphone, c\'est moi qui ai demandé à Nadia. Je voulais entendre Noa.')
 wait:1500
 shot:mina
-zuntil: V.dialogue.busy && window.LOG.includes('Tu lui as dit que j\'allais mieux. Merci. C\'était pour qu\'il ait pas peur.')
-assert: window.LOG.includes('T\'étais pas là, la dernière nuit. Je sais.') && window.LOG.includes('Ma veilleuse, tu la lui as rendue. Avec le fil tout enroulé. C\'était la sienne, d\'abord. Il me l\'avait donnée quand j\'avais peur du noir.')
-assert: Object.keys(V.G.state.flags).every((k) => k === 'bonus' || k.startsWith('b_'))
+zuntil: V.dialogue.busy && window.LOG.includes('Ma veilleuse, tu la lui as rendue. Avec le fil tout enroulé. C\'était la sienne, d\'abord. Il me l\'avait donnée quand j\'avais peur du noir.')
+assert: window.LOG.includes('T\'étais pas là, la dernière nuit. Je sais.') && window.LOG.includes('Tu lui as dit que j\'allais mieux. Merci. C\'était pour qu\'il ait pas peur.')
+# No story flag: only `bonus`, its own b_* and the engine's `world` (the dialogue style of the last map).
+assert: Object.keys(V.G.state.flags).every((k) => k === 'bonus' || k === 'world' || k.startsWith('b_'))
 # Dawn: « Je rentre. », « Lu. », the credits, back to the title.
 zuntil: V.game.top.constructor.name === 'PhoneScene' && V.game.top.mode === 'choose'
 wait:900

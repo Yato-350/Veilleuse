@@ -247,8 +247,28 @@ Drapeaux de partie posés par la méta : `m_appel_314`, `m_absence` (nombre de p
 | Toute fin v2 | Prologue : « Tu reviens. Tu sais, toi. … Tu ne lui diras rien, hein ? » (une mémoire 1.1 seule n'est pas une fin v2) | Chambre, prologue | `prologueDodo`, `real.ts:620`, `sawV2Ending` | `lot10-ngplus`, `lot10-ngplus-v11`, `lot6-ngplus` |
 | T7 (§ 2.8) | Entre minuit et 5 h (heure réelle), les boîtes du narrateur ont le bip de Dodo (celui de Noa, transposé) ; pas dans le bonus, plus après la fin secrète ; après T7, le narrateur du ch. 6 garde le bip de Noa | Partout | `metaTick`, `meta.ts:125` ; `nightNarratorVoice` (`src/game/ui/dialogue.ts`) | `lot10-narrateur-nuit`, `lot10-narrateur-t7`, `lot10-appel-314` |
 
+## Bonus — « La nuit de Maman » (§ 3.17, T5 § 2.6, coda § 2.11, lot 11)
+
+La même nuit (la 365ᵉ), du côté de Maman : elle s'endort aux Glycines à 3 h 33 et rêve. Partie séparée, débloquée au
+titre après l'Aube (« Les rêves des autres ») : elle ne pose que ses drapeaux `b_*` et `bonus`, et ne touche jamais à la
+sauvegarde de la partie principale. Personne n'y dit ce qui s'est dit pendant les 41 secondes. Scripts de debug :
+`bonus_start`, `bonus_service`, `bonus_banc`, `bonus_appart`, `bonus_porte_noa` (devant la porte de Noa), `bonus_338`
+(sa chambre à 3 h 38), `bonus_panier`, `bonus_hopital`, `bonus_nadia`, `bonus_boss`, `bonus_boss3`, `bonus_end`,
+`bonus_aube` (`src/game/story/bonus.ts`, `DEBUG`). Entités pour le bot : `banc` (Glycines) ; `porte_noa`, `rai_noa`,
+`porte_maman`, `frigo`, `panier`, `porte_mina` (appartement) ; `lit_noa`, `veilleuse`, `dodo_338` (chambre de Noa,
+3 h 38) ; `mina`, `nadia` (hôpital de papier). Une porte (Glycines, chambre 304) s'ouvre en marchant contre elle.
+
+| Twist | Indice | Où | Entité / code | Preuve |
+|---|---|---|---|---|
+| T5 | Le réveil de la table de la salle de pause est celui des Glycines ; le Réveil du rêve est « Ton vieux réveil. Celui de ta table de nuit, à la maison. » (celui de l'Interlude IV, avec son post-it) ; sa chambre : « La place du réveil est vide. » — « Ben oui. Je suis là, moi. Dans ta poche. » ; à l'aube, la couverture de Sabine et le réveil des Glycines « retourné, face contre la table » (quelqu'un l'a laissée dormir) | Salle de pause ; couloir de l'appartement | `start`, `src/game/story/bonus.ts:101`, `:122` ; `mamanRoom`, `:556` ; `dawn`, `:1215` ; `porte_maman` | `lot11-bonus` |
+| T4 / T5 / coda | La lumière sous la porte de Noa (le trait de lumière du ch. 4, vu du couloir). Elle s'arrête toujours devant sa porte : [Frapper] → « Pas de réponse. » ; la main à plat sur la porte, « Comme cette nuit-là. » ; 23 h 20 : « Dans l'entrée, pas de veilleuse. », « Tu avais frappé doucement. Personne n'avait répondu. », puis Maman : « Il dort. Enfin. Cinq heures, ça ira. » ; Dodo assis contre sa porte, le vieux réveil réglé sur cinq heures, endormie tout habillée ; 3 h 33 : « « Venez. Maintenant. » » | Couloir de l'appartement | déclencheur `noaStop` et `porte_noa`, `rai_noa` (`src/data/maps/bonus.ts:185`, `:191`, `:193`) ; `noaDoor`, `thatNight`, `bonus.ts:378`, `:408`, `:416` ; drapeau `b_noa_door` | `lot11-bonus`, `lot11-porte-reveiller` |
+| T8 / coda | 3 h 38, sa chambre il y a un an (la même minute que les fenêtres-boutons du ch. 6, vue depuis la porte) : la porte s'ouvre, Dodo bascule « la tête tournée vers le lit » ; la veilleuse « que tu lui avais achetée quand il avait quatre ans. Pour les monstres du placard. » ; « Tu tires sur le fil. » — « Le noir, d'un coup. » ; « Noa ? » ; à la lumière du téléphone, « Ses paupières tremblent. » — « Il ne dort pas. » [Le réveiller] (« Elle s'arrête au-dessus de la couverture. […] Elle s'arrête là chaque fois. ») / [Le laisser dormir] ; le fil enroulé autour de sa main, elle ne referme pas tout à fait ; dans les deux cas : « Tu l'as laissé faire semblant. » ; au retour : « Il la rebranche toutes les nuits, depuis un an. » (double : un garçon qui dort mal, une veilleuse qu'on rapporte à l'hôpital) | Chambre de Noa (`b_noa`) | `enterNoaRoom`, `noaNightlight`, `bonus.ts:451`, `:483`, `:502`, `:519` ; carte `b_noa` (`maps/bonus.ts:224`) ; drapeau `b_338` | `lot11-bonus`, `lot11-porte-reveiller` |
+| Coda | Le mot du frigo (le même qu'à l'Interlude I) et son dos : « Je sais que t— », raturé si fort que le stylo troue le papier, le bas déchiré, « comme tous les soirs » | Frigo | `fridge`, `bonus.ts:562`, `:575` ; `frigo` | `lot11-bonus` |
+| — | La porte de Mina : « D'habitude, elle est fermée à clé. » (la clé est dans le tiroir de Noa) | Couloir de l'appartement | `minaDoor`, `bonus.ts:604` ; `porte_mina` | `lot11-bonus` |
+| Coda / T8 | Nadia : « Le vieux téléphone… vous avez vu l'appel ? » — « Oui. » — « Vous lui en parlerez ? » — « …Un jour. » | Hôpital de papier | `nadiaTalk`, `bonus.ts:680` ; `nadia` | `lot11-bonus` |
+| T5 | Le Réveil : « Tu savais où elle était. Tu avais vu la lumière, sous sa porte. Tu m'as remonté pour avoir le droit de le laisser dormir. » ; « Je n'ai jamais sonné. Le téléphone a sonné avant moi. » ; « Quarante et une. Pas quarante-deux. » (la 42ᵉ nuit, celle où elle n'y était pas) | Chambre 304 | `bossFight`, `bonus.ts:752` ; `room304Enter`, `:722` | `lot11-bonus` |
+| T6 / T8 / coda | Mina dans la lumière du fauteuil : « T'étais pas là, la dernière nuit. Je sais. » ; « Le téléphone, c'est moi qui ai demandé à Nadia. Je voulais entendre Noa. » — « Tu ne lui demandes pas ce qu'il a dit. Tu ne l'as jamais demandé à personne. » ; « Tu lui as dit que j'allais mieux. Merci. C'était pour qu'il ait pas peur. » ; « Ma veilleuse, tu la lui as rendue. […] C'était la sienne, d'abord. » | Chambre 304 | `rest`, `bonus.ts:1135`, `:1140`, `:1143`, `:1144` | `lot11-bonus` |
+
 ## Encore à faire par les lots suivants
 
-| Twist | Indice | Où | Lot |
-|---|---|---|---|
-| T4 / T5 / coda | `bonus.ts` › `noaDoor` : la lumière sous la porte, « Il dort. Enfin. Cinq heures, ça ira. », Maman frappe et personne ne répond | Bonus | 11 |
+Rien pour l'instant : la dernière ligne de ce tableau (le bonus, `noaDoor`) a été faite au lot 11.

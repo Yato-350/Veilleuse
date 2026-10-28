@@ -181,6 +181,7 @@ export const STORY_BONUS: Record<string, string> = {
   'Ses paupières tremblent.': 'His eyelids are trembling.',
   'Il ne dort pas.': 'He\'s not asleep.',
   'Le réveiller': 'Wake him',
+  'Le laisser dormir': 'Let him sleep',
   'Tu tends la main vers son épaule.': 'You reach for his shoulder.',
   'Elle s\'arrête au-dessus de la couverture.': 'Your hand stops above the blanket.',
   'Cette nuit-là, elle s\'est arrêtée là. Elle s\'arrête là chaque fois.': 'That night, it stopped there. It stops there every time.',

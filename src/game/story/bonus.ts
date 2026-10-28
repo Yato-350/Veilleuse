@@ -41,8 +41,8 @@ import { tf, tr } from '../../i18n';
  * The player controls Maman (G.state.playerChar = 'maman'). Separate run: it never touches the main story flags.
  * Flags (prefix b_): b_intro, b_corridor, b_loop (corridor loops), b_sat (sat on the bench: the way home opens),
  * b_sabine / b_albert (talk counts), b_room_<n>, b_cafe, b_phone, b_home, b_noa_door ('frappe' | 'laisse'), b_338
- * (3:38 in his room: 'reveiller' | 'laisser' — the memory ends the same), b_note, b_panier_done, b_hosp, b_choco,
- * b_mina_mem, b_nadia, b_boss_done.
+ * (3:38 in his room, « Le réveiller » | « Le laisser dormir »: 'reveiller' | 'laisser' — the memory ends the same),
+ * b_note, b_panier_done, b_hosp, b_choco, b_mina_mem, b_nadia, b_boss_done.
  */
 
 const flag = (k: string): boolean => !!G.state.flags[k];
@@ -500,7 +500,7 @@ export const noaNightlight: Script = async (d) => {
   await d.say(['Rien.', 'L\'écran de ton téléphone éclaire encore un peu. Juste assez pour son visage.']);
   await d.wait(30);
   await d.say('Ses paupières tremblent.');
-  const r = await d.ask('Il ne dort pas.', ['Le réveiller', 'Le laisser'], undefined, { cancelIndex: 1 });
+  const r = await d.ask('Il ne dort pas.', ['Le réveiller', 'Le laisser dormir'], undefined, { cancelIndex: 1 });
   d.set('b_338', r === 0 ? 'reveiller' : 'laisser');
   if (r === 0) {
     await d.say(['Tu tends la main vers son épaule.', 'Elle s\'arrête au-dessus de la couverture.']);
