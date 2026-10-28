@@ -1,0 +1,179 @@
+# Lot 11 (docs/HISTOIRE.md § 3.17, T5 § 2.6, coda § 2.11): the bonus « La nuit de Maman » played end to end from the
+# title screen, as a player enters it after the Aube ending, with a main run saved (the bonus must leave it untouched
+# and set no story flag but its own b_*). The care home at 3:33 (the break room's alarm clock; in the dream, her old
+# one from home), the corridor loop, the bench; home: she stops at Noa's door (« Il dort. Enfin. Cinq heures, ça
+# ira. », 23:20, the call at 3:33), 3:38 in his room (Dodo falls toward the bed, the nightlight unplugged, his eyelids
+# tremble, « Le laisser », « Tu l'as laissé faire semblant. »); her room (the alarm clock's empty spot), the fridge
+# note and its back « Je sais que t— », the Basket spared, Mina's door (« D'habitude, elle est fermée à clé »); the
+# paper hospital: Mina at 3 a.m., Nadia (« Le vieux téléphone… vous avez vu l'appel ? » — « Oui. » — « Vous lui en
+# parlerez ? » — « …Un jour. »); room 304: the Alarm Clock (« Tu m'as remonté pour avoir le droit de le laisser
+# dormir. »), its three phases, she sleeps; Mina in the armchair's light (« Le téléphone, c'est moi qui ai demandé à
+# Nadia. », « Tu lui as dit que j'allais mieux. Merci. »); dawn, « Je rentre. », « Lu. », the credits, the title.
+# The wandering call bells and coffees are cleared (optional fights). Dialogue keys are logged in window.LOG.
+query: debug=title&lang=fr&meta=endings:aube,names:Sacha
+wait:1200
+eval: window.V = window.__veilleuse
+eval: (window.MAIN = JSON.stringify({ version: 2, playerName: 'Sacha', chapter: 5, map: 'plage', x: 10, y: 8, dir: 'down', hp: 20, playtime: 3720, flags: { interlude: 4, c4_fin: true, i4_knock: 'deux' } }), localStorage.setItem('veilleuse.save.v1', window.MAIN), V.flow.toTitle(), 1)
+wait:1500
+eval: (() => { window.LOG = []; const d = V.dialogue; const say = d.say.bind(d); const ask = d.ask.bind(d); d.say = (t, o) => { window.LOG.push([].concat(t).join(' ')); return say(t, o); }; d.ask = (t, c, o) => { window.LOG.push(t + ' [' + c.join('|') + ']'); return ask(t, c, o); }; return 1; })()
+eval: (V.game.top.idx = V.game.top.items.findIndex((i) => i.label === 'Les rêves des autres'), V.game.top.idx)
+KeyZ
+wait:1500
+auto
+assert: V.G.state.map === 'b_service' && V.G.state.flags.bonus === 1 && V.G.state.playerChar === 'maman'
+assert: window.LOG.includes('Tu raccroches. Sur la table, à côté du téléphone, le réveil de la salle de pause fait tic. Puis tac.')
+assert: window.LOG.includes('Ton vieux réveil. Celui de ta table de nuit, à la maison. Pas celui de la salle de pause. Il a des yeux, maintenant. Et il parle.')
+shot:service
+eval: (V.G.state.cleared.push('b_sonnette_1', 'b_cafe_1', 'b_duo_1', 'b_cafe_2', 'b_sonnette_2', 'b_duo_2'), V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => V.world.removeEntity(e)), 1)
+go:11/5
+wait:300
+auto
+go:40/5
+wait:300
+auto
+assert: V.G.state.flags.b_loop === 1 && V.G.state.map === 'b_service'
+eval: V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => V.world.removeEntity(e))
+go:26/4
+eval: (V.world.player.dir = 'up', 1)
+interact:banc
+zuntil: V.dialogue.choices
+zuntil: V.G.state.flags.b_sat === true && !V.dialogue.busy
+auto
+go:43/3
+eval: (V.world.player.dir = 'up', 1)
+KeyZ
+wait:1500
+auto
+assert: V.G.state.map === 'b_appart'
+# Home. Walking down the hallway, she stops at Noa's door.
+go:5/5
+wait:200
+eval: (V.world.player.dir = 'right', 1)
+ArrowRight:400
+zuntil: V.dialogue.choices
+assert: V.world.player.x === 6 * 16 + 8 && window.LOG.includes('Frapper ? [Frapper|Le laisser]')
+shot:porte
+choose:1
+zuntil: V.dialogue.busy && window.LOG.includes('Il dort. Enfin.{p:30} Cinq heures, ça ira.')
+wait:2500
+shot:il-dort
+zuntil: V.G.state.map === 'b_noa' && !V.dialogue.busy && V.world.busy === 0
+auto
+assert: V.world.get('dodo_338').sprite === 'prop_c6_dodo_tombe'
+shot:chambre
+interact:lit_noa
+auto
+go:2/4
+eval: (V.world.player.dir = 'up', 1)
+KeyZ
+zuntil: V.dialogue.choices
+assert: window.LOG.includes('Il ne dort pas. [Le réveiller|Le laisser]') && window.LOG.includes('Ses paupières tremblent.')
+shot:paupieres
+choose:1
+zuntil: V.dialogue.busy && window.LOG.includes('Tu l\'as laissé faire semblant.')
+wait:1200
+shot:semblant
+zuntil: V.G.state.map === 'b_appart' && !V.dialogue.busy && V.world.busy === 0
+assert: V.G.state.flags.b_noa_door === 'laisse' && V.G.state.flags.b_338 === 'laisser'
+assert: window.LOG.includes('Le couloir. Trois heures trente-trois. Sous la porte de Noa, la lumière. Il l\'a rebranchée. Il la rebranche toutes les nuits, depuis un an.')
+# The rest of the flat: her room, the fridge note and its back.
+interact:porte_maman
+auto
+assert: window.LOG.includes('Ben oui. Je suis là, moi. Dans ta poche.')
+interact:frigo
+zuntil: V.dialogue.choices
+choose:2
+zuntil: V.scene() === 'PaperScene'
+wait:1200
+shot:mot
+zuntil: V.dialogue.busy && window.LOG.includes('Tu la retournes. Au dos, tu essaies encore, comme tous les soirs. « Je sais que t— » Tu ratures si fort que le stylo troue le papier. Tu déchires le bas.')
+auto
+assert: V.G.state.flags.b_note === 'aime'
+# The Basket, spared (her pyjamas folded on her pillow, as in Interlude IV).
+go:10/4
+eval: (V.world.player.dir = 'up', 1)
+interact:panier
+zuntil: V.dialogue.choices
+zuntil: V.scene() === 'Battle'
+god
+auto
+write:joie
+auto
+write:joie
+auto
+write:plier
+auto
+menu:3
+auto
+assert: V.G.state.flags.b_panier_done === 'spare'
+interact:porte_mina
+zuntil: V.dialogue.choices
+zuntil: V.G.state.map === 'b_hopital'
+assert: window.LOG.includes('Tu tournes la poignée. D\'habitude, elle est fermée à clé. Derrière la porte de Mina, il n\'y a pas sa chambre. Il y a un couloir d\'hôpital. Évidemment.')
+auto
+# The paper hospital: Mina at 3 a.m., then Nadia and the old phone.
+go:16/5
+eval: (V.world.player.dir = 'right', 1)
+interact:mina
+auto
+assert: V.G.state.flags.b_mina_mem === true
+go:31/4
+eval: (V.world.player.dir = 'right', 1)
+interact:nadia
+zuntil: V.dialogue.busy && window.LOG.includes('Vous lui en parlerez ?')
+wait:600
+shot:nadia
+auto
+assert: V.G.state.flags.b_nadia === true && window.LOG.includes('Le vieux téléphone… vous avez vu l\'appel ?') && window.LOG.includes('Oui.') && window.LOG.includes('…Un jour.')
+go:32/3
+eval: (V.world.player.dir = 'up', 1)
+KeyZ
+zuntil: V.G.state.map === 'b_304' && V.dialogue.busy && window.LOG.includes('Tu savais où elle était. Tu avais vu la lumière, sous sa porte. Tu m\'as remonté pour avoir le droit de le laisser dormir.')
+wait:1500
+shot:reveil
+# The Alarm Clock: phase 1 (any words), phase 2 (its words, DEBOUT), phase 3 (her words to herself), DORMIR.
+auto
+write:joie
+auto
+write:joie
+auto
+write:joie
+auto
+write:debout
+auto
+write:vite
+auto
+write:encore
+auto
+write:repose-toi
+auto
+write:pleure
+auto
+write:pas ta faute
+auto
+write:je t'aime
+auto
+assert: V.game.top.menuLabels[3] === 'DORMIR'
+menu:3
+zuntil: V.dialogue.choices
+zuntil: V.scene() !== 'Battle'
+zuntil: V.dialogue.busy && window.LOG.includes('Le téléphone, c\'est moi qui ai demandé à Nadia. Je voulais entendre Noa.')
+wait:1500
+shot:mina
+zuntil: V.dialogue.busy && window.LOG.includes('Tu lui as dit que j\'allais mieux. Merci. C\'était pour qu\'il ait pas peur.')
+assert: window.LOG.includes('T\'étais pas là, la dernière nuit. Je sais.') && window.LOG.includes('Ma veilleuse, tu la lui as rendue. Avec le fil tout enroulé. C\'était la sienne, d\'abord. Il me l\'avait donnée quand j\'avais peur du noir.')
+assert: Object.keys(V.G.state.flags).every((k) => k === 'bonus' || k.startsWith('b_'))
+# Dawn: « Je rentre. », « Lu. », the credits, back to the title.
+zuntil: V.game.top.constructor.name === 'PhoneScene' && V.game.top.mode === 'choose'
+wait:900
+assert: window.LOG.includes('Tu as dormi. Deux heures, d\'une traite. Quelqu\'un a posé une couverture sur tes épaules et retourné le réveil, face contre la table.')
+ArrowDown
+ArrowDown
+KeyZ
+zuntil: V.dialogue.busy && window.LOG.includes('« Lu. » Il ne dort pas. Il a lu.')
+shot:lu
+zuntil: V.scene() === 'CreditsScene'
+waitfor: V.G.meta.bonusDone === true
+zuntil: V.scene() === 'TitleScene'
+assert: localStorage.getItem('veilleuse.save.v1') === window.MAIN
+shot:titre

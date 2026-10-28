@@ -188,7 +188,9 @@ const APPART: MapDef = {
     P('prop_coat', 1, 3, { script: B.coatRack }),
     P('prop_shoes', 3, 3, { solid: false, script: B.noaShoes }),
     P('', 2, 2, { text: ['La porte d\'entrée.', 'Derrière, il y a le couloir des Glycines. Tu n\'as pas envie d\'y retourner. Pas tout de suite.'] }),
-    P('', 6, 2, { id: 'porte_noa', script: B.noaDoor, light: { r: 22, color: '#ffe0a0', flicker: true, dy: 0 } }),
+    P('', 6, 2, { id: 'porte_noa', script: B.noaDoor, light: { r: 22, color: '#ffe0a0', flicker: true, dy: 8 } }),
+    // The sliver of light under his door (the same strip as chapter 4's Night 42, seen from the hallway).
+    P('prop_c4_lumiere', 6, 2, { id: 'rai_noa', solid: false, oy: 1 }),
     P('prop_shelf', 7, 3, { w: 2, script: B.familyPhoto }),
     P('', 10, 2, { id: 'porte_mina', script: B.minaDoor }),
     P('ow_panier', 10, 3, { id: 'panier', frames: ['ow_panier', 'ow_panier_2'], frameSpeed: 50, script: B.basket, cond: nf('b_panier_done') }),

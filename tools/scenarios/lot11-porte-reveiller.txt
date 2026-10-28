@@ -1,0 +1,63 @@
+# Lot 11 (§ 3.17, T5 § 2.6): the other branches of Noa's door. From the entrance, walking down the hallway, Maman
+# stops at his door by herself (the trigger walks her to it); [Frapper]: two knocks, « Pas de réponse. », « Derrière
+# la porte, le grésillement d'une veilleuse. »; her hand flat on the door, « Comme cette nuit-là. », 23:20, « Il dort.
+# Enfin. Cinq heures, ça ira. », the call at 3:33, « Trois heures trente-huit. ». In his room: [Le réveiller] — her
+# hand stops above the blanket (« Elle s'arrête là chaque fois. ») — and the memory ends the same: « Tu l'as laissé
+# faire semblant. ». Back in the hallway the door only gives its short line, and the stop never fires again.
+query: debug=script&name=bonus_appart&lang=fr
+wait:1500
+auto
+eval: window.V = window.__veilleuse
+eval: (() => { window.LOG = []; const d = V.dialogue; const say = d.say.bind(d); const ask = d.ask.bind(d); d.say = (t, o) => { window.LOG.push([].concat(t).join(' ')); return say(t, o); }; d.ask = (t, c, o) => { window.LOG.push(t + ' [' + c.join('|') + ']'); return ask(t, c, o); }; return 1; })()
+go:4/6
+wait:200
+eval: (V.world.player.dir = 'right', 1)
+ArrowRight:700
+zuntil: V.dialogue.choices
+assert: V.world.player.x === 6 * 16 + 8 && V.world.player.y === 3 * 16 + 14 && V.world.player.dir === 'up'
+zuntil: V.G.state.flags.b_noa_door === 'frappe'
+zuntil: V.dialogue.busy && window.LOG.includes('Pas de réponse. Derrière la porte, le grésillement d\'une veilleuse.')
+zuntil: V.dialogue.busy && window.LOG.includes('Vingt-trois heures vingt.')
+wait:800
+shot:2320
+zuntil: V.dialogue.busy && window.LOG.includes('Il dort. Enfin.{p:30} Cinq heures, ça ira.')
+assert: window.LOG.includes('Tu rentrais de l\'hôpital. Nadia t\'avait renvoyée dormir. Dans l\'entrée, pas de veilleuse.') && window.LOG.includes('Sous sa porte, la lumière. Une petite musique, dans des écouteurs. Tu avais frappé doucement. Personne n\'avait répondu.')
+zuntil: V.dialogue.busy && window.LOG.includes('« Venez. Maintenant. »')
+zuntil: V.G.state.map === 'b_noa' && !V.dialogue.busy && V.world.busy === 0
+assert: window.LOG.includes('Trois heures trente-huit.') && window.LOG.includes('Tu as assis Dodo contre sa porte. Mina te l\'avait confié pour lui. Tu as réglé ton vieux réveil sur cinq heures. Tu t\'es endormie tout habillée.')
+# The door she came in by: not without the nightlight.
+go:8/3
+eval: (V.world.player.dir = 'up', 1)
+KeyZ
+auto
+assert: V.G.state.map === 'b_noa' && window.LOG.includes('Pas sans la veilleuse. Tu l\'as promise pour l\'aube.')
+interact:dodo_338
+auto
+go:2/4
+eval: (V.world.player.dir = 'up', 1)
+KeyZ
+zuntil: V.dialogue.busy && window.LOG.includes('Le noir, d\'un coup.')
+assert: !V.world.get('veilleuse').light
+wait:600
+shot:noir
+zuntil: V.dialogue.choices
+wait:400
+shot:choix
+zuntil: V.G.state.flags.b_338 === 'reveiller'
+zuntil: V.dialogue.busy && window.LOG.includes('Cette nuit-là, elle s\'est arrêtée là. Elle s\'arrête là chaque fois.')
+wait:1200
+shot:main
+zuntil: V.dialogue.busy && window.LOG.includes('Tu l\'as laissé faire semblant.')
+zuntil: V.G.state.map === 'b_appart' && !V.dialogue.busy && V.world.busy === 0
+assert: V.world.player.x === 6 * 16 + 8 && V.world.player.dir === 'up'
+interact:porte_noa
+auto
+assert: window.LOG[window.LOG.length - 1] === 'La porte de Noa. La lumière, dessous. Tu restes là un moment. Tu restes toujours là un moment.'
+go:4/5
+wait:200
+eval: (V.world.player.dir = 'right', 1)
+ArrowRight:500
+wait:300
+auto
+assert: !V.dialogue.busy && V.world.busy === 0 && window.LOG.filter((l) => l.startsWith('Frapper ?')).length === 1
+shot:couloir
