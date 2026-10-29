@@ -49,7 +49,8 @@ import { inBed } from './real';
  *   c6_nid            the nest; c6_chaussette: talks with Chaussette
  *   c6_boite_vue      the music box chamber has been entered; c6_peigne: the comb was looked at
  *   c6_dent_<1–3>     baby tooth found; c6_dents: how many
- *   c6_boite          the music box played the lullaby whole (the counting scene « dents »)
+ *   c6_boite          the music box played the lullaby whole (the counting scene « dents »); c6_boite_ratee: rounds
+ *                     failed (from 2, « Je n'y arrive pas » lets it play anyway)
  *   c6_couloir        the corridor has been entered; c6_porte_<n>: door n opened (trunk 1–14); c6_fourche: the fork
  *   c6_haut           'douce' | 'dure': which version plays behind the doors of the upper branch (drawn once)
  *   c6_haut_<n>, c6_bas_<n>   door n of that branch opened; c6_ecoute_haut, c6_ecoute_bas: branch heard to door 41
@@ -830,6 +831,10 @@ export const crank: Script = async (d) => {
   await musicBox(d);
 };
 
+/**
+ * Like the sheep of chapter 1: a failed round can be played again or left for later (the crank waits), and from the
+ * second failure (c6_boite_ratee, kept between tries) « Je n'y arrive pas » lets the lullaby play anyway.
+ */
 async function musicBox(d: Director): Promise<void> {
   d.music(null, 1);
   await d.fadeOut(20);
@@ -840,7 +845,8 @@ async function musicBox(d: Director): Promise<void> {
     ['Des épingles se sont mêlées aux goupilles.', 'Pas les épingles. Jamais les épingles.'],
     ['La berceuse, cette fois. Jusqu\'au bout.'],
   ];
-  for (let round = 1; round <= 3; round++) {
+  let gaveUp = false;
+  for (let round = 1; round <= 3 && !gaveUp; round++) {
     scene.announce(round);
     await d.say(intro[round - 1]!, undefined, { voice: 'noa' });
     let attempt = 0;
@@ -848,9 +854,29 @@ async function musicBox(d: Director): Promise<void> {
       const res = await scene.play(round, attempt);
       if (res.ok) break;
       attempt++;
+      const fails = bump('c6_boite_ratee');
       if (attempt === 2) await d.say('Doucement. Elle chantait doucement, elle.', 'dodoreel', { voice: 'noa' });
       else await d.say('La mélodie se perd. Le cylindre recule d\'un cran. Encore.', undefined, { voice: 'noa' });
+      const choices = ['Recommencer', 'Plus tard'];
+      if (fails >= 2) choices.push('Je n\'y arrive pas');
+      const c = await d.ask('Encore une fois ?', choices, undefined, { cancelIndex: 1 });
+      if (c === 1) {
+        await d.fadeOut(20);
+        scene.close();
+        await d.fadeIn(20);
+        d.music('ventre', 1);
+        await tell(d, 'Tu lâches la manivelle. Le cylindre s\'arrête au milieu d\'une note. Il t\'attendra.');
+        return;
+      }
+      if (c === 2) {
+        gaveUp = true;
+        break;
+      }
     }
+  }
+  if (gaveUp) {
+    await voice(d, 'Laisse. Je la connais par cœur.');
+    await tell(d, 'La manivelle tourne toute seule. Les dents trouvent leur place sans toi, une à une.');
   }
   await d.wait(30);
   await d.fadeOut(30);

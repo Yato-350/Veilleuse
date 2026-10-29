@@ -4,6 +4,7 @@ import { getGlyph, measure, wrap } from '../src/engine/font';
 import { GLYPHS, ACCENTS } from '../src/engine/font-data';
 import { hash2, Rng, clamp, rectsOverlap } from '../src/engine/math';
 import { parseRows } from '../src/engine/sprite';
+import { Fx } from '../src/engine/fx';
 import { layoutRich, parseRich, plainText } from '../src/game/ui/richtext';
 import {
   allyActsOn,
@@ -582,6 +583,22 @@ describe('state & saves', () => {
     const again = readMeta();
     expect(again.endingsV1).toEqual(['aube', 'silence']);
     expect(again.nuits).toBe(368);
+  });
+});
+
+describe('screen effects', () => {
+  it('« Réduire les flashs »: no glitch bursts, and a continuous glitch stays below the tearing level', () => {
+    const f = new Fx();
+    f.pulseGlitch(20);
+    expect(f.glitchLevel).toBeCloseTo(0.6);
+    const calm = new Fx();
+    calm.reduceFlashes = true;
+    calm.pulseGlitch(20);
+    expect(calm.glitchLevel).toBe(0);
+    calm.glitch = 0.8;
+    expect(calm.glitchLevel).toBeLessThan(0.125);
+    calm.glitch = 0.06;
+    expect(calm.glitchLevel).toBeCloseTo(0.06);
   });
 });
 

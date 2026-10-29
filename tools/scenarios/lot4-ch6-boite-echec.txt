@@ -1,0 +1,35 @@
+# Review fix: the music box (counting scene « dents ») can be failed forward, like the sheep of chapter 1. A failed
+# round offers « Recommencer » / « Plus tard » (the scene closes, the crank waits); from the second failure
+# (c6_boite_ratee, kept between tries) « Je n'y arrive pas » lets the lullaby play anyway and the passage opens.
+query: debug=script&name=chapter6_boite&dents=3&lang=fr
+god
+wait:1500
+auto
+eval: window.V = window.__veilleuse
+eval: V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => V.world.removeEntity(e))
+interact:manivelle
+auto
+choose:0
+# Round 1 played without a single tooth: it fails.
+zuntil: V.game.top.playing === true
+waitfor: V.game.top.playing === false
+auto
+assert: V.dialogue.choices.join('|') === 'Recommencer|Plus tard' && V.G.state.flags.c6_boite_ratee === 1
+shot:echec1
+# « Plus tard »: back to the room, the box still silent.
+choose:1
+auto
+assert: V.scene() === 'WorldScene' && V.world.controllable && !V.G.state.flags.c6_boite
+interact:manivelle
+auto
+choose:0
+zuntil: V.game.top.playing === true
+waitfor: V.game.top.playing === false
+auto
+assert: V.dialogue.choices.join('|') === 'Recommencer|Plus tard|Je n\'y arrive pas' && V.G.state.flags.c6_boite_ratee === 2
+shot:echec2
+# « Je n'y arrive pas »: Dodo knows it by heart; the lullaby plays, the passage opens.
+choose:2
+auto:60000
+assert: V.G.state.flags.c6_boite === true && V.world.tilemap.ids[19][14] === 'c6_mousse' && V.world.controllable
+shot:ouvert
