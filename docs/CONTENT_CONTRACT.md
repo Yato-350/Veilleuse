@@ -746,8 +746,8 @@ rêve) ; le Moutonnier a son locuteur `moutonnier`.
 
 **v2, chapitre 4** (`src/game/story/chapter4.ts`, cartes `src/data/maps/chapter4.ts`) : tous les drapeaux `c4_*`
 sont documentés en tête du module. Lus par les lots suivants : `c4_maman` (`merci`|`reste`), `c4_reste`, `c4_coton`
-(0–4, les Bourres du ch. 6), `c4_couseuse` (`epargnee`|`vaincue`), `c4_petit_homme` (`epargne`|`vaincu`), `c4_fele`
-(veilleuse fêlée), `c4_mina366` (`merci`|`silence`), `c4_fin`. Couches : `maison_feutre` (monde `feutre`) et
+(0–4, les Bourres du ch. 6), `c4_couseuse` (`epargnee`|`vaincue`), `c4_fele` (veilleuse fêlée). Simples traces, posées
+mais jamais relues : `c4_petit_homme` (`epargne`|`vaincu`), `c4_mina366` (`merci`|`silence`), `c4_fin`. Couches : `maison_feutre` (monde `feutre`) et
 `maison_stylo` (monde `stylo`, même plan, accessoires selon `c4_nuit` ∈ 1, 9, 22, 35, 42) ; l'horloge du salon
 passe de l'une à l'autre. Aides de script : `look(lignes, répliqueMina?)`, `byNight({1: …, 22: …})`.
 Mina n°366 suit Noa par `d.follower('mina366')` (ses répliques : `MINA_LINES`, `mina366Talk`).
