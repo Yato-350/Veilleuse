@@ -10,8 +10,9 @@
  *
  * Steps (comma-separated):
  *   auto[:ms]        advance dialogue / battle text until something needs a decision (choice, battle menu, free roam)
- *   choose:N         pick choice N (0-based) in a dialogue choice or battle list
- *   menu:N           pick battle menu button N (0 FRAPPER, 1 ÉCRIRE, 2 OBJET, 3 ÉPARGNER)
+ *   choose:N         pick choice N (0-based) in a dialogue choice or battle list (moves until N is selected, confirms,
+ *                    and confirms again if the game dropped the press)
+ *   menu:N           pick battle menu button N (0 FRAPPER, 1 ÉCRIRE, 2 OBJET, 3 ÉPARGNER), checked the same way
  *   write:word       ÉCRIRE then the given word in the notebook (falls back to the first word)
  *   hit              FRAPPER and stop the bar near the middle
  *   dodge[:ms]       wait for the enemy turn to end (random wiggle)
@@ -176,18 +177,86 @@ async function auto(limit = 30000) {
   return 'timeout';
 }
 
-async function chooseList(n) {
-  const s = await state();
-  const up = s.battle ? 'ArrowUp' : 'ArrowUp';
-  for (let i = 0; i < 12; i++) await press(up);
-  for (let i = 0; i < n; i++) await press('ArrowDown');
-  await press('KeyZ');
+/** Polls `fn(arg)` in the page until it is truthy or `ms` have passed; returns the last value. */
+async function poll(fn, arg, ms) {
+  const t0 = Date.now();
+  for (;;) {
+    const v = await page.evaluate(fn, arg).catch(() => null);
+    if (v || Date.now() - t0 > ms) return v;
+    await page.waitForTimeout(50);
+  }
 }
 
+/** The selection of the open dialogue choice or battle list: { idx, len }. */
+const selection = (kind) => {
+  const v = window.__veilleuse;
+  if (kind === 'dialogue') return v.dialogue.choices ? { idx: v.dialogue.choiceIdx, len: v.dialogue.choices.length } : null;
+  const l = v.game.top?.list;
+  return l ? { idx: l.idx, len: l.items.length } : null;
+};
+/**
+ * Tags the open dialogue choice or battle list before a confirm press (tag = true), or tells whether the tagged one is
+ * gone (tag = false): a press the game dropped (it consumes input on mode changes) is seen, and sent again.
+ */
+const tagged = ([kind, tag]) => {
+  const v = window.__veilleuse;
+  const o = kind === 'dialogue' ? v.dialogue.choices : v.game.top?.list;
+  if (tag && o) o.__bot = true;
+  return tag || !o?.__bot;
+};
+
+/** Picks choice n (0-based) of a dialogue choice or a battle list: moves until it is selected, then confirms. */
+async function chooseList(n) {
+  const kind = await poll(() => (window.__veilleuse.dialogue.choices ? 'dialogue' : window.__veilleuse.game.top?.list ? 'list' : ''), null, 3000);
+  if (!kind) {
+    // Another kind of list: blind presses.
+    for (let i = 0; i < 12; i++) await press('ArrowUp');
+    for (let i = 0; i < n; i++) await press('ArrowDown');
+    await press('KeyZ');
+    return;
+  }
+  for (let tries = 0; tries < 3; tries++) {
+    for (let k = 0; k < 16; k++) {
+      const sel = await page.evaluate(selection, kind);
+      if (!sel || sel.idx === n || n >= sel.len) break;
+      if (kind === 'dialogue') await press((n - sel.idx + sel.len) % sel.len <= sel.len / 2 ? 'ArrowDown' : 'ArrowUp');
+      // Battle lists are two columns, without wrapping.
+      else if (Math.floor(n / 2) !== Math.floor(sel.idx / 2)) await press(n > sel.idx ? 'ArrowDown' : 'ArrowUp');
+      else await press(n % 2 ? 'ArrowRight' : 'ArrowLeft');
+    }
+    await page.evaluate(tagged, [kind, true]);
+    await press('KeyZ');
+    if (await poll(tagged, [kind, false], 1500)) return;
+  }
+}
+
+/** Picks battle menu button n: moves until it is selected, confirms, and checks the press was taken. */
 async function menu(n) {
-  const cur = await page.evaluate(() => window.__veilleuse.game.top.menuIdx ?? 0);
-  for (let i = 0; i < (n - cur + 4) % 4; i++) await press('ArrowRight');
-  await press('KeyZ');
+  if (!(await poll(() => window.__veilleuse.game.top?.mode === 'menu', null, 4000))) {
+    const cur = await page.evaluate(() => window.__veilleuse.game.top.menuIdx ?? 0);
+    for (let i = 0; i < (n - cur + 4) % 4; i++) await press('ArrowRight');
+    await press('KeyZ');
+    await page.waitForTimeout(250);
+    return;
+  }
+  for (let tries = 0; tries < 3; tries++) {
+    for (let k = 0; k < 8; k++) {
+      const cur = await page.evaluate(() => window.__veilleuse.game.top.menuIdx ?? 0);
+      if (cur === n) break;
+      await press((n - cur + 4) % 4 <= 2 ? 'ArrowRight' : 'ArrowLeft');
+    }
+    // The menu's resolver is cleared when the press is taken (a new menu gets a new one).
+    await page.evaluate(() => {
+      const r = window.__veilleuse.game.top.menuResolve;
+      if (r) r.__bot = true;
+    });
+    await press('KeyZ');
+    const taken = await poll(() => {
+      const t = window.__veilleuse.game.top;
+      return !(t?.mode === 'menu' && t.menuResolve?.__bot);
+    }, null, 1500);
+    if (taken) break;
+  }
   await page.waitForTimeout(250);
 }
 
