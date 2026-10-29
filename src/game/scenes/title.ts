@@ -50,6 +50,12 @@ export function defaultTitleVariant(endings: string[] = G.meta.endings, last: st
   return endings.includes('aube') ? 'dawn' : endings.includes('beaux_reves') ? 'dream' : 'night';
 }
 
+/** « Les rêves des autres » (Maman's night) opens once Noa has woken up at least once: after any of the three dawns. */
+export const BONUS_ENDINGS = ['aube', 'aube_blanche', 'veilleuse'];
+export function bonusUnlocked(endings: string[] = G.meta.endings): boolean {
+  return endings.some((e) => BONUS_ENDINGS.includes(e));
+}
+
 /** Real days since `since` (ms timestamp), for the Beaux rêves title (« Ça fait 23 jours, … »). */
 export function daysSince(since: number, now: number = Date.now()): number {
   return since > 0 ? Math.max(0, Math.floor((now - since) / 86400000)) : 0;
@@ -146,11 +152,11 @@ export class TitleScene implements Scene {
         else this.startNew();
       },
     });
-    // After a first ending: the gallery of souvenirs and poems, and (after the dawn) the bonus chapter.
+    // After a first ending: the gallery of souvenirs and poems, and (after a dawn) the bonus chapter.
     if (G.meta.endings.length > 0 && (G.meta.seen.length > 0 || G.meta.poems.length > 0)) {
       this.items.push({ label: 'Carnet de souvenirs', action: () => game.push(new GalleryScene()), color: '#b4e2c8' });
     }
-    if (G.meta.endings.includes('aube')) {
+    if (bonusUnlocked()) {
       this.items.push({ label: 'Les rêves des autres', action: () => this.leave(() => flow.startBonus()), color: '#f8b6cf' });
     }
     this.items.push({ label: 'Options', action: () => (this.options = new OptionsPanel()) });

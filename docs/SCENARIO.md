@@ -272,9 +272,10 @@ par des scripts de carte et des drapeaux `ep_*`, pour qu'une sauvegarde de suspe
    « Je veillerai sur elle. Lui, il n'a plus peur du noir. Plus autant. ») « Merci, {player}. Bonne nuit. Et
    bonjour. » → `finishGame(d, 'aube')`.
 
-## Bonus — « Les rêves des autres » : la nuit de Maman (après la fin de l'aube)
+## Bonus — « Les rêves des autres » : la nuit de Maman (après une fin de l'aube)
 
-Entrée de l'écran titre débloquée par la fin `aube` (`flow.startBonus` → `story/bonus.ts`, partie séparée qui ne
+Entrée de l'écran titre débloquée par l'une des trois aubes, `aube`, `aube_blanche` ou `veilleuse` (`bonusUnlocked`,
+`flow.startBonus` → `story/bonus.ts`, partie séparée qui ne
 touche pas aux drapeaux de l'histoire principale, `flags.bonus`). Le joueur incarne **Maman**
 (`G.state.playerChar = 'maman'`, « MAMAN » dans le combat, stylo quatre couleurs et gilet de laine). 15–25 minutes.
 Cartes `src/data/maps/bonus.ts`, drapeaux `b_*`.

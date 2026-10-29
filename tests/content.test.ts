@@ -19,7 +19,7 @@ import type { World } from '../src/game/overworld/types';
 import { COUNT_ROUNDS, KNOCK_ROUNDS, SHEEP_ROUNDS, TOOTH_ROUNDS, validCount } from '../src/game/scenes/sheepcount';
 import { dateLabel } from '../src/game/scenes/phone';
 import { CREDIT_LINES, HELP_CARD } from '../src/game/scenes/credits';
-import { daysSince, defaultTitleVariant, saveSlotLabel, TITLE_VARIANTS } from '../src/game/scenes/title';
+import { bonusUnlocked, daysSince, defaultTitleVariant, saveSlotLabel, TITLE_VARIANTS } from '../src/game/scenes/title';
 import { ABSENCE_LINES, absenceCount, absenceLines, applyMetaSpec, NumberWords, numberWords } from '../src/game/meta';
 import { sawV2Ending } from '../src/game/story/real';
 import { bindLanguage } from '../src/i18n';
@@ -421,6 +421,12 @@ describe('v2 scenes', () => {
     const day = 86400000;
     expect(daysSince(0)).toBe(0);
     expect(daysSince(1000, 1000 + 23 * day + 5)).toBe(23);
+  });
+
+  it('title: « Les rêves des autres » opens after any of the three dawns, never after a night without waking', () => {
+    expect(bonusUnlocked([])).toBe(false);
+    for (const e of ['aube', 'aube_blanche', 'veilleuse']) expect(bonusUnlocked(['silence', e]), e).toBe(true);
+    expect(bonusUnlocked(['beaux_reves', 'silence'])).toBe(false);
   });
 
   it('endings (lot 9): the help card after the darker three, the debug entries, the self-written line, the blank name', () => {

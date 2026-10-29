@@ -250,8 +250,9 @@ Drapeaux de partie posés par la méta : `m_appel_314`, `m_absence` (nombre de p
 ## Bonus — « La nuit de Maman » (§ 3.17, T5 § 2.6, coda § 2.11, lot 11)
 
 La même nuit (la 365ᵉ), du côté de Maman : elle s'endort aux Glycines à 3 h 33 et rêve. Partie séparée, débloquée au
-titre après l'Aube (« Les rêves des autres ») : elle ne pose que ses drapeaux `b_*` et `bonus`, et ne touche jamais à la
-sauvegarde de la partie principale. Personne n'y dit ce qui s'est dit pendant les 41 secondes. Scripts de debug :
+titre après l'une des trois aubes — Aube, Aube blanche ou Veilleuse (« Les rêves des autres », `bonusUnlocked`,
+`src/game/scenes/title.ts`) : elle ne pose que ses drapeaux `b_*` et `bonus`, et ne touche jamais à la sauvegarde de la
+partie principale (ni son point de sauvegarde ni la sauvegarde de mise en veille, `suspendSave`, `src/main.ts`). Personne n'y dit ce qui s'est dit pendant les 41 secondes. Scripts de debug :
 `bonus_start`, `bonus_service`, `bonus_banc`, `bonus_appart`, `bonus_porte_noa` (devant la porte de Noa), `bonus_338`
 (sa chambre à 3 h 38), `bonus_panier`, `bonus_hopital`, `bonus_nadia`, `bonus_boss`, `bonus_boss3`, `bonus_end`,
 `bonus_aube` (`src/game/story/bonus.ts`, `DEBUG`). Entités pour le bot : `banc` (Glycines) ; `porte_noa`, `rai_noa`,
