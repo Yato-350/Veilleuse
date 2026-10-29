@@ -13,7 +13,7 @@ import { director, runScript } from './game/director';
 import { flow } from './game/flow';
 import { world } from './game/overworld/world';
 import { setupPwa } from './game/pwa';
-import { G, newState, readMeta, readSave, readSettings, writeMeta, deleteSave, maxHp } from './game/state';
+import { G, hasSave, newState, readMeta, readSave, readSettings, writeMeta, deleteSave, maxHp } from './game/state';
 import { dialogue } from './game/ui/dialogue';
 import { applySettings } from './game/ui/options';
 import { TitleScene } from './game/scenes/title';
@@ -123,9 +123,11 @@ function boot(): void {
   const params = new URLSearchParams(location.search);
 
   // Suspend save: phones kill backgrounded apps, so save when the game is hidden or closed — only while exploring
-  // freely (never mid-battle or mid-cutscene), so that « Continuer » always resumes in a consistent state.
+  // freely (never mid-battle or mid-cutscene), so that « Continuer » always resumes in a consistent state. The bonus run
+  // never overwrites a main run's save (the same rule as its save point, story/bonus.ts savePointHosp).
   const suspendSave = (): void => {
     if (params.has('debug') || !G.meta.runInProgress || game.top !== world || !world.map || !world.controllable) return;
+    if (G.state.flags.bonus && hasSave() && !readSave()?.flags.bonus) return;
     director.save();
   };
   document.addEventListener('visibilitychange', () => {

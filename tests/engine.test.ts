@@ -517,6 +517,8 @@ describe('state & saves', () => {
     interlude2: V11(2, 'appartement_nuit', { interlude: 2, i2_reply: 'pardon', world: 'real' }),
     chapter3: V11(3, 'hopital', { interlude: 0, world: 'ink' }),
     finale: V11(3, 'chambre_mina', { interlude: 3, fin_room: true, world: 'real' }),
+    // The v1.1 epilogue (shop and garden) ran at interlude 3 too, and version 2 reuses its ep_* flag names.
+    epilogue: V11(3, 'jardin', { interlude: 3, fin_room: true, fin_route: 'aube', ep_vl: 'lune', ep_paid: true, ep_garden: true, ep_maman_wait: true, ep_placed: true, ep_poem: true, ep_dodo: 'garde', world: 'real' }),
     // A very old save: no version, no playerChar, no souvenirs.
     legacy: { playerName: 'Léa', chapter: 1, map: 'prairie', x: 1, y: 1, flags: { interlude: 0 } } as Partial<GameState>,
   };
@@ -530,15 +532,18 @@ describe('state & saves', () => {
       expect(s.version, step).toBe(SAVE_VERSION);
       expect(MAPS[s.map], `${step}: map ${s.map}`).toBeDefined();
       expect(s.chapter, step).toBe(raw.chapter);
-      // The v1.1 finale wakes up into the false dawn (version 2 goes there after chapter 3).
-      expect(s.map, step).toBe(step === 'finale' ? 'chambre_faux' : raw.map);
+      // The v1.1 finale (and its epilogue) wakes up into the false dawn (version 2 goes there after chapter 3), on the bed
+      // spawn, in tiles like every save.
+      const toFalseDawn = step === 'finale' || step === 'epilogue';
+      expect(s.map, step).toBe(toFalseDawn ? 'chambre_faux' : raw.map);
+      if (toFalseDawn) expect([s.x, s.y], step).toEqual([MAPS.chambre_faux!.spawns.bed!.x, MAPS.chambre_faux!.spawns.bed!.y]);
       expect(s.playerName, step).toBe(raw.playerName);
       expect(s.playerChar, step).toBe('noa');
       expect(Array.isArray(s.souvenirs) && Array.isArray(s.cleared), step).toBe(true);
-      // Every flag survives, except what the v1.1 finale had seen (fin_*): its moment stays 3 (REAL.i3).
+      // Every flag survives, except what the v1.1 finale and epilogue had seen (fin_*, ep_*): the moment stays 3 (REAL.i3).
       const flags = { ...raw.flags };
-      if (step === 'finale') {
-        delete flags.fin_room;
+      if (toFalseDawn) {
+        for (const k of Object.keys(flags)) if (k.startsWith('fin_') || k.startsWith('ep_')) delete flags[k];
         expect(s.flags.interlude, step).toBe(REAL.i3);
       }
       expect(s.flags, step).toEqual(flags);
