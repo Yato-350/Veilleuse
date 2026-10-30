@@ -1,0 +1,46 @@
+# Review fixes (docs/HISTOIRE.md § 1.5 rule 3, § 3.15): at dawn the hallway clock is still ten minutes fast (« Six
+# heures huit. », the bedroom clock says 5h58); Noa knocks three times at Mina's door, silence, three knocks back
+# (« Trois coups. De l'intérieur. »: a knock with a ring of metal in it); in her room the radiator keeps the ordinary
+# double: « Il commence à peine à tiédir. » — « Le chauffage se remet en route, le matin. Le tuyau cogne dans le mur
+# quand ça repart. ». Back in his room, the phone's status bar says 5:57: Maman's « Je rentre. » (5:52) came « il y a
+# cinq minutes ».
+query: debug=script&name=finale_porte&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+auto
+# The hallway clock.
+go:12/3
+eval: (V.world.player.dir = 'up', 1)
+KeyZ
+zuntil: IDLE()
+assert: SAW('L\'horloge du couloir. Six heures huit.') && SAW('Elle avance de dix minutes.')
+# Mina's door.
+go:10/3
+eval: (V.world.player.dir = 'up', 1)
+interact:a_porte_mina
+zuntil: V.dialogue.choices
+choose:0
+zuntil: SAW('Trois coups. De l\'intérieur.')
+shot:interieur
+zuntil: V.G.state.map === 'chambre_mina' && IDLE()
+assert: V.G.state.flags.fin_porte === true
+interact:f_radiateur
+zuntil: IDLE()
+interact:f_radiateur
+zuntil: IDLE()
+assert: SAW('Son tuyau longe le mur, jusqu\'à ta chambre.') && SAW('Il commence à peine à tiédir.') && SAW('Le tuyau cogne dans le mur quand ça repart.') && !SAW('Il est froid.')
+shot:radiateur
+# The phone, back in his room.
+load:chambre/door
+wait:800
+auto
+interact:phone
+zuntil: V.game.top.constructor.name === 'PhoneScene'
+wait:600
+shot:telephone
+assert: V.game.top.clock === '5:57' && SAW('il y a cinq minutes')

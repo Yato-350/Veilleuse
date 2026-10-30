@@ -165,7 +165,7 @@ export const STORY_REAL: Record<string, string> = {
   'Tu ne regardes pas trop longtemps.': 'You don\'t look for too long.',
   'L\'horloge du couloir indique 3h33.': 'The hallway clock says 3:33.',
   'Comme celle de ta chambre. Comme toutes les horloges.': 'Like the one in your room. Like every clock.',
-  'L\'horloge du couloir. Six heures moins deux.': 'The hallway clock. Two minutes to six.',
+  'L\'horloge du couloir. Six heures huit.': 'The hallway clock. Eight past six.',
   'L\'horloge du couloir.': 'The hallway clock.',
   'Elle avance de dix minutes. Personne ne l\'a jamais remise à l\'heure.': 'It\'s ten minutes fast. No one has ever set it right.',
   'La neige grésille sur l\'écran.': 'Static crackles on the screen.',

@@ -577,9 +577,8 @@ export const shell42: Script = async (d) => {
     audio.stopMusic(2);
     await d.wait(60);
     await d.say(['Pas de mer.', 'Un grésillement, tout près. Une veilleuse branchée dans une chambre.']);
-    await d.say(['Et une respiration.', 'Pas endormie. Réveillée. Elle retient son souffle, puis elle recommence.']);
+    await d.say(['Et une respiration. Un peu trop régulière.', 'Tu n\'arrives pas à savoir si elle dort.']);
     await d.wait(40);
-    await d.say('Tu la reconnais.');
     await d.say('…', 'noa:sad');
     await d.say(['Repose-le.', 'Il est cassé, celui-là.'], 'dodo');
     audio.setAmbience('wind');
@@ -955,7 +954,8 @@ export const portal: Script = async (d) => {
   d.shake(2, 14);
   await d.say(['Derrière le verre du thermomètre, contre la colonne, une petite silhouette tape du poing.', 'Un bonnet. Deux oreilles de mouton.']);
   d.sfx('knock1', { vol: 0.9, pitch: 1.1 });
-  await d.say('T\'avais promis !', 'minavoix');
+  // Her voice, no name: the little girl in the hat is only named at T9 (chapter 6, § 2.10).
+  await d.say('T\'avais promis !', 'inconnu', { voice: 'mina' });
   d.shake(3, 20);
   for (let i = 10; i >= 0; i--) {
     sil.alpha = i / 14;
@@ -1537,7 +1537,7 @@ const DRAWING_TEXT: Record<DrawingId, { look: string[]; fixed: string[] }> = {
     fixed: ['Nadia sourit toujours.', 'Derrière elle, au stylo noir, une silhouette qui dépasse le cadre. Nadia ne la voit pas. Nadia qui sait tout.'],
   },
   mina: {
-    look: ['Mina s\'est dessinée elle-même : dans son lit, avec son bonnet à oreilles de mouton.', 'Elle s\'est fait un très grand sourire. Elle a écrit {c:r}« MOI »{/c}, avec une flèche.'],
+    look: ['Mina s\'est dessinée elle-même : dans son lit, avec Dodo.', 'Elle s\'est fait un très grand sourire. Au-dessus, en rouge : {c:r}« MOI ET DODO »{/c}.'],
     fixed: ['Mina, dans son lit.', 'Au bord du lit, la silhouette noire, trop grande, penchée sur elle. Sans visage. Elle a l\'air de veiller. Elle a l\'air de quelque chose.'],
   },
   chaise: {
@@ -1793,9 +1793,11 @@ export const drawTable: Script = async (d) => {
 /** The drawing game: the moon, her, him, the cough, the nurse's shadow; the drawing stops where chapter 2 found it. */
 async function visit(d: Director): Promise<void> {
   if (flag('c5_visite')) return;
-  await d.say('T\'es venu !', 'minavoix');
-  await d.say(['La silhouette lève la tête. Elle n\'a pas de visage. Juste la forme d\'un bonnet, et de deux épaules.', 'Elle a la voix de Mina.']);
-  await d.say(['T\'as un masque, toi aussi ! On est pareils.', 'On fait un dessin ? Un grand. Deux enfants sous une grande lune.'], 'minavoix');
+  // The silhouette in the hat: Mina's voice, no name tag (T9 names her, chapter 6, § 2.10).
+  const her = (text: string | string[]): Promise<void> => d.say(text, 'inconnu', { voice: 'mina' });
+  await her('T\'es venu !');
+  await d.say('La silhouette lève la tête. Elle n\'a pas de visage. Juste la forme d\'un bonnet, et de deux épaules.');
+  await her(['T\'as un masque, toi aussi ! On est pareils.', 'On fait un dessin ? Un grand. Deux enfants sous une grande lune.']);
   const r = await d.ask('Dessiner avec elle ?', ['Dessiner', 'Dessiner quand même']);
   void r;
   // Sit at the table.
@@ -1805,16 +1807,16 @@ async function visit(d: Director): Promise<void> {
   p.dir = 'up';
   await d.wait(20);
   const dt = DrawTogetherScene.open('visite');
-  await d.say('Toi tu fais la lune. Moi je la colorie. Mais tu la fais grande, hein.', 'minavoix');
+  await her('Toi tu fais la lune. Moi je la colorie. Mais tu la fais grande, hein.');
   await dt.stroke('lune');
-  if (dt.result.crossed) await d.say(['Tes crayons et les miens, ils se sont touchés.', 'Ça compte comme un bisou.'], 'minavoix');
-  else await d.say('T\'es allé trop vite. C\'est pas grave. Elle est belle quand même.', 'minavoix');
+  if (dt.result.crossed) await her(['Tes crayons et les miens, ils se sont touchés.', 'Ça compte comme un bisou.']);
+  else await her('T\'es allé trop vite. C\'est pas grave. Elle est belle quand même.');
   await dt.watch('elle');
-  await d.say(['Voilà, c\'est moi. Avec ma couronne.', 'À toi. Fais-toi à côté. Tu me donnes la main, hein.'], 'minavoix');
+  await her(['Voilà, c\'est moi. Avec ma couronne.', 'À toi. Fais-toi à côté. Tu me donnes la main, hein.']);
   await dt.stroke('lui', { cough: 0.55 });
   d.sfx('cough', { vol: 0.7 });
   await d.wait(30);
-  await d.say('Noa ?', 'minavoix');
+  await her('Noa ?');
   await dt.shadow();
   await d.say(['Le grand frère, il tousse ?', 'Dehors, s\'il te plaît.'], 'infirmiere');
   await d.say('Je vais b—', 'noa:sad');

@@ -318,10 +318,14 @@ const REPLAYS: Array<[string, string[]]> = [
   ['« Sur l\'oreiller, quelque chose te regarde. »', ['Le coton se creuse dans le mur, juste à côté de toi. Deux trous ronds, à la hauteur de tes yeux.', 'Le temps de te retourner, ils se sont refermés.']],
 ];
 
+/** After the secret ending (meta.dodoSilent) the prologue said something else at that point (real.ts › bedAlone). */
+const SILENT_REPLAYS: Record<number, string> = { 3: '« Sur l\'oreiller, Dodo. Une peluche. Juste une peluche. »' };
+
 export const replay =
   (i: number): Script =>
   async (d) => {
-    const [line, after] = REPLAYS[i]!;
+    const [quoted, after] = REPLAYS[i]!;
+    const line = (G.meta.dodoSilent && SILENT_REPLAYS[i]) || quoted;
     d.sfx('static', { vol: 0.25, pitch: 0.5 });
     audio.tempoScale = 0.85;
     await d.say(`{c:g}${line}{/c}`, undefined, { speed: 0.4, pos: 'top' });
@@ -366,7 +370,12 @@ export const t7: Script = async (d) => {
   await d.wait(30);
   await d.say('Tu ne dors pas ?', 'dodo:happy');
   await d.say('…', 'noa:sad');
-  await d.say(['C\'est la première chose que je t\'ai dite, cette nuit.', 'Dans ta chambre. Sur l\'oreiller. Tu te souviens ?'], 'dodo:neutral');
+  await d.say(
+    G.meta.dodoSilent
+      ? ['Cette nuit, dans ta chambre, je n\'ai rien dit.', 'Mais d\'habitude, c\'est la première chose que je dis. Tu te souviens ?']
+      : ['C\'est la première chose que je t\'ai dite, cette nuit.', 'Dans ta chambre. Sur l\'oreiller. Tu te souviens ?'],
+    'dodo:neutral',
+  );
   await d.say(['Dis-le avec moi.', 'Tu ne dors pas ?'], 'dodo:happy');
   await d.wait(20);
   d.sfx('static', { vol: 0.4, pitch: 0.7 });
@@ -390,7 +399,7 @@ export const t7: Script = async (d) => {
   d.set('c6_t7');
   await d.wait(20);
   await tell(d, '…');
-  await tell(d, ['Tu as entendu.', 'Tu te souviens de l\'appel.', 'Et tu peux.']);
+  await tell(d, ['Tu as entendu.', 'Tu as toujours entendu.', 'Et tu peux.']);
   await tell(d, 'À partir d\'ici, il n\'y a plus de trous.');
   await d.wait(20);
   await d.say(['Viens. Je te fais visiter.', 'C\'est chez moi. C\'est chez toi. C\'est pareil.'], 'dodonoa:happy');
@@ -421,7 +430,8 @@ async function flashback(d: Director): Promise<void> {
   d.sfx('tooth', { pitch: 0.6, vol: 0.6 });
   await d.wait(24);
   d.sfx('static', { vol: 0.45, pitch: 0.9 });
-  await d.say('{spd:0.7}« Bonne nuit, Noa ! Dodo veille sur t{static}—krr—chhh…{/static} »{/spd}', 'dodoreel');
+  // Track 1 is Mina's recorded voice: her blip, under Dodo's name (it comes out of him).
+  await d.say('{spd:0.7}« Bonne nuit, Noa ! Dodo veille sur t{static}—krr—chhh…{/static} »{/spd}', 'dodoreel', { voice: 'mina' });
   await d.wait(50);
   await d.say('{spd:0.45}…sur toi. Fais de beaux rêves.{/spd}', 'noa:tired');
   await d.wait(40);
@@ -971,8 +981,8 @@ const TRUNK: Fragment[] = [
   { text: ['3:14.'] },
   { sfx: 'buzz', text: ['Bzzz.', 'La veilleuse est allumée sur ta table de nuit. Sa veilleuse. Elle fait une lune au plafond.'], dark: true },
   { text: ['Tu enlèves le casque.'] },
-  { sfx: 'beep', text: ['Clic.', 'Tu as décroché.'], dark: true },
-  { sfx: 'beep', text: ['Dans le téléphone, une chambre d\'hôpital. Une machine qui bipe, lentement.', 'Une voix d\'adulte, loin du micro : « Vas-y, ma puce. Il t\'écoute. »'], dark: true },
+  { sfx: 'beep', text: ['Clic.', 'Tu as décroché.', 'Tu t\'en souviens. Tu t\'en es toujours souvenu.'], dark: true },
+  { sfx: 'beep', text: ['Dans le téléphone, une chambre d\'hôpital. Une machine qui bipe.', 'Une voix d\'adulte, loin du micro : « Vas-y, ma puce. Il t\'écoute. »'], dark: true },
   { text: ['Quelqu\'un respire, tout près.'] },
   { text: ['Tu ne dis rien.'] },
   { text: ['Elle ne dit rien.'] },
@@ -1015,7 +1025,7 @@ const SILENCES: Record<number, string> = {
   24: 'La pluie.',
   26: '…',
   27: 'La machine bipe.',
-  28: 'Elle respire. Plus lentement.',
+  28: 'Elle bâille.',
   30: '…',
   31: 'La veilleuse grésille.',
   32: 'Toc.',
@@ -1441,7 +1451,7 @@ export const moduleLook: Script = async (d) => {
     if (flag('c6_pile_morte')) {
       await tell(d, ['Le bouton s\'enfonce. Rien ne sort.', 'Pas même du grésillement. La machine a fini de parler.']);
     } else {
-      await d.say('{spd:0.3}{static}« …nne… nuit… N…… »{/static}{/spd}', 'dodoreel');
+      await d.say('{spd:0.3}{static}« …nne… nuit… N…… »{/static}{/spd}', 'dodoreel', { voice: 'mina' });
       await tell(d, ['La voix sort de partout à la fois. Des murs, du sol, de ta poitrine.', 'Elle s\'arrête au même endroit que dans ta chambre. Les parois continuent toutes seules : « …fais de beaux rêves ».']);
     }
   } else if (r === 1) {

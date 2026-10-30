@@ -320,7 +320,7 @@ export function minaThread(): PhoneMessage[] {
   const day = (n: number) => out.push({ from: 'info', text: dateLabel(n) });
   const her = (...t: string[]) => t.forEach((text) => out.push({ from: 'them', text }));
   const me = (text: string, status = 'Lu') => out.push({ from: 'me', text, status });
-  day(407);
+  day(406);
   her('cé mina !!!!', 'maman ma donné son vieu téléphone pour lopital', 'mais un mouton a coté de mon nom');
   me('fait.');
   her('🐑🐑🐑🐑🐑');
@@ -1214,7 +1214,8 @@ async function dodoIV(d: Director): Promise<void> {
       await d.say(['La friture est plus lente que tout à l\'heure.', 'Comme quelqu\'un qui s\'endort.']);
     }
   }
-  const r = await d.ask('{voice:dodo}Tu devrais dormir.', ['Dormir', 'Pas encore'], undefined, { cancelIndex: 1 });
+  // After the secret ending Dodo never speaks again: the same words are Noa's own (as in Interlude III).
+  const r = await d.ask(G.meta.dodoSilent ? '{voice:noa}Tu devrais dormir.' : '{voice:dodo}Tu devrais dormir.', ['Dormir', 'Pas encore'], undefined, { cancelIndex: 1 });
   if (r !== 0) {
     await d.say('Tu ramasses un flocon de coton. Tu le remets dans le trou, tout doucement. Il ressort.');
     return;

@@ -7,7 +7,7 @@ import { EMOTION_COLOR, EMOTION_DARK, type Emotion } from '../../engine/palette'
 import { drawEmoIcon } from '../battle/emoshape';
 import { G } from '../state';
 import { heart, nextArrow } from '../ui/draw';
-import { lang, tf, tr } from '../../i18n';
+import { lang, tf, tr, translated } from '../../i18n';
 
 /*
  * Noa's phone: the conversation with « Maman », seen full screen. Scripts drive it step by step
@@ -85,7 +85,8 @@ export function dateLabel(daysAgo: number, now: Date = new Date()): string {
   if (daysAgo <= 0) return tr('Aujourd\'hui');
   if (daysAgo === 1) return tr('Hier');
   const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo);
-  return lang() === 'en' ? `${MONTHS_EN[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}` : `${d.getDate()} ${MONTHS_FR[d.getMonth()]} ${d.getFullYear()}`;
+  // Already in the reader's language: marked as final, so the phone's chokepoint does not report it as missing.
+  return lang() === 'en' ? translated(`${MONTHS_EN[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`) : `${d.getDate()} ${MONTHS_FR[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 export interface PhoneReply {

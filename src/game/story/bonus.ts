@@ -13,7 +13,7 @@ import { setPageTitle } from '../meta';
 import type { Script } from '../overworld/types';
 import { world } from '../overworld/world';
 import { CreditsScene } from '../scenes/credits';
-import { PhoneScene, type PhoneMessage, type PhoneReply } from '../scenes/phone';
+import { dateLabel, PhoneScene, type PhoneMessage, type PhoneReply } from '../scenes/phone';
 import { deleteSave, G, hasSave, maxHp, readSave, writeMeta } from '../state';
 import { tf, tr } from '../../i18n';
 
@@ -653,7 +653,7 @@ export const minaMemory: Script = async (d) => {
   await d.say('…Mina.', 'maman:sad');
   await d.say(['Ben quoi ? T\'as une drôle de tête.', 'On fait la course jusqu\'au robot ? Le dernier arrivé est une chaussette !'], 'mina:happy');
   await d.say('…Non, en fait. Porte-moi. J\'ai les jambes en coton, ce soir.', 'mina:neutral');
-  await d.say(['Tu te souviens de cette nuit-là.', 'Tu l\'avais portée jusqu\'au distributeur. Elle ne pesait presque plus rien.', 'Elle s\'était endormie avant le chocolat.']);
+  await d.say(['Tu te souviens de cette nuit-là.', 'Tu l\'avais portée sur ton dos jusqu\'au distributeur. Elle avait parlé tout le long.', 'Elle s\'était endormie avant le chocolat.']);
   await d.say(['Maman ? Toi aussi, tu devrais dormir.', 'Tu dis que tu dors. Mais t\'as toujours les yeux ouverts.'], 'mina:sad');
   d.set('b_mina_mem');
   const m = d.find('mina');
@@ -1160,15 +1160,18 @@ async function rest(d: Director): Promise<void> {
 /** The dawn illustration (src/data/illustrations-bonus.ts). */
 const DAWN = 'maman_aube';
 
-/** Maman's side of the thread (her messages on the right), up to the voicemail of 3:33. */
+/**
+ * Maman's side of the thread (her messages on the right), up to the voicemail of 3:33. Dated as Noa's side reads it
+ * from Interlude II on (real.ts › mamanWrote): the prologue two days back, « Tu as mangé ? » yesterday.
+ */
 function mamanThread(): PhoneMessage[] {
   const me = (text: string, status?: string): PhoneMessage => ({ from: 'me', text, status });
   return [
-    { from: 'info', text: 'Hier' },
+    { from: 'info', text: dateLabel(2) },
     me('Noa ?'),
     me('Tu dors ?'),
     me('Je rentre tard. Il y a des pâtes dans le frigo. Je t\'aime.'),
-    { from: 'info', text: 'Aujourd\'hui' },
+    { from: 'info', text: dateLabel(1) },
     me('Tu as mangé ?'),
     { from: 'info', text: '3:33' },
     me('Message vocal · 0:41', 'Distribué'),

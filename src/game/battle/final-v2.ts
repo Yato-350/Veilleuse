@@ -1165,7 +1165,8 @@ export const FINAL_V2_HOOKS: Partial<BattleHooks> = {
       audio.setMuffle(1, 0.3);
       audio.tempoScale = 1;
       await game.wait(30);
-      await director.say('Bonne nuit, Noa ! Dodo veille sur toi. Fais de beaux rêves.', 'dodo:happy');
+      // Track 1, clear for once: Mina's recorded voice (as in the endings, minavoix).
+      await director.say('Bonne nuit, Noa ! Dodo veille sur toi. Fais de beaux rêves.', 'minavoix');
       await game.wait(60);
       await director.say('…C\'était ça. Juste ça. Cinq secondes.', 'dodotorn:sad', { speed: 0.6 });
       s.sleep = 0;

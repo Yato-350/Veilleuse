@@ -108,6 +108,8 @@ interface ReplyDef extends PhoneReply {
 const REPLY_FLAGS = ['p_reply', 'i1_reply', 'i2_reply'] as const;
 /** Phone clock at each real-world moment (index = REAL phase; the finale reads PHONE_CLOCK[REAL.finale]). */
 export const PHONE_CLOCK: Record<number, string> = { [REAL.prologue]: '23:52', [REAL.i1]: '14:06', [REAL.i2]: '3:33', [REAL.i3]: '4:06', [REAL.i4]: '4:44', [REAL.finale]: '5:52' };
+/** The finale phone's status bar: Maman's « Je rentre. » came at 5:52, « il y a cinq minutes » (the bedroom clock: 5h58). */
+const FINALE_NOW = '5:57';
 const SILENCE: ReplyDef = { id: 'rien', text: 'Ne rien répondre', after: ['Tu ne réponds pas. Tu ne sais jamais quoi répondre.'] };
 
 const REPLIES: ReplyDef[][] = [
@@ -200,7 +202,9 @@ function mamanYear(): PhoneMessage[] {
   const me = (text: string): void => {
     out.push({ from: 'me', text, status: 'Lu' });
   };
-  day(408);
+  // Arrival: day 407, so that the nights 407 to 367 are the forty-one in the armchair and the night of day 366 (the
+  // last evening, the call at 3:14 a year ago) is the forty-second.
+  day(407);
   her('On est arrivées. Elle a déjà réclamé ses crayons.', 'Il y a des pâtes au frigo, et du jambon.', 'T\'es grand, tu te débrouilles, hein ?');
   me('oui');
   day(404);
@@ -856,7 +860,7 @@ export const babyPhoto: Script = async (d) => {
 export const hallClock: Script = async (d) => {
   const p = phase();
   if (p === 2) await d.say(['L\'horloge du couloir indique 3h33.', 'Comme celle de ta chambre. Comme toutes les horloges.']);
-  else if (p === REAL.finale) await d.say('L\'horloge du couloir. Six heures moins deux.');
+  else if (p === REAL.finale) await d.say(['L\'horloge du couloir. Six heures huit.', 'Elle avance de dix minutes. Personne ne l\'a jamais remise à l\'heure.']);
   else await d.say(['L\'horloge du couloir.', 'Elle avance de dix minutes. Personne ne l\'a jamais remise à l\'heure.']);
 };
 
@@ -1251,7 +1255,7 @@ function finaleContacts(): PhoneContact[] {
 async function finalePhone(d: Director): Promise<void> {
   const answered = G.state.flags.i3_reply === 'pardon';
   if (!flag('fin_tel')) await d.say(answered && !flag('fin_inconnue') ? ['Deux messages.', 'Un de « Maman », il y a cinq minutes. Et un autre, tout en haut.'] : 'Un message de « Maman », il y a cinq minutes.');
-  const ph = PhoneScene.home({ clock: PHONE_CLOCK[REAL.finale]!, contacts: finaleContacts(), calls: callLog() });
+  const ph = PhoneScene.home({ clock: FINALE_NOW, contacts: finaleContacts(), calls: callLog() });
   for (;;) {
     const ev = await ph.browse();
     if (ev.kind === 'close') break;

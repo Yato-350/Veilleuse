@@ -267,7 +267,7 @@ export const STORY_BONUS: Record<string, string> = {
   'On fait la course jusqu\'au robot ? Le dernier arrivé est une chaussette !': 'Race you to the robot? Last one there\'s a stinky sock!',
   '…Non, en fait. Porte-moi. J\'ai les jambes en coton, ce soir.': '…No, actually. Carry me. My legs are all cotton tonight.',
   'Tu te souviens de cette nuit-là.': 'You remember that night.',
-  'Tu l\'avais portée jusqu\'au distributeur. Elle ne pesait presque plus rien.': 'You carried her to the vending machine. She weighed almost nothing anymore.',
+  'Tu l\'avais portée sur ton dos jusqu\'au distributeur. Elle avait parlé tout le long.': 'You carried her on your back to the vending machine. She talked the whole way.',
   'Elle s\'était endormie avant le chocolat.': 'She fell asleep before the hot chocolate.',
   'Maman ? Toi aussi, tu devrais dormir.': 'Mom? You should sleep too.',
   'Tu dis que tu dors. Mais t\'as toujours les yeux ouverts.': 'You say you sleep. But your eyes are always open.',

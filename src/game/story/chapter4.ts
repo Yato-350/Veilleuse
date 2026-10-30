@@ -1293,7 +1293,7 @@ async function t3(d: Director): Promise<void> {
   await d.walkTo('dodo_t3', 21, 8, 0.7);
   await d.say('Tu n\'aurais pas dû compter.', 'dodo:creepy');
   await d.wait(30);
-  await d.say(['Toi, par contre.', 'Toi, tu es nouveau.', 'Trois cent soixante-quatre nuits que je couds, et jamais personne ne lui tenait la main.'], 'couseuse');
+  await d.say(['Toi, par contre…', 'Toi, je ne te connais pas.', 'Trois cent soixante-quatre nuits que je couds, et jamais personne ne lui tenait la main.'], 'couseuse');
   await d.say('Tu es la seule chose nouvelle, {player}.', 'couseuse');
   await d.say(['Ne l\'écoute pas. Elle radote.', 'Les machines, ça radote. Ça répète toujours la même chose. Point, point, point.'], 'dodo');
   d.remove('dodo_t3');
@@ -1308,6 +1308,9 @@ async function t3Beaten(d: Director): Promise<void> {
   d.spawn({ id: 'dodo_t3', sprite: 'npc_dodo_thin', frames: ['npc_dodo_thin', 'npc_dodo_thin_2'], frameSpeed: 22, x: 12, y: 11, float: true, shadow: false, solid: false });
   await d.walkTo('dodo_t3', 21, 8, 0.7);
   await d.say('Tu n\'aurais pas dû compter.', 'dodo:creepy');
+  // The loop and the player-arc beat of T3 (§ 2.1, § 3.2), which La Couseuse says when she is spared.
+  await d.say(['Chaque nuit, il vient. Chaque nuit, il l\'arrête avant la fin.', 'Chaque matin, il oublie. C\'était bien, comme ça.'], 'dodo');
+  await d.say(['Et puis toi, {player}.', 'Trois cent soixante-quatre nuits, et jamais personne ne lui tenait la main.', 'Tu es la seule chose nouvelle.'], 'dodo:creepy');
   await d.say(['Maintenant, personne ne la recoudra.', 'Ni demain. Ni après.'], 'dodo');
   d.remove('dodo_t3');
   if (withMina()) await d.say(['Mina ne bouge plus.', 'Elle te suit quand même, à petits pas raides, comme une poupée qu\'on tire par la main.']);
