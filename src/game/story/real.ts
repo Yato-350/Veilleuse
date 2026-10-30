@@ -1302,9 +1302,11 @@ async function finaleMinaDoor(d: Director): Promise<void> {
   await d.wait(70);
   await d.say('Rien.');
   await d.wait(50);
-  // Three knocks back. Her wall is the one the old radiator pipe runs along (it knocks when the heating comes on).
+  // Three knocks back, with a ring of metal in them. Her wall is the one the old radiator pipe runs along, and the
+  // heating comes back on at dawn (minaRadiator): it knocks when it starts up. Both readings stay open.
   for (let i = 0; i < 3; i++) {
-    d.sfx('knock1', { vol: 0.4, pitch: 0.85 });
+    d.sfx('knock1', { vol: 0.3, pitch: 0.85 });
+    d.sfx('pipe', { vol: 0.3, pitch: 0.9 });
     await d.wait(30);
   }
   await d.emote('player', '!');
@@ -1365,7 +1367,7 @@ export const minaRadiator: Script = async (d) => {
     await d.say(['Un vieux radiateur, sous la fenêtre.', 'Son tuyau longe le mur, jusqu\'à ta chambre.']);
     return;
   }
-  await d.say(['Il est froid.', 'Le chauffage ne s\'est pas encore remis en route.']);
+  await d.say(['Il commence à peine à tiédir.', 'Le chauffage se remet en route, le matin. Le tuyau cogne dans le mur quand ça repart.']);
 };
 
 /** The nightstand by her bed: where Noa plugs in the nightlight he carried (§ 3.15 item 7). */
@@ -1508,6 +1510,11 @@ async function mamanComesHome(d: Director): Promise<void> {
     'maman:sad',
   );
   await d.say(['Elle t\'aimait tellement.', 'Elle parlait de toi tout le temps.'], 'maman:sad');
+  // T2's « après » (§ 1.1, 19:40): Mina sent Dodo back for him. The exchange only went one way.
+  await d.wait(30);
+  await d.say(['Dodo, le dernier soir, elle me l\'a confié. Pour toi.', '« Prends-le pour Noa. Il fait des cauchemars, je le sais. Moi, j\'aurai ma veilleuse. »'], 'maman:sad');
+  await d.wait(40);
+  await d.say('…', 'noa:sad');
   if (flag('i1_ate')) await d.say('Et tu as mangé les pâtes, l\'autre jour. Je l\'ai vu. … C\'est bien. C\'est bien, mon grand.', 'maman:happy');
   else if (replyOf(1) === 'oui')
     await d.say(['Tu m\'avais écrit « oui », pour les pâtes.', 'La casserole était encore pleine.', 'C\'est pas grave. Moi aussi, je dis que ça va quand ça ne va pas.'], 'maman:sad');

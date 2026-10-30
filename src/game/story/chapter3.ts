@@ -869,7 +869,8 @@ export const door304: Script = async (d) => {
   fx.glitch = 0.45;
   d.glitch(60);
   d.shake(4, 50);
-  await d.say('{glitch}Noa, je voulais juste te dire que je t{/glitch}', 'mina:glitch', { auto: 1, noSkip: true });
+  // Cut where the little girl in the hat finishes it, in chapter 6 (« …que je savais. », T9 § 2.10).
+  await d.say('{glitch}Noa, je voulais juste te dire que je s{/glitch}', 'mina:glitch', { auto: 1, noSkip: true });
   await d.crash(
     [
       'ERREUR : souvenir_mina introuvable',

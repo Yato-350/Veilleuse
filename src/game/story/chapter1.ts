@@ -21,13 +21,16 @@ import { NumberWords } from '../meta';
  *   c1_bouton_vendu  it was sold: no Bouton doré in the final battle, and no secret ending (endings.ts › dawnEnding)
  *   c1_code          Mina explained the knock code at the Mouton Noir's door; c1_knock: Noa knocked (any number)
  *   c1_bonnet_vu     the little silhouette in a hat behind the pillow of the colline has vanished (seen once)
- *   c1_bed_baton, c1_chaussette_vue, c1_borgne, c1_lune_voyage, c1_lune_cycle: talk counters
+ *   c1_bed_baton, c1_chaussette_vue, c1_borgne, c1_lune_voyage, c1_lune_cycle, c1_lune_bouton, c1_chaussette_bruit:
+ *                    talk counters
  *   br_retour        this run started from the Beaux rêves title (« Continuer », no prologue): Mina « Tu es revenu ! »,
  *                    the 365 marks on the dream bed counted to the end (set by main.ts flow.dreamAgain)
  */
 
 const flag = (k: string): boolean => !!G.state.flags[k];
 const withMina = (): boolean => G.state.party.includes('mina');
+/** An Aube is in the memory: the secret ending can be reached this run (endings.ts › dawnEnding), so its hints show. */
+const secretEndingOpen = (): boolean => G.meta.endings.includes('aube');
 /** Talk counter stored in a flag: returns how many times this was seen before, then increments it. */
 function bump(k: string): number {
   const n = Number(G.state.flags[k] ?? 0);
@@ -277,6 +280,12 @@ export const lune: Script = async (d) => {
   }
   if (!bump('c1_lune_voyage')) {
     await d.say(['Il a beaucoup voyagé, ce mouton… *bâille*…', 'Aller. {p:20}Et retour.', 'Zzz…'], 'lune:neutral');
+    return;
+  }
+  // New game+ (§ 5, « Indices pour la trouver »): once an Aube is in the memory, the secret ending can be reached.
+  if (secretEndingOpen() && d.has('bouton_dore') && !bump('c1_lune_bouton')) {
+    await d.say(['Le bouton secret… *bâille*… faut appuyer fort.', 'Zzz…'], 'lune:neutral');
+    if (withMina()) await d.say('Madame Lune ! C\'est un SECRET, j\'ai dit !', 'mina:surprised');
     return;
   }
   if (flag('c1_sheep_done') && !bump('c1_lune_sheep')) {
@@ -544,6 +553,12 @@ export const chaussetteTalk: Script = async (d) => {
     d.set('c1_bouton_offre2');
     await d.say(['Ton bouton doré… Toujours pas à vendre ?', 'Je monte à soixante. C\'est mon dernier prix.'], 'chaussette:neutral');
     await sellButton(d, 60);
+    return;
+  }
+  // New game+ (§ 5, « Indices pour la trouver »): the button she bought.
+  if (flag('c1_bouton_vendu') && secretEndingOpen() && !bump('c1_chaussette_bruit')) {
+    await d.say(['Ton bouton doré, je l\'ai cousu sur mon talon. Regarde comme il brille !', 'Il faisait un drôle de bruit quand on le serrait.'], 'chaussette:happy');
+    await d.say('Alors je marche sur la pointe. Pour ne pas l\'abîmer.', 'chaussette:neutral');
     return;
   }
   if (flag('c1_chaussette_paire')) {

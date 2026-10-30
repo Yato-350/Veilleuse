@@ -137,6 +137,7 @@ export const TILES: Record<string, TileDef> = {
   c4_sheet: { art: v('c4_sheet', 2), solid: true },
   c4_noir: { art: ['t_c4_noir_1', 't_c4_noir_3'], solid: true },
   c4_noir_tear: { art: 't_c4_noir_2', solid: true },
+  c4_noir_bonnet: { art: 't_c4_noir_bonnet', solid: true },
   c4_blank: { art: v('c4_blank', 2), solid: true },
   c4_beam: { art: v('c4_beam', 3), solid: true },
   c4_beam_base: { art: 't_c4_beam_base', solid: true },

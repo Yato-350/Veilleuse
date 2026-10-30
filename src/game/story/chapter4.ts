@@ -52,6 +52,7 @@ import { NumberWords, runsBefore } from '../meta';
  *   c4_mina366        'merci' (she thanked Noa before unravelling) | 'silence'
  *   c4_cabane         the pillow fort in Mina's felt room (the tender beat: a joke, Noa laughs)
  *   c4_fin            the chapter is over (souvenir 4 seen)
+ *   c4_chambre_noire  how many times Mina's blackened room was looked at (the second look finds the beanie)
  */
 
 const flag = (k: string): boolean => !!G.state.flags[k];
@@ -1091,8 +1092,14 @@ export const hallwayStretches: Script = async (d) => {
   await d.warp('couloir_coups', 'debut', { fade: 40 });
 };
 
-/** Mina's room at night: a rectangle blackened so hard that the paper tore. */
+/** Mina's room at night: a rectangle blackened so hard that the paper tore. On the second look, the beanie (T9). */
 export const minaRoomPen: Script = async (d) => {
+  if (bump('c4_chambre_noire') === 1) {
+    // § 2.10, ch. 4: a beanie scribbled in the hatching (the tile t_c4_noir_bonnet). A beanie, or a sheep.
+    await d.say(['Dans les hachures, à un endroit, le stylo a contourné quelque chose au lieu de le noircir.', 'Un rond. Deux petites oreilles. Un bonnet, ou un mouton.']);
+    await d.say('Tu ne l\'as pas dessiné exprès.');
+    return;
+  }
   await d.say(['La chambre de Mina.', 'Tu l\'as coloriée en noir. Fort. Si fort que le papier s\'est déchiré.', 'Tu n\'es pas entré depuis qu\'elle est partie.']);
   if (night() >= 9) {
     await d.wait(30);

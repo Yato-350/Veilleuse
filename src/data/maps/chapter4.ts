@@ -49,8 +49,8 @@ function houseTiles(pen: boolean): string {
   for (const x of [9, 19, 28]) g.rect(x, 1, 1, 7, 'K');
   // Maman's room: a sheet sewn over the whole room (felt); not drawn at all (ballpoint).
   g.rect(29, 2, 9, 6, pen ? 'O' : 'X');
-  // Mina's room at night: a rectangle blackened so hard that the paper tore.
-  if (pen) g.rect(20, 2, 8, 6, 'N').set(22, 4, 'T').set(25, 6, 'T');
+  // Mina's room at night: a rectangle blackened so hard that the paper tore. In the hatching, a beanie (T9).
+  if (pen) g.rect(20, 2, 8, 6, 'N').set(22, 4, 'T').set(25, 6, 'T').set(23, 6, 'Q');
   // Downstairs.
   g.rect(2, 11, 36, 1, 'K').rect(2, 12, 36, 1, 'W').rect(2, 13, 36, 1, 'B').rect(2, 14, 36, 5, '.').rect(2, 19, 36, 1, 'E');
   g.rect(24, 14, 14, 5, 't');
@@ -78,6 +78,7 @@ const HOUSE_LEGEND: Record<string, string> = {
   '.': 'c4_floor',
   ',': 'c4_floor_pen',
   T: 'c4_noir_tear',
+  Q: 'c4_noir_bonnet',
   r: 'c4_floor_mina',
   t: 'c4_tile',
   E: 'c4_edge',

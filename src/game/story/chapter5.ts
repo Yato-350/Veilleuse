@@ -1291,7 +1291,7 @@ export const sink: Script = async (d) => {
 };
 
 export const sanitizer: Script = async (d) => {
-  await d.say(['Un distributeur de gel. Tu appuies. Ça sent l\'alcool, fort.', 'Ça pique aux endroits où tu t\'es rongé les ongles.']);
+  await d.say(['Un distributeur de gel. Tu appuies. Ça sent l\'alcool, fort.', 'Ça te pique les yeux. L\'odeur de là-bas, exactement.']);
 };
 
 export const bin: Script = async (d) => {

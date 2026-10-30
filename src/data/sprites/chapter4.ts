@@ -279,6 +279,27 @@ const noir = (seed: number, tear: boolean): string => {
 const NOIR_1 = noir(61, false);
 const NOIR_2 = noir(62, true);
 const NOIR_3 = noir(63, false);
+/**
+ * T9 (§ 2.10, ch. 4): in one place of the blackened room, a little round hat with two ears, scribbled in the hatching —
+ * a beanie, or a sheep. The ballpoint world gets it drawn by hand (`t_c4_noir_bonnet@stylo`): the same ink, the doodle
+ * in a slightly lighter, bluer stroke, so it only shows when you look. (The tile only exists in the ballpoint layer.)
+ */
+const BONNET_DOODLE = rows(`
+  ......8......
+  ....88.88....
+  ...8.....8...
+  ..8.......8..
+  888.......888
+  8.8.......8.8
+  .88.......88.
+  ..888888888..
+`);
+const doodleAt = (x: number, y: number): boolean => BONNET_DOODLE[y - 5]?.[x - 2] === '8';
+const NOIR_BONNET = over(noir(64, false), BONNET_DOODLE.join('\n').replace(/8/g, 'G'), 2, 5);
+const NOIR_BONNET_PEN: SpriteDef = {
+  art: paint((x, y) => (doodleAt(x, y) ? '8' : hash(x, y, 64) < 0.08 ? '7' : '6')),
+  colors: { '6': '#1d2238', '7': '#2f3a66', '8': '#55659f' },
+};
 
 /** Maman's room, at night: not drawn at all. A pencil construction line, dotted, that stops. */
 const BLANK_1 = paint((x, y) => (y === 5 && x % 3 === 0 ? 'G' : pagePaper(x, y)));
@@ -1029,6 +1050,8 @@ export const ART: Record<string, SpriteDef> = {
   t_c4_noir_1: NOIR_1,
   t_c4_noir_2: NOIR_2,
   t_c4_noir_3: NOIR_3,
+  t_c4_noir_bonnet: NOIR_BONNET,
+  't_c4_noir_bonnet@stylo': NOIR_BONNET_PEN,
   t_c4_blank_1: BLANK_1,
   t_c4_blank_2: BLANK_2,
   t_c4_beam_1: BEAM_1,

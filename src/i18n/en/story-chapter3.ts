@@ -306,7 +306,7 @@ export const STORY_CHAPTER3: Record<string, string> = {
   'Je voulais juste te dire…': 'I just wanted to tell you…',
   'Ça suffit.': 'That\'s enough.',
   'Dodo ? Qu\'est-ce que tu—': 'Dodo? What are you—',
-  '{glitch}Noa, je voulais juste te dire que je t{/glitch}': '{glitch}Noa, I just wanted to tell you that I lo{/glitch}',
+  '{glitch}Noa, je voulais juste te dire que je s{/glitch}': '{glitch}Noa, I just wanted to tell you that I kn{/glitch}',
   'ERREUR : souvenir_mina introuvable': 'ERROR: memory_mina not found',
   '  à reve.charger (pays_de_coton/hopital/304)': '  at dream.load (cottonland/hospital/304)',
   '  à memoire.lire ("mina", "le dernier soir")': '  at memory.read ("mina", "the last night")',
