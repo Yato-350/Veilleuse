@@ -68,6 +68,10 @@
     "src/game/story/chapter3.ts",
     "src/game/story/bonus.ts",
     "src/game/story/common.ts",
-    "src/game/story/index.ts"
+    "src/game/story/index.ts",
+    "src/game/story/chapter5.ts",
+    "src/data/maps/chapter5.ts",
+    "src/game/story/fausse-aube.ts",
+    "src/data/maps/fausse-aube.ts"
   ]
 }
