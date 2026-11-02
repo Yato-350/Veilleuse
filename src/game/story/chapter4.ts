@@ -1190,7 +1190,7 @@ export const mannequin =
   async (d) => {
     const [label, remark] = LABELS[id]!;
     await d.say(['Un mannequin de couturière. Une tête de Mina en feutre, une couronne, deux boutons pour les yeux.', 'Une étiquette de tailleur est épinglée sur sa poitrine :']);
-    await d.say(`{c:y}${label}{/c}`);
+    await d.say(tf('{c:y}{0}{/c}', tr(label)));
     if (remark) await mina(d, remark, remark === '…' ? 'sad' : 'neutral');
     const n = num('c4_etiquettes') + 1;
     d.set('c4_etiquettes', n);
