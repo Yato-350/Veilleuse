@@ -676,6 +676,16 @@ const SAND_WRITING = sandWriting(
   64,
   22,
 );
+/** The same, in English (src/i18n/en/story-chapter5.ts); the beach swaps it in when the game runs in English. */
+const SAND_WRITING_EN = sandWriting(
+  [
+    ['NOA IS A CRAB', 1, 1],
+    ['SO IS MINA', 4, 8],
+    ['NO ITS U', 20, 15],
+  ],
+  64,
+  22,
+);
 
 /** A family on a blue towel, painted over with correction fluid, carefully, following the edges. */
 const ERASED_FAMILY = (() => {
@@ -1830,6 +1840,7 @@ export const ART: Record<string, SpriteDef> = keep({
   prop_c5_traces_p: sprite(STEPS_SMALL, BEACH),
   prop_c5_traces_fin: sprite(STEPS_END, BEACH),
   prop_c5_ecrit: sprite(SAND_WRITING, BEACH),
+  prop_c5_ecrit_en: sprite(SAND_WRITING_EN, BEACH),
   prop_c5_famille: sprite(ERASED_FAMILY, ALL),
   prop_c5_efface: sprite(ERASED_ONE, ALL),
   prop_c5_poste: LIFEGUARD,

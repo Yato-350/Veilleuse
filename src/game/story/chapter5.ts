@@ -7,7 +7,7 @@ import { input } from '../../engine/input';
 import { rng } from '../../engine/math';
 import { SOUVENIRS } from '../../data/illustrations';
 import { TILES } from '../../data/tiles';
-import { tf, tr } from '../../i18n';
+import { lang, tf, tr } from '../../i18n';
 import type { Director } from '../director';
 import type { Entity } from '../overworld/entity';
 import type { Script } from '../overworld/types';
@@ -351,6 +351,8 @@ function mood(tempo: number, wobble: number): void {
 
 export const beachEnter: Script = (d) => {
   noShadows();
+  // The words in the sand are drawn in the sprite: in English, its English twin (« NOA IS A CRAB »…).
+  if (lang() === 'en') for (const e of world.entities) if (e.sprite === 'prop_c5_ecrit') e.sprite = 'prop_c5_ecrit_en';
   // After the tide the lullaby in major goes on, a little slower, a little out of tune.
   if (flag('c5_maree')) mood(0.9, 0.16);
   else mood(1, 0);
