@@ -1,0 +1,21 @@
+# Lot 13, clue checklist (docs/INDICES.md « Fausse aube et chapitres 4 à 6 », T3, § 2.4): Mina n°366, the felt Mina
+# who follows Noa in chapter 4, says Mina's chapter 1 lines again, a little late: talking to her in the felt house gives
+# « Tu sens ? Ça sent la barbe à papa ! … Ça sent la barbe à papa. », then « Les moutons sont trop mignons. Sauf le
+# noir. Il est grognon. … Il est grognon. » (chapter 1: MINA_LINES.prairie and .village, said once).
+query: debug=script&name=chapter4_diner&lang=fr
+eval: window.V = window.__veilleuse
+eval: (window.TXT = () => (V.dialogue.pages[V.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join('')).join(' '), 1)
+wait:1500
+auto
+assert: V.G.state.party.includes('mina366') && V.world.get('mina366')
+interact:mina366
+zuntil: V.dialogue.busy && window.TXT().split('barbe à papa').length === 3
+wait:1500
+shot:barbe
+auto
+interact:mina366
+zuntil: V.dialogue.busy && window.TXT().split('grognon').length === 3
+wait:1500
+shot:grognon
+auto
+assert: V.G.state.flags.mina366_talk_maison_feutre === 2
