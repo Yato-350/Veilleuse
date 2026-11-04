@@ -87,7 +87,9 @@ export const STORY_REAL_NUIT: Record<string, string> = {
   'jai dodo. il veille.': 'i got dodo. he keeps watch.',
   'bonne nuit gros bêta 🐑': 'good night big dummy 🐑',
 
-  // The phone: the pinned thread and its padlock, Léo, Mom's thread
+  // The phone: the pinned thread and its padlock, Léo, Mom's thread (Noa's lowercase « oui » in her year-long
+  // thread, real.ts › mamanYear, escapes the extractor: added by hand)
+  'oui': 'yes',
   'Ton téléphone. 4h06.': 'Your phone. 4:06.',
   'En haut de la liste, une conversation épinglée. Un petit cadenas à côté.': 'At the top of the list, a pinned conversation. A little padlock next to it.',
   'La conversation épinglée, avec son petit cadenas. Tu ne l\'as pas ouverte.': 'The pinned conversation, with its little padlock. You didn\'t open it.',

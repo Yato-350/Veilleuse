@@ -6,6 +6,7 @@ import type { Director } from '../director';
 import type { Script } from '../overworld/types';
 import { world } from '../overworld/world';
 import { G, maxHp } from '../state';
+import { translated } from '../../i18n';
 import { setPageTitle } from '../meta';
 import { CountingScene, type SheepRound } from '../scenes/sheepcount';
 import { dateLabel, PhoneScene, type PhoneCall, type PhoneContact, type PhoneMessage, type PhoneReply } from '../scenes/phone';
@@ -356,12 +357,14 @@ export function minaThread(): PhoneMessage[] {
   return out;
 }
 
+/** A contact-list date (« 8 juil. », "Jul 8"): already in the reader's language once the year is cut off. */
+const listDate = (n: number): string => translated(shortDate(n));
 
 function contacts(): PhoneContact[] {
   return [
-    { id: 'mina', name: MINA, avatar: '🐑', color: '#e0834f', pinned: true, locked: !flag('i3_tel'), when: flag('i3_reply') && G.state.flags.i3_reply !== 'rien' ? PHONE_CLOCK[REAL.i3]! : shortDate(STRANGER_DAY), messages: minaThread() },
+    { id: 'mina', name: MINA, avatar: '🐑', color: '#e0834f', pinned: true, locked: !flag('i3_tel'), when: flag('i3_reply') && G.state.flags.i3_reply !== 'rien' ? PHONE_CLOCK[REAL.i3]! : listDate(STRANGER_DAY), messages: minaThread() },
     { id: 'maman', name: 'Maman', color: '#c86a8a', when: '3:33', messages: mamanThread() },
-    { id: 'leo', name: 'Léo', color: '#5f8fd6', when: shortDate(12), unread: flag('i3_leo') || flag('leo_lu') ? 0 : 3, messages: leoThread() },
+    { id: 'leo', name: 'Léo', color: '#5f8fd6', when: listDate(12), unread: flag('i3_leo') || flag('leo_lu') ? 0 : 3, messages: leoThread() },
   ];
 }
 
