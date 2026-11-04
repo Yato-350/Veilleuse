@@ -1,0 +1,111 @@
+# Lot 12, the False Dawn in English (src/i18n/en/story-fausse-aube.ts), after [Stay]: from the white — "You wake up.",
+# "It's a lovely day.", Mom already on the bed speaking only her fridge notes ("I love you. Dash. Mom.", "You stayed.
+# That's good."); the window on the wrong wall ("To the west."), the calendar ("she's getting better!!"); the apartment;
+# Mom in the kitchen, arms open ("Curl up in her arms?" — [Not yet] once), the neighbors' cat ("His name is
+# Biscotte."), the hug and the close-up, then the fake credits stuck on "Mina ……… not found": [Let it roll] twice (the
+# "Happy Ending": "Thank you for playing! — Dodo", the cross-stitched title), one more "not found" each pass; on the
+# third, "Noa. Look." and only [Look]; the rewind, the chapter 3 card, "No." … "That's not all.", Mina's crayon "THE END"
+# crossed out — and no string of the run is missing from the catalog (i18nMissing), checked before Interlude III.
+query: debug=script&name=fausse_aube_reste&lang=en
+eval: window.V = window.__veilleuse
+eval: (window.TXT = () => (V.dialogue.pages[V.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join('')).join(' '), 1)
+wait:1500
+zuntil: V.dialogue.busy && window.TXT() === 'It\'s a lovely day.'
+wait:1500
+shot:dawn
+zuntil: V.dialogue.busy && window.TXT() === 'I love you. Dash. Mom.'
+wait:1500
+shot:dash
+zuntil: V.dialogue.busy && window.TXT() === 'You stayed. That\'s good.'
+wait:1500
+shot:stayed
+auto
+assert: V.G.state.flags.fa_maman && V.world.map.id === 'chambre_faux' && !V.world.get('maman_lit')
+interact:fa_fenetre
+auto
+interact:fa_fenetre
+auto
+interact:fa_fenetre
+zuntil: V.dialogue.busy && window.TXT() === 'Your room looks out on the courtyard. To the west.'
+wait:1500
+shot:west
+auto
+interact:fa_calendrier
+auto
+interact:fa_calendrier
+zuntil: V.dialogue.busy && window.TXT().includes('"she\'s getting better!!"')
+wait:1500
+shot:calendar
+auto
+go:8/3
+ArrowUp:120
+KeyZ
+waitfor: V.G.state.map === 'appartement_faux'
+zuntil: V.dialogue.busy && window.TXT() === 'Nothing is missing.'
+wait:1200
+shot:apartment
+auto
+assert: V.world.map.id === 'appartement_faux' && V.G.state.flags.fa_appart
+go:29/5
+interact:maman
+auto
+assert: window.TXT() === 'Curl up in her arms?' && V.dialogue.choices.length === 2
+shot:arms
+choose:1
+auto
+interact:maman
+auto
+choose:1
+auto
+interact:maman
+zuntil: V.dialogue.busy && window.TXT() === 'His name is Biscotte.'
+wait:1200
+shot:biscotte
+auto
+assert: window.TXT() === 'Curl up in her arms?'
+choose:0
+zuntil: V.scene() === 'ImageScene'
+wait:2500
+shot:close-up
+zuntil: V.scene() !== 'ImageScene'
+waitfor: V.game.top.phase === 'stopped' && V.game.top.stopT > 80
+shot:stop1
+assert: V.game.top.lines.some(([t]) => t === 'Mina ……… introuvable') && V.G.state.flags.fa_tours === 1
+KeyZ
+KeyZ:9000
+waitfor: V.game.top.phase === 'end'
+shot:signature
+KeyZ
+waitfor: V.scene() === 'TitleScene'
+wait:1200
+shot:crossstitch
+KeyZ
+waitfor: V.game.top.phase === 'stopped' && V.game.top.stopT > 80
+assert: V.game.top.lines.some(([t]) => t === 'Mina ……… introuvable introuvable')
+shot:stop2
+KeyZ
+KeyZ:9000
+waitfor: V.game.top.phase === 'end'
+KeyZ
+waitfor: V.scene() === 'TitleScene'
+wait:1200
+KeyZ
+waitfor: V.game.top.phase === 'stopped' && V.dialogue.busy
+wait:1500
+shot:look
+zuntil: !V.dialogue.busy
+waitfor: V.game.top.phase === 'stopped' && V.game.top.stopT > 80 && !V.dialogue.busy
+assert: V.game.top.lines.some(([t]) => t === 'Mina ……… introuvable introuvable introuvable') && V.G.state.flags.fa_tours === 3
+shot:stop3
+KeyZ
+wait:1500
+shot:rewind
+waitfor: V.dialogue.busy
+zuntil: V.dialogue.busy && window.TXT() === 'That\'s not all.'
+wait:1200
+shot:not-all
+zuntil: V.game.top.constructor.name === 'CrossOutPage'
+wait:2500
+shot:the-end
+assert: V.G.meta.endings.length === 0 || !V.G.meta.endings.includes('fin_heureuse')
+assert: V.i18nMissing().length === 0
