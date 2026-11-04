@@ -1,0 +1,9 @@
+# Lot 13, accessibility: Story mode on the music box of chapter 6 (the « dents » skin): no sewing pin among the teeth
+# in any round, and the cylinder turns 1.35 times slower; the three rounds play to the end of the lullaby.
+query: debug=script&name=count_dents&sheep=auto&lang=fr
+eval: window.V = window.__veilleuse
+eval: (V.G.settings.storyMode = true, window.DECOYS = 0, setInterval(() => { const t = V.game.top; if (t?.queue) window.DECOYS += t.queue.filter((q) => q.kind === 'B').length; }, 50), 1)
+zuntil: V.game.top.round && V.game.top.spawned > 2
+shot:round1
+auto:90000
+assert: window.DECOYS === 0

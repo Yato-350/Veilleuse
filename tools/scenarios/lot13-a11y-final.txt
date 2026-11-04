@@ -1,0 +1,65 @@
+# Lot 13, accessibility (§ 6.4 and the bible's lot 13): the final battle with « Réduire les flashs » and the emotion
+# shapes on. Phase 2's lying crayons keep the « ? » readable over the shapes (screenshot), phase 3's black arena falls
+# without a flash, phase 4's cracks (her words, the Bouton doré, the Pile chargée) never flash above a quarter of the
+# screen's light, no glitch burst, then « Ouvrir les yeux ».
+query: debug=script&name=dodo_v2_objets&lang=fr&sheep=auto
+god
+eval: window.V = window.__veilleuse
+eval: (V.G.settings.reduceFlashes = true, V.fx.reduceFlashes = true, window.MAXF = 0, window.MAXG = 0, setInterval(() => { window.MAXF = Math.max(window.MAXF, V.fx.flashAlpha); window.MAXG = Math.max(window.MAXG, V.fx.glitchLevel); }, 16), 1)
+eval: (V.G.settings.emotionShapes = true, 1)
+auto
+write:joie
+auto
+write:tristesse
+auto
+write:colere
+auto
+write:Dors.
+auto
+write:Arrête d'appeler.
+until:dodge
+wait:1500
+shot:crayons-menteurs
+assert: window.__veilleuse.game.top.lie === true
+auto
+write:Demain.
+auto
+menu:0
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+shot:arene-noire
+ArrowRight
+KeyZ
+wait:2500
+auto
+menu:0
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+ArrowRight
+ArrowRight
+KeyZ
+wait:2500
+auto
+write:je suis là
+auto
+menu:2
+wait:300
+eval: window.__veilleuse.game.top.list.idx = window.__veilleuse.game.top.list.items.indexOf('Bouton doré')
+KeyZ
+auto
+menu:2
+wait:300
+eval: window.__veilleuse.game.top.list.idx = window.__veilleuse.game.top.list.items.indexOf('Pile chargée')
+KeyZ
+auto
+write:bonne nuit
+auto
+shot:fissures
+write:pardon
+auto
+assert: window.__veilleuse.game.top.menuLabels[3] === 'OUVRIR LES YEUX'
+menu:3
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.fin_route === 'aube'
+assert: window.MAXF <= 0.25
+assert: window.MAXG <= 0.1
