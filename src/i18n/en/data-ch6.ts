@@ -11,6 +11,8 @@ export const DATA_CH6: Record<string, string> = {
   'Bonne nuit, Noa ! Dodo veille sur toi.{p:20} Fais de beaux rêves.': 'Good night, Noa! Dodo is watching over you.{p:20} Sweet dreams.',
   'Bonne nuit,{p:20} Noa…{p:20} Dodo veille{p:20} sur…': 'Good night,{p:20} Noa…{p:20} Dodo is watching{p:20} over…',
   'Bon…{p:30}ne…{p:30} nuit…{p:40} N…': 'Good…{p:30} ni…{p:30}ght…{p:40} N…',
+  // (the fourth turn of the same track; no word long enough for the extractor to see it)
+  'B…{p:40}o…{p:50}n…': 'G…{p:40}o…{p:50}o…',
   '* La voix est presque partie.\n* Il lui reste quelque chose. Pas pour longtemps.': '* The voice is almost gone.\n* There is something left in it. Not for long.',
   'Aiguille': 'Needle',
   'Elle recoud tout ce qui dépasse. Sa pointe coud le cœur : sa couleur reste deux tours.': 'She sews back whatever sticks out. Her point sews the heart: its color holds for two turns.',
