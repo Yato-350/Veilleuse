@@ -7,7 +7,7 @@ import { input } from '../../engine/input';
 import { rng } from '../../engine/math';
 import { LULLABY_PATTERN } from '../../data/music';
 import { TILES } from '../../data/tiles';
-import { tr } from '../../i18n';
+import { tf, tr } from '../../i18n';
 import { blot } from '../battle/final-common';
 import { runFinalBattleV2 } from '../battle/final-v2';
 import type { Director } from '../director';
@@ -328,7 +328,7 @@ export const replay =
     const line = (G.meta.dodoSilent && SILENT_REPLAYS[i]) || quoted;
     d.sfx('static', { vol: 0.25, pitch: 0.5 });
     audio.tempoScale = 0.85;
-    await d.say(`{c:g}${line}{/c}`, undefined, { speed: 0.4, pos: 'top' });
+    await d.say(tf('{c:g}{0}{/c}', tr(line)), undefined, { speed: 0.4, pos: 'top' });
     audio.tempoScale = 1;
     await d.say(after);
   };
@@ -534,7 +534,7 @@ export const shelf =
       if (num(k) <= jars.length) bump('c6_bocaux');
       const jar = jars[i]!;
       d.sfx('tooth', { pitch: 1.6, vol: 0.25 });
-      await tell(d, `L'étiquette : « ${jar.label} »`);
+      await tell(d, tf('L\'étiquette : « {0} »', tr(jar.label)));
       await tell(d, jar.inside);
       if (i === jars.length - 1) {
         await tell(d, 'C\'est le dernier bocal de cette étagère. Le premier est de nouveau devant.');
@@ -556,10 +556,10 @@ export const shelfGap: Script = async (d) => {
 /** The jar of this night (365 on a first run): its label is blank; on a later run, the night before has a label. */
 export const jarTonight: Script = async (d) => {
   const n = G.meta.nuits;
-  await tell(d, [`Un bocal un peu à l'écart. L'étiquette porte seulement : « Nuit ${n} : »`, 'Le reste est blanc. Le stylo est posé à côté, le capuchon mâchonné. L\'encre n\'a pas séché.']);
+  await tell(d, [tf('Un bocal un peu à l\'écart. L\'étiquette porte seulement : « Nuit {0} : »', n), 'Le reste est blanc. Le stylo est posé à côté, le capuchon mâchonné. L\'encre n\'a pas séché.']);
   await tell(d, 'C\'est le bocal de cette nuit. Il attend de savoir ce qu\'il faut écrire.');
   if (n > 365) {
-    await tell(d, [`Derrière, un autre bocal. « Nuit ${n - 1} : quelqu'un lui tenait la main. »`, 'Dessous, au crayon, d\'une autre écriture : « {player} ».']);
+    await tell(d, [tf('Derrière, un autre bocal. « Nuit {0} : quelqu\'un lui tenait la main. »', n - 1), 'Dessous, au crayon, d\'une autre écriture : « {player} ».']);
   }
 };
 
@@ -569,7 +569,7 @@ export const shelfSealed: Script = async (d) => {
   const k = bump('c6_n_avance');
   if (k === 1) {
     await tell(d, ['Une étagère de bocaux vides. Les couvercles sont déjà cousus au fil rouge.', 'Les étiquettes sont écrites d\'avance.']);
-    await tell(d, [`« Nuit ${n + 1} ». « Nuit ${n + 2} ». « Nuit ${n + 3} ».`, `Plus loin : « Nuit ${n + 40} ». Et plus loin encore, au fond, dans l'ombre : « Nuit ${n + 365} ».`]);
+    await tell(d, [tf('« Nuit {0} ». « Nuit {1} ». « Nuit {2} ».', n + 1, n + 2, n + 3), tf('Plus loin : « Nuit {0} ». Et plus loin encore, au fond, dans l\'ombre : « Nuit {1} ».', n + 40, n + 365)]);
     await voice(d, ['Je prépare.', 'On n\'est jamais trop prévoyant.']);
     return;
   }
@@ -588,7 +588,7 @@ export const looseJar =
   async (d) => {
     const [label, inside] = LOOSE[i]!;
     d.sfx('tooth', { pitch: 1.6, vol: 0.25 });
-    await tell(d, ['Un bocal qui a roulé loin des étagères.', `L'étiquette : ${label}`]);
+    await tell(d, ['Un bocal qui a roulé loin des étagères.', tf('L\'étiquette : {0}', tr(label))]);
     await tell(d, inside);
   };
 
@@ -801,7 +801,9 @@ export const comb: Script = async (d) => {
     await voice(d, 'J\'en ai pris soin.');
   }
   const left = 3 - num('c6_dents');
-  if (left > 0) await tell(d, left === 1 ? 'Il manque encore une dent. Un trou noir dans la rangée.' : `Il manque ${left === 3 ? 'trois' : 'deux'} dents. Des trous noirs dans la rangée, comme un sourire d'enfant.`);
+  if (left === 1) await tell(d, 'Il manque encore une dent. Un trou noir dans la rangée.');
+  else if (left === 2) await tell(d, 'Il manque deux dents. Des trous noirs dans la rangée, comme un sourire d\'enfant.');
+  else if (left === 3) await tell(d, 'Il manque trois dents. Des trous noirs dans la rangée, comme un sourire d\'enfant.');
   else await tell(d, 'Les trois dents sont revenues. Il ne reste qu\'à tourner la manivelle.');
 };
 
@@ -1618,7 +1620,7 @@ export const threshold: Script = async (d) => {
   d.sfx('write', { vol: 0.4 });
   await tell(d, 'Le carnet s\'ouvre tout seul dans ta main.');
   const words: ThresholdWord[] = ['regarder', 'fermer les yeux', 'partir'];
-  const shown = silence ? words.map((w) => blot(w)) : words;
+  const shown = silence ? words.map((w) => blot(tr(w))) : words;
   const pick = await NotebookPick.pick(shown, [false, false, flag('c6_partir')]);
   if (silence) {
     await tell(d, ['Les mots sont noyés. Tu écris quand même.', 'L\'encre boit ce que tu écris. Il n\'y a plus rien à regarder, plus rien à fermer.']);
