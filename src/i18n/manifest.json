@@ -75,6 +75,7 @@
     "src/data/maps/chapter5.ts",
     "src/game/story/fausse-aube.ts",
     "src/data/maps/fausse-aube.ts",
+    "src/game/story/real-nuit.ts",
     "src/game/story/chapter6.ts",
     "src/data/maps/chapter6.ts",
     "src/game/story/endings.ts",
