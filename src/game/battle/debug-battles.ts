@@ -64,6 +64,12 @@ const douxWords = (chapter: number, n: number) => () => {
  *   dodo_v2_fin           phase 4 with both items (choose « Ouvrir les yeux » or « Rester »)
  *   dodo_v2_fin_silence   phase 3 on the route of the ink
  */
+/** Balance checks (lot 13): &etoiles=N replaces the Étoiles a chapter 4, 5 or 6 debug battle starts with. */
+function stars(n: number): number {
+  const v = new URLSearchParams(location.search).get('etoiles');
+  return v === null ? n : Number(v);
+}
+
 function setup(d: Director, chapter: number, map: string, spawn: string, mina: boolean, flags: string[] = []): void {
   G.state.chapter = chapter;
   for (const f of flags) d.set(f);
@@ -76,7 +82,7 @@ async function ch4(d: Director, ids: string[], opts: { mina?: boolean; flags?: s
   setup(d, 1, 'prairie', 'mina', false, ['c1_tutorial', 'c1_mina', ...(opts.flags ?? [])]);
   const s = G.state;
   s.chapter = 4;
-  s.etoiles = 14;
+  s.etoiles = stars(14);
   s.encre = 3;
   s.weapon = 'plume';
   s.armor = 'plaid';
@@ -94,7 +100,7 @@ async function ch5(d: Director, ids: string[], flags: string[] = []): Promise<vo
   setup(d, 1, 'prairie', 'mina', false, ['c1_tutorial', 'c1_mina', ...flags]);
   const s = G.state;
   s.chapter = 5;
-  s.etoiles = 20;
+  s.etoiles = stars(20);
   s.encre = 3;
   s.weapon = 'plume';
   s.armor = 'plaid';
@@ -110,7 +116,7 @@ async function ch5(d: Director, ids: string[], flags: string[] = []): Promise<vo
 function ch5Stats(chapter: number): void {
   const s = G.state;
   s.chapter = chapter;
-  s.etoiles = 26;
+  s.etoiles = stars(26);
   s.encre = 3;
   s.weapon = 'plume';
   s.armor = 'plaid';

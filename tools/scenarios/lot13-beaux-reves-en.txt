@@ -1,0 +1,46 @@
+# Lot 13, English check: Beaux rêves (Sweet Dreams), played in English — a copy of lot9b-beaux-reves.txt with lang=en, its French text
+# checks replaced by the English of the catalogs (src/i18n/en/), and no string of the run shown untranslated
+# (i18nMissing, dev builds).
+query: debug=script&name=fin_beaux_reves&lang=en
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: (window.__nuits0 = V.G.meta.nuits, 1)
+zuntil: SAW('You won\'t hurt anymore.')
+zuntil: V.G.state.map === 'appartement_br'
+zuntil: SAW('15 today')
+zuntil: SAW('…Thanks.')
+shot:merci
+zuntil: SAW('16.')
+zuntil: SAW('I love you.')
+zuntil: TXT().includes('Sweet dre')
+wait:1500
+shot:pile
+zuntil: SAW('He\'s still there.')
+zuntil: !V.world.entities.some((e) => e.id === 'maman')
+wait:600
+shot:porte
+assert: ['br_mot_0', 'br_mot_1', 'br_mot_2'].every((id) => V.world.entities.some((e) => e.id === id))
+zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'fin_beaux_reves'
+wait:1500
+shot:seize-ans
+zuntil: V.scene() === 'CreditsScene'
+assert: V.G.meta.endings.includes('beaux_reves') && V.G.meta.lastEnding === 'beaux_reves' && V.G.meta.beauxRevesAt > 0 && V.G.meta.nuits === window.__nuits0 + 1
+KeyZ:15000
+waitfor: V.game.top.phase === 'end'
+KeyZ
+waitfor: V.game.top.phase === 'help'
+wait:1500
+shot:aide
+KeyZ
+waitfor: V.scene() === 'TitleScene'
+wait:2500
+shot:titre
+assert: V.game.top.variant === 'continuer_seul' && V.game.top.items.length === 1
+KeyZ
+waitfor: V.G.state.map === 'prairie'
+assert: V.G.state.flags.br_retour === true && V.G.state.chapter === 1 && V.G.meta.runInProgress === true
+assert: window.__veilleuse.i18nMissing().length === 0
