@@ -1,0 +1,166 @@
+# Lot 12, Interlude IV « The Closet » in English (src/i18n/en/story-real-nuit.ts), 4:44, Noa knocks three times:
+# "The closet is open." "You don't like leaving it open at night."; the shoe box of fridge notes ("You'd forgotten
+# Biscotte."), the nightlight's box ("For Noa, age 4 — for the closet monsters"), the thermometer ("MEM 38.4"), the
+# drawer ajar ("Yours."); the back of the fridge note under the hood light ("I know you w—" → "I know you what?");
+# Mom's room: the sticky note "5am — nightlight (Noa's room)" ("She knew where it was."), the battery ("It never rang
+# anyway."), the drawing on the mirror ("MOM DONT TELL NOA. PROMISE."), the voice kit ("My Talking Plushie! — 2 tracks
+# — 20 seconds each", "It's been a year."), the baby teeth, the phone company's letter ("She didn't tell you."), the
+# mint; back in the bedroom, one knock in Mina's wall ("One knock means "you there?"."), three knocks back ("You said
+# good night. She let you sleep."), the radiator; Dodo's split seam ("There's cotton under your nails."), the slower
+# static, "You should sleep." — chapter 5 begins, and no string of the run is missing from the catalog (i18nMissing).
+query: debug=script&name=interlude4&sheep=auto&lang=en
+eval: window.V = window.__veilleuse
+eval: (window.TXT = () => (V.dialogue.pages[V.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join('')).join(' '), 1)
+wait:1500
+zuntil: V.dialogue.busy && window.TXT() === 'You don\'t like leaving it open at night.'
+wait:1200
+shot:wake
+auto
+interact:n_armoire
+auto
+interact:n_boite_mots
+zuntil: V.scene() === 'PaperScene'
+wait:1500
+shot:notes
+zuntil: V.dialogue.busy && window.TXT() === 'You\'d forgotten Biscotte.'
+wait:1200
+shot:biscotte
+auto
+interact:n_boite_veilleuse
+zuntil: V.dialogue.busy && window.TXT() === '"For Noa, age 4 — for the closet monsters"'
+wait:1200
+shot:box
+auto
+interact:n_thermometre
+auto
+choose:0
+zuntil: V.dialogue.busy && window.TXT() === 'MEM 38.4'
+wait:800
+shot:thermometer
+auto
+interact:n_bureau
+auto
+choose:0
+zuntil: V.dialogue.busy && window.TXT() === 'Yours.'
+auto
+assert: V.G.state.flags.i4_armoire && V.G.state.flags.i4_mots && V.G.state.flags.i4_boite && V.G.state.flags.i4_thermo && V.G.state.flags.i4_tiroir
+shot:room
+interact:n_porte
+wait:1500
+zuntil: V.dialogue.busy && window.TXT() === 'Yes, you do.'
+auto
+assert: V.G.state.map === 'appartement_tard'
+shot:hall
+interact:t_frigo
+auto
+choose:0
+auto
+interact:gaziniere
+zuntil: V.scene() === 'PaperScene'
+wait:1500
+shot:back-of-note
+zuntil: V.dialogue.busy && window.TXT() === 'I know you what?'
+wait:1200
+shot:what
+auto
+assert: V.G.state.flags.i4_mot === true
+interact:t_porte_maman
+auto
+choose:0
+wait:1500
+zuntil: V.dialogue.busy && window.TXT() === 'Mom\'s room. It smells of her hand cream, and laundry.'
+auto
+assert: V.G.state.map === 'chambre_maman'
+shot:maman
+interact:reveil
+zuntil: V.scene() === 'PaperScene'
+wait:1200
+shot:sticky-note
+zuntil: V.dialogue.busy && window.TXT() === 'She knew where it was.'
+wait:1200
+shot:she-knew
+auto
+assert: window.TXT() === 'Take out the battery?'
+choose:0
+zuntil: V.dialogue.busy && window.TXT() === 'It never rang anyway.'
+auto
+assert: V.G.state.flags.i4_reveil && V.G.state.flags.i4_pile
+interact:m_miroir
+zuntil: V.scene() === 'ImageScene'
+wait:1200
+zuntil: V.dialogue.busy && window.TXT() === '« MOM DONT TELL NOA. PROMISE. »'
+wait:1200
+shot:hush
+auto
+interact:m_kit
+zuntil: V.dialogue.busy && window.TXT() === '"My Talking Plushie! — 2 tracks — 20 seconds each"'
+wait:1200
+shot:kit
+zuntil: V.scene() === 'PaperScene'
+wait:1200
+shot:nadia
+zuntil: V.dialogue.busy && window.TXT() === 'It\'s been a year.'
+auto
+interact:m_couture
+auto
+interact:m_dents
+auto
+choose:0
+zuntil: V.dialogue.busy && window.TXT() === 'That\'s gross.'
+auto
+interact:m_commode
+auto
+choose:0
+zuntil: V.scene() === 'PaperScene'
+wait:1200
+shot:letter
+zuntil: V.dialogue.busy && window.TXT() === 'She didn\'t tell you.'
+auto
+interact:m_chaise
+zuntil: V.dialogue.busy && window.TXT() === 'You take the candy.'
+auto
+interact:m_planning
+auto
+shot:maman2
+assert: V.G.state.flags.i4_dessin && V.G.state.flags.i4_kit && V.G.state.flags.i4_dents && V.G.state.flags.i4_lettre && V.G.state.items.includes('bonbon')
+go:6/8
+ArrowDown:500
+wait:1500
+auto
+assert: V.G.state.map === 'appartement_tard'
+go:6/3
+ArrowUp:120
+KeyZ
+wait:1200
+zuntil: V.dialogue.busy && window.TXT() === 'One knock means "you there?".'
+wait:1200
+shot:you-there
+zuntil: V.dialogue.choices
+assert: window.TXT() === 'On the other side, someone is waiting.'
+shot:knock
+choose:0
+zuntil: V.game.top.answering && !V.dialogue.busy
+ArrowRight
+ArrowRight
+shot:answer
+KeyZ
+zuntil: V.dialogue.busy && window.TXT() === 'You said good night. She let you sleep.'
+wait:1200
+shot:good-night
+auto
+assert: V.G.state.flags.i4_knock === 'trois'
+interact:dodo_plush
+zuntil: V.dialogue.busy && window.TXT() === 'There\'s cotton under your nails.'
+wait:1200
+shot:cotton
+auto
+choose:0
+zuntil: V.dialogue.busy && window.TXT() === 'Like someone falling asleep.'
+auto
+assert: window.TXT() === 'You should sleep.'
+shot:sleep
+choose:0
+auto
+assert: V.G.state.flags.i4_fin === true
+assert: V.world.map.id === 'plage' && V.G.state.chapter === 5
+assert: V.i18nMissing().length === 0
