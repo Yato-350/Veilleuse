@@ -120,6 +120,8 @@ const state = () =>
       if (Array.isArray(top.menuLabels)) s.labels = top.menuLabels.join('|');
       s.enemies = top.enemies.map((e) => `${e.def.id}:${Math.round(e.hp)}hp:${Math.round((e.calm ?? 0) * 100)}%${e.spareable ? ':spare' : ''}`).join(' ');
       s.waitInput = !!top.text?.waitInput;
+      // Speech bubbles waiting for A (they stay until A is pressed once they are fully shown).
+      if (top.bubbles?.length && top.bubbleResolve) s.bubbles = top.bubbles.length;
       if (top.list) s.list = top.list.items.join('|');
       if (top.nb) s.nb = top.nb.writing ? 'writing' : true;
     }
@@ -138,6 +140,9 @@ const press = async (code, ms = 0) => {
   }
   await page.waitForTimeout(60);
 };
+
+/** A battle state that waits for A: a text to confirm, or speech bubbles. */
+const needsA = (s) => s.battle === 'text' || !!s.bubbles;
 
 let god = false;
 const refill = () => page.evaluate(() => {
@@ -159,7 +164,10 @@ async function auto(limit = 30000) {
     }
     if (s.battle) {
       if (s.battle === 'menu' || s.battle === 'list' || (s.battle === 'notebook' && s.nb !== 'writing') || s.battle === 'bar') return `battle:${s.battle}`;
-      if (s.battle === 'text' || s.battle === 'idle') await press('KeyZ');
+      // Press A only when the battle waits for it (a text or speech bubbles): those cannot move on by themselves, so
+      // the press lands on them. In other idle moments the battle goes on alone, and a press sent then could reach the
+      // menu that opens meanwhile (it would pick the last button, often ÉCRIRE, and open the notebook).
+      if (needsA(s)) await press('KeyZ');
       else if (s.battle === 'dodge') {
         if (god) await refill();
         await press(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'][Math.floor(Math.random() * 4)], 120);
@@ -232,6 +240,16 @@ async function chooseList(n) {
 
 /** Picks battle menu button n: moves until it is selected, confirms, and checks the press was taken. */
 async function menu(n) {
+  // A notebook or a list left open (not by this step) is closed first with B, back to the menu.
+  for (let k = 0; k < 3; k++) {
+    const open = await page.evaluate(() => {
+      const t = window.__veilleuse.game.top;
+      return (t?.mode === 'notebook' && !t.nb?.writing) || (t?.mode === 'list' && !!t.list?.cancel);
+    });
+    if (!open) break;
+    await press('KeyX');
+    await poll(() => window.__veilleuse.game.top?.mode === 'menu', null, 1500);
+  }
   if (!(await poll(() => window.__veilleuse.game.top?.mode === 'menu', null, 4000))) {
     const cur = await page.evaluate(() => window.__veilleuse.game.top.menuIdx ?? 0);
     for (let i = 0; i < (n - cur + 4) % 4; i++) await press('ArrowRight');
@@ -366,7 +384,7 @@ for (const step of steps) {
     for (;;) {
       const st = await state();
       if (st.battle === arg || Date.now() - t0 > 20000) break;
-      if (st.dlg || st.battle === 'text' || st.battle === 'idle') await press('KeyZ');
+      if (st.dlg || needsA(st)) await press('KeyZ');
       await page.waitForTimeout(60);
     }
   }
