@@ -74,6 +74,14 @@
     "src/game/story/chapter5.ts",
     "src/data/maps/chapter5.ts",
     "src/game/story/fausse-aube.ts",
-    "src/data/maps/fausse-aube.ts"
+    "src/data/maps/fausse-aube.ts",
+    "src/game/story/chapter6.ts",
+    "src/data/maps/chapter6.ts",
+    "src/game/story/endings.ts",
+    "src/data/maps/endings.ts",
+    "src/data/illustrations-fins.ts",
+    "src/game/battle/patterns-ch4.ts",
+    "src/game/battle/patterns-ch5.ts",
+    "src/game/battle/bg-ch6.ts"
   ]
 }
