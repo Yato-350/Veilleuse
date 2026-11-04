@@ -1,6 +1,6 @@
 import { drawText, measure } from '../engine/font';
 import { ctx2d, makeCanvas } from '../engine/sprite';
-import { tr } from '../i18n';
+import { lang, tr } from '../i18n';
 
 /*
  * Illustrations of the endings, version 2 (docs/HISTOIRE.md § 5; story/endings.ts). Same family as the real-world
@@ -96,11 +96,13 @@ function vgrad(g: Ctx, x: number, y: number, w: number, h: number, cols: readonl
 
 const layers = new Map<string, HTMLCanvasElement>();
 function layer(name: string, paint: (g: Ctx) => void): HTMLCanvasElement {
-  let c = layers.get(name);
+  // fin_silence carries a word (the card on her door): one cached canvas per language.
+  const key = lang() + ':' + name;
+  let c = layers.get(key);
   if (!c) {
     c = makeCanvas(SW, SH);
     paint(ctx2d(c));
-    layers.set(name, c);
+    layers.set(key, c);
   }
   return c;
 }

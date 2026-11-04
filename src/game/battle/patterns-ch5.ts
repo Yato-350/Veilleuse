@@ -540,7 +540,7 @@ export const CH5_PATTERNS: Record<string, Pattern> = {
           },
         });
         // The printed band, letters crowding as the clasp closes: « MINA — PÉD. 3 — 304 ».
-        const label = 'MINA-PED.3-304';
+        const label = 'MINA-PED.3-304'; // i18n-ignore (a hospital wristband code: a name, a ward, a room)
         w.spawn({
           x: cx,
           y: cy,
@@ -584,7 +584,7 @@ export const CH5_PATTERNS: Record<string, Pattern> = {
     duration: 400,
     tick(w, t, c) {
       const b = w.box;
-      const words = CH5.stolen.length ? CH5.stolen.slice(-3).map((s) => tr(s)) : ['MINE', 'MINE', 'MINE'];
+      const words = CH5.stolen.length ? CH5.stolen.slice(-3).map((s) => tr(s)) : [tr('MINE'), tr('MINE'), tr('MINE')];
       const per = Math.max(6, 8 - c.power);
       const total = words.reduce((a, s) => a + s.length + 3, 0);
       const k = Math.floor((t - 2) / per) % total;

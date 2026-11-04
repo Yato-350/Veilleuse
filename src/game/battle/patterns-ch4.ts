@@ -3,6 +3,7 @@ import { drawChar } from '../../engine/font';
 import { fx } from '../../engine/fx';
 import { rng } from '../../engine/math';
 import type { Emotion } from '../../engine/palette';
+import { tr } from '../../i18n';
 import { G } from '../state';
 import type { Bullet, BulletWorld } from './bullets';
 import type { Pattern, PatternCtx } from './patterns';
@@ -409,7 +410,8 @@ export const CH4_PATTERNS: Record<string, Pattern> = {
     duration: 340,
     tick(w, t, c) {
       const b = w.box;
-      const word = 'JETAIME';
+      // The magnet letters spell « JE T'AIME » one by one (in English: I LOVE YOU).
+      const word = tr('JETAIME');
       if (t % Math.max(16, 24 - c.power * 3) === 0 && t < 290) {
         const n = (c.mem.n = (c.mem.n ?? 0) + 1);
         const side = n % 4;

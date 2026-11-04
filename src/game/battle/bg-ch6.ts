@@ -221,6 +221,7 @@ function paintVoix(g: CanvasRenderingContext2D): void {
     return hole ? '#070506' : ramp(['#1f1a1a', '#2c2524', '#3b322f'], 0.3 + (y - GRILLE.y) / 90, x, y);
   });
   // REC and PLAY: two big round buttons, engraved.
+  // i18n-ignore-start (REC and PLAY are button ids: drawn as icons, never as text)
   const button = (cx: number, cy: number, face: string, label: 'REC' | 'PLAY'): void => {
     field(g, cx - 14, cy - 14, 29, 29, (x, y) => {
       const d = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
@@ -242,6 +243,7 @@ function paintVoix(g: CanvasRenderingContext2D): void {
   };
   button(22, 44, '#3b322f', 'REC');
   button(W - 22, 44, '#3b322f', 'PLAY');
+  // i18n-ignore-end
   // Wires: red and black, hanging in loops from the top.
   for (const [x0, x1, sag, c] of [[64, 120, 18, '#a8324a'], [70, 112, 24, '#1c1424'], [208, 258, 20, '#a8324a'], [214, 250, 14, '#1c1424']] as const) {
     for (let x = x0; x <= x1; x++) {
