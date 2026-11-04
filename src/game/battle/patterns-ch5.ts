@@ -3,7 +3,7 @@ import { drawChar } from '../../engine/font';
 import { fx } from '../../engine/fx';
 import { rng } from '../../engine/math';
 import type { Emotion } from '../../engine/palette';
-import { tr } from '../../i18n';
+import { lang, tr } from '../../i18n';
 import { G } from '../state';
 import type { Bullet, BulletWorld } from './bullets';
 import type { Pattern, PatternCtx } from './patterns';
@@ -218,8 +218,8 @@ function segDigits(w: BulletWorld, text: string, x: number, y: number, vx: numbe
   }
 }
 
-/** « 38,4 » — the reading, with a French comma (the display of a French thermometer). */
-export const tempLabel = (v: number): string => v.toFixed(1).replace('.', ',');
+/** « 38,4 » — the reading, with the decimal mark of the language (« 38.4 » in English; the LCD draws both as a dot). */
+export const tempLabel = (v: number): string => (lang() === 'en' ? v.toFixed(1) : v.toFixed(1).replace('.', ','));
 
 // ---------------------------------------------------------------------------------------------------------------------
 // La Vitre: the fog of breath

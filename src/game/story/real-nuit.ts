@@ -1089,16 +1089,20 @@ export const shoebox: Script = async (d) => {
   await d.say(['Tous ceux de Maman. Ceux de là-bas, quand elle dormait à l\'hôpital.', 'Un par soir. Tu les as tous gardés.']);
   await d.paper(
     [
+      // The notes are wrapped where Maman reads them aloud in the false dawn, so each line fits the paper (194 px).
       'Noa, mange quelque chose s\'il te plaît.',
       'Je t\'aime. — Maman',
       '',
-      'Il y a des pâtes. Bisous sur ton front.',
+      'Il y a des pâtes.',
+      'Bisous sur ton front.',
       '',
-      'Le chat des voisins passe par le balcon.',
+      'Le chat des voisins',
+      'passe par le balcon.',
       'Il s\'appelle Biscotte.',
       'Ne lui donne pas les pâtes.',
       '',
-      'Tu dors ? Je rentre tard. Je t\'aime.',
+      'Tu dors ? Je rentre tard.',
+      'Je t\'aime.',
     ],
     '',
   );
@@ -1367,7 +1371,7 @@ export const blouse: Script = async (d) => {
   await d.say(['Sa blouse de rechange, sur le dossier de la chaise.', 'Un badge : « Les Glycines — équipe de nuit ».']);
   if (flag('i4_bonbon')) return;
   d.set('i4_bonbon');
-  await d.say('Dans la poche, un stylo qui ne marche plus et un bonbon à la menthe.');
+  await d.say('Dans la poche, un stylo qui ne marche plus et un bonbon à la fraise.');
   if (await d.give('bonbon', true)) {
     d.sfx('item');
     await d.say(['Tu prends le bonbon.', 'Elle en a toujours un. Pour toi. Depuis que tu as quatre ans.']);

@@ -100,7 +100,8 @@ export const BATTLE: Record<string, string> = {
   '{c:#e07b6a}Mina n°366 :{/c} {0}\n{1}': '{c:#e07b6a}Mina No. 366:{/c} {0}\n{1}',
   '{c:#e07b6a}Mina n°366 :{/c} {0}': '{c:#e07b6a}Mina No. 366:{/c} {0}',
   '{c:o}Mina :{/c} {0}': '{c:o}Mina:{/c} {0}',
-  // Words drawn letter by letter by the bullets (patterns-ch4.ts: the fridge magnets; patterns-ch5.ts: the gull's cry)
-  'JETAIME': 'ILOVEYOU',
+  // Words drawn letter by letter by the bullets (patterns-ch4.ts: the fridge magnets; patterns-ch5.ts: the gull's cry).
+  // A lowercase magnet letter is drawn backwards: the English line after the fight says « The E is on backwards. »
+  'JETAIME': 'ILOVeYOU',
   'MINE': 'MINE',
 };

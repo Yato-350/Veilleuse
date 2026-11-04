@@ -82,6 +82,7 @@ const LCD: Record<string, string[]> = {
   '8': ['xxx', 'x.x', 'xxx', 'x.x', 'xxx'],
   '9': ['xxx', 'x.x', 'xxx', '..x', 'xxx'],
   ',': ['.', '.', '.', '.', 'x'],
+  '.': ['.', '.', '.', '.', 'x'],
 };
 function drawLcd(g: CanvasRenderingContext2D, text: string, x: number, y: number, color: string): void {
   g.fillStyle = color;
@@ -332,7 +333,7 @@ const THERMO_HOOKS: Partial<BattleHooks> = {
         const hot = s.temp >= 40 && !e.spareable;
         // At 40 the screen blinks; once « fièvre » is written, it shows the reading it remembers.
         if (hot && Math.floor(s.t / 10) % 2) return;
-        drawLcd(g, s.mem ? '38,4' : tempLabel(s.temp), x + 1, y + 1, hot ? '#a8324a' : '#2d3324');
+        drawLcd(g, tempLabel(s.mem ? 38.4 : s.temp), x + 1, y + 1, hot ? '#a8324a' : '#2d3324');
       };
     }
     if (!e.alive || e.spareable) return;

@@ -338,7 +338,7 @@ export const STORY_REAL: Record<string, string> = {
   'Six mois.': 'Six months.',
   'Je pense à elle tout le temps. À toi aussi. Tout le temps.': 'I think about her all the time. About you too. All the time.',
   'Il y a de la soupe. Celle que tu aimes.': 'There\'s soup. The kind you like.',
-  'J\'ai rêvé d\'elle, cette nuit. Elle riait.': 'I dreamt about her last night. She was laughing.',
+  'J\'ai rêvé d\'elle, cette nuit. Elle riait.': 'I dreamed about her last night. She was laughing.',
   'Je voulais te le dire. C\'est tout.': 'I wanted to tell you. That\'s all.',
   'Je rentre tard ❤': 'I\'ll be home late ❤',
   'tu reviens quand au collège ?': 'when r u coming back to school?',

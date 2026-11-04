@@ -5,7 +5,7 @@
  */
 export const DATA_CH5: Record<string, string> = {
   // --- Chapter 5 notebook words (src/data/words.ts; lowercase words escape the extractor) -----------------------------
-  'vacances': 'holidays',
+  'vacances': 'vacation',
   'vague': 'wave',
   'glace': 'ice cream',
   'dessiner': 'draw',
@@ -131,7 +131,7 @@ export const DATA_CH5: Record<string, string> = {
   'L\'été d\'avant ! Elle dormait tout le temps. Mine.': 'The summer before! She slept all the time. Mine.',
   'Je l\'ai piétiné. Pas exprès. Mine.': 'I trampled it. Not on purpose. Mine.',
   'Le quarante-deuxième, c\'est moi qui l\'ai. Mine.': 'The forty-second one, I\'ve got it. Mine.',
-  'Vacances ! Mine ! Mine ! …Les dernières.': 'Holidays! Mine! Mine! …The last ones.',
+  'Vacances ! Mine ! Mine ! …Les dernières.': 'Vacation! Mine! Mine! …The last one.',
   '* La Mouette s\'envole. Elle crie encore, très loin. Ça ressemble à un prénom.': '* The Gull flies off. It keeps screaming, far away. It sounds like a name.',
   '* La Mouette tombe en plumes d\'encre. Les mots qu\'elle avait avalés ne reviennent pas.': '* The Gull falls in feathers of ink. The words it swallowed don\'t come back.',
   'Masque': 'Mask',

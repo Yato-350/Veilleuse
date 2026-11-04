@@ -1,5 +1,5 @@
 import { audio } from '../../engine/audio';
-import { drawChar } from '../../engine/font';
+import { charWidth, drawChar } from '../../engine/font';
 import { fx } from '../../engine/fx';
 import { rng } from '../../engine/math';
 import type { Emotion } from '../../engine/palette';
@@ -63,11 +63,20 @@ function drawPlate(g: CanvasRenderingContext2D, b: Bullet): void {
 
 /** A plastic fridge-magnet letter (bold glyph). */
 function drawLetter(g: CanvasRenderingContext2D, b: Bullet, color: string): void {
-  const ch = String.fromCharCode(b.data.ch ?? 65);
+  const raw = String.fromCharCode(b.data.ch ?? 65);
+  const ch = raw.toUpperCase();
   const x = Math.round(b.x) - 3;
   const y = Math.round(b.y) - 4;
+  // A lowercase letter in the word is a magnet stuck on backwards (the English E of « I LOVE YOU »).
+  const backwards = raw !== ch;
+  if (backwards) {
+    g.save();
+    g.translate(2 * x + charWidth(ch), 0);
+    g.scale(-1, 1);
+  }
   drawChar(g, ch, x, y, color);
   drawChar(g, ch, x + 1, y, color);
+  if (backwards) g.restore();
 }
 
 /** Wind-up chattering teeth: two rows of teeth that open and shut. */

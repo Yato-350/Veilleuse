@@ -7,6 +7,7 @@ import { G, maxHp, writeMeta } from '../state';
 import { isLateNight, setPageTitle } from '../meta';
 import { composePoem } from '../scenes/poem';
 import { dateLabel, PhoneScene, type PhoneContact, type PhoneMessage, type PhoneReply } from '../scenes/phone';
+import { translated } from '../../i18n';
 import { enterDream, isFinale, REAL, realPhase } from './common';
 import { afterFinalBattle, dawnEnding, endingAube, endingAubeBlanche, endingVeilleuse } from './endings';
 import { EPILOGUE_DEBUG } from './epilogue';
@@ -270,8 +271,11 @@ function thread(upTo: number, withReply: boolean): PhoneMessage[] {
   return out;
 }
 
-/** A list date without its year (« 8 juil. »): the contact list has no room for more. */
-export const shortDate = (n: number): string => dateLabel(n).replace(/,? \d{4}$/, '');
+/**
+ * A list date without its year (« 8 juil. »): the contact list has no room for more. Already in the reader's language,
+ * so it is marked as final (the phone does not report it as missing in English).
+ */
+export const shortDate = (n: number): string => translated(dateLabel(n).replace(/,? \d{4}$/, ''));
 
 /** Léo, from school: one sheep a week, whatever happens (the night interludes show the same thread). */
 export function leoThread(): PhoneMessage[] {

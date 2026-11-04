@@ -61,7 +61,7 @@ export const DATA: Record<string, string> = {
   'Yeux de rechange': 'Spare Eyes',
   'Deux boutons pour le prix d\'un. Pour les jours où on ne veut pas voir. Calme le cœur, rend 10 PV.': 'Two buttons for the price of one. For the days you\'d rather not see. Calms the heart, restores 10 HP.',
   'Tu poses les deux boutons sur tes paupières, comme des rondelles de concombre. Un moment, plus rien à voir.': 'You lay the two buttons on your eyelids, like cucumber slices. For a moment, nothing to see.',
-  'Coton gris': 'Grey Cotton',
+  'Coton gris': 'Gray Cotton',
   'Une poignée de coton, encore tiède. Ça sent l\'hôpital. Et un peu la lessive de chez toi. Rend 5 PV.': 'A handful of cotton, still warm. It smells like the hospital. And a little like the laundry at home. Restores 5 HP.',
   'Tu le serres dans ta main. Il est encore tiède.': 'You squeeze it in your hand. It\'s still warm.',
   'Bracelet « NOA »': 'Wristband "NOA"',

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 // @ts-expect-error — plain JS tool, no type declarations
 import { findMissing, readManifest, extractStrings } from '../tools/i18n-missing.mjs';
 import { CATALOG_PARTS, EN } from '../src/i18n/en';
@@ -176,6 +176,31 @@ describe('battle texts fit their box', () => {
     for (const lang of ['fr', 'en'] as const) {
       bindLanguage(() => lang);
       for (const t of texts) if (layoutRich(parseRich(tr(t).replace('{0}', 'Mouton n°212').replace(/\{[1-9n]\}/g, '364')), 276).length > 3) bad.push(`${lang}: ${JSON.stringify(t)}`);
+    }
+    expect(bad).toEqual([]);
+  });
+});
+
+describe('paper pages fit', () => {
+  afterEach(() => bindLanguage(() => 'fr'));
+  it('every line written on a paper page (d.paper in the story modules) stays on the page, in French and English', () => {
+    // PaperScene: a 220 px page; the lines start 24 px in, so 194 px are left before the edge (lines are not wrapped).
+    const texts: string[] = [];
+    for (const f of readdirSync('src/game/story')) {
+      const src = readFileSync(`src/game/story/${f}`, 'utf8');
+      for (let i = src.indexOf('.paper('); i >= 0; i = src.indexOf('.paper(', i + 1)) {
+        let depth = 0;
+        let j = i + 6;
+        for (; j < src.length; j++) if (src[j] === '(') depth++;
+        else if (src[j] === ')' && --depth === 0) break;
+        for (const m of src.slice(i, j).matchAll(/'((?:[^'\\]|\\.)*)'/g)) texts.push(m[1]!.replace(/\\'/g, "'"));
+      }
+    }
+    expect(texts.length).toBeGreaterThan(30);
+    const bad: string[] = [];
+    for (const lang of ['fr', 'en'] as const) {
+      bindLanguage(() => lang);
+      for (const t of texts) if (measure(trLine(t)) > 194) bad.push(`${lang} ${measure(trLine(t))}px: ${JSON.stringify(trLine(t))}`);
     }
     expect(bad).toEqual([]);
   });

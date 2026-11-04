@@ -983,12 +983,13 @@ export const shoebox: Script = async (d) => {
   }
   await d.paper(
     [
-      'Je rentre tard. Il y a des pâtes. Bisous.',
+      // One note per line: each line stays under the paper's 194 px (PaperScene).
+      'Je rentre tard. Il y a des pâtes.',
       'Pense à ton linge, mon grand.',
-      'Elle a dessiné un mouton qui te ressemble ❤',
-      'Mange quelque chose de chaud, pas que des pâtes.',
-      ...(n >= 22 ? ['Elle demande si tu dors bien. Je lui ai dit oui.'] : []),
-      ...(n >= 35 ? ['Ne viens pas tant que tu tousses. Je t\'aime.'] : []),
+      'Elle t\'a dessiné en mouton ❤',
+      'Mange chaud, pas que des pâtes.',
+      ...(n >= 22 ? ['Elle demande si tu dors. J\'ai dit oui.'] : []),
+      ...(n >= 35 ? ['Ne viens pas si tu tousses. Je t\'aime.'] : []),
     ],
     'Les mots du frigo',
   );

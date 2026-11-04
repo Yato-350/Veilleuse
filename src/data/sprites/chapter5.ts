@@ -880,7 +880,7 @@ function portal(state: 'q' | 'ok' | 'fievre' | 'off'): string {
   };
   if (state === 'q') digits.q!.forEach((row, j) => [...row].forEach((c, i) => c === 'k' && p.set(18 + i, 10 + j, 'K')));
   else if (state !== 'off') {
-    // « 37,0 » or « 38,4 », in small LCD figures.
+    // « 37,0 » or « 38,4 », in small LCD figures (the decimal mark is a single dot: it reads « 37.0 » in English too).
     const txt = state === 'ok' ? ['3', '7', ',', '0'] : ['3', '8', ',', '4'];
     const fig: Record<string, string[]> = {
       '3': ['kk', '.k', 'kk', '.k', 'kk'],

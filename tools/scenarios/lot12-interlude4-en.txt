@@ -5,7 +5,7 @@
 # Mom's room: the sticky note "5am — nightlight (Noa's room)" ("She knew where it was."), the battery ("It never rang
 # anyway."), the drawing on the mirror ("MOM DONT TELL NOA. PROMISE."), the voice kit ("My Talking Plushie! — 2 tracks
 # — 20 seconds each", "It's been a year."), the baby teeth, the phone company's letter ("She didn't tell you."), the
-# mint; back in the bedroom, one knock in Mina's wall ("One knock means "you there?"."), three knocks back ("You said
+# strawberry candy; back in the bedroom, one knock in Mina's wall ("One knock means "you there?"."), three knocks back ("You said
 # good night. She let you sleep."), the radiator; Dodo's split seam ("There's cotton under your nails."), the slower
 # static, "You should sleep." — chapter 5 begins, and no string of the run is missing from the catalog (i18nMissing).
 query: debug=script&name=interlude4&sheep=auto&lang=en

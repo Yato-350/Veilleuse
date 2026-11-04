@@ -385,7 +385,7 @@ export const STORY_CHAPTER2: Record<string, string> = {
   'Les cahiers d\'enfants finissent souvent comme ça. Hou.': 'Children\'s notebooks often end like that. Hoo.',
   'Tout le monde fait ça.': 'Everybody does that.',
   // The book that repeats one sentence
-  'Sauf un. Celui-là, on l\'a ouvert souvent : la tranche est toute grise de doigts.': 'Except one. That one has been opened a lot: its edge is all grey with fingerprints.',
+  'Sauf un. Celui-là, on l\'a ouvert souvent : la tranche est toute grise de doigts.': 'Except one. That one has been opened a lot: its edge is all gray with fingerprints.',
   'Tu l\'ouvres au hasard.': 'You open it at random.',
   'Tu es revenu !': 'You came back!',
   'Tu as dormi super longtemps.': 'You slept super long.',
