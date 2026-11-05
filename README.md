@@ -58,10 +58,10 @@ Sous le lit s'ouvre le **Pays de Coton**, un monde dessiné aux crayons de coule
 couronne de papier sur la tête, comme si rien ne s'était passé. Chaque nuit, Noa s'enfonce un peu plus loin dans le
 rêve. Chaque matin, l'appartement est un peu plus sombre, et la porte de la chambre de Mina reste fermée.
 
-Cette nuit sera la plus longue. Ce dont Noa se souvient n'est peut-être que ce qu'il peut supporter ; le reste attend
-quelque part, cousu dans le rêve. *Veilleuse* est une histoire triste et tendre, qui fait peur parfois, sur ce qu'on
-doit aux gens qu'on aime quand on n'a pas su être là. Si tu as joué à la version 1.1, tu crois connaître la fin. Tu ne
-la connais pas.
+Mais cette nuit sera la plus longue. Ce dont Noa se souvient n'est peut-être que ce qu'il peut supporter ; le reste
+attend quelque part, cousu dans le rêve. *Veilleuse* est une histoire triste et tendre, qui fait peur parfois, sur ce
+qu'on doit aux gens qu'on aime quand on n'a pas su être là. Si tu as joué à la version 1.1, tu crois connaître la fin.
+Tu ne la connais pas.
 
 **Prologue · six chapitres oniriques · quatre interludes dans le monde réel · un final · cinq fins, dont une secrète ·
 un épilogue jouable · un chapitre bonus, « Les rêves des autres ».** Environ **3 h 30 à 4 h 30** de jeu. En français
@@ -172,7 +172,7 @@ Chaque scène clé possède un script de débogage (`c1_boss`, `c2_lanterns`, `c
 scénarios du bot (`tools/scenarios/`, 192 parcours : chaque chapitre, chaque fin, l'anglais, les sauvegardes 1.1) :
 
 ```bash
-node tools/run-scenarios.mjs lot13 --jobs 2       # rejoue les scénarios dont le nom contient « lot13 »
+node tools/run-scenarios.mjs v11 lot0 --jobs 2    # les scénarios dont le nom contient « v11 » ou « lot0 »
 node tools/run-scenarios.mjs v2_aube --jobs 1     # une partie entière, du titre au générique (≈ 25 min)
 ```
 
