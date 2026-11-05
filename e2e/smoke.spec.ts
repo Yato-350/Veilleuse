@@ -61,6 +61,8 @@ test('every map loads without errors', async ({ page }) => {
   await page.goto('/?debug=map&map=test');
   await page.waitForTimeout(800);
   const ids = await page.evaluate(() => Object.keys((window as unknown as { __veilleuse: { MAPS: Record<string, unknown> } }).__veilleuse.MAPS));
+  // One full page load per map: the budget grows with the number of maps (more than fifty since version 2).
+  test.setTimeout(30_000 + ids.length * 5_000);
   for (const id of ids) {
     await page.goto(`/?debug=map&map=${id}&spawn=default`);
     await page.waitForTimeout(400);
