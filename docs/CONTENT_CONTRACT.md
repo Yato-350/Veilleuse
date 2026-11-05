@@ -2,7 +2,8 @@
 
 Ce document est la **référence unique** pour produire le contenu du jeu (pixel art, tuiles, ennemis, musique,
 illustrations, cartes, scénario). Chaque fichier de contenu a **un seul propriétaire** ; tout le reste du code est
-considéré comme stable. Lire aussi `docs/GAME_DESIGN.md` (histoire, personnages, systèmes).
+considéré comme stable. Lire aussi `docs/HISTOIRE.md` (la bible de la version 2 : vérité, révélations, scènes, fins,
+limites de contenu) et `docs/GAME_DESIGN.md` (personnages, systèmes).
 
 - Résolution interne : **320×180**. Tuiles : **16×16**. Personnages : **16×24**.
 - Langue de tout le texte affiché : **français** (accents, « guillemets », … autorisés : la police les gère).
@@ -586,7 +587,9 @@ puis `bonnet` (« Mina ») une fois qu'on l'a regardée (`c6_regarder`).
 
 ## 8. Cartes et scénario (équipes RÉEL, CH1, CH2, CH3)
 
-**Le déroulé scène par scène de toute l'histoire est dans `docs/SCENARIO.md` : c'est la référence narrative.**
+**La référence narrative de la version 2 est `docs/HISTOIRE.md` ; le déroulé scène par scène est dans
+`docs/SCENARIO.md` (les scènes de la v1.1, un encadré « v2 » sur chaque section retouchée et le résumé des segments
+nouveaux).**
 
 ### 8.1 Propriété
 
@@ -595,8 +598,13 @@ puis `bonnet` (« Mina ») une fois qu'on l'a regardée (`c6_regarder`).
 | RÉEL | `real.ts` → `REAL_MAPS` : `chambre`, `appartement`, `appartement_nuit`, `chambre_mina` | `real.ts` : `prologue`, `interlude1`, `interlude2`, `finale`, `DEBUG` |
 | RÉEL (v2) | `real.ts` : accessoires de nuit de `chambre` (`isNuit()`), `appartement_tard`, `chambre_maman` | `real-nuit.ts` : `interlude3`, `interlude4`, `DEBUG` |
 | CH1 | `chapter1.ts` → `CHAPTER1_MAPS` : `prairie`, `village`, `boutique`, `maison_mouton`, `colline` | `chapter1.ts` : `start`, `DEBUG` |
-| CH2 | `chapter2.ts` → `CHAPTER2_MAPS` : `lisiere`, `foret`, `clairiere`, `bibliotheque`, `atelier` | `chapter2.ts` : `start`, `DEBUG` |
-| CH3 | `chapter3.ts` → `CHAPTER3_MAPS` : `ruines`, `hopital`, `chambre_304`, `vide` | `chapter3.ts` : `start`, `DEBUG` |
+| CH2 | `chapter2.ts` → `CHAPTER2_MAPS` : `lisiere`, `foret`, `clairiere`, `bibliotheque`, `sentier_gomme`, `atelier` | `chapter2.ts` : `start`, `DEBUG` |
+| CH3 | `chapter3.ts` → `CHAPTER3_MAPS` : `ruines`, `hopital`, `salle_jeux`, `chambre_304`, `vide` | `chapter3.ts` : `start`, `DEBUG` |
+| FAUSSE AUBE (v2) | `fausse-aube.ts` → `FAUSSE_AUBE_MAPS` : `chambre_faux`, `appartement_faux` | `fausse-aube.ts` : `play`, `DEBUG` |
+| CH4 (v2) | `chapter4.ts` → `CHAPTER4_MAPS` : `maison_feutre`, `maison_stylo`, `grenier`, `couloir_coups` | `chapter4.ts` : `start`, `DEBUG` |
+| CH5 (v2) | `chapter5.ts` → `CHAPTER5_MAPS` : `plage`, `sas`, `lac_blanc`, `chambre_verre` | `chapter5.ts` : `start`, `DEBUG` |
+| CH6 (v2) | `chapter6.ts` → `CHAPTER6_MAPS` : `couture`, `ouate`, `boite_a_musique`, `couloir_41`, `voix` | `chapter6.ts` : `start`, `DEBUG` ; combat final `src/game/battle/final-v2.ts` |
+| FINS (v2) | `endings.ts` → `ENDINGS_MAPS` : `appartement_br`, `appartement_silence` | `endings.ts` : les cinq fins, `DEBUG` |
 
 Les chapitres ne se connectent **que** via `src/game/story/common.ts` :
 `enterDream(d, n)` (s'endormir → chapitre n), `wakeUp(d, n)` (se réveiller après le chapitre n),
