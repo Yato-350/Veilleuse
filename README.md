@@ -6,7 +6,8 @@
 
 ***Fais de beaux rêves.***
 
-Un RPG narratif en pixel art sur le deuil, les rêves et la lumière qu'on laisse allumée pour quelqu'un.<br/>
+Un RPG narratif en pixel art, dérangeant et psychologique, sur le deuil, les rêves, la culpabilité<br/>
+et la lumière qu'on laisse allumée pour quelqu'un.<br/>
 Inspiré d'*Undertale*, d'*OMORI* et de *Doki Doki Literature Club*.
 
 [![CI](https://github.com/Yato-350/Veilleuse/actions/workflows/ci.yml/badge.svg)](https://github.com/Yato-350/Veilleuse/actions/workflows/ci.yml)
@@ -25,34 +26,46 @@ Inspiré d'*Undertale*, d'*OMORI* et de *Doki Doki Literature Club*.
 
 <img src="docs/screenshots/01-titre.png" width="49%" alt="Écran titre : une chambre la nuit, une lune en croissant au-dessus de la ville" />
 <img src="docs/screenshots/02-pays-de-coton.png" width="49%" alt="Noa et Mina traversent un pont de bois au Pays de Coton" />
+<img src="docs/screenshots/08-maison-cousue.png" width="49%" alt="Chapitre 4, La Maison Cousue : l'appartement en maison de poupée, tout en feutre cousu de rouge, posé sur une page de cahier" />
+<img src="docs/screenshots/09-maree-blanche.png" width="49%" alt="Chapitre 5, La Marée Blanche : une plage trop claire, sans une ombre ; Mina construit un château de sable" />
+<img src="docs/screenshots/10-ventre-de-dodo.png" width="49%" alt="Chapitre 6, Le Ventre de Dodo : une grotte de coton jauni, une passerelle de fil rouge, des épingles plantées et Chaussette" />
+<img src="docs/screenshots/11-combat-aiguille.png" width="49%" alt="Combat au chapitre 6 : l'Aiguille coud le cœur bleu de Noa, qui gardera sa couleur deux tours" />
 <img src="docs/screenshots/03-combat-resonance.png" width="49%" alt="Combat : le cœur bleu de Noa traverse la pluie bleue d'un Nuage Triste" />
 <img src="docs/screenshots/04-foret-de-crayons.png" width="49%" alt="La Forêt de Crayons : arbres-crayons géants, sol de papier ligné et zones gommées" />
 <img src="docs/screenshots/05-hopital-de-papier.png" width="49%" alt="Le hall de l'Hôpital de Papier, éclairé par des néons" />
-<img src="docs/screenshots/06-combat-final.png" width="49%" alt="Combat final : Dodo, noir d'encre, se fissure de lumière" />
+<img src="docs/screenshots/06-combat-final.png" width="49%" alt="Combat contre Dodo, noir d'encre : les boutons du menu se changent en DORMIR" />
 
 <sub>Jouable au clavier, à la manette et au tactile — <a href="docs/screenshots/07-mobile.png">aperçu sur téléphone</a>.</sub>
 
 </div>
 
-> ⚠️ **Avertissement** — Ce jeu aborde le deuil, la maladie d'un enfant, la culpabilité et des pensées sombres. Il
-> contient des scènes et des effets visuels pouvant être perturbants. Si tu traverses un moment difficile, parles-en :
-> en France, le **3114** répond 24h/24.
+> ⚠️ **Avertissement** — *Veilleuse* parle du deuil, de la maladie et de la mort d'un enfant, de la culpabilité, du repli
+> sur soi et de pensées sombres. Le jeu contient de l'horreur psychologique, des images inquiétantes (poupées et peluches
+> décousues, encre qui coule comme du sang), de faux plantages et des effets visuels qui peuvent perturber. Il n'est pas
+> adapté aux jeunes enfants ni aux personnes facilement impressionnables.
+> Si tu traverses un moment difficile, tu n'es pas seul·e : en France, le **3114** répond gratuitement, jour et nuit.
 
 ---
 
 ## L'histoire
 
 Noa, 14 ans, ne sort plus de sa chambre depuis un an. Il fait toujours nuit. Une nuit, **Dodo**, le mouton en
-peluche de sa petite sœur, se met à parler :
+peluche, se met à parler :
 
 > « Tu ne dors pas ? Viens. Je connais un endroit où personne n'est jamais triste. »
 
-Sous le lit s'ouvre le **Pays de Coton**, un monde dessiné aux crayons de couleur où **Mina** est là, couronne de
-papier sur la tête, comme si rien ne s'était passé. Chaque nuit, Noa s'enfonce un peu plus loin dans le rêve. Chaque
-matin, l'appartement est un peu plus sombre, et la porte de la chambre de Mina reste fermée.
+Sous le lit s'ouvre le **Pays de Coton**, un monde dessiné aux crayons de couleur où **Mina**, sa petite sœur, est là,
+couronne de papier sur la tête, comme si rien ne s'était passé. Chaque nuit, Noa s'enfonce un peu plus loin dans le
+rêve. Chaque matin, l'appartement est un peu plus sombre, et la porte de la chambre de Mina reste fermée.
 
-**Prologue · 3 chapitres oniriques · 2 interludes dans le monde réel · un final · 3 fins · un épilogue jouable ·
-un chapitre bonus, « Les rêves des autres ».** En français et en anglais.
+Cette nuit sera la plus longue. Ce dont Noa se souvient n'est peut-être que ce qu'il peut supporter ; le reste attend
+quelque part, cousu dans le rêve. *Veilleuse* est une histoire triste et tendre, qui fait peur parfois, sur ce qu'on
+doit aux gens qu'on aime quand on n'a pas su être là. Si tu as joué à la version 1.1, tu crois connaître la fin. Tu ne
+la connais pas.
+
+**Prologue · six chapitres oniriques · quatre interludes dans le monde réel · un final · cinq fins, dont une secrète ·
+un épilogue jouable · un chapitre bonus, « Les rêves des autres ».** Environ **3 h 30 à 4 h 30** de jeu. En français
+et en anglais.
 
 ## Le système de combat *Plume & Cœur*
 
@@ -70,7 +83,23 @@ Chaque mot écrit **change la couleur de ton cœur** — Joie, Tristesse, Colèr
 > **Un projectile de la même couleur que ton cœur te traverse sans te blesser.**
 
 Écrire un mot triste à un Nuage Triste l'apaise *et* rend ton cœur bleu : sa pluie bleue ne te touche plus.
-L'empathie protège, littéralement.
+L'empathie protège, littéralement. Plus loin dans la nuit, les combats s'en prennent à l'interface elle-même : des
+boutons cousus, un cœur épinglé, une arène noire où seule une lumière protège, des couleurs qui mentent.
+
+## Ce que tu trouveras
+
+- **Une histoire en trois actes** : six chapitres de rêve, quatre interludes dans l'appartement, la nuit, et neuf
+  révélations qui font relire ce qu'on a déjà vu. Chaque détail inquiétant a aussi une explication ordinaire.
+- **Cinq fins**, dont une secrète, qui dépendent de tes choix, de ceux que tu épargnes et de ce que tu gardes ; un
+  épilogue jouable et un chapitre bonus, « Les rêves des autres ».
+- **Des scènes qui se jouent autrement** : compter les moutons, répondre à des coups à travers un mur, dessiner à
+  deux, réparer une boîte à musique, répondre (ou non) aux messages de Maman.
+- **Un jeu qui se souvient** : ton nom, tes parties, tes fins, l'heure qu'il est vraiment. La partie suivante n'est
+  plus tout à fait la même.
+- **Carnet de souvenirs** sur l'écran titre : illustrations, poèmes écrits pendant la partie, à garder en image.
+- **Accessibilité** : mode Histoire, « Réduire les flashs », secousses désactivables, « Réduire les attentes »,
+  formes des émotions (pour les daltoniens), vitesse du texte, contrôles tactiles réglables.
+- **Français et anglais**, jouable hors-ligne, au clavier, à la manette et au tactile.
 
 ## Jouer
 
@@ -81,6 +110,9 @@ L'empathie protège, littéralement.
 | Menus, carnet, choix | Flèches + Entrée | Croix + A | Toucher directement l'option (boutons, mots, listes, boutique…) |
 | Annuler / courir | Échap · X · Maj | B | B · toucher en dehors du menu ou le ✕ |
 | Menu | C · Tab | Start | ☰ |
+
+Les scènes où l'on compte se jouent avec A au bon moment (ou en touchant l'écran) ; pour dessiner, on tient A (ou on
+garde le doigt sur l'écran) en suivant le pointillé.
 
 ### Installer sur mobile (Android · iPhone · iPad)
 
@@ -96,10 +128,12 @@ contrôles se placent sur les côtés.
 
 **Application Android (APK)** : télécharger `Veilleuse-x.y.z.apk` dans la
 [dernière version](https://github.com/Yato-350/Veilleuse/releases/latest), l'ouvrir sur le téléphone et autoriser
-l'installation depuis cette source. L'APK est construit par le workflow [Android APK](.github/workflows/android.yml)
-(Capacitor) : *Actions → Android APK → Run workflow*, avec un numéro de version (`v1.0.1`…) pour publier une
-nouvelle *Release*, ou vide pour un simple test. Chaque version publie aussi un fichier `.aab` pour le Google Play
-Store.
+l'installation depuis cette source. L'APK de la version 2.0 n'est pas encore publié (voir la
+[feuille de route](docs/ROADMAP.md)) ; en attendant, la 2.0 se joue dans le navigateur et s'installe comme
+application (PWA) sur Android, iPhone et iPad. L'APK est construit par le workflow
+[Android APK](.github/workflows/android.yml) (Capacitor) : *Actions → Android APK → Run workflow*, avec un numéro de
+version (`v2.0.0`…) pour publier une nouvelle *Release*, ou vide pour un simple test. Chaque version publie aussi un
+fichier `.aab` pour le Google Play Store.
 
 **Clé de signature Android** : pour que chaque nouvel APK s'installe par-dessus le précédent (et pour le Play Store),
 les builds sont signés avec une clé stable stockée dans les secrets du dépôt (*Settings → Secrets and variables →
@@ -133,21 +167,30 @@ Le **bot de test** joue des séquences entières sans intervention et vérifie q
 node tools/play.mjs "debug=script&name=c1_tutorial" sortie.png --steps "auto,write:joie,auto,menu:3,choose:0,auto,shot:fin"
 ```
 
-Chaque scène clé possède un script de débogage (`c1_boss`, `c2_lanterns`, `c3_final`, `finale_poem`…) listé dans
-`src/game/story/*.ts`.
+Chaque scène clé possède un script de débogage (`c1_boss`, `c2_lanterns`, `chapter4_grenier`, `chapter5`,
+`finale_poem`…) listé dans `src/game/story/*.ts`. Les preuves de jeu sont enregistrées comme
+scénarios du bot (`tools/scenarios/`, 192 parcours : chaque chapitre, chaque fin, l'anglais, les sauvegardes 1.1) :
+
+```bash
+node tools/run-scenarios.mjs lot13 --jobs 2       # rejoue les scénarios dont le nom contient « lot13 »
+node tools/run-scenarios.mjs v2_aube --jobs 1     # une partie entière, du titre au générique (≈ 25 min)
+```
 
 ### Points techniques
 
 - **Zéro asset binaire** : sprites décrits en texte, police bitmap avec accents, musique et sons synthétisés
-  (Web Audio) — le jeu entier pèse quelques centaines de Ko.
+  (Web Audio) — le jeu entier tient dans un seul fichier JavaScript d'environ 800 Ko compressé.
 - Moteur maison en **TypeScript strict** : boucle à pas fixe, rendu 320×180 mis à l'échelle sur des multiples
   entiers, éclairage dynamique, effets de glitch, scripts de cinématiques en `async/await`.
 - Contenu **validé automatiquement** (chaque clé de sprite, chaque porte, chaque ennemi est vérifié par les tests).
-- **CI** GitHub Actions (lint, types, tests unitaires, build, tests E2E) et **déploiement automatique** sur GitHub Pages.
+- **CI** GitHub Actions (lint, types, tests unitaires, build, tests E2E, une sélection de scénarios du bot) et
+  **déploiement automatique** sur GitHub Pages.
 
-Documentation : [Conception](docs/GAME_DESIGN.md) · [Scénario](docs/SCENARIO.md) ·
+Documentation (attention, elle raconte tout) : [Histoire, bible de la v2](docs/HISTOIRE.md) ·
+[Conception](docs/GAME_DESIGN.md) · [Scénario](docs/SCENARIO.md) · [Indices](docs/INDICES.md) ·
 [Architecture](docs/ARCHITECTURE.md) · [Contrat de contenu](docs/CONTENT_CONTRACT.md) ·
-[Feuille de route](docs/ROADMAP.md) · [Traduction](docs/I18N.md) · [Contribuer](CONTRIBUTING.md)
+[Feuille de route](docs/ROADMAP.md) · [Traduction](docs/I18N.md) · [Journal des changements](CHANGELOG.md) ·
+[Contribuer](CONTRIBUTING.md)
 
 ### Publier sur GitHub Pages
 
