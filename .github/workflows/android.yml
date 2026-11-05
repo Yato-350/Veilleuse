@@ -115,7 +115,7 @@ jobs:
           echo "APK=Veilleuse-$VERSION.apk" >> "$GITHUB_ENV"
           echo "AAB=Veilleuse-$VERSION.aab" >> "$GITHUB_ENV"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: veilleuse-android
           path: |
