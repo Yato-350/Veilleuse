@@ -1,10 +1,46 @@
 # Scénario détaillé — VEILLEUSE
 
-> Document de référence pour l'écriture des scènes. Il fixe la **structure**, les **révélations** et les **arcs**
-> pour que les quatre fils (réel, chapitres 1 à 3) restent cohérents. Les dialogues exacts sont écrits dans le code ;
-> les répliques citées ici sont des exemples de ton, à reprendre ou améliorer.
+> **Version 2.0 : la référence est [`docs/HISTOIRE.md`](HISTOIRE.md)**, la bible de « Il fait toujours nuit » (la
+> vérité, les neuf révélations T1 à T9, les trois actes et six chapitres, les fins, la méta, les limites de contenu).
+> En cas de contradiction, elle l'emporte. Ce document garde le détail des scènes écrites pour la v1.1, qui restent la
+> base de l'acte I. Chaque section touchée par la v2 commence par un encadré **v2** (ce qui change, la section de la
+> bible, le module de `src/game/story/`) ; les segments nouveaux n'ont qu'un résumé. Les indices ajoutés, avec leur
+> fichier:ligne et leur scénario de preuve, sont dans [`docs/INDICES.md`](INDICES.md).
 
-## Arcs à tenir sur toute la durée
+> Version 1.1 : document de référence pour l'écriture des scènes. Il fixe la **structure**, les **révélations** et
+> les **arcs** pour que les quatre fils (réel, chapitres 1 à 3) restent cohérents. Les dialogues exacts sont écrits
+> dans le code ; les répliques citées ici sont des exemples de ton, à reprendre ou améliorer.
+
+## Déroulé de la version 2
+
+| | Segment | Module (`src/game/story/`) | Cartes | v2 |
+|---|---|---|---|---|
+| P | Prologue — « Il fait nuit » | `real.ts` | `chambre` | retouché |
+| 1 | Chapitre 1 — « Le Pays de Coton » | `chapter1.ts` | `prairie`, `village`, `boutique`, `maison_mouton`, `colline` | retouché |
+| I | Interlude I — « Le frigo » | `real.ts` | `chambre`, `appartement` | retouché |
+| 2 | Chapitre 2 — « La Forêt de Crayons » | `chapter2.ts` | `lisiere`, `foret`, `bibliotheque`, `clairiere`, `sentier_gomme`, `atelier` | retouché |
+| II | Interlude II — « La porte », 3 h 33 | `real.ts` | `chambre`, `appartement_nuit` | retouché |
+| 3 | Chapitre 3 — « L'Hôpital de Papier » | `chapter3.ts` | `ruines`, `hopital`, `salle_jeux`, `chambre_304`, `vide` | retouché, combat court |
+| FA | La fausse aube | `fausse-aube.ts` | `chambre_faux`, `appartement_faux` | nouveau |
+| III | Interlude III — « Le sac », 4 h 06 | `real-nuit.ts` | `chambre`, `appartement_tard` | nouveau |
+| 4 | Chapitre 4 — « La Maison Cousue » | `chapter4.ts` | `maison_feutre`, `maison_stylo`, `grenier`, `couloir_coups` | nouveau |
+| IV | Interlude IV — « Le placard », 4 h 44 | `real-nuit.ts` | `chambre`, `appartement_tard`, `chambre_maman` | nouveau |
+| 5 | Chapitre 5 — « La Marée Blanche » | `chapter5.ts` | `plage`, `sas`, `lac_blanc`, `chambre_verre` | nouveau |
+| 6 | Chapitre 6 — « Le Ventre de Dodo » | `chapter6.ts` ; combat final `src/game/battle/final-v2.ts` | `couture`, `ouate`, `boite_a_musique`, `couloir_41`, `voix` | nouveau |
+| F | Final — « Le carnet », 5 h 52 | `real.ts` | `chambre`, `appartement_aube`, `chambre_mina` | réécrit |
+| — | Les fins | `endings.ts` | `appartement_br`, `appartement_silence` | cinq fins et une non-fin |
+| E | Épilogue — « Une veilleuse neuve » | `epilogue.ts` | `bazar`, `jardin` | retouché |
+| B | Bonus — « La nuit de Maman » | `bonus.ts` | `b_service`, `b_appart`, `b_noa`, `b_hopital`, `b_304` | retouché |
+
+Les chapitres 2 à 6 se passent pendant la même nuit, la 365ᵉ ; entre deux chapitres, Noa remonte à la surface et
+l'horloge avance, sauf du chapitre 5 au chapitre 6 où il tombe (`fallInto(d, 6)`). Le flux complet d'une partie est
+dans `docs/ARCHITECTURE.md`.
+
+## Arcs à tenir sur toute la durée (v1.1)
+
+> **v2** — Les arcs de la v2 (Mina, Dodo, le narrateur, le joueur, le monde réel), acte par acte, sont au § 3.2 de la
+> bible. Le « secret » ci-dessous est la vérité de la v1.1 (T0) : la v2 la garde jusqu'à la porte 304, puis la
+> retourne.
 
 | Arc | Prologue | Ch. 1 | Interlude I | Ch. 2 | Interlude II | Ch. 3 | Final |
 |---|---|---|---|---|---|---|---|
@@ -19,6 +55,13 @@ il ne l'a pas apportée) n'est **dit clairement qu'au chapitre 3**. Avant, seule
 ---
 
 ## Prologue — « Il fait nuit » (fil RÉEL, carte `chambre`)
+
+> **v2 (retouché, bible § 3.3)** — Tout reste ; des indices s'ajoutent : la veilleuse au 2ᵉ examen (« Elle a toujours
+> été là, sur ta table de nuit. …Non ? »), le calendrier (« visite ? » raturé, « elle va mieux !! »), le casque, le
+> tiroir (« Tu sais ce qu'il y a dedans. Non. Tu ne sais pas. »), le mur contre le lit, la couture rouge sur le ventre
+> de Dodo, le fil épinglé « Mina 🐑 » qu'on n'ouvre pas. Le bip de Dodo est celui de Noa, transposé. En nouvelle
+> partie+, Dodo : « Tu reviens. Tu sais, toi. … Tu ne lui diras rien, hein ? » ; après la fin secrète, il ne s'éveille
+> plus et Noa glisse seul sous le lit.
 
 1. Écran noir. Narration centrée : « Il fait nuit. » … « Il fait toujours nuit. » Bruit de pluie.
 2. Fondu : Noa allongé dans son lit (`prop_bed_sleeping`), il se lève (le lit redevient `prop_bed`, Noa apparaît à
@@ -45,6 +88,16 @@ il ne l'a pas apportée) n'est **dit clairement qu'au chapitre 3**. Avant, seule
 5. Examiner le lit : « Glisser sous le lit ? » [Oui / Non]. Oui → `enterDream(d, 1)`.
 
 ## Chapitre 1 — « Le Pays de Coton » (fil CH1)
+
+> **v2 (retouché, reste tendre, bible § 3.4)** — Une fausse note par lieu, chacune avec son double ordinaire. Prairie :
+> bâtons gravés sur la tête de lit, traces de bottes à la pointure de Noa, la toux sous le coton, les couettes « en
+> laine » ; dans le trésor de Mina, le **Bouton doré** (« Faut appuyer fort. ») et ses dents de lait. Village : le code
+> des coups devant la porte du Mouton Noir (1 « t'es là ? », 2 « je suis là », 3 « bonne nuit »), Madame Lune
+> (« Encore t— », « Aller. Et retour. », « Il y en a un qui fait semblant. »), le mouton compteur à « trois cent
+> soixante-quatre », le mouton borgne ; chez Chaussette, les Yeux de rechange, et elle rachète le Bouton doré (le
+> vendre ferme la fin secrète, `c1_bouton_vendu`). Colline : le Moutonnier aux yeux cousus, une silhouette en bonnet
+> derrière un oreiller. Le Placard épargné : « Je l'ai gardée pour moi, la lumière. J'avais si peur. » Après *Beaux
+> rêves*, « Continuer » ramène ici.
 
 Ton : merveilleux, drôle, tendre. Le malaise est minime (une ou deux notes fausses).
 
@@ -116,6 +169,10 @@ Ton : merveilleux, drôle, tendre. Le malaise est minime (une ou deux notes faus
 
 ## Interlude I — « Le frigo » (fil RÉEL, `chambre` + `appartement`)
 
+> **v2 (retouché, bible § 3.5)** — Une seconde photo dans le couloir (un petit garçon et un mouton plus gros que lui),
+> l'étiquette de Dodo (« N… »), le dos du mot du frigo raturé, la porte de Maman sans serrure, et au lit : « Pas
+> maintenant. Pour l'instant. »
+
 Jour gris, pluie, lumière blafarde. Musique `interlude`.
 
 1. Noa se réveille. Dodo est une peluche immobile. Le téléphone vibre : un message de Maman (« Tu as mangé ? »),
@@ -131,6 +188,14 @@ Jour gris, pluie, lumière blafarde. Musique `interlude`.
 4. Retourner au lit → « Dormir ? » → `enterDream(d, 2)`.
 
 ## Chapitre 2 — « La Forêt de Crayons » (fil CH2)
+
+> **v2 (retouché, bible § 3.6)** — Les arbres-crayons saignent de l'encre quand on les taille ; un trou gommé chuchote
+> des nombres, un autre cache une petite figure en bonnet ; à la bibliothèque, le livre qui répète « Tu es revenu ! »,
+> le conte écouté « à travers un téléphone », « Ce carnet n'a que trois pays » ; dans la lumière bleue, des fils
+> au-dessus des poignets de Mina ; Mina se fige avec des yeux-boutons et demande « Qui c'est qui parle, quand c'est
+> écrit en blanc ? » ; le bocal de miettes « qui ont une bouche » ; Gomme épargnée : « On efface pour ne plus avoir
+> mal. Ou pour ne plus être coupable. » ; un petit nuage gris sur le souvenir 2 ; de la friture dans la voix de Dodo
+> (« Ch—t. »).
 
 Ton : mélancolique, mystérieux. Mina commence à oublier.
 
@@ -159,6 +224,12 @@ Ton : mélancolique, mystérieux. Mina commence à oublier.
 
 ## Interlude II — « La porte » (fil RÉEL, `chambre` + `appartement_nuit`)
 
+> **v2 (retouché, bible § 3.7)** — Trois coups dans le mur de Mina en entrant dans le couloir ; le reflet aux yeux
+> fermés ; une image de fillette en bonnet dans la vidéo ; les pattes propres de Dodo ; le fil de Maman se remonte
+> d'un an (« Elle va un peu mieux ❤ », « Tu tousses encore ? Alors tu ne viens pas, d'accord ? », les messages du
+> dernier soir) ; Dodo parle dans le réel sans portrait. En nouvelle partie+ : « Cette fois, tu sais que ça ne
+> s'arrête pas au générique. »
+
 Nuit plus noire que jamais. Musique quasi absente, `hum`. Glitches discrets.
 
 1. L'horloge affiche **3:33**. Le téléphone : un **message vocal** de Maman : « Noa… ça fait un an demain. Je… je
@@ -175,6 +246,17 @@ Nuit plus noire que jamais. Musique quasi absente, `hum`. Glitches discrets.
    `enterDream(d, 3)`.
 
 ## Chapitre 3 — « L'Hôpital de Papier » (fil CH3)
+
+> **v2 (retouché, finit sur la fausse aube, bible § 3.8)** — Tout reste jusqu'à la chambre 304. Ajouts : les
+> infirmières de papier sans visage, toutes badgées « NADIA » ; « le chocolat du robot » (B4) qui donne du coton ; les
+> numéros qui déraillent (307, 306, 305, 303½) ; un petit bonhomme qui s'approche d'une porte vitrée, d'un dessin
+> scotché à l'autre ; les voix (« Le grand frère qui toussait ? », « Il croit que c'est lui. ») ; la silhouette en
+> bonnet au bout de la boucle et dans la vitre de la dernière aile ; un nouvel ennemi, **Bracelet** (« MINA — 304 »,
+> puis « NOA — ??? », mot spécial « prénom »). Dodo, trop gentil : « Tu vois ? Tu peux partir quand tu veux. »
+> **Le combat contre Dodo est raccourci** : phases 1 et 2 inchangées, puis le carnet offre un seul mot de Noa,
+> « pardon » ; écrit trois fois, il fissure Dodo en surface, et Dodo cède trop vite (« D'accord. Tu l'as dit. C'est
+> fini. Réveille-toi. »). [Se réveiller] et [Rester] mènent tous deux à la fausse aube (`fa_reste`). La phase 3, le
+> choix et la route du Silence de l'étape 6 sont ceux de la v1.1 : la v2 les a déplacés au combat final du chapitre 6.
 
 Ton : inquiétant puis bouleversant. Monde `ink` (tuiles et sprites corrompus).
 
@@ -196,8 +278,8 @@ Ton : inquiétant puis bouleversant. Monde `ink` (tuiles et sprites corrompus).
 5. Dodo se révèle (la pièce se dissout → `vide`) : « Reste. Ici, elle n'est jamais partie. Ici, tu n'as rien fait de
    mal. » Au joueur : « Et toi, {player}… si tu fermes le jeu, il se réveille. Et il aura mal. Tu ne veux pas lui
    faire de mal, n'est-ce pas ? » (Si `G.meta.tabLeaves > 0` : « Tu es déjà parti tout à l'heure. Je l'ai senti. »)
-6. **Combat final : Dodo** (`dodo_battle`, fond `void`) — Dodo ne peut pas être vaincu par la force (« On ne frappe
-   pas le sommeil. »).
+6. **Combat final : Dodo** (v1.1 ; en v2, le combat court de l'encadré) (`dodo_battle`, fond `void`) — Dodo ne peut
+   pas être vaincu par la force (« On ne frappe pas le sommeil. »).
    - Phase 1 : moutons qu'on compte (`sheep_count`), berceuse (`lullaby`). Dodo bavarde, doux.
    - Phase 2 : il « grandit » (`b_dodo_dark`), les boutons du menu se changent un par un en **DORMIR**
      (`menuLabels`) ; choisir DORMIR assombrit l'écran et rend des PV à Dodo. Le carnet ne propose que ses mots
@@ -210,7 +292,112 @@ Ton : inquiétant puis bouleversant. Monde `ink` (tuiles et sprites corrompus).
    - **Route du silence** (`isSilenceRoute()`) : les mots de Mina sont noyés d'encre, illisibles ; Dodo : « Regarde
      ce que tu as fait. Il n'y a plus personne à qui dire au revoir. » Fin **Silence** → `finishGame(d, 'silence')`.
 
+## La fausse aube (v2, nouveau — bible § 2.2, § 3.9 ; `fausse-aube.ts`)
+
+Un matin trop beau (`chambre_faux`, `appartement_faux`, palette `faux`) : des oiseaux en boucle, un soleil au crayon
+dans une fenêtre sur le mauvais mur, Maman déjà assise sur le lit, qui ne parle qu'avec les phrases de ses mots du
+frigo ; le narrateur ment ouvertement (« Tout va bien. ») et Mina n'est nulle part. Le câlin, le gros plan `faux_aube`
+(la bouche de Maman cousue de fil rouge ; une tache d'encre sur la route du Silence), puis le **faux générique**, mis
+en page comme le vrai, bloqué sur « Mina ……… introuvable » :
+
+- [Regarder] : le générique remonte à l'envers, la carte du chapitre 3 revient, et Noa, de lui-même : « Non. » … « C'est
+  pas tout. » → Interlude III ;
+- [Laisser défiler] : la non-fin **« Fin heureuse »** (« Merci d'avoir joué ! — Dodo », titre au point de croix et un
+  seul « Continuer », qui ramène à la ligne bloquée avec un « introuvable » de plus) ; au troisième passage, seul
+  [Regarder] reste. Jamais enregistrée comme une fin.
+
+Sauvegarde automatique au début ; une sauvegarde 1.1 prise dans l'ancien final se réveille ici.
+
+## Interlude III — « Le sac », 4 h 06 (v2, nouveau — bible § 2.3, § 3.10 ; `real-nuit.ts`)
+
+Il fait encore nuit. Le narrateur se trompe (« Dodo. Ton mouton. » … « …Le mouton de Mina. ») ; le ventre de Dodo
+grésille (« …nne nuit, N… »). Le fil « Mina 🐑 » s'ouvre enfin : un « bonne nuit » par soir pendant des mois, la
+réponse d'une inconnue (« S'il vous plaît, arrêtez. »), une réponse possible (`i3_reply` : `pardon`, `bonnenuit`,
+`rien`), puis le **journal d'appels** : « Mina 🐑 — entrant — 3:14 — 0:41 ». La photo se retourne à la troisième
+tentative (`photo_decoupee`). La porte s'ouvre seule ; dans le placard de l'entrée, le sac de l'hôpital et le polaroïd
+`polaroid_dodo` : « Noa prête Dodo à Mina. "Il veillera sur toi." » (T2). « Tu vois ? Tu reviens toujours. » →
+chapitre 4.
+
+## Chapitre 4 — « La Maison Cousue » (v2, nouveau — bible § 2.4, § 2.5, § 3.11 ; `chapter4.ts`)
+
+L'appartement en maison de poupée, façade ouverte, sur une page de cahier de maths. Deux couches, que l'horloge à
+coucou fait alterner : le **feutre** (`maison_feutre`, la maison « en mieux » cousue par Dodo) et le **stylo**
+(`maison_stylo`, les quarante et une nuits seul, au stylo bille). Dodo maigrit et perd son coton ; **Mina n°366**, en
+feutre, aux yeux-boutons, suit Noa et l'aide au combat en version cousue.
+
+1. La porte se coud derrière Noa ; le **dîner en boucle** et la **Poupée-Maman** (« merci », ou « reste » : `c4_reste`).
+2. Les nuits au stylo, 1, 9, 22 (la Clé, la trappe du grenier) et 35 (Noa prend la vraie veilleuse) ; le téléphone
+   mural sonne chaque nuit. En option, nourrir Dodo du coton des moutons-poupées (`c4_coton`, les Bourres s'en
+   souviennent au chapitre 6).
+3. Le **grenier** (T3) : les mannequins des Mina ratées et leurs étiquettes (« Mina n°365 — ce soir. A failli finir sa
+   phrase. »), le tas de couronnes, les bâtons sur les poutres ; **La Couseuse** (mot spécial « découdre »).
+4. Le **couloir des coups** : on répond au code à travers le mur ; le couloir s'allonge quand la lumière tremble.
+5. **Nuit 42 sur 41** (T4) : « Elle réclame sa veilleuse 🙂 », la lumière sous la porte, l'ombre d'une main ; **Le
+   Petit Homme de la Maison** (mot spécial « rendre ») : épargné, « J'avais peur du noir. Moi. Pas elle. » ; vaincu,
+   la veilleuse se fêle (`c4_fele`). Mina n°366 se défait en un long fil rouge ; souvenir 4 `souvenir_lumiere`.
+
+## Interlude IV — « Le placard », 4 h 44 (v2, nouveau — bible § 2.6, § 3.12 ; `real-nuit.ts`)
+
+L'armoire ouverte : les quarante et un mots du frigo gardés dans une boîte à chaussures, la boîte de la veilleuse
+(« Pour Noa, 4 ans — pour les monstres du placard »), le thermomètre (« MEM 38,4 »). Sous la hotte, le dos du mot du
+frigo : « Je sais que t— ». La chambre de Maman (`chambre_maman`) : le réveil réglé sur 5 h et son post-it (T5),
+[Prendre la pile ?] (`i4_pile`), le dessin « MAMAN TU DIS PAS A NOA. PROMIS. » (`dessin_chut`), le découd-vite, le kit
+« Mon doudou qui parle ! » et le mot de Nadia sur les piles. De retour dans la chambre, un coup dans le mur de Mina :
+[Répondre] (un, deux ou trois coups, dans la scène de comptage) ou [Ne rien faire] (`i4_knock`, lu au combat final).
+Dodo décousu, du coton sous les ongles → chapitre 5.
+
+## Chapitre 5 — « La Marée Blanche » (v2, nouveau — bible § 2.7, § 3.13 ; `chapter5.ts`)
+
+Trop clair, puis stérile. Pas de Mina dans l'équipe (son cadre vide reste) ; le fil rouge de Mina n°366 sert de chemin
+sûr.
+
+1. La **plage** surexposée (`plage`) : pas d'ombre, quarante et un coquillages (certains rejouent une nuit d'hôpital)
+   et un quarante-deuxième caché ; **Mina d'avant**, au crayon, et son château.
+2. **La serviette** : elle s'endort et ne se réveille pas pendant 30 secondes réelles (5 avec le mode Histoire ou
+   « Réduire les attentes ») ; la seule réplique de Noa : « T'es nulle, tu dors tout le temps. » ; la marée blanche
+   laisse un drap d'hôpital plat et vide.
+3. Le portail du Thermomètre, « Tu vas bien ? » : [Oui] (`c5_menti`) ou [Non. J'ai de la fièvre.] (`c5_fievre`, le
+   chemin long). Le **sas** (`sas`) : la porte suivante ne s'ouvre que si l'on ferme celle de derrière.
+4. Le **lac blanc** (`lac_blanc`) : la neige blesse ; « Corriger les dessins » (Dodo tend le crayon : « Dessine-toi
+   dedans. », `c5_corrige`) ; la salle des parents, entendue à travers la cloison (T6).
+5. La **chambre de verre** (`chambre_verre`) : la visite, une partie de dessin à deux que la toux interrompt
+   (`src/game/scenes/drawtogether.ts`) ; **La Vitre** (Tristesse, puis « je ne sais pas » ; d'abord « pardon » si
+   `c5_menti`) ; souvenir 5 `souvenir_vitre`.
+6. **La chute** : Dodo ouvre sa propre couture et Noa tombe dedans, sans réveil.
+
+## Chapitre 6 — « Le Ventre de Dodo » (v2, nouveau — bible § 2.8 à § 2.10, § 3.14 ; `chapter6.ts`, `final-v2.ts`)
+
+L'intérieur de la peluche : coton humide, passerelles de fil rouge, épingles, et au cœur un module vocal grand comme
+une cathédrale, dont la pile fuit.
+
+1. La **couture** (`couture`) : les murs rejouent le prologue ; **T7** : le nom passe de DODO à NOA, Noa finit lui-même
+   la phrase de la pile ; « Je suis ce que tu fais avec sa voix. » Dès lors, le narrateur a le bip de Noa et dit vrai.
+2. La **ouate** (`ouate`) : les bocaux des nuits 1 à 364 et le bocal sans étiquette de la nuit 0 ; les Bourres si
+   `c4_coton` > 0.
+3. La **boîte à musique** (`boite_a_musique`) : remettre trois dents de lait sur le peigne (scène de comptage, habillage
+   « dents ») ; la berceuse joue en entier pour la première fois.
+4. Le **couloir des 41 portes** (`couloir_41`, T8) : les deux versions de l'appel, une par branche, puis « Laquelle est
+   vraie ? » ([La douce] / [La dure] / [Je ne sais pas], `G.meta.callVersion`) ; les yeux-boutons s'ouvrent sur 3 h 38 ;
+   la **Pile** (rencontre unique, `c6_pile`).
+5. Le **seuil de la voix** (`voix`, T9) : la Petite au Bonnet ; le carnet s'ouvre hors combat (« regarder », « fermer
+   les yeux », « partir »).
+6. **Le combat final contre Dodo**, en quatre phases : les moutons (un par défaite du joueur), DORMIR (les mots de
+   l'appel, les couleurs qui mentent), les coups (répondre au code dans le noir ; `i4_knock`), les mots de Mina (avec le
+   Bouton doré et la Pile chargée) ; ÉPARGNER devient OUVRIR LES YEUX. [Ouvrir les yeux] → le final ; [Rester] →
+   *Beaux rêves* ; la route de l'Encre → *Silence*.
+
 ## Final — « Le carnet » (fil RÉEL, `chambre` → `appartement` → `chambre_mina`)
+
+> **v2 (réécrit, bible § 2.11, § 3.15 ; `real.ts`)** — 5 h 52, le ciel pâlit (`appartement_aube`). Le téléphone
+> (Maman : « Je rentre. » ; l'inconnue si `i3_reply` = `pardon`) ; le tiroir enfin ouvert (la clé de la chambre de
+> Mina et les petits visages découpés : [Remettre ton visage sur la photo ?]) ; Noa prend sa veilleuse, frappe trois
+> coups à la porte de Mina, trois coups répondent. Dans la chambre : le bonnet sur l'oreiller, la peinture usée à
+> hauteur d'oreiller, le radiateur ; le carnet relu (« Elle savait. Elle a toujours su qui avait peur du noir. »), le
+> poème, la veilleuse branchée à côté du lit de Mina (« Le geste que tu n'as pas fait. »). Maman rentre : « Je
+> l'avais. La veilleuse. », la coda « Je savais », l'appel de 3 h 14 et le rhume (« ça pouvait venir de partout »),
+> « Elle n'était pas dans le noir. », puis les réponses aux messages (ci-dessous) ; le radiateur cogne trois fois :
+> « C'est le chauffage. » — « …Je sais. » Le final se ferme sur l'*Aube*, l'*Aube blanche* ou la fin secrète (voir
+> « Les fins »). Les étapes ci-dessous sont celles de la v1.1.
 
 1. Noa se réveille. Il ne pleut plus. Il fait encore nuit, mais le ciel pâlit. La peluche Dodo est sur le lit, tête
    tournée vers la porte.
@@ -230,6 +417,10 @@ Ton : inquiétant puis bouleversant. Monde `ink` (tuiles et sprites corrompus).
 
 ### Répondre à Maman (prologue, interludes I et II)
 
+> **v2** — L'Interlude III ajoute une réponse au fil « Mina 🐑 » (`i3_reply` : « Pardon. C'était ma sœur. », « bonne
+> nuit », ou rien), que le final et l'épilogue lisent pour l'inconnue. Le final v2 reprend les réponses à Maman
+> ci-dessous après la coda.
+
 Un seul mot par moment, choisi dans un petit carnet à côté du téléphone ; chaque réponse a une émotion (couleur,
 forme si l'option d'accessibilité est active), plus « Ne rien répondre » (on peut changer d'avis en revenant au
 téléphone). Le fil garde tout l'historique (le téléphone du final montre toute la conversation).
@@ -242,7 +433,27 @@ téléphone). Le fil garde tout l'historique (le téléphone du final montre tou
 
 `rien` = « Ne rien répondre » ; un drapeau absent = téléphone jamais ouvert (compté comme un silence).
 
+## Les fins (v2 — bible § 5 ; `endings.ts`)
+
+| Fin | Comment | Ce qu'on voit | Écran titre ensuite |
+|---|---|---|---|
+| **Aube** | [Ouvrir les yeux] au ch. 6, hors route du Silence, moins de trois dessins corrigés (`c5_corrige` < 3) | le final, le soleil se lève (`fin_aube`), l'épilogue | l'aube |
+| **Aube blanche** | [Ouvrir les yeux] avec `c5_corrige` ≥ 3 | le poème ajoute tout seul « j'étais là », Maman ment pour lui (« …Oui. Oui, mon grand. »), un soleil de correcteur ; l'épilogue en blanc ; carte d'aide | l'aube au soleil blanc |
+| **Beaux rêves** | [Rester] au ch. 6 | les années passent derrière sa porte, les mots de Maman s'empilent, la pile meurt sur « beaux rê— » : un garçon vivant, toujours dans sa chambre ; carte d'aide | « Continuer » seul, les jours réels comptés ; il ramène au chapitre 1 |
+| **Silence** | la route de l'Encre (`isSilenceRoute()`) | il se réveille reposé ; la porte de Mina devient « DÉBARRAS », « Qui ? », trois coups dans le débarras et personne ne bouge ; son prénom devient « ______ » ; carte d'aide | la photo de famille, un blanc en forme d'enfant |
+| **Veilleuse** (secrète) | une *Aube* déjà vue, le Bouton doré gardé, « J'ai de la fièvre », `c5_corrige` < 3, la Pile épargnée, « Je ne sais pas » à la question de l'appel, la pile du réveil prise | au final, [Découdre Dodo ?] : le module, le dessin `lune_finie`, les deux pistes ; Dodo recousu au fil bleu, laissé sur la pierre ; il ne parle plus jamais (`meta.dodoSilent`) | la veilleuse branchée à l'aube |
+| *« Fin heureuse »* (non-fin) | [Laisser défiler] le faux générique | voir la fausse aube ; jamais enregistrée | le point de croix |
+
+Chaque fin passe par `finishGame` (`common.ts`) : le générique, la carte d'aide 3114 après *Beaux rêves*, *Silence* et
+*Aube blanche*, une nuit de plus dans la mémoire (`meta.nuits`). Le bonus s'ouvre après l'une des trois aubes.
+
 ## Épilogue — « Une veilleuse neuve » (fil RÉEL, route de l'aube, `bazar` → `jardin`)
+
+> **v2 (retouché, bible § 3.16 ; `epilogue.ts`)** — Dodo est muet (« La pile est morte. », « Il ne dit plus rien. Tu
+> le prends quand même. ») ; la voix off de la fin garde le nom de Dodo, avec le bip de Noa ; le 42ᵉ coquillage, s'il
+> a été trouvé, est posé sur la pierre ; l'inconnue, au portail, si `i3_reply` = `pardon` : « Bonne journée. »
+> Variantes : *Aube blanche* (« Je venais tous les jours. », Maman ne le contredit pas, « Beaux rêves, {player}. ») et
+> *Veilleuse* (Dodo recousu laissé sur la pierre, les dessins de Mina au lieu de la voix off).
 
 Le matin, un an jour pour jour. Monde réel de jour, musique `room_quiet`, aucun combat, 5–8 minutes. Tout est piloté
 par des scripts de carte et des drapeaux `ep_*`, pour qu'une sauvegarde de suspension reprenne proprement.
@@ -273,6 +484,13 @@ par des scripts de carte et des drapeaux `ep_*`, pour qu'une sauvegarde de suspe
    bonjour. » → `finishGame(d, 'aube')`.
 
 ## Bonus — « Les rêves des autres » : la nuit de Maman (après une fin de l'aube)
+
+> **v2 (retouché, bible § 3.17)** — Devant la porte de Noa, Maman s'arrête toujours : « Il dort. Enfin. Cinq heures,
+> ça ira. » ; un nouveau souvenir, 3 h 38 dans la chambre de Noa (elle débranche la veilleuse et voit ses paupières
+> trembler : [Le réveiller] / [Le laisser dormir], et dans les deux cas « Tu l'as laissé faire semblant. ») ; le
+> Réveil : « Tu m'as remonté pour avoir le droit de le laisser dormir. » ; Nadia : « Vous lui en parlerez ? » —
+> « …Un jour. » ; Mina dans le fauteuil : « Le téléphone, c'est moi qui ai demandé à Nadia. », « Tu lui as dit que
+> j'allais mieux. Merci. » Le bonus n'écrase jamais la sauvegarde de la partie principale.
 
 Entrée de l'écran titre débloquée par l'une des trois aubes, `aube`, `aube_blanche` ou `veilleuse` (`bonusUnlocked`,
 `flow.startBonus` → `story/bonus.ts`, partie séparée qui ne
