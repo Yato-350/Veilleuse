@@ -275,7 +275,9 @@ export class TitleScene implements Scene {
     });
     // The save slot, beside « Continuer ».
     if (this.slot && this.idx === 0) drawText(g, this.slot, this.slotX, startY, { color: '#8a7f96', shadow: '#0b0710' });
-    drawText(g, `v${VERSION}`, W - 4, H - 11, { color: '#4e4359', align: 'right' });
+    // The font's period sits one pixel under the baseline: at H - 11 it fell on the last row of the screen and
+    // « v1.1.0 » read « v110 ». The bottom lines of the title stand two pixels higher.
+    drawText(g, `v${VERSION}`, W - 4, H - 13, { color: '#4e4359', align: 'right' });
     this.drawMeta(g);
   }
 
@@ -295,11 +297,11 @@ export class TitleScene implements Scene {
     if (h >= 0 && h < 5) {
       const a = 0.5 + 0.3 * Math.sin(this.t * 0.03);
       g.globalAlpha = a;
-      drawText(g, tf('Il est {0}h. Tu devrais dormir, toi aussi.', h === 0 && lang() === 'en' ? 12 : h), 4, H - 11, { color: '#6d5a8a' });
+      drawText(g, tf('Il est {0}h. Tu devrais dormir, toi aussi.', h === 0 && lang() === 'en' ? 12 : h), 4, H - 13, { color: '#6d5a8a' });
       g.globalAlpha = 1;
     } else if (G.meta.deaths > 5 && this.mood === 'night') {
       g.globalAlpha = 0.4;
-      drawText(g, tf('Tu es tombé·e {0} fois.', G.meta.deaths), 4, H - 11, { color: '#6d5a8a' });
+      drawText(g, tf('Tu es tombé·e {0} fois.', G.meta.deaths), 4, H - 13, { color: '#6d5a8a' });
       g.globalAlpha = 1;
     }
   }

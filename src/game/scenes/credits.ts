@@ -304,7 +304,8 @@ export class CreditsScene implements Scene {
       }
       drawText(g, txt, W / 2, y, { align: 'center', color: color ?? '#fffaf2', scale: i === 0 ? 2 : 1, alpha });
     });
-    drawText(g, `v${VERSION}`, W - 4, H - 11, { color: '#2a2238', align: 'right' });
+    // Two pixels above the bottom edge, like the title: the font's period sits under the baseline.
+    drawText(g, `v${VERSION}`, W - 4, H - 13, { color: '#2a2238', align: 'right' });
     if (this.phase === 'stopped' && this.stopT >= 70 && !this.introBusy) this.drawChoices(g);
     if (this.phase === 'help') this.drawHelp(g);
   }
