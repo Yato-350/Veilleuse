@@ -1,0 +1,60 @@
+# Lot 4 proof: the final battle v2 against Dodo, the four phases, with both items. Phase 1 (the sheep of the deaths),
+# phase 2 (DORMIR, his words as subtitles, the lying crayons), phase 3 (knocks in the dark: round A answered with two
+# knocks, round B with three), phase 4 (her words, the Bouton doré and the Pile chargée), then « Ouvrir les yeux ».
+query: debug=script&name=dodo_v2_objets&lang=fr&sheep=auto
+god
+auto
+write:joie
+auto
+write:tristesse
+auto
+write:colere
+auto
+assert: window.__veilleuse.game.top.enemies[0].def.sprite === 'b_dodo_torn'
+write:Dors.
+auto
+shot:lie
+write:Arrête d'appeler.
+auto
+write:Demain.
+auto
+assert: window.__veilleuse.game.top.menuLabels[0] === 'FRAPPER'
+menu:0
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+ArrowRight
+KeyZ
+wait:2500
+auto
+menu:0
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+ArrowRight
+ArrowRight
+KeyZ
+wait:2500
+auto
+shot:p4
+assert: window.__veilleuse.game.top.menuLabels[1] === 'ÉCRIRE'
+write:je suis là
+auto
+menu:2
+wait:300
+eval: window.__veilleuse.game.top.list.idx = window.__veilleuse.game.top.list.items.indexOf('Bouton doré')
+KeyZ
+auto
+menu:2
+wait:300
+eval: window.__veilleuse.game.top.list.idx = window.__veilleuse.game.top.list.items.indexOf('Pile chargée')
+KeyZ
+auto
+write:bonne nuit
+auto
+write:pardon
+auto
+assert: window.__veilleuse.game.top.menuLabels[3] === 'OUVRIR LES YEUX'
+shot:ready
+menu:3
+auto
+shot:choice
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.fin_route === 'aube'

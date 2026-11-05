@@ -1,0 +1,35 @@
+# Lot 11 in English (src/i18n/en/story-bonus.ts): Noa's door and 3:38 read in English — "Knock?", "Like that night.",
+# "Eleven twenty.", "He's asleep. Finally. Five o'clock will do.", "Come. Now.", "Three thirty-eight.", "You pull the
+# cord.", "His eyelids are trembling.", "He's not asleep." [Wake him | Let him sleep], "You let him pretend." — and no string
+# of the run is missing from the catalog (i18nMissing).
+query: debug=script&name=bonus_porte_noa&lang=en
+wait:1500
+eval: window.V = window.__veilleuse
+eval: (window.TXT = () => (V.dialogue.pages[V.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join('')).join(' '), 1)
+zuntil: V.dialogue.choices
+assert: window.TXT() === 'Knock?'
+shot:knock
+choose:1
+zuntil: V.dialogue.busy && window.TXT().includes('Like that night.')
+zuntil: V.dialogue.busy && window.TXT().includes('Eleven twenty.')
+zuntil: V.dialogue.busy && window.TXT().includes('He\'s asleep. Finally.')
+wait:2500
+assert: window.TXT() === 'He\'s asleep. Finally. Five o\'clock will do.'
+shot:asleep
+zuntil: V.dialogue.busy && window.TXT().includes('"Come. Now."')
+zuntil: V.dialogue.busy && window.TXT().includes('Three thirty-eight.')
+zuntil: V.G.state.map === 'b_noa' && !V.dialogue.busy && V.world.busy === 0
+go:2/4
+eval: (V.world.player.dir = 'up', 1)
+KeyZ
+zuntil: V.dialogue.busy && window.TXT().includes('You pull the cord.')
+zuntil: V.dialogue.busy && window.TXT().includes('His eyelids are trembling.')
+zuntil: V.dialogue.choices
+assert: window.TXT() === 'He\'s not asleep.' && V.dialogue.choices.length === 2
+shot:choice
+choose:1
+zuntil: V.dialogue.busy && window.TXT().includes('You let him pretend.')
+wait:1500
+shot:pretend
+zuntil: V.G.state.map === 'b_appart' && !V.dialogue.busy && V.world.busy === 0
+assert: V.G.state.flags.b_338 === 'laisser' && V.i18nMissing().length === 0

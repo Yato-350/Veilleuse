@@ -1,0 +1,44 @@
+# Lot 4 (chapter 6 world): chapter 5 falls into chapter 6. La Vitre spared, the souvenir, the fall through Dodo's seam
+# (chapter5.theFall → fallInto(d, 6)): no waking up, the card « Chapitre 6 — Le Ventre de Dodo », then the landing in
+# the seam (map couture, chapter 6, the autosave of the new chapter).
+query: debug=script&name=chapter5_visite&lang=fr
+god
+wait:1500
+auto
+interact:silhouette
+auto
+choose:0
+zuntil: window.__veilleuse.game.top.tracing && !window.__veilleuse.dialogue.busy
+KeyZ:5200
+zuntil: window.__veilleuse.game.top.tracing && window.__veilleuse.game.top.tracing.who === 'noa' && !window.__veilleuse.dialogue.busy
+KeyZ:4500
+waitfor: window.__veilleuse.game.top.result.coughed === true
+wait:1600
+auto
+assert: window.__veilleuse.G.state.flags.c5_visite
+assert: window.__veilleuse.world.map.id === 'chambre_verre'
+# Up to the glass: La Vitre.
+go:11/12
+wait:300
+auto
+assert: window.__veilleuse.game.top.enemies && window.__veilleuse.game.top.enemies[0].def.id === 'vitre'
+write:tristesse
+auto
+write:tristesse
+auto
+write:je ne sais pas
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable
+menu:3
+choose:0
+zuntil: window.__veilleuse.game.top.constructor.name === 'ImageScene'
+wait:2500
+auto
+assert: window.__veilleuse.G.state.flags.c5_vitre === 'epargnee'
+assert: window.__veilleuse.G.state.souvenirs.includes('vitre')
+assert: window.__veilleuse.G.state.flags.c5_fin
+zuntil: window.__veilleuse.G.state.chapter === 6 && window.__veilleuse.world.map && window.__veilleuse.world.map.id === 'couture'
+wait:2000
+shot:atterrissage
+auto
+assert: window.__veilleuse.G.state.flags.c6_intro && window.__veilleuse.readSave().chapter === 6 && window.__veilleuse.readSave().map === 'couture'

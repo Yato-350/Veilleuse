@@ -1,0 +1,14 @@
+# Lot 10 (docs/HISTOIRE.md § 5 « Méta », row « Une fin v1.1 déjà vue »): a memory that saw the end of version 1.1
+# (&meta=endingsV1:aube) reads, in the fake credits, under the title and before the stop on Mina's line, « Tu croyais
+# que c'était fini, la dernière fois. ». Every path sees it (« Regarder » rewinds from the stop).
+query: debug=script&name=faux_generique&lang=fr&meta=endingsV1:aube
+eval: window.V = window.__veilleuse
+waitfor: V.scene() === 'CreditsScene'
+eval: window.LINES = () => V.game.top.lines.map(([t]) => t)
+assert: LINES().indexOf('Tu croyais que c\'était fini, la dernière fois.') > 0 && LINES().indexOf('Tu croyais que c\'était fini, la dernière fois.') < LINES().findIndex((t) => t.startsWith('Mina ……'))
+# (The debug script loads the map under the credits: its arrival line is cleared first.)
+zuntil: !V.dialogue.busy
+wait:2500
+shot:memoire
+waitfor: V.game.top.phase === 'stopped' && V.game.top.stopT > 80
+shot:stop

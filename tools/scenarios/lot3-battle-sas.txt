@@ -1,0 +1,19 @@
+# Lot 3 (chapter 5 battles): the Masque squeezes and muffles the text box (anger squeezes it more), Joie ×2 frees it;
+# then the Gel, whose drops stick to the heart and sting, Tristesse ×2.
+query: debug=script&name=bt_masque&lang=fr
+god
+wait:1500
+auto
+write:colere
+auto
+assert: window.__veilleuse.game.top.textInset > 0 && window.__veilleuse.game.top.muffle > 0
+shot:masque
+write:joie
+auto
+write:joie
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable && window.__veilleuse.game.top.textInset === 0
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.debug_battle === 'spare:masque'

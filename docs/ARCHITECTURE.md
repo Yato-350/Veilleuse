@@ -1,8 +1,9 @@
 # Architecture technique
 
 *Veilleuse* est un jeu HTML5 écrit en **TypeScript strict**, sans moteur tiers ni fichier binaire : sprites, police,
-musique et effets sonores sont générés par le code au démarrage. Le build Vite produit un site statique (≈ quelques
-centaines de Ko) déployé sur GitHub Pages et installable comme application (PWA, hors-ligne).
+musique et effets sonores sont générés par le code au démarrage. Le build Vite produit un site statique (version 2.0 :
+un fichier JavaScript d'environ 2,2 Mo, 800 Ko compressé) déployé sur GitHub Pages et installable comme application
+(PWA, hors-ligne).
 
 ```
 index.html ─ main.ts ─┬─ engine/   (indépendant du jeu)
@@ -35,11 +36,12 @@ index.html ─ main.ts ─┬─ engine/   (indépendant du jeu)
 | `overworld/` | Scène d'exploration : tilemap pré-rendue avec bordures organiques, entités triées en Y, collisions avec glissement aux coins, suiveur, ennemis visibles, déclencheurs, portes, caméra, éclairage dynamique, particules |
 | `battle/` | Système **Plume & Cœur** : règles (triangle des émotions, résonance), ennemis et besoins émotionnels, monde de projectiles, bibliothèque de motifs, scène de combat écrite en `async/await` |
 | `ui/` | Boîte de dialogue (machine à écrire, texte enrichi, portraits, choix), dessins d'interface, options |
-| `scenes/` | Avertissement, titre (qui évolue selon les fins vues), saisie du nom, menu pause, boutique, game over, cartes de chapitre, illustrations, poème, crédits |
-| `story/` | Scénario : `common.ts` relie les modules (`enterDream`, `wakeUp`, `finishGame`), un module par fil narratif |
-| `meta.ts` | Quatrième mur : changement de titre d'onglet, retour sur la page, heure réelle |
+| `scenes/` | Avertissement, titre (qui évolue selon les fins vues ; variantes v2 selon la dernière fin), saisie du nom, menu pause, boutique, game over, cartes de chapitre, illustrations, poème, crédits (scriptés en v2 : arrêt sur une ligne avec un choix, défilement à l'envers, carte d'aide), téléphone (contacts, fil épinglé, journal d'appels), Carnet de souvenirs, scène de comptage (`sheepcount.ts` : moutons, coups, dents), dessin à deux (`drawtogether.ts`, ch. 5) |
+| `story/` | Scénario : `common.ts` relie les modules (`enterDream`, `wakeUp`, `fallInto`, `finishGame`), un module par fil narratif (`real.ts`, `chapter1.ts` à `chapter6.ts`, `fausse-aube.ts`, `real-nuit.ts` pour les Interludes III et IV, `endings.ts`, `epilogue.ts`, `bonus.ts`) ; la bible de l'histoire est `docs/HISTOIRE.md` |
+| `meta.ts` | Quatrième mur : changement de titre d'onglet, retour sur la page, heure réelle. v2 (§ 5 « Méta ») : bip de Dodo pour le narrateur entre minuit et 5 h, page « Pendant ton absence » dès le ch. 4, appel de 3 h 14 pendant un interlude (chacun attend un moment libre), nombres en toutes lettres (`numberWords`), mémoire simulée pour le debug (`applyMetaSpec`) |
+| `clock.ts` | L'horloge réelle telle que le jeu la lit (`{time}`, narrateur de nuit, 3 h 14, titre) ; réglable par `&clock=` et par le bot (`__veilleuse.clock`) |
 | `pwa.ts` | Service worker, invite d'installation, notification de mise à jour |
-| `debug.ts` | Points d'entrée de développement par URL (`?debug=map&map=…`, `?debug=battle&…`, planches de sprites) |
+| `debug.ts` | Points d'entrée de développement par URL (`?debug=map&map=…`, `?debug=battle&…`, planches de sprites ; avec tout mode, `&meta=…` simule une mémoire et `&clock=h:mm` règle l'heure) |
 
 ## `src/data` — contenu
 
@@ -56,14 +58,20 @@ Le français est la langue source : les textes restent en français dans le code
 ```
 WarningScene → TitleScene → NameEntryScene → flow.newGame
   → story.real.prologue (WorldScene) → enterDream(1) → chapter1 → wakeUp(1) → interlude1 → enterDream(2) …
-  → chapter3 → Dodo → { wakeUp(3) → finale | beaux_reves | silence } → finishGame → CreditsScene → TitleScene
+  → chapter3 → Dodo (court) → wakeUp(3) → fausseAube (faux générique, « Fin heureuse » ≤ 3 tours) → interlude3
+  → enterDream(4) → chapter4 → wakeUp(4) → interlude4 → enterDream(5) → chapter5 → fallInto(6) → chapter6
+  → combat final → { wakeUp(6) → finale → aube | aube_blanche | veilleuse → épilogue | beaux_reves | silence }
+  → finishGame → CreditsScene (carte d'aide après beaux_reves, silence, aube_blanche) → TitleScene (variante de
+  `meta.lastEnding`)
 ```
 
 ## Qualité
 
 - `npm run check` : ESLint, `tsc --noEmit` (mode strict), Vitest (moteur + validation de tout le contenu), build.
 - `npm run test:e2e` : Playwright (bureau + mobile) — démarrage, nouvelle partie, chargement de toutes les cartes,
-  tour de combat, sans erreur console.
+  tour de combat, sans erreur console ; en CI, suivi d'une sélection de scénarios du bot.
+- `node tools/run-scenarios.mjs` : les scénarios du bot (`tools/scenarios/`, voir son README), preuves de jeu de chaque
+  chapitre, fin, révélation et option.
 - `node tools/shot.mjs` : captures d'écran scriptées pour la revue visuelle.
 - CI GitHub Actions sur chaque push ; déploiement Pages automatique depuis `main`.
 - Service worker généré au build avec la liste exacte des fichiers et un hash de version (`tools/vite-sw-plugin.ts`).

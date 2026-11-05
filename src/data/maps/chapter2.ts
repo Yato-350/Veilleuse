@@ -351,7 +351,7 @@ const FORET_PROPS: PropDef[] = [
   // Pond and oddities
   P('', 31, 27, { solid: false, script: C2.inkPond }),
   P('', 29, 28, { solid: false, script: C2.inkPond }),
-  P('prop_sharpener_big', 34, 16, { w: 2, script: C2.sharpener }),
+  P('prop_sharpener_big', 34, 16, { id: 'taille_crayon_geant', w: 2, script: C2.sharpener }),
   P('prop_pencil_g', 48, 30, { script: C2.greenPencil }),
   P('prop_pencil_y', 3, 20, { script: C2.chewedPencil }),
   DECO('prop_crayon_rock', 23, 20, 'Un bout de crayon de cire. Trop court pour dessiner. Trop joli pour être jeté.'),
@@ -359,8 +359,10 @@ const FORET_PROPS: PropDef[] = [
   DECO('prop_crayon_rock', 7, 9, 'Un bout de crayon de cire. On dirait qu\'il a été mâchouillé.'),
   // Erased zones…
   SOFT('prop_drawing_erased', 17, 14, undefined, { script: C2.erasedDrawing, cond: ERASED_ONLY }),
-  P('', 38, 21, { solid: false, script: C2.erasedHole, cond: ERASED_ONLY }),
-  P('', 11, 27, { solid: false, script: C2.erasedHole, cond: ERASED_ONLY }),
+  P('', 38, 21, { id: 'trou_chuchote', solid: false, script: C2.erasedHole, cond: ERASED_ONLY }),
+  P('', 11, 27, { id: 'trou_figure', solid: false, script: C2.erasedHoleFigure, cond: ERASED_ONLY }),
+  // Far away in the white, a tiny figure in grey pencil, from behind, in a hat with sheep ears (T9): gone once seen.
+  P('prop_bonnet_trou', 11, 27, { id: 'c2_bonnet', solid: false, script: C2.erasedHoleFigure, cond: () => !spared() && !G.state.flags.c2_bonnet_vu }),
   crumbs(15, 15),
   crumbs(20, 14),
   crumbs(36, 23),
@@ -455,8 +457,8 @@ const BIBLIOTHEQUE: MapDef = {
   legend: { T: 'wall_d_top', W: 'wall_d', '.': 'paper', R: 'rug' },
   spawns: { default: { x: 7, y: 10, dir: 'up' }, entry: { x: 7, y: 10, dir: 'up' } },
   props: [
-    P('prop_shelf', 1, 3, { w: 2, script: C2.shelfTales }),
-    P('prop_shelf', 3, 3, { w: 2, script: C2.shelfUnread }),
+    P('prop_shelf', 1, 3, { id: 'etagere_contes', w: 2, script: C2.shelfTales }),
+    P('prop_shelf', 3, 3, { id: 'etagere_illisible', w: 2, script: C2.shelfUnread }),
     DECO('prop_bookstack', 5, 3, 'Une pile de dictionnaires. Le mot « adieu » a été découpé dans chacun d\'eux.'),
     DECO('prop_bookstack', 9, 3, 'Une pile d\'atlas. Ils ne montrent que des pays qui n\'existent pas.'),
     P('prop_jar_shelf', 10, 3, { w: 2, script: C2.jars }),
@@ -464,7 +466,7 @@ const BIBLIOTHEQUE: MapDef = {
     DECO('prop_plant', 14, 3, 'Une plante en papier crépon. Quelqu\'un l\'arrose quand même.'),
     P('prop_bookstack', 14, 6, { script: C2.shelfBlank }),
     P('prop_desk', 11, 8, { w: 2, text: 'Un bureau de lecture. La lampe est allumée pour personne.' }),
-    P('prop_carnet', 12, 8, { solid: false, oy: -13, script: C2.carnet, light: { r: 22, color: '#fff3cf', flicker: true, dy: -14 } }),
+    P('prop_carnet', 12, 8, { id: 'carnet_etoiles', solid: false, oy: -13, script: C2.carnet, light: { r: 22, color: '#fff3cf', flicker: true, dy: -14 } }),
     DECO('prop_chair', 10, 8, 'Une chaise. Elle attend un lecteur.'),
     P('prop_lamp', 3, 7, { text: 'Un lampadaire. Son abat-jour est une page de dictionnaire.', light: { r: 46, color: '#ffe991', dy: -18 } }),
     DECO('prop_bookstack', 1, 9, 'Des livres pour s\'endormir. Celui du dessus s\'est endormi le premier.'),
@@ -675,6 +677,9 @@ const ATELIER: MapDef = {
     P('prop_easel', 17, 5, { script: C2.atelierEasel }),
     P('prop_easel', 3, 15, { script: C2.atelierEasel }),
     P('prop_sharpener_big', 21, 10, { w: 2, script: C2.sharpener }),
+    // Gomme's jar of crumbs, « À JETER » (version 2): open once she is spared.
+    P('prop_bocal_miettes', 5, 5, { id: 'bocal_miettes', script: C2.crumbJar, cond: ERASED_ONLY }),
+    P('prop_bocal_miettes_ouvert', 5, 5, { id: 'bocal_miettes', script: C2.crumbJar, cond: RESTORED_ONLY }),
     DECO('prop_bookstack', 23, 4, 'Des cahiers. Toutes les pages sont blanches. Gomme a été très appliquée.'),
     DECO('prop_bookstack', 1, 8, 'Des carnets de croquis, vidés de leurs croquis.'),
     DECO('prop_crayon_rock', 9, 16, 'Un crayon de cire, usé jusqu\'au bout. Il a beaucoup dessiné avant d\'arriver ici.'),

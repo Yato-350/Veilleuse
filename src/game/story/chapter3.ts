@@ -1,34 +1,38 @@
 import { audio } from '../../engine/audio';
 import { H, TILE, W } from '../../engine/constants';
-import { drawText, measure } from '../../engine/font';
+import { drawText } from '../../engine/font';
 import { fx } from '../../engine/fx';
-import { game } from '../../engine/game';
-import { input } from '../../engine/input';
 import { rng } from '../../engine/math';
-import type { Emotion } from '../../engine/palette';
-import { drawSprite } from '../../engine/sprite';
 import { SOUVENIRS } from '../../data/illustrations';
-import { DODO_WORDS, MINA_WORDS } from '../../data/words';
-import { hasSpr, spr } from '../assets';
+import { DODO_WORDS } from '../../data/words';
 import type { Battle } from '../battle/battle';
-import type { EnemyRuntime } from '../battle/enemy';
 import type { BattleHooks, WordDef } from '../battle/types';
 import { director, type Director } from '../director';
 import { isLateNight, setPageTitle } from '../meta';
 import type { Script } from '../overworld/types';
 import { world } from '../overworld/world';
-import { G } from '../state';
-import { tf, tr, translated } from '../../i18n';
-import { finishGame, isSilenceRoute, shop, wakeUp } from './common';
+import { G, maxHp } from '../state';
+import { tf, tr } from '../../i18n';
+import { isSilenceRoute, shop, wakeUp } from './common';
+import { endingAubeV1, endingBeauxReves } from './endings';
+import { makeCrack } from '../battle/final-common';
 
 /**
  * Chapter 3 — « L'Hôpital de Papier ».
  * ruines (the Cotton Country drowned in ink) → hopital (lobby + endless corridor, salle_jeux) → door 304 (Mina is
- * erased) → chambre_304 (souvenir « La veilleuse ») → vide (Dodo's reveal, final battle, three endings).
+ * erased) → chambre_304 (souvenir « La veilleuse ») → vide (Dodo's reveal, the short battle of version 2: « pardon »
+ * three times, Dodo gives in too easily, and every way out leads to the false dawn, wakeUp(3) → fausse-aube.ts).
  *
  * Flags: c3_intro, c3_village, c3_lit (closet lights the marsh), c3_nook_open (Gomme), c3_hospital_seen, c3_wish,
  * c3_loop (corridor stage 0..3), c3_loop_fails, c3_loops, c3_heard_0..3, c3_plume, c3_cape, c3_door304,
- * c3_mina_erased, c3_veilleuse, fin_route ('aube').
+ * c3_mina_erased, c3_veilleuse, c3_dawn_ready (Dodo gave in: the door of light leads to the false dawn), fa_reste
+ * ([Rester] was chosen at the end of the battle; read by the false dawn, fausse-aube.ts).
+ *
+ * Version 2 clues (lot 8, docs/HISTOIRE.md § 3.8, checklist docs/INDICES.md): c3_nadia (paper nurses met, 0..3) and
+ * c3_nadia_0..2 (each one looked at), c3_robot (B4 gave the grey cotton), c3_sas (room 303½ looked at, counter),
+ * c3_bonnet_vu (the figure in the hat at the end of the loop), c3_reflet (the reflection in the last wing's window),
+ * c3_placard (the Closet Monster's talk counter: even = his secret), c3_fenetre304 (room 304's window, counter: the
+ * mist drawing from the second look), c3_bracelet ('epargne' | 'coupe', set by the battle, src/data/enemies-ch3.ts).
  */
 
 const flag = (k: string): boolean => !!G.state.flags[k];
@@ -37,6 +41,12 @@ const withMina = (): boolean => G.state.party.includes('mina');
 /** Corridor stage: 0..2 = looping corridor, 3 = the last wing with door 304. */
 export const stage = (): number => num('c3_loop');
 const tile = (px: number): number => Math.floor(px / TILE);
+/** Increments a talk counter and returns its value before. */
+function bump(k: string): number {
+  const n = num(k);
+  G.state.flags[k] = n + 1;
+  return n;
+}
 
 async function mina(d: Director, text: string | string[], expr = 'neutral'): Promise<void> {
   if (withMina()) await d.say(text, `mina:${expr}`);
@@ -291,6 +301,12 @@ export const placardTalk: Script = async (d) => {
     await placardLights(d);
     return;
   }
+  // T9: what a closet sees, in the evening, through the keyhole.
+  if (bump('c3_placard') % 2 === 0) {
+    await d.say(['Petits… Je vais vous dire un secret de placard.', 'Le soir, une petite fille au bonnet regarde par ta fenêtre.', 'Elle ne frappe pas. Elle regarde si ta lumière est allumée.'], 'placard');
+    await mina(d, ['Les placards, ça voit tout de travers. Par le trou de la serrure.', 'C\'était sûrement la lune.'], 'neutral');
+    return;
+  }
   await d.say(['Allez-y, petits. Je garde la lumière.', 'Si vous avez peur, regardez derrière vous. Je serai là.'], 'placard');
 };
 
@@ -430,6 +446,64 @@ export const lobbyTray: Script = async (d) => {
   await d.give('lait');
 };
 
+// --- The paper nurses and the vending machine (version 2, § 3.8) ----------------
+
+/** Where the paper nurses stand: 0 lobby, 1 corridor (a new place at each stage), 2 the last wing. */
+const NURSES: Array<{ look: string[]; line: string }> = [
+  {
+    look: ['Une infirmière en papier plié, debout près de l\'accueil.', 'Tu ne l\'avais pas vue, en entrant.', 'Elle n\'a pas de visage. Juste un pli, au milieu. Sur son badge, au feutre : « NADIA ».'],
+    line: 'Les visites sont finies, mon grand. Reviens demain.',
+  },
+  {
+    look: ['Une infirmière en papier, plantée au milieu du couloir.', 'Pas de visage, elle non plus. Sur son badge : « NADIA ».'],
+    line: 'Toutes les portes se ressemblent, la nuit. Suis les dessins.',
+  },
+  {
+    look: ['Encore une infirmière en papier, au bout du couloir.', 'Badge : « NADIA ». Elle se tient très droite, tournée vers les portes, comme pour écouter.'],
+    line: 'Chut. Ici, on ne ferme jamais tout à fait les portes. Pour la lumière.',
+  },
+];
+
+export const paperNurse =
+  (i: number): Script =>
+  async (d) => {
+    const nurse = NURSES[i]!;
+    const seen = flag(`c3_nadia_${i}`);
+    if (seen) {
+      await d.say('L\'infirmière en papier. « NADIA ».');
+    } else {
+      d.set(`c3_nadia_${i}`);
+      await d.say(nurse.look);
+      // T6 / § 3.8: every badge says NADIA. The ordinary reason: Mina never saw their faces, and the night was Nadia.
+      const met = bump('c3_nadia');
+      if (met === 0) {
+        await mina(d, ['C\'est Nadia ! …Enfin, une Nadia.', 'On voyait jamais leur visage, ici. Elles avaient toujours un masque.'], 'happy');
+        await mina(d, 'Et la nuit, c\'était toujours Nadia.', 'neutral');
+      } else if (met === 1) {
+        await mina(d, 'Elles s\'appellent toutes Nadia. C\'est plus facile pour se rappeler.', 'neutral');
+      }
+    }
+    await d.say(nurse.line, 'infirmiere');
+  };
+
+/** « Le chocolat du robot », B4 (the bonus chapter tells the real one): here it gives cotton. */
+export const vendingRobot: Script = async (d) => {
+  if (flag('c3_robot')) {
+    await d.say(['Le distributeur. Tu tapes B4.', 'La spirale tourne dans le vide. Ça fait un bruit de ventre vide.']);
+    return;
+  }
+  await d.say(['Un distributeur, en papier comme le reste.', 'Derrière la vitre, des rangées de chocolats et de gâteaux. Tous dessinés.']);
+  await mina(d, ['Le robot ! C\'est le chocolat du robot !', 'Il faut taper B4. Un pour moi, un pour Maman, un pour toi.'], 'happy');
+  const r = await d.ask('Taper B4 ?', ['B4', 'Laisser'], undefined, { cancelIndex: 1 });
+  if (r !== 0) return;
+  d.set('c3_robot');
+  d.sfx('buzz', { pitch: 0.7, vol: 0.5 });
+  await d.wait(40);
+  await d.say(['La spirale tourne. Quelque chose tombe dans le bac, sans un bruit.', 'Une poignée de coton. Gris. Encore tiède.']);
+  await mina(d, ['C\'est de la barbe à papa ! …Elle est grise.', 'Il est en panne, le robot. Il donne ce qu\'il a.'], 'neutral');
+  await d.give('coton_gris');
+};
+
 // ---------------------------------------------------------------------------
 // Salle de jeux (the pediatric playroom)
 // ---------------------------------------------------------------------------
@@ -491,7 +565,8 @@ const DOORS: number[][] = [
   [311, 296, 303, 0],
 ];
 const RIGHT = [1, 0, 2];
-const LAST_WING = [305, 306, 307, 308];
+/** The last wing counts down to 304… and skips it: 307, 306, 305, then 303½ (§ 3.8). */
+const LAST_WING = [307, 306, 305];
 
 export const corridorIntro: Script = async (d) => {
   if (!withMina()) return;
@@ -504,7 +579,8 @@ export const corridorDoor =
   async (d) => {
     const s = stage();
     if (s >= 3) {
-      await d.say([tf('Chambre {0}.', LAST_WING[i]!), 'La porte est fermée. Derrière, il n\'y a pas un bruit.']);
+      if (i >= LAST_WING.length) await room303half(d);
+      else await d.say([tf('Chambre {0}.', LAST_WING[i]!), 'La porte est fermée. Derrière, il n\'y a pas un bruit.']);
       return;
     }
     const n = DOORS[s]![i]!;
@@ -515,6 +591,17 @@ export const corridorDoor =
     if (i === RIGHT[s]) await rightDoor(d, s);
     else await wrongDoor(d);
   };
+
+/** Room 303½, the last door before 304: through its porthole, the airlock (T6: the place he got to, chapter 5). */
+async function room303half(d: Director): Promise<void> {
+  if (bump('c3_sas') > 0) {
+    await d.say(['Chambre 303½. Le sas.', 'La porte n\'a pas de poignée de ce côté.']);
+    return;
+  }
+  await d.say(['Chambre 303½.', 'Le « ½ » a été ajouté à la main. Au crayon, tout petit.']);
+  await d.say(['Par le hublot : une toute petite pièce. Un lavabo, des blouses pendues, une boîte de masques.', 'Et au fond, une autre vitre.']);
+  await mina(d, ['C\'est le sas ! On se lave les mains, on met un masque, et après on a le droit d\'entrer.', 'C\'est pour pas apporter de microbes. Les microbes, c\'est le pire ennemi des chevalières.'], 'happy');
+}
 
 async function rightDoor(d: Director, s: number): Promise<void> {
   d.sfx('door');
@@ -541,6 +628,7 @@ async function wrongDoor(d: Director): Promise<void> {
 }
 
 export const corridorLoop: Script = async (d) => {
+  d.remove('bonnet_couloir');
   d.glitch(10);
   const p = d.player;
   p.x = 15 * TILE + 8;
@@ -557,18 +645,103 @@ export const corridorLoop: Script = async (d) => {
   }
 };
 
-/** Mina's drawings taped next to the right door. */
+/** The pass of the looping corridor the figure in the hat was last shown on (stage, loops, wrong doors). */
+let bonnetPass = '';
+
+/**
+ * T9 (§ 2.10): at the far end of the looping corridor, someone small in a knitted hat turns the corner — always ahead.
+ * Once per pass along the corridor; the first time, the camera lingers and Mina has an ordinary explanation.
+ */
+export const corridorBonnet: Script = async (d) => {
+  const pass = `${stage()}:${num('c3_loops')}:${num('c3_loop_fails')}`;
+  if (pass === bonnetPass || d.find('bonnet_couloir')) return;
+  bonnetPass = pass;
+  const first = !flag('c3_bonnet_vu');
+  d.spawn({ id: 'bonnet_couloir', sprite: 'npc_bonnet_loin', x: 56, y: 4, solid: false, shadow: false });
+  const walkOff = async (): Promise<void> => {
+    const e = d.find('bonnet_couloir');
+    if (!e) return;
+    for (let i = 0; i < 50 && d.find('bonnet_couloir'); i++) {
+      e.x += 0.5;
+      await d.wait(1);
+    }
+    e.sprite = 'npc_bonnet_loin_fondu';
+    for (let i = 0; i < 14 && d.find('bonnet_couloir'); i++) {
+      e.x += 0.5;
+      await d.wait(1);
+    }
+    d.remove('bonnet_couloir');
+  };
+  if (!first) {
+    void (async () => {
+      await d.wait(30);
+      await walkOff();
+    })();
+    return;
+  }
+  d.set('c3_bonnet_vu');
+  await d.cameraTo(52, 4);
+  await d.wait(30);
+  await d.say(['Au bout du couloir, quelqu\'un.', 'Quelqu\'un de petit, avec un bonnet.']);
+  await walkOff();
+  await d.say('Il tourne le coin. Il n\'y a pas de coin.');
+  d.cameraFollow();
+  await mina(d, ['Un autre enfant !', 'Il a pas le droit de se promener, la nuit. Nadia va le gronder.'], 'surprised');
+  await mina(d, 'Ici, y a plein d\'enfants qui ont des bonnets. Même quand il fait chaud.', 'neutral');
+};
+
+/**
+ * T9 (§ 2.10, « room304Window »): the corridor window of the last wing, at night, is a mirror. Beside Noa's reflection,
+ * someone smaller in a knitted hat with sheep's ears, while Mina, in her pigtails, stands right next to him.
+ */
+export const wingWindow: Script = async (d) => {
+  if (!withMina() || flag('c3_mina_erased')) return;
+  d.set('c3_reflet');
+  const m = d.find('mina');
+  // (over the window tile: the sprite is anchored at the bottom of tile row 1, minus the usual 2 px)
+  d.spawn({ id: 'reflet', sprite: 'fx_reflet_vitre', x: 50, y: 1, solid: false, shadow: false }).oy = 2;
+  d.face('player', 'up');
+  await d.wait(30);
+  await d.say(['Tu passes devant la fenêtre. Dehors, il fait tout noir : la vitre fait miroir.', 'Dedans, ton reflet. Et à côté de toi, quelqu\'un de plus petit.', 'Avec un bonnet. Un bonnet à oreilles de mouton.']);
+  d.face('player', m && m.x < d.player.x ? 'left' : 'right');
+  await d.wait(40);
+  await d.say('Tu tournes la tête. Mina est là. Avec ses couettes.');
+  d.remove('reflet');
+  d.face('player', 'up');
+  await d.wait(30);
+  await d.say('Dans la vitre, maintenant, il y a toi, et une petite fille avec des couettes.');
+  await mina(d, ['Quoi ? Pourquoi tu me regardes comme ça ?', '…J\'ai de l\'encre sur le nez ?'], 'surprised');
+};
+
+/** The same window, looked at again. */
+export const wingWindowLook: Script = async (d) => {
+  if (flag('c3_mina_erased')) {
+    await d.say(['La fenêtre du couloir. Dehors, la nuit.', 'Dans la vitre, il n\'y a plus que toi.']);
+    return;
+  }
+  await d.say(['La fenêtre du couloir. Dehors, la nuit.', 'Dans la vitre, ton reflet, et celui de Mina. Rien d\'autre.']);
+};
+
+/**
+ * Mina's drawings taped next to the right door. In a corner of each, a little blue figure comes nearer to a door with
+ * a window, drawing after drawing (§ 3.8, T6); the last one, beside 304, is only that door.
+ */
 export const tapedDrawing =
   (s: number): Script =>
   async (d) => {
     const lines = [
-      ['Un dessin scotché au mur : un mouton avec une couronne.', 'En bas, au feutre : « par ici !! »'],
-      ['Un dessin : une chaussette qui tient un soleil.', 'Une grosse flèche rouge pointe vers la porte d\'à côté.'],
-      ['Un dessin : deux enfants sous une grande lune.', 'Le plus grand a les cheveux bleus. Une flèche, vers la porte.'],
+      ['Un dessin scotché au mur : un mouton avec une couronne.', 'En bas, au feutre : « par ici !! »', 'Dans un coin, tout petit, un bonhomme aux cheveux bleus. Très loin de lui, une porte avec une vitre.'],
+      ['Un dessin : une chaussette qui tient un soleil.', 'Une grosse flèche rouge pointe vers la porte d\'à côté.', 'Dans le coin, le petit bonhomme bleu. Il est plus près de la porte vitrée.'],
+      ['Un dessin : deux enfants sous une grande lune.', 'Le plus grand a les cheveux bleus. Une flèche, vers la porte.', 'Dans le coin, le petit bonhomme est arrivé devant la porte vitrée. Il ne l\'ouvre pas.'],
+      ['Le dernier dessin, à côté de la porte 304.', 'Rien qu\'une porte vitrée, et le petit bonhomme bleu, tout contre.', 'De l\'autre côté de la vitre, une main toute petite, posée à plat.'],
     ];
     await d.say(lines[s] ?? lines[0]!);
     if (s === 0) await mina(d, 'C\'est moi qui l\'ai fait. Le mouton, c\'est Dodo ! Avec une couronne, parce que.', 'happy');
+    else if (s === 1) await mina(d, ['Le petit bonhomme ? C\'est toi.', 'Je te mets dans tous mes dessins. Comme ça, t\'es là.'], 'happy');
     else if (s === 2) await mina(d, 'Celui-là, je l\'ai fini. Tu vois ? Je l\'ai fini.', 'sad');
+    else {
+      await mina(d, ['C\'est toi qui viens me voir. Je l\'ai dessiné avant. Pour que ça arrive.', '…Il manque ta main, de ton côté. J\'avais plus de bleu.'], 'neutral');
+    }
   };
 
 export const inkDrawing: Script = async (d) => {
@@ -590,12 +763,19 @@ async function overhear(d: Director, lines: Array<[string, string]>): Promise<vo
 
 export const heardNurse: Script = async (d) => {
   await overhear(d, [
-    ['narrator', 'Des pas, dans le couloir. Une porte qu\'on entrouvre.'],
+    ['narrator', 'Des pas, dans le couloir. Deux voix, tout bas.'],
+    ['infirmiere', 'Le grand frère qui toussait ? On l\'a renvoyé. Pauvre gamin.'],
+    ['narrator', 'Une porte qu\'on entrouvre.'],
     ['infirmiere', 'Tu ne dors pas, ma puce ? Il est tard.'],
     ['infirmiere', 'Ton frère ? Il viendra. Demain, sûrement.'],
     ['infirmiere', 'Allez. Je laisse la porte entrouverte. Comme ça, il y a un peu de lumière.'],
   ]);
   await mina(d, ['T\'as entendu ?', '…Y a personne, pourtant.'], 'surprised');
+  // T6: Noa coughs. The narrator has an ordinary reason ready.
+  d.sfx('cough', { vol: 0.6 });
+  await d.wait(20);
+  await d.say('Tu tousses. La poussière de papier, sûrement.');
+  await mina(d, 'Mets ta main devant ta bouche ! C\'est la règle, ici.', 'angry');
 };
 
 export const heardMaman: Script = async (d) => {
@@ -605,6 +785,7 @@ export const heardMaman: Script = async (d) => {
     ['mamantel', 'Il ne veut pas venir… Il dit qu\'il a des devoirs. Il dit qu\'il viendra demain.'],
     ['mamantel', 'Il dit ça tous les jours.'],
     ['mamantel', '…Je sais. Je sais qu\'il a peur. Moi aussi, j\'ai peur.'],
+    ['mamantel', 'Il croit que c\'est lui. Je n\'arrive pas à lui dire que non.'],
   ]);
   await mina(d, 'C\'était… la voix de Maman ?', 'sad');
   await d.say('…', 'noa:sad');
@@ -688,7 +869,8 @@ export const door304: Script = async (d) => {
   fx.glitch = 0.45;
   d.glitch(60);
   d.shake(4, 50);
-  await d.say('{glitch}Noa, je voulais juste te dire que je t{/glitch}', 'mina:glitch', { auto: 1, noSkip: true });
+  // Cut where the little girl in the hat finishes it, in chapter 6 (« …que je savais. », T9 § 2.10).
+  await d.say('{glitch}Noa, je voulais juste te dire que je s{/glitch}', 'mina:glitch', { auto: 1, noSkip: true });
   await d.crash(
     [
       'ERREUR : souvenir_mina introuvable',
@@ -734,7 +916,12 @@ export const room304Bed: Script = async (d) => {
 };
 
 export const room304Window: Script = async (d) => {
-  await d.say(['La fenêtre. Des rideaux verts. La pluie sur la vitre.', 'Tu connais cette fenêtre. Tu l\'as déjà vue, en haut de la Colline aux Couvertures.', 'Une petite main posée contre la vitre, pour attraper les lumières de la ville.']);
+  if (bump('c3_fenetre304') === 0) {
+    await d.say(['La fenêtre. Des rideaux verts. La pluie sur la vitre.', 'Tu connais cette fenêtre. Tu l\'as déjà vue, en haut de la Colline aux Couvertures.', 'Une petite main posée contre la vitre, pour attraper les lumières de la ville.']);
+    return;
+  }
+  // T9: a drawing in the mist, at a child's height.
+  await d.say(['En bas, la vitre est embuée. À hauteur d\'enfant.', 'Quelqu\'un y a dessiné du bout du doigt : un rond, et deux oreilles pointues.', 'Un mouton. Ou un bonnet. C\'est difficile à dire.']);
 };
 
 export const room304Drawing1: Script = async (d) => {
@@ -821,79 +1008,58 @@ async function dodoReveal(d: Director): Promise<void> {
   if (G.meta.tabLeaves > 0) await d.say(['Tu es déjà parti tout à l\'heure. Je l\'ai senti.', 'Ne recommence pas.'], 'dododark:creepy');
   if (isLateNight()) await d.say('Il est {time}. Toi aussi, tu devrais dormir.', 'dodo:neutral');
   await d.say('…', 'noa:sad');
+  // Far too kind (T1): the way out he offers is his.
+  await d.say(['Oh, ne fais pas cette tête.', 'Je ne retiens personne, moi.', 'Tu vois ? Tu peux partir quand tu veux.'], 'dodo:happy');
   await d.say(['Viens. Je vais te bercer.', 'Jusqu\'à ce que tu oublies.'], 'dodo:happy');
   await finalBattle(d);
 }
 
 // ---------------------------------------------------------------------------
-// FINAL BATTLE — Dodo
+// The battle against Dodo — the short version (version 2: docs/HISTOIRE.md § 2.2 T1, § 3.8)
 // ---------------------------------------------------------------------------
 
-type FinalOutcome = 'aube' | 'beaux_reves' | 'silence';
+/*
+ * Phase 1 (the sheep, the lullaby) and phase 2 (the menu turns into DORMIR one button at a time) are those of
+ * version 1.1. In phase 2 the notebook holds Dodo's words and a single word in Noa's own handwriting, the one he said
+ * in room 304: « pardon ». Written three times, it cracks Dodo — on the surface only — and he gives in far too easily:
+ * « D'accord. Tu l'as dit. C'est fini. Réveille-toi. » Then [Se réveiller] / [Rester]: both lead to the false dawn
+ * (fausse-aube.ts, through wakeUp(3)); fa_reste remembers the second one. Sleeping until the dark is full offers
+ * [Rester] as well. On the route of the ink the battle plays the same way: only Dodo's answers change.
+ */
+
+/** How the battle against Dodo ends: eyes open, or staying with him. Both lead to the false dawn. */
+type FinalOutcome = 'reveil' | 'reste';
 
 interface FinalState {
-  phase: 1 | 2 | 3;
+  phase: 1 | 2;
   silence: boolean;
   /** 0..MAX_SLEEP: the screen darkens, the music slows. */
   sleep: number;
   /** Phase-2 turns started (the menu turns into DORMIR one button at a time). */
   p2: number;
-  p3: number;
   dodoWords: number;
+  /** « pardon » written (Dodo gives in at PARDONS). */
+  pardons: number;
   hits: number;
   falls: number;
-  /** Mina's words already written. */
-  written: string[];
   outcome: FinalOutcome | null;
   tabLeaves: number;
   cracks: Array<Array<[number, number]>>;
   t: number;
-  /** Mina's words drowned in the player's own ink (mixed route), by original text. */
-  drowned: string[];
-  /** Drowned words written anyway (Dodo's cutting lines cycle). */
-  inkTries: number;
-  /** Spared friends still to come in phase 3 (species ids, in order of appearance). */
-  friends: string[];
-  friendVisits: number;
-  /** Friends drawn around Dodo (fading in and out). */
-  stage: StageFriend[];
-  /** Words shown in the notebook (blots are drawn over the drowned ones). */
-  nbWords: WordDef[];
-  /** A word of the notebook is being written (the list is hidden). */
-  nbWriting: boolean;
-  /** A friend's gift: the whole next dodge takes the soul's color (frames left, longer than any attack). */
-  recolorNext: number;
-  recolorLeft: number;
-  recolorEmo: Emotion;
-  recolorBy: StageFriend | null;
-  wasDodge: boolean;
-  /** Per-frame hook registered in game.hooks for the battle's duration. */
-  tick: (() => void) | null;
-}
-
-interface StageFriend {
-  sprite: string;
-  x: number;
-  y: number;
-  scale: number;
-  born: number;
-  gone: number | null;
 }
 
 const MAX_SLEEP = 0.62;
-/** Number of Mina's words needed before ÉPARGNER becomes SE RÉVEILLER. */
-const WAKE_AT = 4;
+/** « pardon » written this many times: Dodo gives in. */
+const PARDONS = 3;
 const LABELS = ['FRAPPER', 'ÉCRIRE', 'OBJET', 'ÉPARGNER'];
 const P2_ORDER = [0, 2, 3];
-
-/** Mina's words drowned in ink (silence route). */
-const INK_WORDS: WordDef[] = ['#%@&#', '&#%*', '@#&%#@#', '%#@& &#%', '#&@%#&', '*#%@#'].map((text) => ({ text, emotion: 'neutre' }));
+/** Noa's only word in the notebook: the one of room 304, in his own handwriting. */
+const PARDON: WordDef = { text: 'pardon', emotion: 'tristesse', power: 2 };
 
 const TALK: Record<string, string[]> = {
   p1: ['Un mouton… deux moutons…', 'Chut. Personne ne se dispute, ici.', 'Tu es fatigué. Je le sais.', 'Tu te souviens de ma voix ?'],
   p2: ['Dors.', 'Reste avec moi, {player}.', 'Tant que tu joues, elle existe.', 'Pourquoi se réveiller ?', 'Il fait si chaud, sous la couette.'],
-  p3: ['Arrête… ces mots-là…', 'Ce n\'est pas ton écriture !', 'Si tu te réveilles, tu la perds.', 'Je voulais juste que tu n\'aies plus mal.', 'Elle n\'est plus là. ELLE N\'EST PLUS LÀ.'],
-  ready: ['…', 'Tu es sûr ?', 'Il fera froid, dehors.'],
+  fissure: ['…', 'Ce mot-là ne sert à rien, ici.', 'Dors, plutôt.', 'Tu l\'as déjà dit. Elle ne l\'a pas entendu.'],
   silence: ['Dors.', 'Il n\'y a plus rien.', 'Plus personne.'],
 };
 
@@ -904,224 +1070,28 @@ const DODO_WORD_LINES: Record<string, string> = {
   reste: 'Je reste. Toujours.',
   oublie: 'On oublie tout, ici. Même ce qui fait mal.',
   chut: 'Chuuut…',
+  demain: 'Demain. Ici, c\'est toujours demain. Il ne vient jamais.',
   encore: 'Encore. Et encore. Et encore.',
   dodo: 'C\'est moi. Je suis là.',
 };
 
-/** Dodo cracks, Mina whispers: one pair per word. */
-const MINA_PAIRS: Record<string, [string, string[]]> = {
-  merci: ['Merci ? Pourquoi merci ?', ['Merci pour les histoires, le soir. Au téléphone.', 'Même quand t\'avais plus envie.']],
-  pardon: ['Arrête. Ici, tu n\'as rien fait de mal.', ['Je sais, Noa. Je sais.', 'Je t\'en ai jamais voulu. Gros bêta.']],
-  'au revoir': ['Non. Pas au revoir. Bonne nuit.', ['Au revoir, c\'est pas un mot triste.', 'C\'est un mot pour ceux qui restent.']],
-  'je t\'aime': ['Elle disait ça. Le soir. Avant d\'éteindre.', ['Moi aussi.', 'Gros comme le Pays de Coton. Plus gros, même.']],
-  lumière: ['Éteins ça. ÉTEINS ÇA.', ['Allume la lumière, Noa.', 'T\'as plus besoin d\'avoir peur du noir.']],
-  matin: ['Le matin, tout s\'en va. TOUT.', ['Il fait bientôt jour.', 'Regarde par la fenêtre. Le ciel devient tout pâle.']],
-};
-
-// --- The weight of the ink (mixed route) -------------------------------------------------------------------------
-
-/** Mina's words drowned first by the player's ink: the core of the goodbye (pardon, au revoir, je t'aime, matin) stays. */
-const DROWN_ORDER = ['merci', 'lumière'];
-
-/** Number of Mina's words drowned in ink: one per 3 Encre, always leaving WAKE_AT readable words (the dawn stays possible). */
-export function drownedCount(encre: number): number {
-  return Math.max(0, Math.min(Math.floor(encre / 3), MINA_WORDS.length - WAKE_AT, DROWN_ORDER.length));
-}
-
-/** The illegible blot that replaces a drowned word in the notebook (same length, so it takes the word's place). */
-const blot = (text: string): string => [...text].map((c, i) => (c === ' ' ? ' ' : i % 3 === 1 ? '█' : '▓')).join('');
-/** The blot of a drowned word, as long as the word shown in the current language. */
-const inkOf = (t: string): WordDef => ({ text: blot(tr(t)), emotion: 'neutre' as Emotion });
-const isBlot = (text: string): boolean => text.length > 0 && /^[▓█ ]+$/.test(text);
-
-/** Dodo, when a drowned word is written anyway. */
-const INK_CUTS = [
-  'Tu ne peux pas lire ça, hein ? C\'est ton encre.',
-  'Je t\'avais dit que ça partait au lavage. J\'ai menti.',
-  'Elle voulait te le dire. Toi, tu frappais.',
-  'Ceux que tu as effacés aussi avaient des choses à dire.',
-];
-
-/** …and where Mina's voice should have answered, nothing. */
-const INK_SILENCES = [
-  '* Tu écris sur la tache. L\'encre boit les lettres.\n* Tu attends la voix de Mina. Elle ne vient pas.',
-  '* La tache s\'étale encore un peu.\n* Là où elle aurait dû parler, il n\'y a que du silence.',
-];
-
-// --- Spared friends come to help (phase 3) -------------------------------------------------------------------------
-
-type FriendGift = 'crack' | 'recolor' | 'heal' | 'placard' | 'gomme';
-
-interface Friend {
-  /** Species id (G.state.spares). */
-  id: string;
-  sprite: string;
-  name: string;
-  /** Rich-text color code of the name. */
-  col: string;
-  voice: string;
-  line: string;
-  gift: FriendGift;
-  /** Narration of the gift. {n} = HP healed. */
-  act: string;
-  /** Spared bosses: a narration box before they speak. */
-  intro?: string;
-  boss?: boolean;
-  scale?: number;
-  /** Feet on the stage (lower = higher on screen; fliers float). */
-  y?: number;
-}
-
-/** In order of appearance: the small ones first, then the spared bosses, who get the strongest moments. */
-const FRIENDS: Friend[] = [
-  { id: 'gribouille', sprite: 'b_gribouille', name: 'Gribouille', col: 'v', voice: 'default', line: 'Scritch ! On gribouille ensemble ?', gift: 'crack', act: '* Il gribouille un trait de lumière sur Dodo.' },
-  { id: 'pissenlit', sprite: 'b_pissenlit', name: 'Pissenlit', col: 'y', voice: 'default', line: 'Hi hi ! Fais un vœu ! Un gros !', gift: 'recolor', act: '* Ses graines se posent sur ton cœur.\n* La prochaine attaque aura ta couleur.' },
-  { id: 'nuage', sprite: 'b_nuage', name: 'Nuage Triste', col: 'b', voice: 'default', line: 'J\'ai gardé un peu de pluie. De la tiède.', gift: 'heal', act: '* Une petite averse tiède. Tu récupères {n} PV.' },
-  { id: 'chaussette_perdue', sprite: 'b_chaussette_perdue', name: 'Chaussette Perdue', col: 'p', voice: 'sock', line: 'J\'ai retrouvé ma paire. Ça arrive, tu vois ?', gift: 'heal', act: '* Elle réchauffe ton cœur. Tu récupères {n} PV.' },
-  { id: 'mouton_noir', sprite: 'b_mouton_noir', name: 'Mouton Noir', col: 'v', voice: 'sheep', line: 'Hé, le gros. Moi aussi, j\'étais tout noir.', gift: 'crack', act: '* Il fonce tête baissée. BONK ! Dodo se fissure.' },
-  { id: 'avion', sprite: 'b_avion', name: 'Avion en Papier', col: 'b', voice: 'default', line: 'Vrrrr ! Courrier ! De la part de tout le monde !', gift: 'recolor', act: '* Il fait des loopings autour de ton cœur.\n* La prochaine attaque aura ta couleur.' },
-  { id: 'taille_crayon', sprite: 'b_taille_crayon', name: 'Taille-Crayon', col: 'r', voice: 'monster', line: 'Donne ton crayon. Crrr… Voilà. Bien pointu.', gift: 'crack', act: '* Ton crayon brille. Un trait de lumière fend Dodo.' },
-  { id: 'bip', sprite: 'b_bip', name: 'Bip', col: 'o', voice: 'tv', line: 'Bip. Bip. Bip. Tu entends ? C\'est le tien.', gift: 'heal', act: '* Ton cœur bat plus fort. Tu récupères {n} PV.' },
-  { id: 'perfusion', sprite: 'b_perfusion', name: 'Perfusion', col: 'p', voice: 'default', line: 'Goutte à goutte… Doucement. Ça va aller.', gift: 'heal', act: '* Une goutte de lumière. Tu récupères {n} PV.' },
-  { id: 'luciole', sprite: 'b_luciole_2', name: 'Luciole', col: 'y', voice: 'default', line: 'Je brille encore. C\'est toi qui m\'as rallumée.', gift: 'crack', act: '* Elle se pose sur Dodo.\n* Là où elle brille, la laine se fend.', y: 64 },
-  { id: 'placard', sprite: 'b_placard', name: 'Monstre du Placard', col: 'y', voice: 'monster', line: 'Le noir, je connais, petit. J\'y ai vécu toute ma vie.\nEt je te le dis : il ne faut pas y rester.', gift: 'placard', act: '* Il ouvre grand ses portes.\n* Toute sa lumière se déverse sur Dodo.\n* Tu récupères tous tes PV.', intro: '* Au bord du vide, une armoire s\'ouvre en grinçant.\n* Le Monstre du Placard !', boss: true },
-  { id: 'gomme', sprite: 'b_gomme', name: 'Gomme', col: 'p', voice: 'eraser', line: 'Tu m\'as appris à garder. Même ce qui fait mal.\nAlors je garde. Et j\'efface juste ce qu\'il faut.', gift: 'gomme', act: '* Frrrt, frrrt. Elle efface la laine noire.\n* Dessous, il n\'y a que de la lumière.', intro: '* Une petite gomme rose roule jusqu\'à tes pieds.\n* Gomme !', boss: true },
-];
-const FRIEND = (id: string): Friend | undefined => FRIENDS.find((f) => f.id === id);
-/** Where friends stand around Dodo (bottom-center anchor). */
-const STAGE_X = [62, 258, 98, 222, 30, 290];
-
-/** Spared friends, in order of appearance. With drowned words, Gomme comes first: she knows how to erase ink. */
-export function friendQueue(spares: Record<string, number>, drowned: number): string[] {
-  const ids = FRIENDS.filter((f) => (spares[f.id] ?? 0) > 0).map((f) => f.id);
-  if (drowned > 0 && ids.includes('gomme')) return ['gomme', ...ids.filter((id) => id !== 'gomme')];
-  return ids;
-}
-
-/**
- * The next visit: a spared boss alone, or a small group, sized so that every boss still gets its own turn before
- * Dodo turns back into a plush (`slots` = visits left until then, this one included).
- */
-export function nextVisit(queue: string[], slots: number): string[] {
-  if (!queue.length) return [];
-  const bosses = queue.filter((id) => FRIEND(id)?.boss);
-  const small = queue.filter((id) => !FRIEND(id)?.boss);
-  if (FRIEND(queue[0]!)?.boss || !small.length || (bosses.length && slots <= bosses.length)) return [bosses[0] ?? queue[0]!];
-  const size = Math.min(3, Math.ceil(small.length / Math.max(1, slots - bosses.length)));
-  return small.slice(0, size);
-}
-
-/** « A, B et C ». */
-function listNames(names: string[]): string {
-  return names.length < 2 ? (names[0] ?? '') : tf('{0} et {1}.', names.slice(0, -1).join(', '), names[names.length - 1]!);
-}
-
-/** Word-wraps a list to the battle text box (first line prefixed with `head`, the next ones indented with `tail`). */
-function wrapList(text: string, head: string, tail: string, width = 274): string[] {
-  const out: string[] = [];
-  let line = head;
-  for (const word of text.split(' ')) {
-    const next = line === head || line === tail ? `${line}${word}` : `${line} ${word}`;
-    if (measure(next) > width && line !== head && line !== tail) {
-      out.push(line);
-      line = `${tail}${word}`;
-    } else line = next;
-  }
-  out.push(line);
-  return out;
-}
-
-function makeCrack(): Array<[number, number]> {
-  let x = rng.range(-20, 20);
-  let y = rng.range(-50, -18);
-  const pts: Array<[number, number]> = [[x, y]];
-  for (let i = 0; i < 6; i++) {
-    x += rng.range(-6, 6);
-    y += rng.range(-5, 6);
-    pts.push([x, y]);
-  }
-  return pts;
-}
-
-/** A filled pixel disc (halos). */
-function disc(g: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
-  for (let dy = -r; dy <= r; dy++) {
-    const w = Math.round(Math.sqrt(r * r - dy * dy));
-    g.fillRect(cx - w, cy + dy, w * 2, 1);
-  }
-}
-
-/** An ink blot over a drowned word of the notebook (x, y: where the word is written; w: its width). */
-function drawBlot(g: CanvasRenderingContext2D, x: number, y: number, w: number, t: number, seed: number): void {
-  g.fillStyle = '#0b0710';
-  // A lumpy puddle: overlapping discs along the word.
-  const n = Math.max(2, Math.round(w / 6));
-  for (let i = 0; i <= n; i++) {
-    const r = 4 + ((seed + i * 3) % 3 === 0 ? 2 : 1);
-    disc(g, Math.round(x + (w * i) / n), y + 4 + (((seed + i) % 2) * 2 - 1), r);
-  }
-  g.fillRect(x - 2, y - 1, w + 4, 10);
-  // Splashes
-  g.fillRect(x - 8, y + 6, 2, 2);
-  g.fillRect(x + w + 7, y, 2, 2);
-  g.fillRect(x + w + 6, y + 9, 1, 1);
-  // One slow drip
-  const dx = x + Math.round(w * (0.35 + (seed % 3) * 0.15));
-  const len = 2 + ((Math.floor(t / 10) + seed * 4) % 8);
-  g.fillRect(dx, y + 9, 2, len);
-  disc(g, dx + 1, y + 9 + len, 2);
-  // A dull sheen
-  g.fillStyle = '#3a2f52';
-  g.fillRect(x + 1, y, Math.max(3, Math.round(w / 3)), 1);
-  g.fillRect(x, y + 1, 1, 2);
-}
-
-/** Spared friends around Dodo: they fade in with a soft halo, bob, and fade out. */
-function drawStage(g: CanvasRenderingContext2D, s: FinalState): void {
-  s.stage = s.stage.filter((f) => f.gone === null || s.t - f.gone < 30);
-  for (const f of s.stage) {
-    if (!hasSpr(f.sprite)) continue;
-    const k = Math.min(1, (s.t - f.born) / 20);
-    const a = k * (f.gone === null ? 1 : Math.max(0, 1 - (s.t - f.gone) / 30));
-    if (a <= 0) continue;
-    const bob = Math.round(Math.sin((s.t + f.x) * 0.06) * 1.5);
-    const y = f.y + bob + Math.round((1 - k) * 6);
-    const sp = spr(f.sprite);
-    const cy = Math.round(y - (sp.ay * f.scale) / 2);
-    g.globalCompositeOperation = 'lighter';
-    g.fillStyle = '#ffd27a';
-    for (const [r, al] of [[22, 0.05], [17, 0.06], [12, 0.08], [7, 0.1]] as const) {
-      g.globalAlpha = al * a;
-      disc(g, f.x, cy, r);
-    }
-    g.globalAlpha = 1;
-    g.globalCompositeOperation = 'source-over';
-    const key = hasSpr(`${f.sprite}_2`) && Math.floor((s.t + f.x) / 24) % 2 === 1 ? `${f.sprite}_2` : f.sprite;
-    drawSprite(g, spr(key), f.x, y, { alpha: a, scaleX: f.scale, scaleY: f.scale });
-  }
-  g.globalAlpha = 1;
-}
+/** Phase 2: five of Dodo's words (« dors, reste, oublie, demain, chut »), and Noa's « pardon » last. */
+const P2_WORDS: WordDef[] = [...DODO_WORDS.filter((w) => w.text !== 'dodo').slice(0, 5), PARDON];
 
 function drawFinalOverlay(g: CanvasRenderingContext2D, b: Battle, s: FinalState): void {
   s.t++;
   const e = b.enemies[0];
-  // Light leaking through the cracks of the dark Dodo.
-  if (e && s.phase === 3 && !s.silence && e.def.sprite === 'b_dodo_dark' && !e.hidden && b.mode !== 'notebook') {
-    const pulse = 0.65 + 0.35 * Math.sin(s.t * 0.12);
+  // « pardon »: thin cracks on the surface of the black wool. No light comes through: they do not go deep.
+  if (e && s.cracks.length && e.def.sprite === 'b_dodo_dark' && !e.hidden && b.mode !== 'notebook') {
     for (const c of s.cracks) {
       for (let i = 0; i + 1 < c.length; i++) {
         const [x0, y0] = c[i]!;
         const [x1, y1] = c[i + 1]!;
         const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0)));
         for (let k = 0; k <= n; k++) {
-          const px = Math.round(e.x + x0 + ((x1 - x0) * k) / n);
-          const py = Math.round(e.y + y0 + ((y1 - y0) * k) / n);
-          g.globalAlpha = 0.35 * pulse;
-          g.fillStyle = '#ffe991';
-          g.fillRect(px - 1, py - 1, 3, 3);
-          g.globalAlpha = 1;
-          g.fillStyle = '#fff3cf';
-          g.fillRect(px, py, 1, 1);
+          g.globalAlpha = 0.55;
+          g.fillStyle = '#d8cfe0';
+          g.fillRect(Math.round(e.x + x0 + ((x1 - x0) * k) / n), Math.round(e.y + y0 + ((y1 - y0) * k) / n), 1, 1);
         }
       }
     }
@@ -1135,62 +1105,20 @@ function drawFinalOverlay(g: CanvasRenderingContext2D, b: Battle, s: FinalState)
     g.fillStyle = `rgba(5,2,10,${(s.sleep * 0.45).toFixed(3)})`;
     g.fillRect(0, 154, W, H - 154);
   }
-  // Dawn: a warm light grows with Mina's words.
-  if (s.phase === 3 && !s.silence && s.written.length) {
-    g.fillStyle = `rgba(255,214,150,${Math.min(0.16, s.written.length * 0.028).toFixed(3)})`;
-    g.fillRect(0, 0, W, H);
-  }
-  // Spared friends, glowing through the dark.
-  if (s.stage.length && b.mode !== 'notebook') drawStage(g, s);
-  // The notebook's handwriting.
-  if (b.mode === 'notebook') {
+  // The notebook: Dodo's words fill the page, Noa's one word sits at the bottom.
+  if (b.mode === 'notebook' && s.phase === 2) {
     const x = 44;
     const y = 10;
     const w = 232;
     const h = 128;
-    if (s.phase === 2) {
-      g.fillStyle = '#fff6e0';
-      g.fillRect(x + 22, y + h - 15, w - 26, 12);
-      drawText(g, tr('dors · dors · dors · dors · dors'), x + 24, y + h - 13, { color: '#9a7bd0' });
-    } else if (s.phase === 3 && !s.silence) {
-      g.fillStyle = '#fff6e0';
-      g.fillRect(x + 22, y + h - 15, w - 26, 12);
-      drawText(g, tr('Écris avec moi. — Mina ♥'), x + 24, y + h - 13, { color: '#e0834f' });
-      // Mina's words drowned in the player's ink.
-      if (!s.nbWriting) {
-        s.nbWords.forEach((wd, i) => {
-          if (isBlot(wd.text)) drawBlot(g, x + 34 + (i % 2) * 100, y + 51 + Math.floor(i / 2) * 25, measure(wd.text), s.t, i);
-        });
-      }
-      // A tiny paper crown in the margin.
-      g.fillStyle = '#f5c04f';
-      g.fillRect(x + 5, y + h - 22, 9, 3);
-      g.fillRect(x + 5, y + h - 25, 1, 3);
-      g.fillRect(x + 9, y + h - 26, 1, 4);
-      g.fillRect(x + 13, y + h - 25, 1, 3);
-    } else if (s.phase === 3 && s.silence) {
-      // Ink running down the page.
-      g.fillStyle = '#0b0710';
-      for (let i = 0; i < 11; i++) {
-        const dx = x + 22 + i * 19 + ((i * 7) % 5);
-        const len = 18 + ((i * 37 + Math.floor(s.t / 4)) % 70);
-        g.fillRect(dx, y, 3 + (i % 2), Math.min(h - 4, len));
-        g.fillRect(dx - 1, y + Math.min(h - 6, len) - 2, 5 + (i % 2), 4);
-      }
-    }
+    g.fillStyle = '#fff6e0';
+    g.fillRect(x + 22, y + h - 15, w - 26, 12);
+    drawText(g, tr('dors · dors · dors · dors · dors'), x + 24, y + h - 13, { color: '#9a7bd0' });
   }
 }
 
-/** Removes the final battle's per-frame hook. */
-function unhook(s: FinalState): void {
-  if (!s.tick) return;
-  const i = game.hooks.indexOf(s.tick);
-  if (i >= 0) game.hooks.splice(i, 1);
-  s.tick = null;
-}
-
-/** `from`: 3 starts the battle directly in phase 3 (debug scripts). */
-function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
+/** `from`: 2 starts the battle directly in phase 2 (debug scripts). */
+function finalHooks(s: FinalState, from: 1 | 2 = 1): Partial<BattleHooks> {
   const dodo = (b: Battle) => b.enemies[0]!;
   const muffle = () => {
     audio.setMuffle(1 - s.sleep * 1.1, 0.8);
@@ -1216,7 +1144,7 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
     await b.say('* Dodo grandit. Sa laine devient noire comme l\'encre.\n* Il prend toute la place.');
   }
 
-  /** Dodo's dark form (phase 2 onwards). */
+  /** Dodo's dark form (phase 2). */
   function darken(b: Battle): void {
     const e = dodo(b);
     e.def = {
@@ -1230,218 +1158,6 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
     s.phase = 2;
   }
 
-  async function toPhase3(b: Battle): Promise<void> {
-    const e = dodo(b);
-    s.phase = 3;
-    await b.say('* Le carnet s\'ouvre tout seul.\n* La page est pleine de « dors », de « reste », d\'« oublie ».');
-    await b.say('* Tu tournes la page.');
-    if (s.silence) {
-      e.def = { ...e.def, atk: 4, flavor: ['* L\'encre monte. Elle n\'a plus de fond.', '* Il n\'y a plus de couleurs.', '* Le silence est très grand.'] };
-      await b.say('* Sur la page suivante, il y avait des mots.\n* Ils sont noyés d\'encre. Tu ne peux plus les lire.');
-      await b.bubble([{ e, text: 'Tu cherches quelqu\'un ?' }]);
-      return;
-    }
-    e.def = {
-      ...e.def,
-      atk: 4,
-      check: 'Il a peur que tu partes. Les mots de Mina le fissurent.',
-      flavor: ['* Des fissures de lumière courent sur la laine noire.', '* Le carnet est tiède, comme une main.', '* Tu entends des feutres sur du papier.', '* Quelque part, quelqu\'un fredonne la berceuse. Juste.'],
-    };
-    // The weight of the ink: some of Mina's words are drowned (never so many that the dawn becomes unreachable).
-    s.drowned = DROWN_ORDER.slice(0, drownedCount(G.state.encre));
-    s.friends = friendQueue(G.state.spares, s.drowned.length);
-    await b.say('* Ce n\'est pas ton écriture.\n* Des lettres rondes, maladroites. Des cœurs sur les i.');
-    audio.playMusic('title', { fadeIn: 3, fadeOut: 2 });
-    s.sleep = Math.max(0, s.sleep - 0.2);
-    muffle();
-    await director.say(['Noa ?', 'C\'est moi. Je suis là. Dans les mots.'], 'minavoix');
-    if (s.drowned.length) {
-      director.sfx('glitch', { vol: 0.5 });
-      await b.say(
-        s.drowned.length > 1
-          ? "* Mais sur la page, deux mots sont noyés d'encre.\n* Tu reconnais cette encre. C'est la tienne."
-          : "* Mais sur la page, un mot est noyé d'encre.\n* Tu reconnais cette encre. C'est la tienne.",
-      );
-      await director.say(['Y a des mots que j\'arrive plus à dire, Noa. C\'est tout taché.', 'Mais les autres sont encore là. Écris avec moi.'], 'minavoix');
-    } else {
-      await director.say(['Écris avec moi.', 'On a encore des choses à se dire.'], 'minavoix');
-    }
-  }
-
-  // --- Ink and friends (phase 3) ---
-
-  /** A drowned word written anyway: Dodo cuts, and where Mina should have answered, nothing. */
-  async function inkWritten(b: Battle, e: EnemyRuntime): Promise<void> {
-    const i = s.inkTries++;
-    director.sfx('glitch', { pitch: 0.6, vol: 0.5 });
-    fx.flash('#0b0710', 16, 0.5);
-    s.sleep = Math.min(MAX_SLEEP, s.sleep + 0.06);
-    muffle();
-    await b.bubble([{ e, text: INK_CUTS[i % INK_CUTS.length]! }]);
-    await b.say(INK_SILENCES[Math.min(i, INK_SILENCES.length - 1)]!);
-    if (s.sleep >= MAX_SLEEP - 0.001) await offerStay(b);
-  }
-
-  const healFor = (b: Battle): number => Math.max(4, Math.round(b.maxHp * 0.25));
-
-  /** Heals and returns the (translated) narration with the HP actually healed (the {n} sentence is dropped at full HP). */
-  function healText(b: Battle, n: number, text: string): string {
-    const before = b.hp;
-    b.heal(n);
-    const got = b.hp - before;
-    const t = tr(text);
-    return translated(got > 0 ? t.replace('{n}', String(got)) : t.replace(/ [^.!?\n]*\{n\}[^.!?\n]*\./, ''));
-  }
-
-  function onStage(f: Friend, slot: number): StageFriend {
-    const sf: StageFriend = { sprite: f.sprite, x: STAGE_X[slot % STAGE_X.length]!, y: f.y ?? 80, scale: f.scale ?? (f.boss ? 0.8 : 0.7), born: s.t, gone: null };
-    s.stage.push(sf);
-    return sf;
-  }
-
-  const leave = (sf: StageFriend | null): void => {
-    if (sf && sf.gone === null) sf.gone = s.t;
-  };
-
-  /** Light cracks the dark Dodo (false if he is already a plush again). */
-  function lightCrack(b: Battle, n: number): boolean {
-    const e = dodo(b);
-    if (e.def.sprite !== 'b_dodo_dark') return false;
-    for (let i = 0; i < n; i++) s.cracks.push(makeCrack());
-    e.shake = 24 + n * 8;
-    e.flash = 8;
-    fx.shake(2, 12 + n * 4);
-    director.sfx('shatter', { pitch: 1.3, vol: 0.6 });
-    s.sleep = Math.max(0, s.sleep - 0.06 * n);
-    muffle();
-    return true;
-  }
-
-  /** A friend's gift; returns its narration (translated). */
-  function gift(b: Battle, f: Friend, sf: StageFriend): string {
-    const fallback = '* La nuit s\'éclaire un peu autour de toi. Tu récupères {n} PV.';
-    if (f.gift === 'heal') return healText(b, healFor(b), f.act);
-    if (f.gift === 'crack') return lightCrack(b, 1) ? tr(f.act) : healText(b, healFor(b), fallback);
-    if (f.gift === 'recolor') {
-      // Pointless once Dodo is calm (his last attacks are harmless): then a little light instead.
-      if (s.written.length >= WAKE_AT) return healText(b, healFor(b), fallback);
-      s.recolorNext = 900;
-      leave(s.recolorBy);
-      s.recolorBy = sf;
-      return tr(f.act);
-    }
-    if (f.gift === 'placard') {
-      lightCrack(b, 3);
-      fx.flash('#fff3cf', 36, 0.85);
-      director.sfx('door', { pitch: 0.7 });
-      s.sleep = 0;
-      muffle();
-      b.heal(b.maxHp);
-      return tr(f.act);
-    }
-    // Gomme: she erases the player's ink first.
-    const word = s.drowned.shift();
-    if (word) {
-      lightCrack(b, 1);
-      fx.flash('#fff6e0', 24, 0.6);
-      director.sfx('chime', { pitch: 1.2 });
-      return tf("* Frrrt, frrrt. Elle frotte la tache d'encre.\n* De toutes ses forces.\n* Dessous, un mot revient : « {0} ».", tr(word));
-    }
-    return lightCrack(b, 2) ? tr(f.act) : healText(b, healFor(b), fallback);
-  }
-
-  /** One visit of spared friends (at most one appearance each), at the start of a phase-3 turn. */
-  async function visit(b: Battle): Promise<void> {
-    // Visits left while Dodo is still dark (one word per turn), this one included: the bosses must come before.
-    const slots = Math.max(0, WAKE_AT - s.written.length);
-    const ids = nextVisit(s.friends, slots);
-    if (!ids.length) return;
-    s.friends = s.friends.filter((id) => !ids.includes(id));
-    const e = dodo(b);
-    const k = s.friendVisits++;
-    if (k === 0) {
-      await b.bubble([{ e, text: 'Qui les a laissés entrer ?' }]);
-      await b.say('* Au bord de la page, quelque chose bouge.\n* Ceux que tu as épargnés ne t\'ont pas oublié.');
-    }
-    const shown: StageFriend[] = [];
-    for (const [i, id] of ids.entries()) {
-      const f = FRIEND(id)!;
-      const sf = onStage(f, i === 0 ? k % 2 : i === 1 ? (k + 1) % 2 : 2 + (k % 2));
-      shown.push(sf);
-      director.sfx('chime', { pitch: 0.9 + i * 0.15, vol: 0.5 });
-      await game.wait(18);
-      if (f.intro) await b.say(f.intro);
-      const name = `{c:${f.col}}${tf('{0} :', tr(f.name))}{/c} `;
-      if (f.boss) {
-        await b.say(translated(`${name}${tr(f.line)}`), false, true, f.voice);
-        const erased = f.gift === 'gomme' && s.drowned.length > 0;
-        await b.say(gift(b, f, sf));
-        const cry = f.gift === 'placard' ? 'Fermez ça ! FERMEZ ÇA !' : erased ? 'Non ! Cette encre, il l\'a méritée !' : 'Non ! Ça, c\'était à moi !';
-        await b.bubble([{ e, text: cry }]);
-      } else {
-        const act = gift(b, f, sf);
-        await b.say(translated(`${name}${tr(f.line)}\n${act}`), false, true, f.voice);
-      }
-    }
-    for (const sf of shown) if (sf !== s.recolorBy) leave(sf);
-  }
-
-  /** Waking up: the spared friends who have not come yet wave goodbye, all together. */
-  async function chorus(b: Battle): Promise<void> {
-    const fs = s.friends.map(FRIEND).filter((f): f is Friend => !!f);
-    s.friends = [];
-    if (!fs.length) return;
-    fs.forEach((f, i) => onStage(f, i));
-    director.sfx('chime', { pitch: 1.1 });
-    if (fs.length === 1) {
-      await b.say(tf('* {0} est encore là, derrière toi.\n* Un petit signe. Bonne route, Noa.', tr(fs[0]!.name)));
-      return;
-    }
-    const names = wrapList(listNames(fs.map((f) => tr(f.name))), '* ', '  ');
-    const head = tr('* Derrière toi, il y a encore du monde :');
-    const bye = tr('* Ils te font signe. Bonne route, Noa.');
-    if (names.length <= 2) await b.say(translated([head, ...names, bye].join('\n')));
-    else {
-      await b.say(translated([head, ...names].join('\n')));
-      await b.say(bye);
-    }
-  }
-
-  /** Every frame: notebook state (blots) and the friends' recoloring of the next dodge. */
-  function frame(b: Battle): void {
-    if (b.ended) {
-      unhook(s);
-      return;
-    }
-    if (b.mode !== 'notebook') s.nbWriting = false;
-    else if (input.pressed('a')) s.nbWriting = true;
-    const dodge = b.mode === 'dodge';
-    if (dodge && !s.wasDodge && s.recolorNext > 0) {
-      // The gift colors the heart too, if it has no color: white projectiles never pass through.
-      if (b.soulEmo === 'neutre') b.setEmotion('joie');
-      s.recolorEmo = b.soulEmo;
-      s.recolorLeft = s.recolorNext;
-      s.recolorNext = 0;
-    }
-    if (!dodge && s.wasDodge) s.recolorLeft = 0;
-    s.wasDodge = dodge;
-    if (dodge && s.recolorLeft > 0) {
-      for (const p of b.bw.bullets) {
-        if (p.emo !== s.recolorEmo && !p.data.friend) {
-          p.emo = s.recolorEmo;
-          p.data.friend = 1;
-        }
-      }
-      if (--s.recolorLeft === 0) {
-        leave(s.recolorBy);
-        s.recolorBy = null;
-      }
-    } else if (!dodge && s.recolorBy && s.recolorNext === 0) {
-      leave(s.recolorBy);
-      s.recolorBy = null;
-    }
-  }
-
   async function sleepAction(b: Battle): Promise<void> {
     const e = dodo(b);
     s.sleep = Math.min(MAX_SLEEP, s.sleep + 0.14);
@@ -1451,7 +1167,7 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
     b.heal(4);
     await b.say('* Tu fermes les yeux. Juste un instant.\n* C\'est doux. C\'est chaud. Tout devient plus sombre.\n* Dodo reprend des forces.');
     await b.bubble([{ e, text: SLEEP_LINES[Math.floor(s.t / 7) % SLEEP_LINES.length]! }]);
-    if (s.sleep >= MAX_SLEEP - 0.001 && !s.silence) await offerStay(b);
+    if (s.sleep >= MAX_SLEEP - 0.001) await offerStay(b);
   }
 
   async function offerStay(b: Battle): Promise<void> {
@@ -1459,7 +1175,7 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
     b.setText(null);
     const r = await director.ask('Rester ici, avec Dodo ?', ['Rester', '…Non'], 'dodo:creepy', { cancelIndex: 1 });
     if (r === 0) {
-      s.outcome = 'beaux_reves';
+      s.outcome = 'reste';
       b.end('scripted');
       return;
     }
@@ -1468,74 +1184,50 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
     await b.say('* Tu te mords la joue. Tu rouvres les yeux.\n* Pas encore.');
   }
 
-  async function stayAction(b: Battle): Promise<void> {
-    b.setText(null);
-    const r = await director.ask('Rester ici ? Pour toujours ?', ['Rester', 'Pas encore'], 'dodo:happy', { cancelIndex: 1 });
-    if (r === 0) {
-      s.outcome = 'beaux_reves';
-      b.end('scripted');
-      return;
-    }
-    await b.say('* La porte reste entrouverte. Tu n\'y vas pas. Pas encore.');
-  }
-
-  async function wakeAction(b: Battle): Promise<void> {
+  /** « pardon », in Noa's handwriting: a crack on the surface; the third time, Dodo gives in. */
+  async function pardonWritten(b: Battle): Promise<void> {
     const e = dodo(b);
-    await b.bubble([{ e, text: 'Non… attends.' }]);
-    await director.say(['Si tu te réveilles, elle s\'en va. Pour de vrai, cette fois.', 'Tu vas avoir mal, Noa. Tellement mal.'], 'dododark:creepy');
-    await director.say('Ici, au moins… tu n\'as jamais froid.', 'dodo:neutral');
-    b.setText(null);
-    const r = await director.ask('Dodo te tend la patte. Derrière lui, la nuit est si douce.', ['Se réveiller', 'Rester']);
-    s.outcome = r === 0 ? 'aube' : 'beaux_reves';
-    if (r === 0) {
-      director.set('fin_route', 'aube');
-      await chorus(b);
-      await b.say('* Tu ouvres les yeux.');
-    }
-    b.end('scripted');
-  }
-
-  async function silenceEnd(b: Battle): Promise<void> {
-    const e = dodo(b);
-    await b.bubble([{ e, text: 'Tu ne peux plus les lire, hein ?' }]);
-    fx.glitch = 0.2;
-    await director.say(['Regarde ce que tu as fait.', 'Il n\'y a plus personne à qui dire au revoir.'], 'dododark:creepy');
-    fx.glitch = 0;
-    s.outcome = 'silence';
-    b.end('scripted');
-  }
-
-  async function crack(b: Battle, w: WordDef): Promise<void> {
-    const e = dodo(b);
-    s.written.push(w.text);
-    s.cracks.push(makeCrack(), makeCrack());
-    e.shake = 40;
-    e.flash = 10;
-    fx.shake(4, 24);
-    director.sfx('shatter', { pitch: 0.8 + s.written.length * 0.08 });
-    s.sleep = Math.max(0, s.sleep - 0.16);
+    s.pardons++;
+    s.cracks.push(makeCrack());
+    e.shake = 24 + s.pardons * 8;
+    e.flash = 8;
+    fx.shake(2, 14);
+    director.sfx('shatter', { pitch: 1.1 + s.pardons * 0.1, vol: 0.45 });
+    s.sleep = Math.max(0, s.sleep - 0.12);
     muffle();
-    const pair = MINA_PAIRS[w.text];
-    if (pair) {
-      await b.bubble([{ e, text: pair[0] }]);
-      await director.say(pair[1], 'minavoix');
-    }
-    const n = s.written.length;
-    if (n >= WAKE_AT && e.def.sprite !== 'b_dodo') {
-      e.def = { ...e.def, sprite: 'b_dodo', scale: 1, flavor: ['* Dodo est tout petit, maintenant. Un mouton en peluche, un peu usé.'], check: 'Un mouton en peluche. Mina te l\'avait donné. Il veillera sur toi.' };
-      e.flash = 30;
-      fx.flash('#fff3cf', 30, 0.8);
-      await b.say('* La laine noire tombe en morceaux.\n* Dessous, il y a un petit mouton en peluche. Un peu usé.');
-      await b.say('* {c:y}La lumière passe à travers les fissures.\n* Tu peux SE RÉVEILLER.{/c}');
-    } else if (n === 1) {
-      await b.say('* Dodo se fissure. La lumière passe.\n* {c:y}Le bouton OBJET revient.{/c}');
-    } else if (n === 2) {
-      await b.say('* Une autre fissure.\n* Un bouton change encore : RESTER. Comme une porte qu\'on laisse ouverte.');
-    } else if (n < WAKE_AT) {
-      await b.say('* Dodo se fissure de partout.');
+    if (s.pardons === 1) {
+      await b.say('* Tu écris « pardon ».\n* Ce n\'est pas son écriture. C\'est la tienne. Elle penche à peine.');
+      await b.bubble([{ e, text: s.silence ? 'Pardon ? À qui ? Il n\'y a plus personne.' : 'Arrête. Ici, tu n\'as rien fait de mal.' }]);
+      await b.say('* Une fissure court sur la laine noire.\n* Une toute petite fissure. En surface.');
+    } else if (s.pardons < PARDONS) {
+      await b.bubble([{ e, text: s.silence ? 'Encore ? Personne ne l\'entendra.' : 'Encore ? Tu l\'as déjà dit. Devant la porte.' }]);
+      await b.say('* Une deuxième fissure.\n* Dessous, la laine est encore noire. Elle ne va pas loin.');
     } else {
-      await b.say('* Les mots de Mina flottent autour de toi, tout doux.');
+      await giveIn(b);
     }
+  }
+
+  /** Dodo gives in. Far too easily. */
+  async function giveIn(b: Battle): Promise<void> {
+    const e = dodo(b);
+    await b.bubble([{ e, text: '…' }]);
+    await b.bubble([{ e, text: 'D\'accord.' }]);
+    await b.bubble([{ e, text: s.silence ? 'Tu l\'as dit. À personne. C\'est fini.' : 'Tu l\'as dit. C\'est fini.' }]);
+    await b.bubble([{ e, text: 'Réveille-toi.' }]);
+    s.sleep = 0;
+    muffle();
+    fx.flash('#fff3cf', 30, 0.7);
+    director.sfx('chime', { pitch: 0.9 });
+    e.def = { ...e.def, sprite: 'b_dodo', scale: 1, flavor: ['* Un mouton en peluche. Il te sourit.'], check: 'Un mouton en peluche. Il a l\'air très content.' };
+    e.flash = 30;
+    s.cracks = [];
+    await b.say('* La laine noire tombe d\'un coup, comme un drap qu\'on retire.\n* Dessous, un petit mouton en peluche. Il sourit.\n* Il sourit beaucoup.');
+    b.setText(null);
+    const r = await director.ask('Au bout du vide, une porte s\'est ouverte. Derrière, il fait jour.', ['Se réveiller', 'Rester']);
+    s.outcome = r === 0 ? 'reveil' : 'reste';
+    if (r === 0) await b.say('* Tu ouvres les yeux.');
+    else await b.bubble([{ e, text: 'Je savais que tu resterais.' }]);
+    b.end('scripted');
   }
 
   return {
@@ -1544,15 +1236,7 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
       if (turn === 1) {
         b.overlay = (g, bb) => drawFinalOverlay(g, bb, s);
         e.def = { ...e.def, atk: 1 };
-        if (!s.tick) {
-          const tick = (): void => frame(b);
-          s.tick = tick;
-          game.hooks.push(tick);
-        }
-        if (from === 3) {
-          darken(b);
-          s.p2 = 4;
-        }
+        if (from === 2) darken(b);
       }
       if (G.meta.tabLeaves > s.tabLeaves) {
         s.tabLeaves = G.meta.tabLeaves;
@@ -1571,62 +1255,31 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
         } else {
           await toPhase2(b);
         }
+        return;
       }
-      if (s.phase === 2) {
-        if (s.p2 >= 4 || (s.dodoWords >= 3 && s.p2 >= 3)) {
-          await toPhase3(b);
-        } else {
-          s.p2++;
-          const name = ['FRAPPER', 'OBJET', 'ÉPARGNER'][s.p2 - 1];
-          director.sfx('glitch');
-          if (name) await b.say(tf("* Le bouton {0} s'efface.\n* À sa place, quelqu'un a écrit : DORMIR.", tr(name)));
-          else await b.say('* Il ne reste que ÉCRIRE.\n* Et le carnet ne contient plus que ses mots à lui.');
-        }
-      }
-      if (s.phase === 3 && !b.ended) {
-        s.p3++;
-        if (s.silence && s.p3 >= 3) await silenceEnd(b);
-        else if (!s.silence) {
-          if (s.written.length === 0 && s.p3 === 3) await director.say('Écris, Noa. Dans le carnet. Avec moi.', 'minavoix');
-          if (s.p3 >= 2) await visit(b);
-        }
+      if (s.p2 < 3) {
+        s.p2++;
+        director.sfx('glitch');
+        await b.say(tf("* Le bouton {0} s'efface.\n* À sa place, quelqu'un a écrit : DORMIR.", tr(['FRAPPER', 'OBJET', 'ÉPARGNER'][s.p2 - 1]!)));
+      } else if (s.p2 === 3) {
+        s.p2++;
+        await b.say('* Il ne reste que ÉCRIRE.\n* Dans le carnet, entre ses mots à lui, il y a un mot de ta main.');
+      } else if (s.pardons === 0 && ++s.p2 % 3 === 0) {
+        await b.say('* Le carnet pèse sur tes genoux.\n* Tout en bas de la page, ton mot attend. « pardon ».');
       }
     },
     menuLabels: () => {
       if (s.phase === 1) return LABELS;
-      if (s.phase === 2) {
-        const out = [...LABELS];
-        for (let i = 0; i < Math.min(3, s.p2); i++) out[P2_ORDER[i]!] = 'DORMIR';
-        return out;
-      }
-      if (s.silence) return ['DORMIR', 'ÉCRIRE', 'DORMIR', 'DORMIR'];
-      const n = s.written.length;
-      return [n >= 2 ? 'RESTER' : 'DORMIR', 'ÉCRIRE', n >= 1 ? 'OBJET' : 'DORMIR', n >= WAKE_AT ? 'SE RÉVEILLER' : 'DORMIR'];
+      const out = [...LABELS];
+      for (let i = 0; i < Math.min(3, s.p2); i++) out[P2_ORDER[i]!] = 'DORMIR';
+      return out;
     },
     onMenu: async (b, i) => {
-      const label = b.menuLabels[i];
-      if (label === 'DORMIR') {
-        await sleepAction(b);
-        return true;
-      }
-      if (label === 'RESTER') {
-        await stayAction(b);
-        return true;
-      }
-      if (label === 'SE RÉVEILLER') {
-        await wakeAction(b);
-        return true;
-      }
-      return false;
+      if (b.menuLabels[i] !== 'DORMIR') return false;
+      await sleepAction(b);
+      return true;
     },
-    words: () => {
-      if (s.phase === 1) return null;
-      if (s.phase === 2) return DODO_WORDS;
-      if (s.silence) return INK_WORDS;
-      const left = MINA_WORDS.filter((w) => !s.written.includes(w.text));
-      s.nbWords = (left.length ? left : MINA_WORDS).map((w) => (s.drowned.includes(w.text) ? inkOf(w.text) : w));
-      return s.nbWords;
-    },
+    words: () => (s.phase === 1 ? null : P2_WORDS),
     onWord: async (b, e, w) => {
       resetNeeds(b);
       if (s.phase === 1) {
@@ -1641,25 +1294,16 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
         await b.say('* Les mots glissent sur sa laine sans y laisser de trace.');
         return true;
       }
-      if (s.phase === 2) {
-        s.dodoWords++;
-        s.sleep = Math.min(MAX_SLEEP, s.sleep + 0.06);
-        muffle();
-        await b.bubble([{ e, text: DODO_WORD_LINES[w.text] ?? 'Oui…' }]);
-        await b.say(tf('* Tu écris « {0} ». Ta main est lourde. Les lettres penchent.', tr(w.text)));
-        if (s.sleep >= MAX_SLEEP - 0.001) await offerStay(b);
+      if (w.text === PARDON.text) {
+        await pardonWritten(b);
         return true;
       }
-      if (s.silence) {
-        await silenceEnd(b);
-        return true;
-      }
-      if (isBlot(w.text)) await inkWritten(b, e);
-      else if (!s.written.includes(w.text) && MINA_PAIRS[w.text]) await crack(b, w);
-      else {
-        await b.bubble([{ e, text: 'Tu l\'as déjà dit…' }]);
-        await director.say('Je l\'ai entendu, Noa. La première fois.', 'minavoix');
-      }
+      s.dodoWords++;
+      s.sleep = Math.min(MAX_SLEEP, s.sleep + 0.06);
+      muffle();
+      await b.bubble([{ e, text: DODO_WORD_LINES[w.text] ?? 'Oui…' }]);
+      await b.say(tf('* Tu écris « {0} ». Ta main est lourde. Les lettres penchent.', tr(w.text)));
+      if (s.sleep >= MAX_SLEEP - 0.001) await offerStay(b);
       return true;
     },
     onFight: async (b, e) => {
@@ -1688,13 +1332,11 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
     },
     pattern: (_b, turn) => {
       if (s.phase === 1) return turn % 2 ? 'sheep_count' : 'lullaby';
-      if (s.phase === 2) return ['dodo_rings', 'lullaby', 'sheep_count'][s.p2 % 3]!;
-      if (s.silence) return 'dodo_rings';
-      if (s.written.length >= WAKE_AT) return 'calm';
-      return 'dodo_storm';
+      if (s.pardons > 0) return ['lullaby', 'sheep_count'][s.p2 % 2]!;
+      return ['dodo_rings', 'lullaby', 'sheep_count'][s.p2 % 3]!;
     },
     talk: () => {
-      const key = s.phase === 1 ? 'p1' : s.phase === 2 ? 'p2' : s.silence ? 'silence' : s.written.length >= WAKE_AT ? 'ready' : 'p3';
+      const key = s.phase === 1 ? 'p1' : s.silence ? 'silence' : s.pardons > 0 ? 'fissure' : 'p2';
       const list = TALK[key]!;
       return list[Math.floor(s.t / 13) % list.length]!;
     },
@@ -1718,34 +1360,20 @@ function finalHooks(s: FinalState, from: 1 | 3 = 1): Partial<BattleHooks> {
   };
 }
 
-async function finalBattle(d: Director, from: 1 | 3 = 1): Promise<void> {
+async function finalBattle(d: Director, from: 1 | 2 = 1): Promise<void> {
   const s: FinalState = {
     phase: 1,
     silence: isSilenceRoute(),
     sleep: 0,
     p2: 0,
-    p3: 0,
     dodoWords: 0,
+    pardons: 0,
     hits: 0,
     falls: 0,
-    written: [],
     outcome: null,
     tabLeaves: G.meta.tabLeaves,
     cracks: [],
     t: 0,
-    drowned: [],
-    inkTries: 0,
-    friends: [],
-    friendVisits: 0,
-    stage: [],
-    nbWords: [],
-    nbWriting: false,
-    recolorNext: 0,
-    recolorLeft: 0,
-    recolorEmo: 'joie',
-    recolorBy: null,
-    wasDodge: false,
-    tick: null,
   };
   G.state.chapter = 3;
   await d.battle(['dodo'], {
@@ -1756,73 +1384,43 @@ async function finalBattle(d: Director, from: 1 | 3 = 1): Promise<void> {
     hooks: finalHooks(s, from),
     intro: '* Dodo t\'enveloppe. Il est immense, et si doux.',
   });
-  unhook(s);
   audio.setMuffle(1, 0.5);
   audio.tempoScale = 1;
   fx.glitch = 0;
-  const outcome: FinalOutcome = s.outcome ?? (s.silence ? 'silence' : 'aube');
-  if (outcome === 'silence') await endingSilence(d);
-  else if (outcome === 'beaux_reves') await endingBeauxReves(d);
-  else await endingAube(d);
+  await afterDodo(d, s.outcome ?? 'reveil');
 }
 
-// ---------------------------------------------------------------------------
-// Endings
-// ---------------------------------------------------------------------------
-
-async function endingAube(d: Director): Promise<void> {
-  d.set('fin_route', 'aube');
+/** After the battle: the way out Dodo opened. Both choices lead to the false dawn (wakeUp(3), fausse-aube.ts). */
+async function afterDodo(d: Director, outcome: FinalOutcome): Promise<void> {
   setPageTitle(null);
-  d.music(null, 2);
   const giant = d.find('dodo_giant');
   if (giant) {
     world.particles.burst(giant.x, giant.y - 20, '#fff3cf', 30, 1.4);
     d.remove('dodo_giant');
   }
-  d.spawn({ id: 'dodo_plush', sprite: 'prop_dodo_plush', x: 15, y: 8, solid: false, shadow: true });
-  d.flash('#fff3cf', 30);
+  d.spawn({ id: 'dodo_plush', sprite: 'prop_dodo_plush', x: 15, y: 8, solid: false, shadow: true, script: dodoPlushTalk });
   world.extraDarkness = -0.2;
-  await d.wait(60);
-  await d.say(['…', 'Tu as gagné, Noa.'], 'dodo:neutral');
-  await d.say(['Elle m\'avait donné à toi pour que je veille sur toi.', 'Je crois que j\'ai mal compris.', 'Veiller, ce n\'est pas empêcher de se réveiller.'], 'dodo:neutral');
-  await d.say(['Va.', 'Moi, je suis un mouton en peluche. Mon travail, c\'est de rester.'], 'dodo:happy');
-  d.music('title', 2);
-  await d.wait(30);
-  // Mina appears a few steps ahead of Noa, left of where the choice window opens.
-  const mx = Math.min(22, tile(d.player.x) + 7);
-  d.spawn({ id: 'mina_light', sprite: 'pose_mina_light', x: mx, y: 8, solid: false, shadow: false, light: { r: 60, color: '#fff3cf', flicker: true } });
-  d.sfx('chime', { pitch: 0.9 });
-  await d.cameraTo(mx - 2, 8);
-  await d.say('Noa.', 'mina:happy');
-  await d.say(['Tout à l\'heure, j\'ai pas pu finir ma phrase.', 'Je voulais juste te dire…'], 'mina:neutral');
-  await d.say('C\'est pas ta faute.', 'mina:sad');
-  await d.say(['Et mon carnet… celui avec le Pays de Coton dedans.', 'Il est sur mon bureau. Je l\'ai fait pour toi.', 'Va le lire, d\'accord ? Et allume la lumière.'], 'mina:happy');
-  await d.say('…Mina.', 'noa:sad');
-  const c = await d.ask('Elle sourit. Elle attend que tu le dises.', ['Au revoir', 'Je t\'aime', 'Pardon']);
-  await d.say(['Au revoir.', 'Je t\'aime.', 'Pardon.'][c]!, 'noa:sad');
-  const answers = [
-    ['Au revoir, Noa.', 'Fais de beaux rêves… mais pas trop longtemps, hein !'],
-    ['Moi aussi.', 'Gros comme le Pays de Coton. Plus gros, même.'],
-    ['Je sais.', 'Moi aussi je t\'aime, gros bêta.'],
-  ];
-  await d.say(answers[c]!, 'mina:happy');
-  const ml = d.find('mina_light');
-  if (ml) {
-    for (let i = 0; i < 30; i++) {
-      ml.alpha = 1 - i / 30;
-      await d.wait(3);
-    }
-    world.particles.burst(ml.x, ml.y - 12, '#ffe991', 24, 1);
+  if (outcome === 'reste') {
+    d.set('fa_reste');
+    d.music('dodo', 2);
+    await d.wait(40);
+    await d.say(['Chut. Voilà.', 'Ferme les yeux. Quand tu les rouvriras, tout ira bien.'], 'dodo:happy');
+    await d.say('Tout ira très bien.', 'dodo:happy');
+    await d.wait(30);
+    d.sfx('whoosh', { pitch: 0.6 });
+    await wakeUp(d, 3);
+    return;
   }
-  d.remove('mina_light');
-  d.cameraFollow();
+  d.flash('#fff3cf', 30);
+  await d.wait(50);
+  await d.say(['Va, Noa.', 'La porte est ouverte. Elle a toujours été ouverte.'], 'dodo:happy');
+  await d.say('Bonne nuit.', 'dodo:happy');
   d.set('c3_dawn_ready');
-  await d.wait(30);
-  await d.say(['Plus loin, au bout du vide, une porte de lumière s\'est ouverte.', 'De l\'autre côté, il fait presque jour.']);
+  d.music('void', 2);
 }
 
 export const dodoPlushTalk: Script = async (d) => {
-  if (flag('c3_dawn_ready')) await d.say(['Va, Noa.', 'Je veillerai. Pour de vrai.'], 'dodo:happy');
+  if (flag('c3_dawn_ready')) await d.say(['Va, Noa.', 'Il fait jour, de l\'autre côté. Il fait si beau.'], 'dodo:happy');
   else await d.say('Un mouton immense, fait de laine et de nuit. Il respire lentement.');
 };
 
@@ -1831,51 +1429,10 @@ export const doorOfLight: Script = async (d) => {
     await d.say(['Une porte de lumière, tout au bout du vide.', 'Elle est fermée. Elle est trop loin.']);
     return;
   }
-  await d.say(['Une porte de lumière.', 'De l\'autre côté, quelqu\'un a laissé une veilleuse allumée.']);
+  await d.say(['Une porte de lumière.', 'De l\'autre côté, des oiseaux chantent. Il fait beau. Il fait déjà jour.']);
   d.sfx('whoosh', { pitch: 0.8 });
-  d.set('fin_route', 'aube');
   await wakeUp(d, 3);
 };
-
-async function endingBeauxReves(d: Director): Promise<void> {
-  d.music('dodo', 2);
-  const p = d.player;
-  await d.say(['Chut. Voilà.', 'Allonge-toi. Là. Tout contre moi.'], 'dodo:happy');
-  d.show('player', false);
-  d.spawn({ id: 'noa_lie', sprite: 'pose_noa_lie', x: tile(p.x), y: tile(p.y - 2), solid: false, shadow: false });
-  await d.wait(60);
-  await d.say(['Je vais te raconter une histoire.', 'Il était une fois un Pays de Coton, où il ne pleuvait que du coton…'], 'dodo:happy');
-  await d.say(['…et une princesse-chevalière qui n\'est jamais partie.', 'Et un grand frère qui n\'a jamais rien fait de mal.'], 'dodo:happy');
-  await d.say('Un mouton… {p:30}deux moutons… {p:40}trois…', 'dodo:neutral');
-  await d.wait(40);
-  await d.say(['Merci, {player}.', 'Tu peux rester, toi aussi. Tant que tu restes, il dort bien.'], 'dodo:creepy');
-  await d.fadeOut(120);
-  await d.image('fin_beaux_reves', [
-    'Noa dort. Il fait de beaux rêves.',
-    'Dans le rêve, il fait toujours nuit, et personne n\'est jamais triste.',
-    'Dans l\'appartement, la veilleuse grésille encore un peu. Puis plus rien.',
-  ]);
-  await d.narrate('Bonne nuit, Noa.', { voice: 'dodo' });
-  await d.narrate('Bonne nuit, {player}.', { voice: 'dodo' });
-  await finishGame(d, 'beaux_reves');
-}
-
-async function endingSilence(d: Director): Promise<void> {
-  d.music(null, 1);
-  d.ambience('none');
-  world.extraDarkness = 0.4;
-  await d.say(['Dors, maintenant.', 'Il n\'y a plus rien à réveiller.'], 'dododark:creepy');
-  fx.glitch = 0.15;
-  await d.fadeOut(120);
-  fx.glitch = 0;
-  await d.image('fin_silence', [
-    'Le Pays de Coton est noyé d\'encre.',
-    'Il n\'y a plus de moutons. Plus de lune. Plus de princesse.',
-    'Il n\'y a plus personne pour se souvenir de rien.',
-  ]);
-  await d.narrate('…', { voice: 'dododark' });
-  await finishGame(d, 'silence');
-}
 
 // ---------------------------------------------------------------------------
 // Mina's lines and debug
@@ -1894,6 +1451,8 @@ export const MINA_LINES: Record<string, string[]> = {
     'Pourquoi on chuchote ? Y a personne. …Hein ?|sad',
     'Je me souviens de ce couloir. Je sais pas pourquoi.|sad',
     'Tiens-moi la main. Juste dans le couloir.|sad',
+    // (Balance, lot 8: a nudge towards the playroom and the Cape de Mina before chapter 4.)
+    'La porte à côté de l\'accueil… J\'ai l\'impression qu\'il y a un truc à moi, derrière.|neutral',
   ],
   salle_jeux: [
     'Je jouais ici ! Avec des feutres qui sentent la fraise.|happy',
@@ -1908,8 +1467,124 @@ function setup(d: Director, flags: string[], party: boolean): void {
   d.follower(party ? 'mina' : null);
 }
 
+/** Debug: Noa (with Mina) standing at tile (x, y) of `map`, corridor stage `stage` (lot 8 clue scripts). */
+async function clueAt(d: Director, map: string, x: number, y: number, stage = 0, flags: string[] = []): Promise<void> {
+  setup(d, ['c3_intro', 'c3_hospital_seen', 'c3_marsh', 'c3_hosp_in', 'c3_corridor', ...flags], true);
+  d.set('c3_loop', stage);
+  // (no wandering enemy next to the clue)
+  G.state.cleared.push('c3_perfusion_1', 'c3_bip_1', 'c3_perfusion_2', 'c3_duo_1', 'c3_bracelet_1');
+  d.load(map, 'default');
+  d.player.x = x * TILE + 8;
+  d.player.y = y * TILE + 14;
+  world.snapCamera();
+  world.resetFollower();
+  await d.fadeIn(10);
+}
+
 /** Scripts runnable with ?debug=script&name=… */
 export const DEBUG: Record<string, Script> = {
+  // --- Version 2 clues (lot 8): Noa and Mina are put next to each clue; walk or press A. ---
+  /** The paper nurse of the lobby (A, facing up). */
+  c3_nadia: async (d) => {
+    await clueAt(d, 'hopital', 10, 4);
+    d.face('player', 'up');
+  },
+  /** The vending machine of the lobby, « le chocolat du robot » (A, facing up). */
+  c3_robot: async (d) => {
+    await clueAt(d, 'hopital', 3, 4);
+    d.face('player', 'up');
+  },
+  /** Corridor, stage 0: two steps right and the nurse's voice is heard (« le grand frère qui toussait »). */
+  c3_voix: async (d) => {
+    await clueAt(d, 'hopital', 23, 4, 0, ['c3_heard_1', 'c3_heard_2', 'c3_heard_3']);
+    d.face('player', 'right');
+  },
+  /** Corridor, stage 1: two steps right and Maman's voice on the phone (« Il croit que c'est lui »). */
+  c3_maman: async (d) => {
+    await clueAt(d, 'hopital', 22, 4, 1, ['c3_heard_0']);
+    d.face('player', 'right');
+  },
+  /** Corridor, stage 0, near the end: walk right and someone in a knitted hat turns the corner, then the loop. */
+  c3_bonnet: async (d) => {
+    await clueAt(d, 'hopital', 44, 4, 0, ['c3_heard_0']);
+    d.face('player', 'right');
+  },
+  /** The last wing (stage 3): walk right, the window reflects someone in a hat beside Noa. */
+  c3_aile: async (d) => {
+    await clueAt(d, 'hopital', 48, 4, 3, ['c3_heard_0', 'c3_heard_1', 'c3_heard_2', 'c3_heard_3']);
+    d.face('player', 'right');
+  },
+  /** Room 303½ in the last wing (A, facing up). */
+  c3_sas: async (d) => {
+    await clueAt(d, 'hopital', 46, 3, 3, ['c3_heard_3']);
+    d.face('player', 'up');
+  },
+  /** Mina's taped drawing of stage `?stage` (default 0) next to the right door (A, facing up). */
+  c3_dessin: async (d) => {
+    const st = Number(new URLSearchParams(location.search).get('stage') ?? 0);
+    const x = [29, 20, 38, 56][st] ?? 29;
+    await clueAt(d, 'hopital', x, 3, st, ['c3_heard_0', 'c3_heard_1', 'c3_heard_2', 'c3_heard_3', 'c3_reflet']);
+    d.face('player', 'up');
+  },
+  /** The Closet Monster, spared in chapter 1, after he lit the marsh (A, facing up): « une petite fille au bonnet ». */
+  c3_placard: async (d) => {
+    setup(d, ['c3_intro', 'c1_placard_spared', 'c3_lit', 'c3_marsh'], true);
+    d.load('ruines', 'bed');
+    d.player.x = 31 * TILE + 8;
+    d.player.y = 13 * TILE + 14;
+    world.snapCamera();
+    world.resetFollower();
+    await d.fadeIn(10);
+    d.face('player', 'up');
+  },
+  /** Room 304, under the window (A twice, facing up: the drawing in the mist). */
+  c3_fenetre304: async (d) => {
+    setup(d, ['c3_intro', 'c3_hosp_in', 'c3_door304', 'c3_mina_erased', 'c3_304_in'], false);
+    d.set('c3_loop', 3);
+    d.load('chambre_304', 'door');
+    d.player.x = 9 * TILE + 8;
+    d.player.y = 3 * TILE + 14;
+    world.snapCamera();
+    await d.fadeIn(10);
+    d.face('player', 'up');
+  },
+  /**
+   * Balance (lot 8): a real battle with the stats expected at the end of act I — 14 Étoiles, no Encre, the Plume
+   * dorée and the Cape de Mina, Mina at Noa's side. URL: &enemies=bip,perfusion (default bracelet), &chapter=4 and
+   * &ally=mina366 for La Couseuse, &armor=plaid, &etoiles=N, &encre=N. The outcome in flags.debug_battle.
+   */
+  bt_acte1: async (d) => {
+    const p = new URLSearchParams(location.search);
+    setup(d, ['c3_intro', 'c3_hosp_in', 'c3_corridor'], true);
+    const st = G.state;
+    st.chapter = Number(p.get('chapter') ?? 3);
+    st.etoiles = Number(p.get('etoiles') ?? 14);
+    st.encre = Number(p.get('encre') ?? 0);
+    st.weapon = 'plume';
+    st.armor = p.get('armor') ?? 'cape';
+    st.items = ['chocolat', 'lait', 'biscuit', 'mouchoir'];
+    st.party = [p.get('ally') ?? 'mina'].filter((a) => a !== 'none');
+    st.hp = maxHp(st);
+    d.load('hopital', 'start');
+    await d.fadeIn(10);
+    const r = await d.battle((p.get('enemies') ?? 'bracelet').split(','));
+    st.flags.debug_battle = `${r.outcome}:${[...r.spared, ...r.killed].join('+')}`;
+  },
+  /** Bracelet, a real battle (not the tutorial one), with chapter 3 stats; the outcome in flags.debug_battle. */
+  bt_bracelet: async (d) => {
+    setup(d, ['c3_intro', 'c3_hosp_in', 'c3_corridor'], true);
+    const st = G.state;
+    st.etoiles = 12;
+    st.encre = 0;
+    st.weapon = 'plume';
+    st.armor = 'cape';
+    st.items = ['chocolat', 'lait', 'biscuit', 'mouchoir'];
+    st.hp = 32;
+    d.load('hopital', 'start');
+    await d.fadeIn(10);
+    const r = await d.battle(['bracelet']);
+    st.flags.debug_battle = `${r.outcome}:${[...r.spared, ...r.killed].join('+')}`;
+  },
   c3_start: start,
   c3_ruines: async (d) => {
     setup(d, ['c3_intro'], true);
@@ -1964,46 +1639,37 @@ export const DEBUG: Record<string, Script> = {
     G.state.spares.nuage = 1;
     G.state.keyItems.push('veilleuse_poche');
     G.state.items.push('lait', 'chocolat');
+    if (new URLSearchParams(location.search).has('acte1')) {
+      // Balance (lot 8): the stats expected at the end of act I (see bt_acte1).
+      Object.assign(G.state, { etoiles: 14, weapon: 'plume', armor: 'cape' });
+      G.state.hp = maxHp(G.state);
+    }
     d.load('vide', 'center');
     await d.fadeIn(10);
     await finalBattle(d);
   },
-  /** Phase 3 on a mixed route: 9 Encre (two of Mina's words drowned) and a few spared friends. */
-  c3_final_mixed: async (d) => {
+  /** The short battle straight in phase 2 (the notebook: Dodo's words and « pardon »). */
+  c3_battle_p2: async (d) => {
     setup(d, ['c3_intro', 'c3_mina_erased', 'c3_veilleuse'], false);
-    G.state.encre = 9;
-    G.state.kills = { nuage: 2, mouton_noir: 3, taille_crayon: 2, avion: 2 };
-    G.state.spares = { pissenlit: 1, chaussette_perdue: 1, bip: 1 };
-    G.state.items.push('lait');
+    G.state.spares.nuage = 1;
     d.load('vide', 'center');
     await d.fadeIn(10);
-    await finalBattle(d, 3);
+    await finalBattle(d, 2);
   },
-  /** Phase 3 on a gentle route: every friend was spared (both bosses included). */
-  c3_final_friends: async (d) => {
+  /** The short battle on the route of the ink (straight in phase 2). */
+  c3_battle_silence: async (d) => {
     setup(d, ['c3_intro', 'c3_mina_erased', 'c3_veilleuse'], false);
-    G.state.kills = {};
-    G.state.spares = Object.fromEntries(FRIENDS.map((f) => [f.id, 1]));
-    G.state.keyItems.push('veilleuse_poche');
+    G.state.spares = {};
+    G.state.kills = { gribouille: 3, nuage: 3, mouton_noir: 2, placard: 1 };
     d.load('vide', 'center');
     await d.fadeIn(10);
-    await finalBattle(d, 3);
-  },
-  /** Phase 3 with ink and Gomme spared: she erases a drowned word. */
-  c3_final_gomme: async (d) => {
-    setup(d, ['c3_intro', 'c3_mina_erased', 'c3_veilleuse'], false);
-    G.state.encre = 7;
-    G.state.kills = { nuage: 3, mouton_noir: 2, taille_crayon: 2 };
-    G.state.spares = { gomme: 1, placard: 1, luciole: 1 };
-    d.load('vide', 'center');
-    await d.fadeIn(10);
-    await finalBattle(d, 3);
+    await finalBattle(d, 2);
   },
   c3_aube: async (d) => {
     setup(d, ['c3_intro', 'c3_mina_erased', 'c3_veilleuse'], false);
     d.load('vide', 'center');
     await d.fadeIn(10);
-    await endingAube(d);
+    await endingAubeV1(d);
   },
   c3_beaux_reves: async (d) => {
     setup(d, ['c3_intro', 'c3_mina_erased', 'c3_veilleuse'], false);

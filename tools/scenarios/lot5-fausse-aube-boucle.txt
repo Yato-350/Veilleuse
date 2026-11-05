@@ -1,0 +1,56 @@
+# Lot 5 (the false dawn, §3.9): Maman in the kitchen recites a fridge note and opens her arms; the hug, the close-up
+# `faux_aube` (her mouth sewn shut), then the fake credits stuck on « Mina ……… introuvable ». [Laisser défiler] twice:
+# the « Fin heureuse » (« Merci d'avoir joué ! — Dodo », the cross-stitched title with one « Continuer »), each pass
+# one more « introuvable »; on the third pass Mina whispers « Noa. Regarde. » and only [Regarder] is left. The credits
+# rewind, the chapter 3 card, « Non. » … « C'est pas tout. », the crayon « FIN » crossed out, Interlude III (4:06).
+# Never recorded as an ending; meta.fauxGenerique counts the dawn.
+query: debug=script&name=fausse_aube_appart&lang=fr
+wait:1500
+auto
+eval: (window.__fg0 = window.__veilleuse.G.meta.fauxGenerique, window.__end0 = window.__veilleuse.G.meta.endings.length)
+interact:maman
+auto
+choose:0
+zuntil: window.__veilleuse.scene() === 'ImageScene'
+wait:1500
+shot:close-up
+zuntil: window.__veilleuse.scene() !== 'ImageScene'
+waitfor: window.__veilleuse.game.top.phase === 'stopped' && window.__veilleuse.game.top.stopT > 80
+shot:stop1
+assert: window.__veilleuse.game.top.lines.some(([t]) => t === 'Mina ……… introuvable') && window.__veilleuse.G.state.flags.fa_tours === 1
+KeyZ
+KeyZ:9000
+waitfor: window.__veilleuse.game.top.phase === 'end'
+shot:signature
+KeyZ
+waitfor: window.__veilleuse.scene() === 'TitleScene'
+wait:1200
+shot:crossstitch
+KeyZ
+waitfor: window.__veilleuse.game.top.phase === 'stopped' && window.__veilleuse.game.top.stopT > 80
+assert: window.__veilleuse.game.top.lines.some(([t]) => t === 'Mina ……… introuvable introuvable')
+KeyZ
+KeyZ:9000
+waitfor: window.__veilleuse.game.top.phase === 'end'
+KeyZ
+waitfor: window.__veilleuse.scene() === 'TitleScene'
+wait:1200
+KeyZ
+waitfor: window.__veilleuse.game.top.phase === 'stopped' && window.__veilleuse.dialogue.busy
+shot:regarde
+zuntil: !window.__veilleuse.dialogue.busy
+waitfor: window.__veilleuse.game.top.phase === 'stopped' && window.__veilleuse.game.top.stopT > 80 && !window.__veilleuse.dialogue.busy
+assert: window.__veilleuse.game.top.lines.some(([t]) => t === 'Mina ……… introuvable introuvable introuvable') && window.__veilleuse.G.state.flags.fa_tours === 3
+KeyZ
+wait:1500
+shot:rewind
+waitfor: window.__veilleuse.dialogue.busy
+shot:non
+zuntil: window.__veilleuse.game.top.constructor.name === 'CrossOutPage'
+wait:2500
+shot:fin
+zuntil: window.__veilleuse.G.state.map === 'chambre' && window.__veilleuse.G.state.flags.interlude === 3
+auto
+shot:interlude3
+assert: window.__veilleuse.G.state.flags.fa_fin === true && window.__veilleuse.G.meta.fauxGenerique === window.__fg0 + 1 && window.__veilleuse.G.meta.endings.length === window.__end0
+assert: window.__veilleuse.scene() === 'WorldScene' && !window.__veilleuse.dialogue.busy

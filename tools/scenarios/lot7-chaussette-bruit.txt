@@ -1,0 +1,28 @@
+# Review fix (docs/HISTOIRE.md § 5, « Indices pour la trouver »; docs/INDICES.md): in a new game+ where the secret ending
+# can be reached (an Aube in the memory), Noa sells the Golden Button to Sockette (60 Buttons, talking to her); talked to
+# again, she has sewn it on her heel: « Il faisait un drôle de bruit quand on le serrait. » (« Alors je marche sur la
+# pointe. »). Once only.
+query: debug=script&name=c1_boutique&lang=fr&meta=endings:aube
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+eval: (V.G.state.flags.c1_bouton_offre = true, 1)
+interact:chaussette
+zuntil: V.dialogue.choices && V.dialogue.choices.length === 2
+assert: SAW('Je monte à soixante.')
+choose:0
+zuntil: IDLE()
+assert: V.G.state.flags.c1_bouton_vendu === true && !SAW('drôle de bruit')
+interact:chaussette
+zuntil: SAW('drôle de bruit')
+shot:bruit
+zuntil: IDLE()
+assert: SAW('je l\'ai cousu sur mon talon') && SAW('Il faisait un drôle de bruit quand on le serrait.') && SAW('Alors je marche sur la pointe.') && V.G.state.flags.c1_chaussette_bruit === 1
+eval: (window.N0 = SEEN.length, 1)
+interact:chaussette
+zuntil: IDLE()
+assert: !SEEN.slice(N0).some((t) => t.includes('drôle de bruit'))

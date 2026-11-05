@@ -1,0 +1,24 @@
+# Lot 3 (chapter 5 world): the towel, without « Réduire les attentes ». Mina of before lies down; for 30 real
+# seconds every press only says « Elle dort. » (the beach whitens, the lullaby slows down); after that Noa tries
+# to wake her, Dodo says to let her, Noa's one line slips out, and the white tide comes.
+query: debug=script&name=chapter5_serviette&lang=fr
+wait:1500
+eval: window.__veilleuse.G.settings.shortWaits = false
+eval: window.__veilleuse.G.settings.storyMode = false
+eval: window.__veilleuse.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => window.__veilleuse.world.removeEntity(e))
+auto
+interact:mina_avant
+auto
+assert: window.__veilleuse.G.state.flags.c5_sieste
+wait:18000
+interact:mina_dort
+auto
+assert: !window.__veilleuse.G.state.flags.c5_maree && window.__veilleuse.G.state.flags.c5_serviette === 1
+go:15/13
+wait:300
+shot:blanc
+wait:11000
+interact:mina_dort
+auto:90000
+assert: window.__veilleuse.G.state.flags.c5_maree && window.__veilleuse.G.state.flags.c5_nulle && window.__veilleuse.G.state.flags.c5_serviette === 2
+shot:drap

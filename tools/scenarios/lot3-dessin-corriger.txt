@@ -1,0 +1,21 @@
+# Lot 3 (chapter 5 drawing game): « Corriger les dessins ». Five of Mina's drawings in turn; Noa traces himself into
+# four of them (a black ballpoint figure, too tall, with no face) and leaves the third one alone (B before the first
+# line). The demo counts the corrections in flags.debug_corrige.
+query: debug=script&name=dessin_corriger&lang=fr
+wait:1500
+zuntil: window.__veilleuse.game.top.drawing === 'maman' && window.__veilleuse.game.top.tracing && !window.__veilleuse.dialogue.busy
+KeyZ:7000
+shot:maman
+zuntil: window.__veilleuse.game.top.drawing === 'nadia' && window.__veilleuse.game.top.tracing && !window.__veilleuse.dialogue.busy
+KeyZ:7000
+zuntil: window.__veilleuse.game.top.drawing === 'mina' && window.__veilleuse.game.top.tracing && !window.__veilleuse.dialogue.busy
+wait:300
+KeyX
+zuntil: window.__veilleuse.game.top.drawing === 'chaise' && window.__veilleuse.game.top.tracing && !window.__veilleuse.dialogue.busy
+KeyZ:7000
+shot:chaise
+zuntil: window.__veilleuse.game.top.drawing === 'plage' && window.__veilleuse.game.top.tracing && !window.__veilleuse.dialogue.busy
+KeyZ:7000
+shot:plage
+zuntil: window.__veilleuse.G.state.flags.debug_corrige !== undefined
+assert: window.__veilleuse.G.state.flags.debug_corrige === 4

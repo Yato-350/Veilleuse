@@ -1,0 +1,17 @@
+# Lot 13, English check: the title (first run: New Game, Options, Credits) and its « Credits » entry, which scrolls the
+# real credits (the help lines, "Thanks for playing, {player}."), in English — a copy of v11-title-credits.txt with
+# lang=en; nothing shown untranslated (i18nMissing, dev builds).
+query: debug=title&lang=en
+wait:1500
+shot:title
+assert: window.__veilleuse.scene() === 'TitleScene' && window.__veilleuse.game.top.items.map((i) => i.label).join() === 'Nouvelle partie,Options,Crédits'
+ArrowDown
+ArrowDown
+KeyZ
+waitfor: window.__veilleuse.game.top.constructor.name === 'CreditsScene'
+KeyZ:12000
+shot:credits
+assert: window.__veilleuse.game.top.lines.some(([t]) => t.includes('3114')) && window.__veilleuse.game.top.lines.at(-1)[0] === 'Merci d\'avoir joué, {player}.'
+KeyX
+waitfor: window.__veilleuse.game.top.constructor.name === 'TitleScene'
+assert: window.__veilleuse.i18nMissing().length === 0

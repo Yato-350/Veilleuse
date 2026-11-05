@@ -1,0 +1,17 @@
+# Lot 13, accessibility (§ 6.4): T7 at the entrance of chapter 6 with « Réduire les flashs » on: the name in the box
+# switches from DODO to NOA without flickering or jittering, no glitch burst, no strong flash, up to the narrator.
+query: debug=script&name=chapter6_t7&lang=fr
+god
+waitfor: window.__veilleuse.dialogue.busy
+eval: window.V = window.__veilleuse
+eval: (V.G.settings.reduceFlashes = true, V.fx.reduceFlashes = true, window.MAXF = 0, window.MAXG = 0, setInterval(() => { window.MAXF = Math.max(window.MAXF, V.fx.flashAlpha); window.MAXG = Math.max(window.MAXG, V.fx.glitchLevel); }, 16), 1)
+eval: window.T = () => (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ')
+zuntil: window.T().includes('Dis-le avec moi')
+zuntil: window.__veilleuse.dialogue.asKey !== ''
+shot:bascule
+zuntil: window.__veilleuse.world.map.id === 'chambre'
+zuntil: window.T().includes('Tu ne peux pas.')
+wait:600
+shot:narrateur
+auto
+assert: window.__veilleuse.G.state.flags.c6_t7 === true && window.MAXF <= 0.25 && window.MAXG <= 0.1

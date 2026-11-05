@@ -1,4 +1,4 @@
-import { PAL } from './palette';
+import { PAL, type PixelMaterial } from './palette';
 
 export interface Sprite {
   img: HTMLCanvasElement;
@@ -18,6 +18,10 @@ export interface BuildOptions {
   flipX?: boolean;
   /** Adds a 1px outline around opaque pixels (canvas grows by 1px on each side). */
   outline?: string;
+  /** Per-pixel material after the color transform (v2 worlds: felt stitches, pen hatching…). */
+  material?: PixelMaterial;
+  /** The sprite is a map tile (the material draws seams / grids that tile instead of silhouette borders). */
+  tile?: boolean;
   /** Anchor; defaults to bottom-center. */
   ax?: number;
   ay?: number;
@@ -91,13 +95,31 @@ export function buildSprite(src: string | string[], opts: BuildOptions = {}): Sp
     const sx = opts.flipX ? w0 - 1 - x : x;
     return rows[y]![sx];
   };
+  const mat = opts.material;
+  const matCache = new Map<string, [number, number, number]>();
+  const hexOf = (ch: string): string => {
+    const hex = pal[ch] ?? '#ff00ff';
+    return opts.transform ? opts.transform(hex) : hex;
+  };
+  const material = (x: number, y: number, hex: string, edge: boolean): [number, number, number] => {
+    const out = mat!(x, y, hex, edge, !!opts.tile);
+    let v = matCache.get(out);
+    if (!v) {
+      const n = parseInt(out.slice(1), 16);
+      v = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+      matCache.set(out, v);
+    }
+    return v;
+  };
+  const touchesClear = (x: number, y: number): boolean =>
+    isClear(at(x - 1, y)) || isClear(at(x + 1, y)) || isClear(at(x, y - 1)) || isClear(at(x, y + 1));
   if (opts.outline) {
     const oc = rgb(opts.outline);
     for (let y = -1; y <= h0; y++) {
       for (let x = -1; x <= w0; x++) {
         if (!isClear(at(x, y))) continue;
         if (!isClear(at(x - 1, y)) || !isClear(at(x + 1, y)) || !isClear(at(x, y - 1)) || !isClear(at(x, y + 1))) {
-          put(x + pad, y + pad, oc);
+          put(x + pad, y + pad, mat ? material(x + pad, y + pad, hexOf(opts.outline), true) : oc);
         }
       }
     }
@@ -106,7 +128,7 @@ export function buildSprite(src: string | string[], opts: BuildOptions = {}): Sp
     for (let x = 0; x < w0; x++) {
       const ch = at(x, y);
       if (isClear(ch)) continue;
-      put(x + pad, y + pad, rgb(ch!));
+      put(x + pad, y + pad, mat ? material(x + pad, y + pad, hexOf(ch!), !opts.outline && !opts.tile && touchesClear(x, y)) : rgb(ch!));
     }
   }
   g.putImageData(img, 0, 0);

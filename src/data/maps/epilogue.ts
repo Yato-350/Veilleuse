@@ -113,7 +113,14 @@ const onStone = (): PropDef[] => [
       cond: () => !!G.state.flags.ep_placed && G.state.flags.ep_vl === id,
     }),
   ),
-  ON('prop_dodo_plush', E.STONE.x + 1, E.STONE.y, 0, { id: 'dodo_plush', ox: -2, cond: () => G.state.flags.ep_dodo === 'laisse' }),
+  // After the secret ending he was sewn back with blue thread (dodoMoment).
+  ...(['prop_dodo_plush', 'prop_dodo_recousu'] as const).map((sprite) =>
+    ON(sprite, E.STONE.x + 1, E.STONE.y, 0, {
+      id: 'dodo_plush',
+      ox: -2,
+      cond: () => G.state.flags.ep_dodo === 'laisse' && (E.dawn() === 'veilleuse') === (sprite === 'prop_dodo_recousu'),
+    }),
+  ),
 ];
 
 const SPARROW = (id: string, x: number, y: number, speed: number): NpcDef => ({

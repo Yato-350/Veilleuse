@@ -1,0 +1,14 @@
+# Lot 7 (docs/HISTOIRE.md § 2.4, T3): chapter 2, Mina freezes mid-sentence on the forest's north path. For a handful of
+# ticks, facing you, her eyes are two grey buttons sewn with a cross of red thread (pose_mina_boutons), then the
+# glitch, and she finishes her sentence as if nothing happened. A page-side watcher copies the game canvas on the frame
+# after the pose appears, and shows that copy for the screenshot.
+query: debug=script&name=c2_freeze&lang=fr
+wait:600
+eval: window.V = window.__veilleuse
+eval: (() => { let armed = false; const tick = () => { const m = V.world.get('mina'); if (m && m.sprite === 'pose_mina_boutons') { if (armed && !window.SNAP) window.SNAP = document.querySelector('canvas').toDataURL(); armed = true; } requestAnimationFrame(tick); }; requestAnimationFrame(tick); return 1; })()
+zuntil: V.G.state.flags.c2_freeze === true && !V.dialogue.busy && V.world.busy === 0
+assert: V.world.get('mina').data.boutons === true && !!window.SNAP
+assert: V.world.get('mina').sprite === undefined && V.world.get('mina').char === 'mina'
+eval: (() => { const i = new Image(); i.src = window.SNAP; i.style.cssText = 'position:fixed;left:0;top:0;width:640px;height:360px;image-rendering:pixelated;z-index:99'; document.body.appendChild(i); return 1; })()
+wait:300
+shot:boutons

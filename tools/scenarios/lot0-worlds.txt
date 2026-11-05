@@ -1,0 +1,17 @@
+# Lot 0 proof: the five v2 world materials on an existing map (village): felt, ballpoint, white-out, cotton, too-bright.
+query: debug=map&map=village&world=feutre&lang=fr
+wait:800
+shot:feutre
+eval: (() => { const v = window.__veilleuse; v.MAPS.village = { ...v.MAPS.village, world: 'stylo' }; v.world.load('village', 'default'); return 1; })()
+wait:600
+shot:stylo
+eval: (() => { const v = window.__veilleuse; v.MAPS.village = { ...v.MAPS.village, world: 'blanc' }; v.world.load('village', 'default'); return 1; })()
+wait:600
+shot:blanc
+eval: (() => { const v = window.__veilleuse; v.MAPS.village = { ...v.MAPS.village, world: 'ouate' }; v.world.load('village', 'default'); return 1; })()
+wait:600
+shot:ouate
+eval: (() => { const v = window.__veilleuse; v.MAPS.village = { ...v.MAPS.village, world: 'faux' }; v.world.load('village', 'default'); return 1; })()
+wait:600
+shot:faux
+assert: window.__veilleuse.world.variant === 'faux'

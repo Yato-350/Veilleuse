@@ -1,0 +1,27 @@
+# Review fixes (docs/HISTOIRE.md § 2.4 T3, § 3.2 the player's arc): La Couseuse, spared, speaks to the player without a
+# gender (« Toi, par contre… » — « Toi, je ne te connais pas. ») before « Tu es la seule chose nouvelle, {player}. ».
+query: debug=script&name=chapter4_grenier&lang=fr
+god
+wait:1500
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+auto
+interact:mq_365
+auto
+choose:0
+auto
+assert: window.__veilleuse.game.top.ally === 'mina366'
+write:tristesse
+auto
+write:tristesse
+auto
+write:découdre
+auto
+menu:3
+choose:0
+auto
+assert: V.G.state.flags.c4_couseuse === 'epargnee' && V.G.state.flags.c4_t3 === true
+assert: SAW('Toi, je ne te connais pas.') && SAW('Tu es la seule chose nouvelle,') && !SAW('tu es nouveau')

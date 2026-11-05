@@ -1,0 +1,14 @@
+# Lot 8 (§ 3.8, T6): Mina's taped drawing of stage 2 (the two children under a big moon): in the corner, the little
+# blue figure has reached the glass door, « Il ne l'ouvre pas. »
+query: debug=script&name=c3_dessin&stage=2&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+eval: (V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => (V.G.state.cleared.push(e.id), V.world.removeEntity(e.id))), 1)
+interact:dessin_2
+zuntil: IDLE()
+assert: SAW('Il ne l\'ouvre pas.') && SAW('Je l\'ai fini.')

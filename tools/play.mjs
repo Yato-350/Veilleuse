@@ -3,11 +3,16 @@
  * Playtest bot: drives the game in a headless browser with high-level steps and saves screenshots.
  *
  *   node tools/play.mjs "debug=script&name=c1_start" out.png --steps "auto,shot:menu,write:soleil,auto,shot:end"
+ *   node tools/play.mjs --scenario tools/scenarios/v11-sheep.txt [out.png] [--quiet]
+ *
+ * A scenario file (tools/scenarios/README.md) holds the query and one step per line, so proof runs can be saved and
+ * replayed (steps may then contain commas). `assert:<js>` fails the run when the expression is falsy.
  *
  * Steps (comma-separated):
  *   auto[:ms]        advance dialogue / battle text until something needs a decision (choice, battle menu, free roam)
- *   choose:N         pick choice N (0-based) in a dialogue choice or battle list
- *   menu:N           pick battle menu button N (0 FRAPPER, 1 ÉCRIRE, 2 OBJET, 3 ÉPARGNER)
+ *   choose:N         pick choice N (0-based) in a dialogue choice or battle list (moves until N is selected, confirms,
+ *                    and confirms again if the game dropped the press)
+ *   menu:N           pick battle menu button N (0 FRAPPER, 1 ÉCRIRE, 2 OBJET, 3 ÉPARGNER), checked the same way
  *   write:word       ÉCRIRE then the given word in the notebook (falls back to the first word)
  *   hit              FRAPPER and stop the bar near the middle
  *   dodge[:ms]       wait for the enemy turn to end (random wiggle)
@@ -20,26 +25,58 @@
  *   swipe:x/y/x2/y2  quick pointer flick between two game pixels (mouse drag)
  *   tap:x/y          tap (touch with --touch, else mouse click) at game pixel (x, y) of the 320×180 screen
  *   Code[:ms]        press (or hold) a key; wait:ms; shot:name; log (prints state); eval:js
+ *   assert:js        evaluate js in the page; a falsy result fails the run (exit code 1)
+ *   waitfor:js       wait (up to 20 s, pressing nothing) until js is truthy; fails the run on timeout
+ *   zuntil:js        press Z (advance text) every 250 ms until js is truthy (up to 30 s); fails the run on timeout
  * Prints a state line after each step; exits non-zero on page errors.
  */
 import { chromium } from 'playwright';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { createServer } from 'vite';
-import { resolve } from 'node:path';
+import { basename, resolve } from 'node:path';
 
 const args = process.argv.slice(2);
-const query = args[0] ?? 'debug=title';
-const out = resolve(args[1] ?? 'play.png');
 const opt = (name, def) => {
   const i = args.indexOf(`--${name}`);
   return i >= 0 ? args[i + 1] : def;
 };
+/** Positional arguments (options and their values removed). */
+const VALUED = new Set(['--steps', '--sep', '--size', '--scenario']);
+const positional = args.filter((a, i) => !a.startsWith('--') && !VALUED.has(args[i - 1] ?? ''));
+
+/**
+ * Scenario file: `#` comments, `query: …`, optional `size: WxH`, `touch: true`, `canvas: true`, `lang: en`,
+ * then one step per line (a line `steps:` before them is allowed).
+ */
+function readScenario(file) {
+  const sc = { query: 'debug=title', steps: [], size: null, touch: false, canvas: false };
+  for (const raw of readFileSync(file, 'utf8').split('\n')) {
+    const line = raw.trim();
+    if (!line || line.startsWith('#') || line === 'steps:') continue;
+    const m = /^(query|size|touch|canvas|lang):\s*(.*)$/.exec(line);
+    if (m) {
+      const [, k, v] = m;
+      if (k === 'query') sc.query = v;
+      else if (k === 'size') sc.size = v;
+      else if (k === 'lang') sc.query += `&lang=${v}`;
+      else sc[k] = v === 'true';
+    } else sc.steps.push(line);
+  }
+  return sc;
+}
+const scenarioFile = opt('scenario', null);
+const scenario = scenarioFile ? readScenario(scenarioFile) : null;
+const query = scenario ? scenario.query : (positional[0] ?? 'debug=title');
+const out = resolve(
+  (scenario ? positional[0] : positional[1]) ?? (scenario ? `play-${basename(scenarioFile).replace(/\.[^.]+$/, '')}.png` : 'play.png'),
+);
 // --sep ";" lets eval steps contain commas.
-const steps = opt('steps', 'auto').split(opt('sep', ',')).filter(Boolean);
-const [vw, vh] = opt('size', '640x360').split('x').map(Number);
+const steps = scenario ? scenario.steps : opt('steps', 'auto').split(opt('sep', ',')).filter(Boolean);
+const [vw, vh] = (scenario?.size ?? opt('size', '640x360')).split('x').map(Number);
 const quiet = args.includes('--quiet');
 /** --canvas: screenshots show only the game screen (handy with --touch / phone sizes). */
-const canvasOnly = args.includes('--canvas');
+const canvasOnly = args.includes('--canvas') || !!scenario?.canvas;
+if (scenario) console.log(`scenario ${scenarioFile}: ${query} (${steps.length} steps)`);
 
 const server = await createServer({ server: { port: 0, host: '127.0.0.1', hmr: false, watch: null }, logLevel: 'error' });
 await server.listen();
@@ -51,7 +88,7 @@ const browser = await launch(process.env.PW_CHROMIUM || undefined).catch((e) => 
   if (existsSync('/opt/pw-browsers/chromium')) return launch('/opt/pw-browsers/chromium');
   throw e;
 });
-const touch = args.includes('--touch');
+const touch = args.includes('--touch') || !!scenario?.touch;
 const page = await browser.newPage({ viewport: { width: vw, height: vh }, deviceScaleFactor: touch ? 2 : 1, hasTouch: touch, isMobile: touch });
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.stack ?? e)));
@@ -83,6 +120,8 @@ const state = () =>
       if (Array.isArray(top.menuLabels)) s.labels = top.menuLabels.join('|');
       s.enemies = top.enemies.map((e) => `${e.def.id}:${Math.round(e.hp)}hp:${Math.round((e.calm ?? 0) * 100)}%${e.spareable ? ':spare' : ''}`).join(' ');
       s.waitInput = !!top.text?.waitInput;
+      // Speech bubbles waiting for A (they stay until A is pressed once they are fully shown).
+      if (top.bubbles?.length && top.bubbleResolve) s.bubbles = top.bubbles.length;
       if (top.list) s.list = top.list.items.join('|');
       if (top.nb) s.nb = top.nb.writing ? 'writing' : true;
     }
@@ -101,6 +140,9 @@ const press = async (code, ms = 0) => {
   }
   await page.waitForTimeout(60);
 };
+
+/** A battle state that waits for A: a text to confirm, or speech bubbles. */
+const needsA = (s) => s.battle === 'text' || !!s.bubbles;
 
 let god = false;
 const refill = () => page.evaluate(() => {
@@ -122,7 +164,10 @@ async function auto(limit = 30000) {
     }
     if (s.battle) {
       if (s.battle === 'menu' || s.battle === 'list' || (s.battle === 'notebook' && s.nb !== 'writing') || s.battle === 'bar') return `battle:${s.battle}`;
-      if (s.battle === 'text' || s.battle === 'idle') await press('KeyZ');
+      // Press A only when the battle waits for it (a text or speech bubbles): those cannot move on by themselves, so
+      // the press lands on them. In other idle moments the battle goes on alone, and a press sent then could reach the
+      // menu that opens meanwhile (it would pick the last button, often ÉCRIRE, and open the notebook).
+      if (needsA(s)) await press('KeyZ');
       else if (s.battle === 'dodge') {
         if (god) await refill();
         await press(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'][Math.floor(Math.random() * 4)], 120);
@@ -140,18 +185,96 @@ async function auto(limit = 30000) {
   return 'timeout';
 }
 
-async function chooseList(n) {
-  const s = await state();
-  const up = s.battle ? 'ArrowUp' : 'ArrowUp';
-  for (let i = 0; i < 12; i++) await press(up);
-  for (let i = 0; i < n; i++) await press('ArrowDown');
-  await press('KeyZ');
+/** Polls `fn(arg)` in the page until it is truthy or `ms` have passed; returns the last value. */
+async function poll(fn, arg, ms) {
+  const t0 = Date.now();
+  for (;;) {
+    const v = await page.evaluate(fn, arg).catch(() => null);
+    if (v || Date.now() - t0 > ms) return v;
+    await page.waitForTimeout(50);
+  }
 }
 
+/** The selection of the open dialogue choice or battle list: { idx, len }. */
+const selection = (kind) => {
+  const v = window.__veilleuse;
+  if (kind === 'dialogue') return v.dialogue.choices ? { idx: v.dialogue.choiceIdx, len: v.dialogue.choices.length } : null;
+  const l = v.game.top?.list;
+  return l ? { idx: l.idx, len: l.items.length } : null;
+};
+/**
+ * Tags the open dialogue choice or battle list before a confirm press (tag = true), or tells whether the tagged one is
+ * gone (tag = false): a press the game dropped (it consumes input on mode changes) is seen, and sent again.
+ */
+const tagged = ([kind, tag]) => {
+  const v = window.__veilleuse;
+  const o = kind === 'dialogue' ? v.dialogue.choices : v.game.top?.list;
+  if (tag && o) o.__bot = true;
+  return tag || !o?.__bot;
+};
+
+/** Picks choice n (0-based) of a dialogue choice or a battle list: moves until it is selected, then confirms. */
+async function chooseList(n) {
+  const kind = await poll(() => (window.__veilleuse.dialogue.choices ? 'dialogue' : window.__veilleuse.game.top?.list ? 'list' : ''), null, 3000);
+  if (!kind) {
+    // Another kind of list: blind presses.
+    for (let i = 0; i < 12; i++) await press('ArrowUp');
+    for (let i = 0; i < n; i++) await press('ArrowDown');
+    await press('KeyZ');
+    return;
+  }
+  for (let tries = 0; tries < 3; tries++) {
+    for (let k = 0; k < 16; k++) {
+      const sel = await page.evaluate(selection, kind);
+      if (!sel || sel.idx === n || n >= sel.len) break;
+      if (kind === 'dialogue') await press((n - sel.idx + sel.len) % sel.len <= sel.len / 2 ? 'ArrowDown' : 'ArrowUp');
+      // Battle lists are two columns, without wrapping.
+      else if (Math.floor(n / 2) !== Math.floor(sel.idx / 2)) await press(n > sel.idx ? 'ArrowDown' : 'ArrowUp');
+      else await press(n % 2 ? 'ArrowRight' : 'ArrowLeft');
+    }
+    await page.evaluate(tagged, [kind, true]);
+    await press('KeyZ');
+    if (await poll(tagged, [kind, false], 1500)) return;
+  }
+}
+
+/** Picks battle menu button n: moves until it is selected, confirms, and checks the press was taken. */
 async function menu(n) {
-  const cur = await page.evaluate(() => window.__veilleuse.game.top.menuIdx ?? 0);
-  for (let i = 0; i < (n - cur + 4) % 4; i++) await press('ArrowRight');
-  await press('KeyZ');
+  // A notebook or a list left open (not by this step) is closed first with B, back to the menu.
+  for (let k = 0; k < 3; k++) {
+    const open = await page.evaluate(() => {
+      const t = window.__veilleuse.game.top;
+      return (t?.mode === 'notebook' && !t.nb?.writing) || (t?.mode === 'list' && !!t.list?.cancel);
+    });
+    if (!open) break;
+    await press('KeyX');
+    await poll(() => window.__veilleuse.game.top?.mode === 'menu', null, 1500);
+  }
+  if (!(await poll(() => window.__veilleuse.game.top?.mode === 'menu', null, 4000))) {
+    const cur = await page.evaluate(() => window.__veilleuse.game.top.menuIdx ?? 0);
+    for (let i = 0; i < (n - cur + 4) % 4; i++) await press('ArrowRight');
+    await press('KeyZ');
+    await page.waitForTimeout(250);
+    return;
+  }
+  for (let tries = 0; tries < 3; tries++) {
+    for (let k = 0; k < 8; k++) {
+      const cur = await page.evaluate(() => window.__veilleuse.game.top.menuIdx ?? 0);
+      if (cur === n) break;
+      await press((n - cur + 4) % 4 <= 2 ? 'ArrowRight' : 'ArrowLeft');
+    }
+    // The menu's resolver is cleared when the press is taken (a new menu gets a new one).
+    await page.evaluate(() => {
+      const r = window.__veilleuse.game.top.menuResolve;
+      if (r) r.__bot = true;
+    });
+    await press('KeyZ');
+    const taken = await poll(() => {
+      const t = window.__veilleuse.game.top;
+      return !(t?.mode === 'menu' && t.menuResolve?.__bot);
+    }, null, 1500);
+    if (taken) break;
+  }
   await page.waitForTimeout(250);
 }
 
@@ -230,6 +353,7 @@ async function swipe(arg) {
 }
 
 const shotPath = (name) => out.replace(/\.png$/, `-${name}.png`);
+const failures = [];
 for (const step of steps) {
   const colon = step.indexOf(':');
   const cmd = colon < 0 ? step : step.slice(0, colon);
@@ -260,7 +384,7 @@ for (const step of steps) {
     for (;;) {
       const st = await state();
       if (st.battle === arg || Date.now() - t0 > 20000) break;
-      if (st.dlg || st.battle === 'text' || st.battle === 'idle') await press('KeyZ');
+      if (st.dlg || needsA(st)) await press('KeyZ');
       await page.waitForTimeout(60);
     }
   }
@@ -295,6 +419,28 @@ for (const step of steps) {
       return `${x},${y}`;
     }, arg);
   else if (cmd === 'eval') res = String(await page.evaluate(arg));
+  else if (cmd === 'waitfor' || cmd === 'zuntil') {
+    const t0 = Date.now();
+    let v = false;
+    while (Date.now() - t0 < (cmd === 'zuntil' ? 30000 : 20000)) {
+      v = await page.evaluate(arg).catch(() => false);
+      if (v) break;
+      if (cmd === 'zuntil') await press('KeyZ');
+      await page.waitForTimeout(cmd === 'zuntil' ? 190 : 100);
+    }
+    res = v ? `ok after ${Date.now() - t0} ms` : 'TIMEOUT';
+    if (!v) {
+      failures.push(`${step} → timeout`);
+      console.log(`${step.padEnd(18)} → ${res}`);
+    }
+  } else if (cmd === 'assert') {
+    const v = await page.evaluate(arg).catch((e) => `error: ${e.message}`);
+    res = v && !String(v).startsWith('error:') ? `ok (${String(v).slice(0, 40)})` : `FAILED (${String(v)})`;
+    if (res.startsWith('FAILED')) {
+      failures.push(`${step} → ${String(v)}`);
+      console.log(`${step.padEnd(18)} → ${res}`);
+    }
+  }
   else if (cmd === 'tap') res = await tapAt(arg);
   else if (cmd === 'swipe') await swipe(arg);
   else await press(cmd, arg ? Number(arg) : 0);
@@ -305,9 +451,13 @@ await snap(out);
 const untranslated = await page.evaluate(() => window.__veilleuse.i18nMissing?.() ?? []).catch(() => []);
 if (untranslated.length)
   console.log(`i18n: ${untranslated.length} untranslated string(s) shown:\n  ${untranslated.slice(0, 40).map((s) => JSON.stringify(s)).join('\n  ')}`);
+if (failures.length) {
+  console.log(`ASSERTIONS FAILED:\n${failures.join('\n')}`);
+  process.exitCode = 1;
+}
 if (errors.length) {
   console.log('PAGE ERRORS/WARNINGS:\n' + [...new Set(errors)].slice(0, 30).join('\n'));
   process.exitCode = 1;
-} else console.log('ok, no page errors');
+} else console.log(failures.length ? 'no page errors, but assertions failed' : 'ok, no page errors');
 await browser.close();
 await server.close();

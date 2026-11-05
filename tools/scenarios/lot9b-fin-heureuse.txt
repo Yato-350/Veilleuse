@@ -1,0 +1,27 @@
+# Lot 9 (second half): the « Fin heureuse », the non-ending (docs/HISTOIRE.md § 5): in the false dawn, [Laisser
+# défiler] lets the fake credits roll to « Merci d'avoir joué ! — Dodo » and the cross-stitched title. It is never
+# recorded: the memory keeps its endings, its last ending (here a Silence seen before: the title is still the cross-
+# stitch, not the photo), its nights; the run goes on (its save is kept). « Continuer » leads back to the stuck line.
+query: debug=script&name=fausse_aube_appart&lang=fr
+wait:1500
+eval: window.V = window.__veilleuse
+eval: (V.G.meta.endings = ['silence'], V.G.meta.lastEnding = 'silence', window.__meta0 = JSON.stringify([V.G.meta.endings, V.G.meta.lastEnding, V.G.meta.nuits, V.G.meta.beauxRevesAt]), 1)
+auto
+interact:maman
+auto
+choose:0
+zuntil: V.scene() === 'ImageScene'
+zuntil: V.scene() !== 'ImageScene'
+waitfor: V.game.top.phase === 'stopped' && V.game.top.stopT > 80
+KeyZ
+KeyZ:9000
+waitfor: V.game.top.phase === 'end'
+KeyZ
+waitfor: V.scene() === 'TitleScene'
+wait:1200
+shot:point-de-croix
+eval: JSON.stringify([V.game.top.variant, V.G.meta.endings, V.G.meta.lastEnding, V.G.meta.nuits, V.G.meta.beauxRevesAt, window.__meta0])
+assert: V.game.top.variant === 'point_de_croix' && JSON.stringify([V.G.meta.endings, V.G.meta.lastEnding, V.G.meta.nuits, V.G.meta.beauxRevesAt]) === window.__meta0
+KeyZ
+waitfor: V.game.top.phase === 'stopped' && V.game.top.stopT > 80
+assert: V.game.top.lines.some(([t]) => t === 'Mina ……… introuvable introuvable')

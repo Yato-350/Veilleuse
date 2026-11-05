@@ -1,0 +1,9 @@
+# Lot 0 proof: dialogue tags. {static} radio static in Dodo's line, then {as:noa}: mid-box the name tag, portrait
+# and blip switch from Dodo to Noa (T7). Then {voice:noa} on a narrator box, and the narrator's night blip.
+query: debug=script&name=dialogue_tags&lang=fr
+waitfor: window.__veilleuse.dialogue.speaker.name === 'Dodo'
+shot:dodo
+zuntil: window.__veilleuse.dialogue.speaker.name === 'Noa' && window.__veilleuse.dialogue.baseSpeaker.name === 'Dodo'
+shot:switched
+auto
+assert: window.__veilleuse.scene() === 'WorldScene' && window.__veilleuse.dialogue.narratorVoice === null

@@ -1,0 +1,19 @@
+# Lot 4: the final battle, phase 3: DORMIR again and again (Z on DORMIR until something else is asked). At the bottom of
+# sleep Dodo offers to stay: « …Non » once (Noa bites his cheek, sleep goes back up), then DORMIR until he offers
+# again, and « Rester »: Beaux rêves (flags.fin_route = 'beaux_reves').
+query: debug=script&name=dodo_v2_coups&lang=fr
+god
+wait:1500
+auto
+menu:1
+zuntil: window.__veilleuse.dialogue.choices && window.__veilleuse.dialogue.choices.length === 2
+wait:600
+shot:offre
+choose:1
+auto
+assert: !window.__veilleuse.G.state.flags.fin_route
+menu:1
+zuntil: window.__veilleuse.dialogue.choices && window.__veilleuse.dialogue.choices.length === 2
+wait:600
+choose:0
+zuntil: window.__veilleuse.G.state.flags.debug_battle === 'beaux_reves'

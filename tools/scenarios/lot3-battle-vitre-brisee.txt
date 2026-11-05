@@ -1,0 +1,12 @@
+# Lot 3 (chapter 5 battles): La Vitre, broken (HP lowered to keep the run short): the glass bursts into ink, an empty bed
+# behind it, the sheet flat. The battle sets flags.c5_vitre = 'brisee'. FRAPPER stays selected: Z until it is over.
+query: debug=script&name=vitre&lang=fr
+god
+wait:1500
+auto
+eval: window.__veilleuse.game.top.enemies[0].hp = 3
+hit
+waitfor: window.__veilleuse.G.state.flags.c5_vitre === 'brisee'
+wait:1400
+shot:lit
+zuntil: window.__veilleuse.G.state.flags.debug_battle === 'win:vitre'

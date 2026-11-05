@@ -1,0 +1,25 @@
+# Lot 1 (chapter 4 battles): Pâte Froide and Mot Aimanté together. Pâte Froide (first target) wants Tristesse ×2 and
+# is spared first; then Mot Aimanté, alone, wants Colère then Joie ×2 and spits out « JE T'AIME ».
+query: debug=script&name=bt_ch4_duo&lang=fr
+god
+wait:1500
+auto
+write:tristesse
+auto
+write:tristesse
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable
+menu:3
+choose:0
+auto
+write:colere
+auto
+write:joie
+auto
+write:joie
+auto
+assert: window.__veilleuse.game.top.enemies[1].spareable
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.debug_battle === 'spare:pate_froide+mot_aimante'

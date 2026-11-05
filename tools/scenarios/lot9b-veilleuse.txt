@@ -1,0 +1,89 @@
+# Lot 9 (second half): Veilleuse, the secret ending (docs/HISTOIRE.md § 5), every condition met (an Aube already in
+# the memory, the Golden Button kept, « J'ai de la fièvre », fewer than three corrections, the Pile spared, « Je ne
+# sais pas », the alarm clock's battery). « Le découdre »: Maman's seam ripper (« Tu vas l'abîmer. » — « Je vais le
+# réparer. »), the folded drawing lune_finie, track 1 clear for the first time in a year, track 2 under the golden
+# button (« C'est pas toi qui m'as rendue malade, gros bêta. »), « Elle savait pas, pour l'appel. » — « Non. Mais
+# elle te connaissait. », three knocks on her wall and the radiator answers, Dodo sewn back with blue thread
+# (fin_veilleuse). The epilogue: Dodo with his blue seam is left on her stone (no choice), then Mina's drawings
+# instead of the closing voice. Recorded as veilleuse; Dodo silent for good (meta.dodoSilent); no help card; the
+# title shows the nightlight plugged in at dawn, and no Dodo.
+query: debug=script&name=finale_veilleuse&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+zuntil: TXT().includes('Je sais que tu ne dormais pas')
+zuntil: TXT().includes('pas dans le noir')
+zuntil: V.dialogue.choices && V.dialogue.choices[0] === 'Le découdre'
+choose:0
+zuntil: SAW('Je vais le réparer.')
+shot:decoudre
+zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'lune_finie'
+wait:1500
+shot:lune-finie
+zuntil: V.dialogue.choices && V.dialogue.choices[0] === 'Appuyer'
+KeyZ
+zuntil: SAW('Fais de beaux rêves.')
+assert: V.dialogue.speaker.name === 'Mina' && V.G.state.flags.fin_decousu === true
+zuntil: V.dialogue.choices && V.dialogue.choices[0] === 'Appuyer fort'
+KeyZ
+zuntil: TXT().includes('gros bêta')
+shot:piste2
+zuntil: SAW('Mais elle te connaissait.')
+zuntil: SAW('répond. Trois fois.')
+zuntil: SAW('Ils tiennent.')
+zuntil: SAW('contre le bonnet')
+shot:recousu
+zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'fin_veilleuse'
+wait:1500
+shot:fin-veilleuse
+assert: V.G.state.flags.fin_piste1 === true && V.G.state.flags.fin_piste2 === true && V.G.state.flags.fin_recousu === true && V.G.state.flags.fin_ending === 'veilleuse'
+zuntil: V.G.state.map === 'bazar' && V.world.busy === 0 && !V.dialogue.busy
+assert: SAW('une couture bleue') && !SAW('La pile est morte.')
+interact:vl_lune
+zuntil: V.dialogue.choices
+choose:0
+auto
+go:10/5
+ArrowUp:150
+KeyZ
+zuntil: V.dialogue.choices
+choose:0
+auto
+go:7/7
+ArrowDown:600
+waitfor: V.G.state.map === 'jardin'
+auto
+go:19/5
+ArrowUp:300
+wait:300
+auto
+go:19/4
+interact:mina_stone
+zuntil: V.dialogue.choices
+choose:0
+zuntil: V.dialogue.choices
+choose:0
+zuntil: SAW('Tu le laisses là.')
+shot:pierre
+assert: V.G.state.flags.ep_dodo === 'laisse' && V.world.entities.some((e) => e.id === 'dodo_plush' && e.sprite === 'prop_dodo_recousu')
+zuntil: !V.dialogue.busy && V.world.busy === 0
+interact:maman
+zuntil: V.dialogue.choices
+choose:0
+zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'fin_jardin'
+zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'carnet_page1'
+wait:1500
+shot:dessins
+zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'lune_finie'
+zuntil: V.scene() === 'CreditsScene'
+assert: !SAW('Je veillerai sur') && V.G.meta.endings.includes('veilleuse') && V.G.meta.lastEnding === 'veilleuse' && V.G.meta.dodoSilent === true
+KeyZ:15000
+waitfor: V.game.top.phase === 'end'
+KeyZ
+waitfor: V.scene() === 'TitleScene'
+wait:2500
+shot:titre
+assert: V.game.top.variant === 'veilleuse'

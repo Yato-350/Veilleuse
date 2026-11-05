@@ -1,0 +1,19 @@
+# Review fix (docs/HISTOIRE.md § 2.1 T2 « après », § 1.1 at 19:40): when Maman comes home, after « Elle t'aimait
+# tellement. », she tells how Dodo came back: « Dodo, le dernier soir, elle me l'a confié. Pour toi. » — « « Prends-le
+# pour Noa. Il fait des cauchemars, je le sais. Moi, j'aurai ma veilleuse. » » (the exchange only went one way), and
+# Noa says nothing. The scene then goes on to the radiator and the dawn (Aube).
+query: debug=script&name=finale_aube&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: window.WHO = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) { SEEN.push(t); WHO.push(V.dialogue.speaker?.name ?? ''); } }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.AT = (s) => SEEN.findIndex((t) => t.includes(s))
+zuntil: SAW('Elle t\'aimait tellement.')
+zuntil: SAW('Moi, j\'aurai ma veilleuse.')
+shot:dodo-rendu
+zuntil: SAW('Dans le mur, le tuyau du radiateur cogne.')
+assert: AT('Dodo, le dernier soir, elle me l\'a confié. Pour toi.') > AT('Elle parlait de toi tout le temps.') && WHO[AT('Prends-le pour Noa.')] === 'Maman' && WHO[AT('Prends-le pour Noa.') + 1] === 'Noa'
+zuntil: V.G.state.flags.fin_ending === 'aube'

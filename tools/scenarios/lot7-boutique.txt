@@ -1,0 +1,45 @@
+# Lot 7 (docs/HISTOIRE.md § 3.4): chapter 1, Sockette's shop, the Golden Button in Noa's pocket. Talking to her first:
+# « Comme d'habitude ? ». At the counter she offers 50 Buttons for it; Noa keeps it; the shop sells the spare eyes
+# (« Pour les jours où on ne veut pas voir »). Talking to her again: 60 Buttons; Noa sells. The button is gone, the flag
+# c1_bouton_vendu (which silently closes the secret ending) is set, and Mina says it doesn't matter.
+query: debug=script&name=c1_boutique&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+interact:chaussette
+zuntil: SAW('Comme d\'habitude ?')
+shot:habitude
+zuntil: IDLE()
+assert: SAW('Toutes les têtes fatiguées se ressemblent') && SAW('Mais dis-moi…')
+# The counter: the first offer, kept
+interact:comptoir
+zuntil: V.dialogue.choices && V.dialogue.choices.length === 2
+shot:offre
+choose:1
+zuntil: V.game.top.constructor.name === 'ShopScene'
+assert: SAW('Il te va bien, de toute façon.') && V.G.state.keyItems.includes('bouton_dore') && !V.G.state.flags.c1_bouton_vendu
+ArrowDown:60
+wait:150
+ArrowDown:60
+wait:150
+ArrowDown:60
+wait:150
+ArrowDown:60
+wait:400
+shot:yeux
+KeyX:60
+zuntil: V.game.top.constructor.name === 'WorldScene' && IDLE()
+# Talking again: the second offer, sold
+eval: (window.B0 = V.G.state.boutons, 1)
+interact:chaussette
+zuntil: V.dialogue.choices && V.dialogue.choices.length === 2
+assert: SAW('Je monte à soixante.')
+choose:0
+zuntil: SAW('C\'était qu\'un bouton.')
+shot:vendu
+zuntil: IDLE()
+assert: V.G.state.flags.c1_bouton_vendu === true && !V.G.state.keyItems.includes('bouton_dore') && V.G.state.boutons === B0 + 60

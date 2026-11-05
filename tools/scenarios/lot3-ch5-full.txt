@@ -1,0 +1,168 @@
+# Lot 3 (chapter 5 world): the whole chapter, from the card to the fall, the short way (« Oui. »).
+# The beach (no shadow, a sun that does not move): Mina of before, shells listened to (Maman humming; Mina counting
+# her breaths), the forty-second one where the small footprints stop; the castle grows with the shells given; she
+# falls asleep on the towel (« Réduire les attentes »: 5 s instead of 30); Noa's only line; the white tide; the sheet;
+# the frozen sea; the portal → « Oui. »: the short way, the rest of the airlock is white; the lake; one drawing
+# corrected; the parents' room; the visit; La Vitre wants « pardon » first; souvenir; the fall.
+query: debug=script&name=chapter5&lang=fr
+god
+wait:1500
+auto
+assert: window.__veilleuse.world.map.id === 'plage' && window.__veilleuse.G.state.flags.c5_intro
+eval: window.__veilleuse.G.state.cleared.push('c5_crabe_1', 'c5_mouette_1', 'c5_mouette_2', 'c5_plage_duo', 'c5_gel_1', 'c5_gel_2', 'c5_masque_1', 'c5_masque_2', 'c5_noire_1', 'c5_noire_2', 'c5_thermo_lac', 'c5_gel_lac')
+eval: window.__veilleuse.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => window.__veilleuse.world.removeEntity(e))
+shot:plage
+interact:mina_avant
+auto
+interact:coquillages_0
+auto
+choose:0
+auto
+interact:coquillages_3
+auto
+choose:1
+auto
+interact:coquillages_4
+auto
+choose:0
+auto
+interact:coquillage42
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c5_coquillages === 14 && window.__veilleuse.G.state.flags.c5_coquillage42
+interact:mina_avant
+auto
+assert: window.__veilleuse.G.state.flags.c5_donnes === 14
+eval: window.__veilleuse.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => window.__veilleuse.world.removeEntity(e))
+interact:mina_avant
+auto
+assert: window.__veilleuse.G.state.flags.c5_sieste
+go:15/13
+wait:400
+shot:sieste
+eval: window.__veilleuse.G.settings.shortWaits = true
+interact:mina_dort
+auto
+assert: !window.__veilleuse.G.state.flags.c5_maree
+wait:5500
+interact:mina_dort
+auto:90000
+assert: window.__veilleuse.G.state.flags.c5_maree && window.__veilleuse.G.state.flags.c5_drap && window.__veilleuse.G.state.flags.c5_nulle
+shot:drap
+assert: window.__veilleuse.G.state.flags.c5_fil_vu
+go:22/24
+interact:portail
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.c5_menti && !window.__veilleuse.G.state.flags.c5_fievre
+assert: window.__veilleuse.world.map.id === 'sas'
+shot:court
+# The short way: door 1 is behind Noa already.
+interact:porte_1
+auto
+choose:0
+auto
+go:37/7
+wait:300
+auto
+interact:porte_2
+auto
+go:39/7
+wait:300
+auto
+interact:porte_2
+auto
+choose:0
+auto
+go:45/7
+wait:300
+auto
+interact:porte_3
+auto
+go:47/7
+wait:300
+auto
+interact:porte_3
+auto
+choose:1
+auto
+choose:0
+auto
+go:55/7
+wait:300
+auto
+interact:porte_4
+auto
+go:57/7
+wait:300
+auto
+interact:porte_4
+auto
+choose:0
+auto
+go:64/7
+wait:300
+auto
+interact:porte_5
+auto
+ArrowRight:900
+auto
+assert: window.__veilleuse.world.map.id === 'lac_blanc' && window.__veilleuse.G.state.flags.c5_lac
+eval: window.__veilleuse.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => window.__veilleuse.world.removeEntity(e))
+go:17/4
+wait:300
+auto
+go:20/3
+interact:dessin_mina
+auto
+choose:0
+zuntil: window.__veilleuse.game.top.drawing === 'mina' && window.__veilleuse.game.top.tracing && !window.__veilleuse.dialogue.busy
+KeyZ:7000
+auto
+assert: window.__veilleuse.G.state.flags.c5_corrige === 1
+go:38/12
+interact:cabane
+auto
+interact:fauteuil
+auto
+choose:0
+auto
+go:65/31
+wait:400
+auto
+go:24/22
+interact:porte_verre
+auto
+assert: window.__veilleuse.world.map.id === 'chambre_verre'
+interact:silhouette
+auto
+choose:1
+zuntil: window.__veilleuse.game.top.tracing && !window.__veilleuse.dialogue.busy
+KeyZ:5200
+zuntil: window.__veilleuse.game.top.tracing && window.__veilleuse.game.top.tracing.who === 'noa' && !window.__veilleuse.dialogue.busy
+KeyZ:4500
+waitfor: window.__veilleuse.game.top.result.coughed === true
+auto
+assert: window.__veilleuse.G.state.flags.c5_visite
+go:11/12
+wait:300
+auto
+assert: window.__veilleuse.game.top.enemies[0].total === 4
+write:pardon
+auto
+write:tristesse
+auto
+write:tristesse
+auto
+write:je ne sais pas
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable
+menu:3
+choose:0
+zuntil: window.__veilleuse.G.state.flags.c5_fin
+auto
+assert: window.__veilleuse.G.state.flags.c5_vitre === 'epargnee'
+assert: window.__veilleuse.G.state.flags.c5_corrige === 1 && window.__veilleuse.G.state.flags.c5_menti
+shot:fin

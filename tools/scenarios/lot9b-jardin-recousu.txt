@@ -1,0 +1,9 @@
+# Review fix: after the secret ending (Veilleuse), a save taken in the garden once Dodo is left on the stone reloads
+# with the sewn Dodo (blue stitches, prop_dodo_recousu); after the other dawns, the plain plush.
+query: debug=map&map=jardin&spawn=stone&flags=interlude=9,fin_ending=veilleuse,ep_dodo=laisse,ep_placed,ep_poem,ep_vl=lune,ep_maman_wait,ep_garden&lang=fr
+wait:1500
+assert: window.__veilleuse.world.get('dodo_plush').sprite === 'prop_dodo_recousu'
+shot:veilleuse
+eval: (window.__veilleuse.G.state.flags.fin_ending = 'aube', window.__veilleuse.world.load('jardin', 'stone'), 1)
+wait:500
+assert: window.__veilleuse.world.get('dodo_plush').sprite === 'prop_dodo_plush' && window.__veilleuse.world.entities.filter((e) => e.id === 'dodo_plush').length === 1

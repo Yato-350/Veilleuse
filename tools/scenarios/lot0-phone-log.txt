@@ -1,0 +1,28 @@
+# Lot 0 proof: the v2 phone, opened on the call log (« Mina 🐑 — entrant — 3:14 — 0:41 », a year ago), then the
+# messages tab: the pinned « Mina 🐑 » thread is locked (refused once, then opened on a year of « bonne nuit »).
+query: debug=script&name=phone_log&lang=fr
+wait:1500
+auto:3000
+shot:log
+assert: window.__veilleuse.game.top.isOnCalls === true
+ArrowLeft
+wait:400
+shot:list
+KeyZ
+wait:300
+auto:2500
+KeyZ
+wait:300
+auto:2500
+KeyZ
+wait:800
+shot:thread
+assert: window.__veilleuse.game.top.view === 'thread' && window.__veilleuse.game.top.msgs.length > 700
+ArrowUp:1200
+shot:history
+KeyX
+wait:300
+KeyX
+wait:800
+auto
+assert: window.__veilleuse.scene() === 'WorldScene'

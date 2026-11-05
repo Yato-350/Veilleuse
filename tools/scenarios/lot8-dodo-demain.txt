@@ -1,0 +1,16 @@
+# Lot 8 (§ 2.9 T8): in the short battle against Dodo, his words in the notebook are « dors, reste, oublie, demain, chut »
+# (the words of the call); « demain »: « Ici, c'est toujours demain. Il ne vient jamais. »
+query: debug=script&name=c3_battle_p2&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; const b = V.game.top; const j = (cs) => cs.map((l) => l.map((c) => c.ch).join('')).join(' '); if (D.busy) return j(D.pages[D.pageIdx]?.lines || []); if (!b || !b.enemies) return ''; return [b.text ? j(b.text.chars) : '', ...(b.bubbles || []).map((x) => j(x.chars))].join(' | '); }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+god
+auto
+assert: ['dors', 'reste', 'oublie', 'demain', 'chut', 'pardon'].every((w) => V.game.top.pickWords(V.game.top.enemies[0]).some((x) => x.text === w))
+write:demain
+zuntil: SAW('Il ne vient jamais.')
+shot:demain

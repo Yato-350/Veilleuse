@@ -1,0 +1,84 @@
+# Lot 13, English check: Veilleuse, the secret ending, played in English — a copy of lot9b-veilleuse.txt with lang=en, its French text
+# checks replaced by the English of the catalogs (src/i18n/en/), and no string of the run shown untranslated
+# (i18nMissing, dev builds).
+query: debug=script&name=finale_veilleuse&lang=en
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+zuntil: TXT().includes('I know you weren\'t asleep')
+zuntil: TXT().includes('wasn\'t in the dark')
+zuntil: V.dialogue.choices && V.dialogue.choices[0] === 'Unstitch him'
+choose:0
+zuntil: SAW('I\'m going to mend him.')
+shot:decoudre
+zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'lune_finie'
+wait:1500
+shot:lune-finie
+zuntil: V.dialogue.choices && V.dialogue.choices[0] === 'Press'
+KeyZ
+zuntil: SAW('Sweet dreams.')
+assert: V.dialogue.speaker.name === 'Mina' && V.G.state.flags.fin_decousu === true
+zuntil: V.dialogue.choices && V.dialogue.choices[0] === 'Press hard'
+KeyZ
+zuntil: TXT().includes('big dummy')
+shot:piste2
+zuntil: SAW('But she knew you.')
+zuntil: SAW('answers. Three times.')
+zuntil: SAW('They hold.')
+zuntil: SAW('against the hat')
+shot:recousu
+zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'fin_veilleuse'
+wait:1500
+shot:fin-veilleuse
+assert: V.G.state.flags.fin_piste1 === true && V.G.state.flags.fin_piste2 === true && V.G.state.flags.fin_recousu === true && V.G.state.flags.fin_ending === 'veilleuse'
+zuntil: V.G.state.map === 'bazar' && V.world.busy === 0 && !V.dialogue.busy
+assert: SAW('blue seam') && !SAW('The battery is dead.')
+interact:vl_lune
+zuntil: V.dialogue.choices
+choose:0
+auto
+go:10/5
+ArrowUp:150
+KeyZ
+zuntil: V.dialogue.choices
+choose:0
+auto
+go:7/7
+ArrowDown:600
+waitfor: V.G.state.map === 'jardin'
+auto
+go:19/5
+ArrowUp:300
+wait:300
+auto
+go:19/4
+interact:mina_stone
+zuntil: V.dialogue.choices
+choose:0
+zuntil: V.dialogue.choices
+choose:0
+zuntil: SAW('You leave him there.')
+shot:pierre
+assert: V.G.state.flags.ep_dodo === 'laisse' && V.world.entities.some((e) => e.id === 'dodo_plush' && e.sprite === 'prop_dodo_recousu')
+zuntil: !V.dialogue.busy && V.world.busy === 0
+interact:maman
+zuntil: V.dialogue.choices
+choose:0
+zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'fin_jardin'
+zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'carnet_page1'
+wait:1500
+shot:dessins
+zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'lune_finie'
+zuntil: V.scene() === 'CreditsScene'
+assert: !SAW('I\'ll watch over') && V.G.meta.endings.includes('veilleuse') && V.G.meta.lastEnding === 'veilleuse' && V.G.meta.dodoSilent === true
+KeyZ:15000
+waitfor: V.game.top.phase === 'end'
+KeyZ
+waitfor: V.scene() === 'TitleScene'
+wait:2500
+shot:titre
+assert: V.game.top.variant === 'veilleuse'
+assert: window.__veilleuse.i18nMissing().length === 0

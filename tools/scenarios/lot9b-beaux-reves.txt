@@ -1,0 +1,50 @@
+# Lot 9 (second half): Beaux rêves v2 (docs/HISTOIRE.md § 5, § 6.1), [Rester] at the end of the final battle. Dodo
+# (Noa's own voice) tells the story and promises « Tu n'auras plus mal »; then the real world: Noa gets up, goes back
+# to his room, shuts the door; in the hallway the years go by: Maman's notes pile up on his door (« Noa, tu as 15 ans
+# aujourd'hui. Il y a un gâteau dans le frigo. », « 16. », « Je t'aime. »), he answers « …Merci. » through the door;
+# behind it, the voice module dies in the middle of « beaux rê— »; « Il est là. Il est toujours là. »; a boy of
+# sixteen, alive, awake, in his room (fin_beaux_reves), the promise contradicted on screen. Recorded (beaux_reves,
+# beauxRevesAt, one more night), the help card (3114), the title with a single « Continuer » that counts the real days;
+# « Continuer » goes straight back into chapter 1 (no prologue, flags.br_retour).
+query: debug=script&name=fin_beaux_reves&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: (window.__nuits0 = V.G.meta.nuits, 1)
+zuntil: SAW('Tu n\'auras plus mal.')
+zuntil: V.G.state.map === 'appartement_br'
+zuntil: SAW('15 ans aujourd')
+zuntil: SAW('…Merci.')
+shot:merci
+zuntil: SAW('16.')
+zuntil: SAW('Je t\'aime.')
+zuntil: TXT().includes('beaux rê')
+wait:1500
+shot:pile
+zuntil: SAW('Il est toujours là.')
+zuntil: !V.world.entities.some((e) => e.id === 'maman')
+wait:600
+shot:porte
+assert: ['br_mot_0', 'br_mot_1', 'br_mot_2'].every((id) => V.world.entities.some((e) => e.id === id))
+zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'fin_beaux_reves'
+wait:1500
+shot:seize-ans
+zuntil: V.scene() === 'CreditsScene'
+assert: V.G.meta.endings.includes('beaux_reves') && V.G.meta.lastEnding === 'beaux_reves' && V.G.meta.beauxRevesAt > 0 && V.G.meta.nuits === window.__nuits0 + 1
+KeyZ:15000
+waitfor: V.game.top.phase === 'end'
+KeyZ
+waitfor: V.game.top.phase === 'help'
+wait:1500
+shot:aide
+KeyZ
+waitfor: V.scene() === 'TitleScene'
+wait:2500
+shot:titre
+assert: V.game.top.variant === 'continuer_seul' && V.game.top.items.length === 1
+KeyZ
+waitfor: V.G.state.map === 'prairie'
+assert: V.G.state.flags.br_retour === true && V.G.state.chapter === 1 && V.G.meta.runInProgress === true

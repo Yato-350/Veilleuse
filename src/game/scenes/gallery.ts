@@ -7,7 +7,7 @@ import { makeCanvas } from '../../engine/sprite';
 import { ILLUSTRATIONS, SOUVENIRS } from '../../data/illustrations';
 import { G, type SavedPoem } from '../state';
 import { box, heart } from '../ui/draw';
-import { drawPoemPage, poemDate, poemFile, poemLines, sharePoem, type ShareResult } from '../ui/share';
+import { drawPoemPage, poemDate, poemFile, poemLines, sharePoem, silenced, type ShareResult } from '../ui/share';
 import { tf, tr, trAll } from '../../i18n';
 
 /**
@@ -35,6 +35,10 @@ const CATALOG: Array<[key: string, kind: string, title: string, captions: string
   ['souvenir_fenetre', KIND_SOUVENIR, '', []],
   ['souvenir_dessin', KIND_SOUVENIR, '', []],
   ['souvenir_veilleuse', KIND_SOUVENIR, '', []],
+  ['souvenir_lumiere', KIND_SOUVENIR, '', []],
+  ['souvenir_vitre', KIND_SOUVENIR, '', []],
+  ['souvenir_vitre_brisee', KIND_SOUVENIR, '', []],
+  ['bonnet_visage', KIND_SOUVENIR, 'La Petite au Bonnet', ['Son visage, au crayon de papier. Fatigué, et souriant.', '« T\'as mis le temps, gros bêta. »']],
   ['photo_famille', KIND_REAL, 'La photo de l\'été', ['Maman, toi, et Mina avec sa couronne en papier.', 'Tu avais oublié que tu souriais comme ça.']],
   [
     'tv_mina',
@@ -46,20 +50,23 @@ const CATALOG: Array<[key: string, kind: string, title: string, captions: string
       '« Tu le gardes, hein ? Promis ? Promis juré ? »',
     ],
   ],
+  ['faux_aube', KIND_REAL, 'Il fait beau', ['Elle te serre fort, et elle sourit.', 'Elle sourit tout le temps.', 'Elle ne peut rien faire d\'autre.']],
+  ['faux_aube_encre', KIND_REAL, 'Il fait beau, quand même', ['Elle te serre fort.', 'Tu cherches son visage. Il n\'y a que de l\'encre.', 'Tu la reconnais. C\'est la tienne.']],
+  ['photo_decoupee', KIND_REAL, 'La photo retournée', ['Maman. Mina, avec sa couronne en papier.', 'À ta place, un trou. Les bords sont nets. Bien droits.', 'Aux ciseaux.']],
+  ['polaroid_dodo', KIND_REAL, 'Le polaroïd', ['Dodo, sur un oreiller d\'hôpital. Une main de garçon posée sur lui.', '« Noa prête Dodo à Mina. "Il veillera sur toi." »']],
+  ['dessin_chut', KIND_REAL, 'Le dessin du miroir', ['Une petite fille, un doigt sur la bouche.', '« MAMAN TU DIS PAS A NOA. PROMIS. »']],
   ['carnet_couverture', KIND_CARNET, 'Le Pays de Coton', ['Un carnet à spirale, des gommettes en forme d\'étoile.', '« Le Pays de Coton — pour Noa »']],
   ['carnet_page1', KIND_CARNET, 'La prairie', ['Une prairie pleine de coton. Un garçon aux cheveux bleus.', 'Une princesse avec une cape et une couronne.']],
   ['carnet_page2', KIND_CARNET, 'Le village des moutons', ['Un village de moutons. Une chaussette marchande.', '« elle cherche sa paire !! »']],
   ['carnet_page3', KIND_CARNET, 'La forêt de crayons', ['Une forêt de crayons. Un hibou à lunettes. Des lucioles.']],
   ['carnet_page4', KIND_CARNET, 'La dernière page', ['« Si tu as peur du noir, regarde la lune. Moi je serai ta veilleuse. »', 'Elle l\'avait écrit pour toi, bien avant tout ça.']],
   ['fin_aube', KIND_FIN, 'L\'aube', ['Le soleil se lève sur la chambre de Mina.', 'Pour la première fois depuis un an, il fait jour.']],
+  ['fin_aube_blanche', KIND_FIN, 'L\'aube blanche', ['Le soleil se lève sur la chambre de Mina.', 'Il est tout rond, tout blanc. Il ne chauffe pas.', 'Il fait jour quand même.']],
+  ['lune_finie', KIND_FIN, 'La lune finie', ['Deux enfants sous une grande lune. Le grand frère n\'a pas de masque.', '« FINI. (sans toi mais avec toi) »']],
+  ['fin_veilleuse', KIND_FIN, 'La veilleuse', ['À côté de son lit, la veilleuse est branchée.', 'Personne ne l\'éteint.']],
   ['fin_jardin', KIND_FIN, 'Le jardin', ['Derrière vous, la veilleuse brille en plein jour.', 'Personne ne la remarque vraiment.', 'Mais elle brille.']],
-  [
-    'fin_beaux_reves',
-    KIND_FIN,
-    'Beaux rêves',
-    ['Noa dort. Il fait de beaux rêves.', 'Dans le rêve, il fait toujours nuit, et personne n\'est jamais triste.', 'Dans l\'appartement, la veilleuse grésille encore un peu. Puis plus rien.'],
-  ],
-  ['fin_silence', KIND_FIN, 'Le silence', ['Le Pays de Coton est noyé d\'encre.', 'Il n\'y a plus de moutons. Plus de lune. Plus de princesse.', 'Il n\'y a plus personne pour se souvenir de rien.']],
+  ['fin_beaux_reves', KIND_FIN, 'Beaux rêves', ['Noa a seize ans.', 'Il mange quand Maman dort. Il répond quand on frappe. Pas toujours.']],
+  ['fin_silence', KIND_FIN, 'Le silence', ['Noa va bien.', 'Au bout du couloir, il y a un débarras.', 'Personne n\'y range plus rien.']],
   ['maman_aube', 'Les rêves des autres', 'Cinq heures cinquante', ['Maman a dormi. Deux heures, d\'une traite.', 'Sur la table, le réveil est face contre le bois.', '« Je rentre. »']],
 ];
 
@@ -72,7 +79,7 @@ export function galleryEntries(): GalleryEntry[] {
     known.add(key);
     const s = Object.values(SOUVENIRS).find((x) => x.image === key);
     const caps = captions.length ? captions : (s?.captions ?? []);
-    out.push({ key, kind: tr(kind), title: tr(title || s?.title || 'Un souvenir'), captions: trAll(caps) });
+    out.push({ key, kind: silenced(tr(kind)), title: silenced(tr(title || s?.title || 'Un souvenir')), captions: trAll(caps).map(silenced) });
   }
   for (const key of Object.keys(ILLUSTRATIONS)) {
     if (!known.has(key)) out.push({ key, kind: tr('Un rêve'), title: tr('Un autre souvenir'), captions: [] });
@@ -496,7 +503,7 @@ export class GalleryScene implements Scene {
     else this.drawList(g);
     if (this.onTabs) {
       const hint = this.tab === 0 ? 'Les images gardées, d\'une nuit à l\'autre.' : 'Les poèmes que tu as écrits pour Mina.';
-      drawText(g, tr(hint), W / 2, H - 12, { align: 'center', color: '#8a7f96' });
+      drawText(g, silenced(tr(hint)), W / 2, H - 12, { align: 'center', color: '#8a7f96' });
     }
   }
 
@@ -619,7 +626,7 @@ export class GalleryScene implements Scene {
         g.fillRect(x - 4, y - 2, w + 8, ROW_H - 2);
         heart(g, x - 2 + Math.round(Math.sin(this.t * 0.15)), y + 2, '#ff4a5a');
       }
-      drawText(g, tr(poem.title), x + 10, y, { color: RED });
+      drawText(g, silenced(tr(poem.title)), x + 10, y, { color: RED });
       drawText(g, poemDate(poem.at), x + w, y, { align: 'right', color: FADED });
       drawText(g, this.preview(poem, w - 10), x + 10, y + 11, { color: INK });
     });

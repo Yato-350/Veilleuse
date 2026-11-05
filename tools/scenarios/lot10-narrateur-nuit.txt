@@ -1,0 +1,18 @@
+# Lot 10 (docs/HISTOIRE.md § 2.8 « Indices — nouveaux », T7; clue checklist row « Le bip de Dodo pour le narrateur »):
+# between midnight and 5 a.m., real time, the narrator's boxes speak with Dodo's blip (Noa's, pitched up). At noon,
+# the narrator's own blip. A line with its own voice keeps it (chapter 6 after T7: Noa's). &clock= sets the real clock.
+query: debug=script&name=prologue_chambre&lang=fr&clock=2:30
+wait:1500
+eval: window.V = window.__veilleuse
+eval: window.VOICES = []
+eval: (setInterval(() => { if (V.dialogue.busy && V.dialogue.speaker?.name === '') VOICES.push(V.dialogue.blipVoice()); }, 50), 1)
+assert: V.dialogue.narratorVoice === 'dodo'
+interact:calendrier
+auto
+assert: VOICES.length > 0 && VOICES.every((v) => v === 'dodo')
+# Noon: the narrator's own blip.
+eval: (V.clock.set('12:00'), window.VOICES = [], 1)
+wait:800
+interact:calendrier
+auto
+assert: V.dialogue.narratorVoice === null && VOICES.length > 0 && VOICES.every((v) => v === 'narrator')

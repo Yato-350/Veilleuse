@@ -1,0 +1,31 @@
+# Lot 4: the final battle, phase 4 with both items (she was looked at: her face drawn in pencil), « Ouvrir les yeux »:
+# Dodo small again, the last lines, flags.fin_route = 'aube'; afterFinalBattle wakes Noa up into the finale (the
+# version 1.1 finale until lot 5 wires STORY.wake[6]).
+query: debug=script&name=dodo_v2_fin&lang=fr
+god
+wait:1500
+auto
+write:merci
+auto
+menu:2
+wait:300
+eval: window.__veilleuse.game.top.list.idx = window.__veilleuse.game.top.list.items.indexOf('Bouton doré')
+KeyZ
+auto
+menu:2
+wait:300
+eval: window.__veilleuse.game.top.list.idx = window.__veilleuse.game.top.list.items.indexOf('Pile chargée')
+KeyZ
+auto
+write:pardon
+auto
+write:matin
+auto
+assert: window.__veilleuse.game.top.menuLabels[3] === 'OUVRIR LES YEUX'
+shot:bouton
+menu:3
+auto
+choose:0
+zuntil: window.__veilleuse.G.state.flags.fin_route === 'aube' && window.__veilleuse.game.top.constructor.name !== 'Battle'
+wait:3000
+shot:reveil

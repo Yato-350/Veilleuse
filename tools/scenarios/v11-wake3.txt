@@ -1,0 +1,9 @@
+# The end of chapter 3 no longer leads to the v1.1 finale: wakeUp(3) wakes up into the false dawn (STORY.wake[3],
+# fausse-aube.ts) — the real-world moment is Interlude III's (3), the bedroom is too beautiful (chambre_faux, world
+# `faux`), Maman is already sitting on the bed and leaves between two blinks; the autosave is taken at its start.
+query: debug=script&name=wake_3&lang=fr
+auto:30000
+shot:fausse-aube
+assert: window.__veilleuse.G.state.flags.interlude === 3 && window.__veilleuse.G.state.map === 'chambre_faux' && window.__veilleuse.G.state.flags.fa_maman === true
+assert: window.__veilleuse.readSave().map === 'chambre_faux' && window.__veilleuse.readSave().flags.fa_debut === true
+assert: window.__veilleuse.scene() === 'WorldScene' && !window.__veilleuse.dialogue.busy

@@ -1,0 +1,11 @@
+# v1.1 path (must play exactly as in 1.1): chapter 1, « Compter les moutons » on the Colline aux Couvertures.
+# The scene plays its three rounds by itself (&sheep=auto); the blind round asks the total (the middle answer is
+# right on a first attempt); then the Moutonnier opens the way and the player walks free.
+query: debug=script&name=c1_sheep&sheep=auto&lang=fr
+auto:60000
+shot:ask
+choose:1
+auto:30000
+assert: window.__veilleuse.G.state.flags.c1_sheep_done === true
+assert: window.__veilleuse.scene() === 'WorldScene' && window.__veilleuse.G.state.map === 'colline'
+shot:end

@@ -126,7 +126,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.release != '')
         run: |
           cat > release-notes.md <<'NOTES'
-          **Veilleuse** — un RPG narratif en pixel art sur le deuil, les rêves et la lumière qu'on laisse allumée pour quelqu'un.
+          **Veilleuse** — un RPG narratif en pixel art, dérangeant et psychologique, sur le deuil, les rêves et la culpabilité.
 
           ### Jouer
           - **Dans le navigateur** (ordinateur, téléphone, tablette) : https://yato-350.github.io/Veilleuse/
@@ -135,14 +135,15 @@ jobs:
           - **iPhone / iPad** : ouvrir le lien dans Safari → *Partager* → *Sur l'écran d'accueil*.
 
           ### Contenu
-          Prologue, trois chapitres oniriques, deux interludes dans le monde réel, un final, trois fins, un épilogue
-          jouable et un chapitre bonus, « Les rêves des autres ». Système de combat original *Plume & Cœur* : les mots
-          que tu écris changent la couleur de ton cœur. Nouveautés : voir le [journal des changements](https://github.com/Yato-350/Veilleuse/blob/main/CHANGELOG.md).
+          Prologue, six chapitres oniriques, quatre interludes dans le monde réel, un final, cinq fins dont une secrète,
+          un épilogue jouable et un chapitre bonus, « Les rêves des autres » : environ 3 h 30 à 4 h 30. Système de combat
+          original *Plume & Cœur* : les mots que tu écris changent la couleur de ton cœur. Nouveautés : voir le [journal des changements](https://github.com/Yato-350/Veilleuse/blob/main/CHANGELOG.md).
 
           🇬🇧 *Also in English: Options → Language, or https://yato-350.github.io/Veilleuse/?lang=en*
 
-          > Le jeu aborde le deuil, la maladie d'un enfant et la culpabilité. Si tu traverses un moment difficile,
-          > parles-en : en France, le **3114** répond 24h/24.
+          > Le jeu parle du deuil, de la maladie et de la mort d'un enfant, de la culpabilité et de pensées sombres ; il
+          > contient de l'horreur psychologique et des effets visuels qui peuvent perturber. Si tu traverses un moment
+          > difficile, tu n'es pas seul·e : en France, le **3114** répond gratuitement, jour et nuit.
           NOTES
 
       - name: Publish the release

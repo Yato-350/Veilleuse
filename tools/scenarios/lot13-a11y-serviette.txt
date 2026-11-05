@@ -1,0 +1,15 @@
+# Lot 13, accessibility: the real-time wait of chapter 5 (Mina of before asleep on the towel, 30 seconds) is cut to
+# 5 seconds in Story mode, as with « Réduire les attentes ».
+query: debug=script&name=chapter5_serviette&lang=fr
+wait:1500
+eval: (window.__veilleuse.G.settings.shortWaits = false, window.__veilleuse.G.settings.storyMode = true, 1)
+eval: window.__veilleuse.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => window.__veilleuse.world.removeEntity(e))
+auto
+interact:mina_avant
+auto
+assert: window.__veilleuse.G.state.flags.c5_sieste
+wait:6000
+interact:mina_dort
+auto:90000
+assert: window.__veilleuse.G.state.flags.c5_maree && window.__veilleuse.G.state.flags.c5_nulle
+shot:drap

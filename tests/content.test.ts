@@ -13,6 +13,31 @@ import { SPEAKERS } from '../src/data/speakers';
 import { PATTERNS } from '../src/game/battle/patterns';
 import { WORD_POOLS } from '../src/data/words';
 import { ACCENTS, GLYPHS } from '../src/engine/font-data';
+import { V2_WORLDS, WORLD_BG, WORLD_MATERIALS, WORLD_TRANSFORMS } from '../src/engine/palette';
+import { VARIANT_TRANSFORMS } from '../src/game/assets';
+import type { World } from '../src/game/overworld/types';
+import { COUNT_ROUNDS, KNOCK_ROUNDS, SHEEP_ROUNDS, TOOTH_ROUNDS, validCount } from '../src/game/scenes/sheepcount';
+import { dateLabel } from '../src/game/scenes/phone';
+import { CREDIT_LINES, HELP_CARD } from '../src/game/scenes/credits';
+import { bonusUnlocked, daysSince, defaultTitleVariant, saveSlotLabel, TITLE_VARIANTS } from '../src/game/scenes/title';
+import { ABSENCE_LINES, absenceCount, absenceLines, applyMetaSpec, NumberWords, numberWords } from '../src/game/meta';
+import { sawV2Ending } from '../src/game/story/real';
+import { bindLanguage } from '../src/i18n';
+import { measure } from '../src/engine/font';
+import { W } from '../src/engine/constants';
+import { parseRich, plainText } from '../src/game/ui/richtext';
+import { nightNarratorVoice } from '../src/game/ui/dialogue';
+import { DEBUG_SCRIPTS } from '../src/game/story';
+import { fallInto, HELP_CARD_ENDINGS, REAL, STORY } from '../src/game/story/common';
+import { composePoem } from '../src/game/scenes/poem';
+import { silenced } from '../src/game/ui/share';
+import { PHONE_CLOCK } from '../src/game/story/real';
+import { interlude3, interlude4, isNuit } from '../src/game/story/real-nuit';
+import * as chapter5 from '../src/game/story/chapter5';
+import * as fausseAube from '../src/game/story/fausse-aube';
+import { finale } from '../src/game/story/real';
+import * as chapter6 from '../src/game/story/chapter6';
+import { G, newMeta } from '../src/game/state';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -247,5 +272,500 @@ describe('font', () => {
       }
     }
     expect([...missing].map(([ch, f]) => `${ch} (${f})`)).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Version 2 groundwork (docs/HISTOIRE.md §7, lot 0): the new worlds and the new scenes.
+// ---------------------------------------------------------------------------
+
+const HEX = /^#[0-9a-f]{6}$/i;
+const rgbOf = (hex: string): [number, number, number] => {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
+const lum = (hex: string): number => {
+  const [r, g, b] = rgbOf(hex);
+  return (0.3 * r + 0.59 * g + 0.11 * b) / 255;
+};
+const chroma = (hex: string): number => {
+  const c = rgbOf(hex);
+  return Math.max(...c) - Math.min(...c);
+};
+const PAL_HEX = Object.values(PAL).filter((h) => HEX.test(h));
+
+describe('v2 worlds', () => {
+  it('has the five materials of the bible, each with a transform, a background and sprite variants', () => {
+    expect([...V2_WORLDS]).toEqual(['feutre', 'stylo', 'blanc', 'ouate', 'faux']);
+    for (const w of V2_WORLDS) {
+      expect(typeof WORLD_TRANSFORMS[w], w).toBe('function');
+      expect(VARIANT_TRANSFORMS[w], w).toBe(WORLD_TRANSFORMS[w]);
+      expect(WORLD_BG[w], w).toMatch(HEX);
+    }
+  });
+
+  it('maps every palette color to a valid color, and every material pixel too', () => {
+    const bad: string[] = [];
+    for (const w of V2_WORLDS) {
+      const mat = WORLD_MATERIALS[w];
+      for (const hex of PAL_HEX) {
+        const out = WORLD_TRANSFORMS[w](hex);
+        if (!HEX.test(out)) bad.push(`${w}: ${hex} → ${out}`);
+        if (!mat) continue;
+        for (let y = 0; y < 16; y++)
+          for (let x = 0; x < 16; x++)
+            for (const [edge, tile] of [
+              [false, false],
+              [true, false],
+              [false, true],
+            ] as const) {
+              const px = mat(x, y, out, edge, tile);
+              if (!HEX.test(px)) bad.push(`${w} material: (${x},${y}) ${out} → ${px}`);
+            }
+      }
+    }
+    expect([...new Set(bad)].slice(0, 10)).toEqual([]);
+  });
+
+  it('gives each world its own look', () => {
+    const avg = (f: (h: string) => number, xs: string[]) => xs.reduce((a, h) => a + f(h), 0) / xs.length;
+    const T = WORLD_TRANSFORMS;
+    // feutre: warm (more red than blue on average than the source palette), a little desaturated.
+    const warmth = (h: string) => rgbOf(h)[0] - rgbOf(h)[2];
+    expect(avg(warmth, PAL_HEX.map(T.feutre))).toBeGreaterThan(avg(warmth, PAL_HEX));
+    expect(avg(chroma, PAL_HEX.map(T.feutre))).toBeLessThan(avg(chroma, PAL_HEX));
+    // stylo: three levels only (paper, hatching grey, ink), and the darkest is a near-black ink.
+    const pen = new Set(PAL_HEX.map(T.stylo));
+    expect(pen.size).toBe(3);
+    expect(Math.min(...[...pen].map(lum))).toBeLessThan(0.2);
+    // blanc: white on white; only the dark lines survive, as blue pen.
+    const white = PAL_HEX.map(T.blanc);
+    for (const h of white) {
+      const [r, , b] = rgbOf(h);
+      expect(lum(h) > 0.85 || b > r + 80, h).toBe(true);
+    }
+    expect(white.some((h) => lum(h) < 0.5)).toBe(true);
+    // ouate: yellowed cotton, red ≥ green ≥ blue on (almost) every color.
+    const sepia = PAL_HEX.map(T.ouate).filter((h) => {
+      const [r, g, b] = rgbOf(h);
+      return r + 8 >= g && g + 8 >= b;
+    });
+    expect(sepia.length / PAL_HEX.length).toBeGreaterThan(0.9);
+    // faux: too beautiful, more saturated than the dream.
+    expect(avg(chroma, PAL_HEX.map(T.faux))).toBeGreaterThan(avg(chroma, PAL_HEX) * 1.2);
+  });
+
+  it('is accepted as a map world, and every map uses a known world', () => {
+    const known = new Set(['dream', 'real', 'ink', 'void', ...V2_WORLDS]);
+    const worlds: World[] = [...V2_WORLDS];
+    expect(worlds.length).toBe(5);
+    const bad = Object.values(MAPS)
+      .filter((m) => !known.has(m.world))
+      .map((m) => `${m.id}: ${m.world}`);
+    expect(bad).toEqual([]);
+  });
+});
+
+describe('v2 scenes', () => {
+  it('counting: three skins of three rounds, the v1.1 sheep unchanged', () => {
+    expect(Object.keys(COUNT_ROUNDS)).toEqual(['moutons', 'coups', 'dents']);
+    expect(COUNT_ROUNDS.moutons).toBe(SHEEP_ROUNDS);
+    // The v1.1 rounds (titles and sheep to count) must not move: chapter 1 plays exactly as before.
+    expect(SHEEP_ROUNDS.map((r) => [r.title, r.blind, r.tolerance, ...r.seqs.map(validCount)])).toEqual([
+      ['Doucement', false, 2, 6],
+      ['Le mouton noir', false, 2, 8],
+      ['Les yeux fermés', true, 99, 9, 10, 9],
+    ]);
+    for (const [skin, rounds] of Object.entries(COUNT_ROUNDS)) {
+      expect(rounds.length, skin).toBe(3);
+      for (const r of rounds) {
+        expect(r.interval > 20 && r.window > 0 && r.seqs.length > 0, `${skin} ${r.title}`).toBe(true);
+        for (const s of r.seqs) expect(validCount(s), `${skin} ${r.title}`).toBeGreaterThan(3);
+      }
+    }
+    // Knocks: the radiator answers too (decoys), and the last round is counted in the dark.
+    expect(KNOCK_ROUNDS.slice(1).every((r) => r.seqs.every((s) => s.includes('B')))).toBe(true);
+    expect(KNOCK_ROUNDS[2]!.blind).toBe(true);
+    // Teeth: sewing pins among the teeth.
+    expect(TOOTH_ROUNDS.slice(1).every((r) => r.seqs.every((s) => s.includes('B')))).toBe(true);
+  });
+
+  it('phone: dates a year back, in the real calendar', () => {
+    const now = new Date(2026, 9, 9);
+    expect(dateLabel(0, now)).toBe('Aujourd\'hui');
+    expect(dateLabel(1, now)).toBe('Hier');
+    expect(dateLabel(2, now)).toBe('7 oct. 2026');
+    expect(dateLabel(365, now)).toBe('9 oct. 2025');
+    expect(dateLabel(40, now)).toBe('30 août 2026');
+  });
+
+  it('credits: the help line stays, the help card says what the bible says', () => {
+    expect(HELP_CARD).toBe('Si tu as des idées noires, tu peux appeler le 3114 (gratuit, 24 h/24). Tu n\'es pas seul·e.');
+    expect(CREDIT_LINES.some(([t]) => t.includes('3114'))).toBe(true);
+    expect(CREDIT_LINES[CREDIT_LINES.length - 1]![0]).toContain('{player}');
+  });
+
+  it('title: the v1.1 looks plus the five v2 variants, and the real days of Beaux rêves', () => {
+    for (const v of ['night', 'dawn', 'dream', 'point_de_croix', 'continuer_seul', 'soleil_blanc', 'silence_v2', 'veilleuse']) {
+      expect(TITLE_VARIANTS, v).toContain(v);
+    }
+    expect(defaultTitleVariant([])).toBe('night');
+    expect(defaultTitleVariant(['beaux_reves'])).toBe('dream');
+    expect(defaultTitleVariant(['silence', 'aube'])).toBe('dawn');
+    // Version 2: the ending reached last picks the title (§ 5).
+    expect(defaultTitleVariant(['aube', 'silence'], 'silence')).toBe('silence_v2');
+    expect(defaultTitleVariant(['aube'], 'aube_blanche')).toBe('soleil_blanc');
+    expect(defaultTitleVariant(['aube'], 'beaux_reves')).toBe('continuer_seul');
+    expect(defaultTitleVariant(['aube'], 'veilleuse')).toBe('veilleuse');
+    expect(defaultTitleVariant(['silence'], 'aube')).toBe('dawn');
+    const day = 86400000;
+    expect(daysSince(0)).toBe(0);
+    expect(daysSince(1000, 1000 + 23 * day + 5)).toBe(23);
+  });
+
+  it('title: « Les rêves des autres » opens after any of the three dawns, never after a night without waking', () => {
+    expect(bonusUnlocked([])).toBe(false);
+    for (const e of ['aube', 'aube_blanche', 'veilleuse']) expect(bonusUnlocked(['silence', e]), e).toBe(true);
+    expect(bonusUnlocked(['beaux_reves', 'silence'])).toBe(false);
+  });
+
+  it('endings (lot 9): the help card after the darker three, the debug entries, the self-written line, the blank name', () => {
+    expect([...HELP_CARD_ENDINGS].sort()).toEqual(['aube_blanche', 'beaux_reves', 'silence']);
+    for (const name of ['fin_aube', 'fin_aube_blanche', 'fin_beaux_reves', 'fin_silence', 'fin_veilleuse', 'epilogue_v2']) expect(DEBUG_SCRIPTS[name], name).toBeTypeOf('function');
+    for (const key of ['fin_aube_blanche', 'fin_veilleuse', 'lune_finie', 'fin_beaux_reves', 'fin_silence']) expect(ILLUSTRATIONS[key], key).toBeTypeOf('function');
+    for (const map of ['appartement_br', 'appartement_silence']) expect(MAPS[map], map).toBeDefined();
+    const poem = composePoem([{ text: 'lune', emotion: 'joie' }, { text: 'j\'étais là', emotion: 'neutre' }]);
+    expect(poem).toContain('j\'étais là.');
+    const before = G.meta.lastEnding;
+    G.meta.lastEnding = 'silence';
+    expect(silenced('Le carnet de Mina')).toBe('Le carnet de ______');
+    G.meta.lastEnding = 'aube';
+    expect(silenced('Le carnet de Mina')).toBe('Le carnet de Mina');
+    G.meta.lastEnding = before;
+  });
+
+  it('dialogue: {as:…} switches the speaker mid-box, {voice:…} only the blip, {static} crackles', () => {
+    const chars = parseRich('Dodo veille sur t{static}—ch—t…{/static}{as:noa}…sur toi.{as:noa:sad} Tu ne dors pas ?{voice:dodo}');
+    expect(chars.filter((c) => c.as !== undefined).map((c) => c.as)).toEqual(['noa', 'noa:sad']);
+    expect(chars.filter((c) => c.voice !== undefined).map((c) => c.voice)).toEqual(['dodo']);
+    // Markers take no room and print nothing.
+    expect(chars.filter((c) => c.as !== undefined || c.voice !== undefined).every((c) => c.ch === '')).toBe(true);
+    expect(chars.filter((c) => c.fx === 'static').map((c) => c.ch).join('')).toBe('—ch—t…');
+    expect(plainText('a{as:noa}b{static}c{/static}')).toBe('abc');
+    // {as:noa} needs Noa's name, face and blip.
+    expect(SPEAKERS.noa).toMatchObject({ name: 'Noa', voice: 'noa', portrait: 'noa' });
+    // The narrator takes Dodo's blip between midnight and 5 a.m., never once Dodo is silent for good.
+    expect(nightNarratorVoice(3, false)).toBe('dodo');
+    expect(nightNarratorVoice(0, false)).toBe('dodo');
+    expect(nightNarratorVoice(5, false)).toBeNull();
+    expect(nightNarratorVoice(23, false)).toBeNull();
+    expect(nightNarratorVoice(3, true)).toBeNull();
+  });
+
+  it('story wiring: six dreams, the real-world phases and their clocks', () => {
+    expect(REAL).toEqual({ prologue: 0, i1: 1, i2: 2, i3: 3, i4: 4, finale: 9 });
+    expect(PHONE_CLOCK[REAL.i3]).toBe('4:06');
+    expect(PHONE_CLOCK[REAL.i4]).toBe('4:44');
+    expect(PHONE_CLOCK[REAL.finale]).toBe('5:52');
+    expect(typeof fallInto).toBe('function');
+    // Lot 5 wires the whole night: every dream has its entry, every waking up its scene (chapter 5 falls, it never wakes).
+    for (const n of [1, 2, 3, 4, 5, 6] as const) expect(STORY.dream[n], `dream ${n}`).toBeTruthy();
+    for (const n of [1, 2, 3, 4, 6] as const) expect(STORY.wake[n], `wake ${n}`).toBeTruthy();
+    expect(STORY.wake[5]).toBeUndefined();
+  });
+
+  it('debug: every lot 0 demo can be replayed', () => {
+    for (const name of ['phone_log', 'phone_home', 'phone_ring', 'faux_generique', 'dialogue_tags', 'count_coups', 'count_dents']) {
+      expect(typeof DEBUG_SCRIPTS[name], name).toBe('function');
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Production lot 2: the night interludes III « Le sac » (4:06) and IV « Le placard » (4:44).
+// ---------------------------------------------------------------------------
+
+describe('night interludes (lot 2)', () => {
+  it('chapter 4 wakes up into Interlude IV; chapter 3 wakes up into the false dawn, which ends in Interlude III', () => {
+    expect(STORY.wake[4]).toBe(interlude4);
+    expect(STORY.wake[3]).toBe(fausseAube.play);
+    expect(STORY.wake[3]).not.toBe(interlude3);
+    expect(STORY.dream[4]).toBeTruthy();
+  });
+
+  it('can replay every scene by debug', () => {
+    for (const name of ['interlude3', 'interlude4', 'phone_mina', 'interlude3_sac', 'interlude3_fin', 'interlude4_maman', 'interlude4_coups']) {
+      expect(typeof DEBUG_SCRIPTS[name], name).toBe('function');
+    }
+  });
+
+  it('shows the bedroom night props only at 4:06 and 4:44, and names the hallway by the hour', () => {
+    const shown = (phase: number): string[] => {
+      G.state.flags.interlude = phase;
+      return (MAPS.chambre!.props ?? []).filter((p) => !p.cond || p.cond()).map((p) => p.id ?? p.sprite);
+    };
+    const before = { ...G.state.flags };
+    try {
+      for (const phase of [REAL.prologue, REAL.i1, REAL.i2, REAL.finale]) {
+        expect(isNuit()).toBe(false);
+        expect(shown(phase).filter((id) => id.startsWith('n_'))).toEqual([]);
+      }
+      for (const phase of [REAL.i3, REAL.i4]) {
+        const ids = shown(phase);
+        expect(isNuit()).toBe(true);
+        expect(ids).toContain('n_photo');
+        expect(ids).toContain('n_radiateur');
+        // One of each by night: the bed, the plush, the nightlight, the phone.
+        for (const id of ['bed', 'dodo_plush', 'veilleuse', 'phone']) expect(ids.filter((x) => x === id).length, `${id} at ${phase}`).toBe(1);
+      }
+      G.state.flags.interlude = REAL.i3;
+      expect(MAPS.appartement_tard!.name).toBe('Appartement — 4h06');
+      G.state.flags.interlude = REAL.i4;
+      expect(MAPS.appartement_tard!.name).toBe('Appartement — 4h44');
+      expect(MAPS.chambre_maman!.warps?.[0]?.to).toBe('appartement_tard');
+    } finally {
+      G.state.flags = before;
+    }
+  });
+
+  it('keeps the rule of the 41 seconds: no line says which version of the call is the true one', () => {
+    const src = readFileSync(join('src', 'game', 'story', 'real-nuit.ts'), 'utf8');
+    expect(src).not.toMatch(/vraie version|version vraie|true version|la vraie|callVersion/i);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Production lot 3: chapter 5 « La Marée Blanche ».
+// ---------------------------------------------------------------------------
+
+describe('chapter 5 (lot 3)', () => {
+  it('is entered from Interlude IV and replayable by debug', () => {
+    expect(STORY.dream[5]).toBe(chapter5.start);
+    for (const name of ['chapter5', 'chapter5_serviette', 'chapter5_portail', 'chapter5_sas', 'chapter5_lac', 'chapter5_cabane', 'chapter5_visite', 'chapter5_vitre', 'chapter5_chute']) {
+      expect(typeof DEBUG_SCRIPTS[name], name).toBe('function');
+    }
+    for (const id of ['plage', 'sas', 'lac_blanc', 'chambre_verre']) expect(MAPS[id], id).toBeTruthy();
+  });
+
+  it('has forty-one shells in clusters (the forty-second is hidden) and five drawings to correct', () => {
+    expect(chapter5.SHELL_CLUSTERS.reduce((n, c) => n + c[2], 0)).toBe(41);
+    expect(chapter5.DRAWINGS.map(([, id]) => id).sort()).toEqual(['chaise', 'maman', 'mina', 'nadia', 'plage']);
+  });
+
+  it('cuts the 30-second wait on the towel to 5 s with Story mode or « Réduire les attentes »', () => {
+    const before = { ...G.settings };
+    try {
+      G.settings.storyMode = false;
+      G.settings.shortWaits = false;
+      expect(chapter5.sleepWaitMs()).toBe(30000);
+      G.settings.shortWaits = true;
+      expect(chapter5.sleepWaitMs()).toBe(5000);
+      G.settings.shortWaits = false;
+      G.settings.storyMode = true;
+      expect(chapter5.sleepWaitMs()).toBe(5000);
+    } finally {
+      Object.assign(G.settings, before);
+    }
+  });
+
+  it('opens each airlock door only once the one behind is closed (and not while Noa answers the knocks)', () => {
+    const before = { ...G.state.flags };
+    try {
+      for (let n = 1; n <= 5; n++) delete G.state.flags[`c5_porte_${n}`];
+      delete G.state.flags.c5_sas_toc;
+      expect(chapter5.doorState(1)).toBe('ouverte');
+      expect(chapter5.doorState(2)).toBe('rouge');
+      G.state.flags.c5_porte_1 = 'fermee';
+      expect(chapter5.doorState(1)).toBe('morte');
+      expect(chapter5.doorState(2)).toBe('verte');
+      G.state.flags.c5_porte_2 = 'fermee';
+      G.state.flags.c5_sas_toc = 1;
+      expect(chapter5.doorState(4)).toBe('rouge');
+      G.state.flags.c5_porte_3 = 'fermee';
+      expect(chapter5.doorState(4)).toBe('verte');
+      expect(chapter5.lakeDoorOpen()).toBe(false);
+    } finally {
+      G.state.flags = before;
+    }
+  });
+
+  it('keeps the rule of the 41 seconds', () => {
+    const src = readFileSync(join('src', 'game', 'story', 'chapter5.ts'), 'utf8');
+    expect(src).not.toMatch(/vraie version|version vraie|true version|la vraie|callVersion/i);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Production lot 4: chapter 6 « Le Ventre de Dodo » (the world and the story).
+// ---------------------------------------------------------------------------
+
+describe('chapter 6 (lot 4)', () => {
+  it('is fallen into from chapter 5 and replayable by debug', () => {
+    expect(STORY.dream[6]).toBe(chapter6.start);
+    for (const name of ['chapter6', 'chapter6_t7', 'chapter6_bocaux', 'chapter6_boite', 'chapter6_appel', 'chapter6_fenetres', 'chapter6_pile', 'chapter6_bonnet', 'chapter6_final']) {
+      expect(typeof DEBUG_SCRIPTS[name], name).toBe('function');
+    }
+    for (const id of ['couture', 'ouate', 'boite_a_musique', 'couloir_41', 'voix']) {
+      expect(MAPS[id], id).toBeTruthy();
+      expect(MAPS[id]!.world, id).toBe('ouate');
+    }
+  });
+
+  it('puts forty-one numbered doors on the corridor: 1–14 on the trunk, then 15–41 on each branch', () => {
+    const map = MAPS.couloir_41!;
+    const rows = parseRows(map.tiles);
+    const { trunk, haut, bas, doorX } = chapter6.CORRIDOR;
+    const door = (x: number, wall: number): boolean => map.legend[rows[wall]![x]!] === 'r_door_top' && map.legend[rows[wall + 1]![x]!] === 'r_door';
+    for (let n = 1; n <= 14; n++) expect(door(doorX(n), trunk.wall), `door ${n}`).toBe(true);
+    for (const b of [haut, bas]) for (let n = 15; n <= 41; n++) expect(door(doorX(n), b.wall), `door ${n}`).toBe(true);
+    const plates = (map.props ?? []).filter((p) => p.sprite.startsWith('prop_c6_num_'));
+    expect(plates.length).toBe(14 + 27 * 2);
+  });
+
+  it('keeps the rule of the 41 seconds: both versions say « Dors », at the same doors, and nothing says which is true', () => {
+    const { douce, dure } = chapter6.CALL;
+    expect(Object.keys(douce)).toEqual(Object.keys(dure));
+    for (const v of [douce, dure]) expect(Object.values(v).some(([, line]) => line.includes('Dors'))).toBe(true);
+    const src = ['src/game/story/chapter6.ts', 'src/data/maps/chapter6.ts'].map((f) => readFileSync(f, 'utf8')).join('\n');
+    expect(src).not.toMatch(/vraie version|version vraie|true version|la vraie|real version|true call/i);
+    // « vraie » only ever appears in the question itself.
+    for (const line of src.split('\n').filter((l) => /\bvraie\b/.test(l))) expect(line).toContain('Laquelle est vraie');
+  });
+
+  it('keeps the music box passage closed until the lullaby has played', () => {
+    const map = MAPS.boite_a_musique!;
+    const rows = parseRows(map.tiles);
+    for (const [x, y] of chapter6.FOAM_PASSAGE) expect(TILES[map.legend[rows[y]![x]!]!]!.solid, `${x},${y}`).toBe(true);
+    expect(map.warps?.[0]?.to).toBe('couloir_41');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Production lot 5: chapter 3's short battle against Dodo, the false dawn, and the whole night wired.
+// ---------------------------------------------------------------------------
+
+describe('the false dawn (lot 5)', () => {
+  it('wires the six chapters in order: chapter 3 → the false dawn → III → 4 → IV → 5 ⇣ 6 → the finale', () => {
+    expect(STORY.wake[3]).toBe(fausseAube.play);
+    expect(STORY.wake[6]).toBe(finale);
+    expect(STORY.dream[5]).toBe(chapter5.start);
+    expect(STORY.dream[6]).toBe(chapter6.start);
+    for (const name of ['fausse_aube', 'fausse_aube_reste', 'fausse_aube_appart', 'fausse_aube_encre', 'faux_generique', 'fausse_aube_fin', 'c3_battle_p2', 'c3_battle_silence']) {
+      expect(typeof DEBUG_SCRIPTS[name], name).toBe('function');
+    }
+  });
+
+  it('has the two faux maps (the bedroom and the apartment, too beautiful) and the music that can play backwards', () => {
+    for (const id of ['chambre_faux', 'appartement_faux']) {
+      expect(MAPS[id], id).toBeTruthy();
+      expect(MAPS[id]!.world, id).toBe('faux');
+    }
+    // Mina's door is not there: the hallway has the four doors of the real apartment minus hers.
+    const rows = parseRows(MAPS.appartement_faux!.tiles);
+    const doors = [...rows[1]!].map((c, x) => (c === 'D' ? x : -1)).filter((x) => x >= 0);
+    expect(doors).toEqual([2, 6, 14, 18]);
+    expect(TRACKS.faux_generique).toBeTruthy();
+    expect(ILLUSTRATIONS.faux_aube && ILLUSTRATIONS.faux_aube_encre).toBeTruthy();
+  });
+
+  it('lays out the fake credits like the real ones, stuck on « Mina ……… introuvable », one more each pass', () => {
+    G.meta.endingsV1 = [];
+    for (const pass of [1, 2, 3]) {
+      const { lines, stop } = fausseAube.fauxCreditLines(pass);
+      expect(lines[stop]![0]).toBe(['Mina ………', ...Array(pass).fill('introuvable')].join(' '));
+      expect(lines.slice(0, 4)).toEqual(CREDIT_LINES.slice(0, 4));
+      expect(lines[lines.length - 1]).toEqual(CREDIT_LINES[CREDIT_LINES.length - 1]);
+    }
+    expect(fausseAube.fauxCreditLines(1).lines.some(([t]) => t.startsWith('Tu croyais'))).toBe(false);
+    G.meta.endingsV1 = ['aube'];
+    expect(fausseAube.fauxCreditLines(1).lines.some(([t]) => t === 'Tu croyais que c\'était fini, la dernière fois.')).toBe(true);
+    // Before the stop on Mina's line (lot 10): « Regarder » rewinds from there, so every path reads it.
+    const v11 = fausseAube.fauxCreditLines(1);
+    expect(v11.lines.findIndex(([t]) => t.startsWith('Tu croyais'))).toBeLessThan(v11.stop);
+    G.meta.endingsV1 = [];
+  });
+
+  it('keeps the rule of the 41 seconds in the false dawn and chapter 3', () => {
+    const src = ['src/game/story/fausse-aube.ts', 'src/data/maps/fausse-aube.ts', 'src/game/story/chapter3.ts'].map((f) => readFileSync(f, 'utf8')).join('\n');
+    expect(src).not.toMatch(/vraie version|version vraie|true version|real version|true call/i);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Production lot 10: meta and new game+ (docs/HISTOIRE.md § 5 « Méta et nouvelle partie+ »).
+// ---------------------------------------------------------------------------
+
+describe('meta and new game+ (lot 10)', () => {
+  it('spells the nights out in words, in both languages', () => {
+    const cases: Array<[number, string]> = [
+      [364, 'trois cent soixante-quatre'],
+      [365, 'trois cent soixante-cinq'],
+      [71, 'soixante et onze'],
+      [80, 'quatre-vingts'],
+      [81, 'quatre-vingt-un'],
+      [97, 'quatre-vingt-dix-sept'],
+      [200, 'deux cents'],
+      [201, 'deux cent un'],
+      [1000, 'mille'],
+      [2380, 'deux mille trois cent quatre-vingts'],
+    ];
+    for (const [n, w] of cases) expect(numberWords(n), String(n)).toBe(w);
+    expect(numberWords(21, true)).toBe('vingt et une');
+    expect(numberWords(381, true)).toBe('trois cent quatre-vingt-une');
+    expect(NumberWords(364, true)).toBe('Trois cent soixante-quatre');
+    bindLanguage(() => 'en');
+    try {
+      expect(NumberWords(365)).toBe('Three hundred and sixty-five');
+      expect(numberWords(1004)).toBe('one thousand and four');
+    } finally {
+      bindLanguage(() => 'fr');
+    }
+  });
+
+  it('simulates a memory from ?debug=…&meta=', () => {
+    const m = newMeta();
+    expect(applyMetaSpec(m, 'endings:aube,callVersion:douce')).toEqual([]);
+    expect(m).toMatchObject({ endings: ['aube'], callVersion: 'douce', nuits: 366 });
+    const v11 = newMeta();
+    applyMetaSpec(v11, 'endingsV1:aube|silence');
+    expect(v11).toMatchObject({ endings: ['aube', 'silence'], endingsV1: ['aube', 'silence'], nuits: 367 });
+    const before = G.meta;
+    try {
+      G.meta = v11;
+      expect(sawV2Ending()).toBe(false);
+      G.meta = m;
+      expect(sawV2Ending()).toBe(true);
+    } finally {
+      G.meta = before;
+    }
+    const other = newMeta();
+    expect(applyMetaSpec(other, 'dodoSilent,fauxGenerique:2,nuits:370,endings:veilleuse,beauxRevesAt:23,deaths=4,oops:1')).toEqual(['oops']);
+    expect(other).toMatchObject({ dodoSilent: true, fauxGenerique: 2, nuits: 370, deaths: 4 });
+    expect(daysSince(other.beauxRevesAt)).toBe(23);
+    applyMetaSpec(other, 'reset,callVersion:sais_pas');
+    expect(other).toMatchObject({ dodoSilent: false, nuits: 365, callVersion: 'sais_pas', endings: [] });
+  });
+
+  it('writes what Noa said while the player was away: one line per doubling of the time', () => {
+    expect([5_000, 15_000, 30_000, 60_000, 300_000, 7_200_000].map(absenceCount)).toEqual([0, 1, 2, 3, 5, 8]);
+    const from = new Date(2026, 9, 27, 3, 2).getTime();
+    const lines = absenceLines(from, from + 300_000, 'Sacha');
+    expect(lines).toHaveLength(5);
+    expect(lines[0]).toBe('3h02 — « …t\'es là ? »');
+    expect(lines[2]).toBe('3h04 — « Sacha ? »');
+    expect(ABSENCE_LINES[0]).toBe('« …t\'es là ? »');
+    // The page fits: every line within the notebook page, the longest name included.
+    for (const l of absenceLines(from, from + 7_200_000, 'Alexandrine-Lou')) expect(measure(l), l).toBeLessThanOrEqual(W - 130);
+  });
+
+  it('names the save slot after the night: « Nuit 366 »', () => {
+    expect(saveSlotLabel(366, 'Sacha', '1:02')).toBe('Nuit 366 · Sacha · 1:02');
+    expect(saveSlotLabel(366, '', '0:10')).toBe('Nuit 366 · 0:10');
+    expect(saveSlotLabel(370, 'Alexandrine-Lou-Marie', '12:40', 100)).toBe('Nuit 370 · 12:40');
+  });
+
+  it('keeps the rule of the 41 seconds in the meta', () => {
+    const src = readFileSync(join('src', 'game', 'meta.ts'), 'utf8');
+    expect(src).not.toMatch(/vraie version|version vraie|true version|real version|true call|la vraie/i);
   });
 });

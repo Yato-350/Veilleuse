@@ -1,0 +1,30 @@
+# Lot 10 (docs/HISTOIRE.md § 5 « Méta », row « meta.dodoSilent »; § 3.3 item 9): after the secret ending, Dodo never
+# speaks again. &meta=dodoSilent simulates that memory. At 3 a.m. the narrator keeps its own blip (Dodo's is gone). The
+# prologue: Dodo does not wake up, Mina's treasure-hunt drawing says « REGARDE SOUS LE LIT ». Interlude II: the plush
+# says nothing, his words come back as the narrator's with Noa's blip, and the NG+ line about the credits too
+# (&meta=…,fauxGenerique:1). Chapter 3 starts.
+query: debug=script&name=prologue_chambre&lang=fr&meta=dodoSilent,fauxGenerique:1&clock=3:00
+wait:1500
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: window.WHO = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) { SEEN.push(t); WHO.push([V.dialogue.speaker?.name ?? '', V.dialogue.blipVoice()]); } }, 50), 1)
+eval: window.BY = (s) => WHO[SEEN.findIndex((t) => t.includes(s))] ?? []
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+assert: V.G.meta.dodoSilent === true && V.G.meta.fauxGenerique === 1 && V.dialogue.narratorVoice === null
+assert: V.world.entities.some((e) => e.id === 'dessin_chasse')
+interact:bed
+auto
+assert: SAW('Il ne dit rien.') && SAW('« REGARDE SOUS LE LIT »') && !V.G.state.flags.p_dodo
+# Interlude II, back in bed with everything seen.
+eval: (Object.assign(V.G.state.flags, { interlude: 2, i2_voicemail: true, i2_tv: true, i2_dodo_back: true }), 1)
+load:chambre/bed
+wait:600
+interact:bed
+zuntil: V.dialogue.choices
+shot:i2
+assert: SAW('Il ne dit rien. Il ne dira plus rien.') && SAW('Tu sais ce qui se passe quand on se réveille ?') && SAW('ça ne s\'arrête pas au générique')
+assert: BY('On perd tout.')[0] === '' && BY('On perd tout.')[1] === 'noa' && !SAW('Dors, Noa.')
+choose:0
+zuntil: V.G.state.chapter === 3

@@ -11,6 +11,21 @@ import { tr } from '../../i18n';
 
 const PICKS = 6;
 const COLS = 3;
+/** The extra line: frames before its first letter, frames per letter, letters' worth of frames held at the end. */
+const GHOST_DELAY = 70;
+const GHOST_SPEED = 9;
+const GHOST_HOLD = 9;
+
+/** Ink of the line that writes itself (the blue pen of the white world, chapter 5). */
+const GHOST_INK = '#3b5bd0';
+
+export interface PoemOptions {
+  /**
+   * A line nobody picks (Aube blanche, docs/HISTOIRE.md § 5: « j'étais là »): once the six words are written, it
+   * writes itself under them, letter by letter, and is returned as a seventh word (emotion 'neutre').
+   */
+  extra?: string;
+}
 
 /** DDLC-style poem: pick words one by one on a notebook page. Resolves with the chosen words. */
 export class PoemScene implements Scene {
@@ -20,22 +35,49 @@ export class PoemScene implements Scene {
   private t = 0;
   private resolve: ((w: WordDef[]) => void) | null = null;
   private hop = 0;
+  /** Frames since the six words were picked, while the extra line writes itself (-1 = not yet). */
+  private ghostT = -1;
 
-  constructor(private title: string) {
+  constructor(
+    private title: string,
+    private opts: PoemOptions = {},
+  ) {
     this.words = rng.shuffle([...POEM_WORDS]).slice(0, 15);
   }
 
-  static write(title: string): Promise<WordDef[]> {
-    const s = new PoemScene(title);
+  static write(title: string, opts: PoemOptions = {}): Promise<WordDef[]> {
+    const s = new PoemScene(title, opts);
     game.push(s);
     return new Promise((r) => {
       s.resolve = r;
     });
   }
 
+  /** Letters of the extra line written so far. */
+  private ghostShown(): number {
+    return this.ghostT < GHOST_DELAY ? 0 : Math.floor((this.ghostT - GHOST_DELAY) / GHOST_SPEED);
+  }
+
+  private updateGhost(): void {
+    const text = [...tr(this.opts.extra ?? '')];
+    const before = this.ghostShown();
+    this.ghostT++;
+    const now = this.ghostShown();
+    if (now > before && now <= text.length && text[now - 1] !== ' ') audio.sfx('write', { pitch: 0.7 });
+    if (now >= text.length + GHOST_HOLD) {
+      game.remove(this);
+      input.consume();
+      this.resolve?.([...this.chosen, { text: this.opts.extra!, emotion: 'neutre' }]);
+    }
+  }
+
   update(): void {
     this.t++;
     if (this.hop > 0) this.hop--;
+    if (this.ghostT >= 0) {
+      this.updateGhost();
+      return;
+    }
     const n = this.words.length;
     if (input.repeat('left')) {
       this.idx = (this.idx + n - 1) % n;
@@ -66,6 +108,10 @@ export class PoemScene implements Scene {
       this.hop = 12;
       audio.sfx('write', { pitch: 0.9 });
       if (this.chosen.length >= PICKS) {
+        if (this.opts.extra) {
+          this.ghostT = 0;
+          return;
+        }
         game.remove(this);
         input.consume();
         this.resolve?.(this.chosen);
@@ -83,20 +129,11 @@ export class PoemScene implements Scene {
   }
 
   draw(g: CanvasRenderingContext2D): void {
-    g.fillStyle = '#2a1e18';
-    g.fillRect(0, 0, W, H);
-    const x = 30;
-    const y = 10;
-    const w = W - 60;
-    const h = H - 20;
-    g.fillStyle = '#fff6e0';
-    g.fillRect(x, y, w, h);
-    g.fillStyle = '#d7e6f7';
-    for (let ly = y + 26; ly < y + h - 4; ly += 18) g.fillRect(x + 2, ly, w - 4, 1);
-    g.fillStyle = '#f08a9a';
-    g.fillRect(x + 22, y, 1, h);
+    const { x, y, w, h } = drawPoemPage(g);
     drawText(g, tr(this.title), W / 2, y + 7, { align: 'center', color: '#2b2a5c' });
-    drawText(g, `${this.chosen.length}/${PICKS}`, x + w - 8, y + 7, { align: 'right', color: '#8a7f96' });
+    // The extra line counts too: « 7/6 ».
+    const ghost = this.ghostT >= 0 ? [...tr(this.opts.extra ?? '')].slice(0, this.ghostShown()).join('') : '';
+    drawText(g, `${this.chosen.length + (ghost ? 1 : 0)}/${PICKS}`, x + w - 8, y + 7, { align: 'right', color: ghost ? GHOST_INK : '#8a7f96' });
     this.words.forEach((wd, i) => {
       const col = i % COLS;
       const row = Math.floor(i / COLS);
@@ -118,7 +155,24 @@ export class PoemScene implements Scene {
     // Chosen words preview along the bottom
     const preview = this.chosen.map((c) => tr(c.text)).join(', ');
     drawText(g, preview, W / 2, y + h - 14, { align: 'center', color: '#6e4a3a' });
+    // The line nobody picked, in blue pen, just above.
+    if (ghost) drawText(g, ghost, W / 2, y + h - 30, { align: 'center', color: GHOST_INK });
   }
+}
+
+/** The poem's page: the dark desk, a sheet of lined paper, its red margin. Returns the sheet's rectangle. */
+export const POEM_PAGE = { x: 30, y: 10, w: W - 60, h: H - 20 };
+export function drawPoemPage(g: CanvasRenderingContext2D, desk = '#2a1e18'): typeof POEM_PAGE {
+  const { x, y, w, h } = POEM_PAGE;
+  g.fillStyle = desk;
+  g.fillRect(0, 0, W, H);
+  g.fillStyle = '#fff6e0';
+  g.fillRect(x, y, w, h);
+  g.fillStyle = '#d7e6f7';
+  for (let ly = y + 26; ly < y + h - 4; ly += 18) g.fillRect(x + 2, ly, w - 4, 1);
+  g.fillStyle = '#f08a9a';
+  g.fillRect(x + 22, y, 1, h);
+  return POEM_PAGE;
 }
 
 function emoColor(e: Emotion): string {

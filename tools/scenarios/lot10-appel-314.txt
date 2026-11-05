@@ -1,0 +1,36 @@
+# Lot 10 (docs/HISTOIRE.md § 5 « Méta », row « Heure réelle 3:14, pendant un interlude »): at 3:14, real time, during
+# an interlude, Noa's phone rings, « Mina 🐑 ». The green button does nothing; it rings (41 s, a few with « Réduire les
+# attentes »), then it is a missed call in the log, at 3:14. « Tu n'as pas pu décrocher. » Never in the prologue or the
+# dream chapters, once a night. &clock=3:13 sets the game's real clock to 3:13 (it reaches 3:14 by itself).
+# Also (row T7 of the clue checklist): between midnight and 5 a.m. the narrator speaks with Dodo's blip.
+query: debug=script&name=interlude1_chambre&lang=fr&clock=3:13:57
+wait:1500
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: (V.G.settings.shortWaits = true, 1)
+# Night: the narrator's blip is Dodo's.
+assert: V.dialogue.narratorVoice === 'dodo' && !V.G.state.flags.m_appel_314
+# 3:14 reached while exploring Interlude I: the phone comes up, ringing.
+waitfor: V.scene() === 'PhoneScene' && V.game.top.ringing
+assert: V.game.top.ringing.name === 'Mina 🐑' && V.G.state.flags.m_appel_314 === true
+shot:ring
+# The green button does nothing.
+KeyZ
+KeyZ
+assert: V.game.top.ringing
+waitfor: SAW('Tu n\'as pas pu décrocher.')
+assert: V.game.top.calls[0].name === 'Mina 🐑' && V.game.top.calls[0].dir === 'missed' && V.game.top.calls[0].time === '3:14'
+shot:missed
+zuntil: !V.dialogue.busy
+KeyX
+waitfor: V.scene() === 'WorldScene' && V.world.controllable
+# Once a night: still 3:14, it does not ring again.
+wait:2000
+assert: V.scene() === 'WorldScene'
+# Daytime: the narrator's own blip again.
+eval: (V.clock.set('14:06'), 1)
+wait:800
+assert: V.dialogue.narratorVoice === null

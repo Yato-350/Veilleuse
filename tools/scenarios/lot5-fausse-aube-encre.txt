@@ -1,0 +1,14 @@
+# Lot 5 (§ 3.8 « Route du Silence »): on the route of the ink, Maman's face in the false dawn is a blot of ink instead
+# of a mouth sewn shut (sprites `_encre`, illustration `faux_aube_encre`).
+query: debug=script&name=fausse_aube_encre&lang=fr
+wait:1500
+auto
+assert: window.__veilleuse.world.get('maman').sprite === 'pose_fa_maman_encre'
+go:29/5
+interact:maman
+auto
+choose:0
+zuntil: window.__veilleuse.scene() === 'ImageScene'
+wait:2500
+shot:encre
+assert: window.__veilleuse.game.top.key === 'faux_aube_encre' && window.__veilleuse.fx.fadeAlpha < 0.1

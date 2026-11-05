@@ -1,0 +1,13 @@
+# Lot 9 (first half): the c4_reste variant (chapter 4, Noa asked the paper Maman to stay at the table). Maman stops on
+# the threshold of Mina's room before coming in: « Je ne savais pas si j'avais le droit. ». Then the Aube branch.
+query: debug=script&name=finale_reste&lang=fr
+wait:1500
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('si j\'avais le droit')
+assert: Math.floor((window.__veilleuse.world.entities.find((e) => e.id === 'maman').y - 1) / 16) === 8
+shot:seuil
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('Tu es réveillé')
+assert: Math.floor((window.__veilleuse.world.entities.find((e) => e.id === 'maman').y - 1) / 16) === 6
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('pas dans le noir')
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('Une neuve')
+zuntil: window.__veilleuse.scene() === 'ImageScene' && window.__veilleuse.game.top.key === 'fin_aube'
+assert: window.__veilleuse.G.state.flags.fin_ending === 'aube'

@@ -1,0 +1,31 @@
+# Lot 1 (chapter 4 world): saving in the sewn house and continuing. Thin Dodo is the save point of the felt layer
+# (Mina n°366 following), the nightlight on Noa's bedside table the save point of the ballpoint nights; continuing
+# puts Noa back in the right layer, on the right night, with Mina n°366 behind him.
+query: debug=script&name=chapter4_retour&lang=fr
+wait:1500
+auto
+interact:mina_chaise
+auto
+interact:dodo
+auto
+choose:0
+auto
+assert: window.__veilleuse.readSave().map === 'maison_feutre' && window.__veilleuse.readSave().party.includes('mina366')
+eval: window.__veilleuse.flow.continueGame().then(() => 1)
+wait:1500
+shot:felt
+assert: window.__veilleuse.G.state.map === 'maison_feutre' && window.__veilleuse.G.state.party.includes('mina366') && window.__veilleuse.G.state.flags.c4_nuit === 1
+assert: window.__veilleuse.world.follower && window.__veilleuse.world.follower.id !== undefined
+interact:horloge
+auto
+choose:0
+auto
+interact:veilleuse
+auto
+choose:0
+auto
+assert: window.__veilleuse.readSave().map === 'maison_stylo' && window.__veilleuse.readSave().flags.c4_nuit === 9
+eval: window.__veilleuse.flow.continueGame().then(() => 1)
+wait:1500
+shot:stylo
+assert: window.__veilleuse.G.state.map === 'maison_stylo' && window.__veilleuse.G.state.flags.c4_nuit === 9 && !window.__veilleuse.G.state.party.includes('mina366')

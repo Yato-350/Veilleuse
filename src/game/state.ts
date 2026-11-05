@@ -2,7 +2,10 @@ import { loadJSON, saveJSON, storage } from '../engine/storage';
 import type { Dir } from '../engine/math';
 import type { Emotion } from '../engine/palette';
 
-export const SAVE_VERSION = 1;
+/** Save format version. 1 = v1.1 (finale stored as interlude 3), 2 = v2 (finale = interlude 9). */
+export const SAVE_VERSION = 2;
+/** Version of the persistent meta memory. 1 = v1.1, 2 = v2 (nights, endingsV1…). */
+export const META_VERSION = 2;
 
 export interface GameState {
   version: number;
@@ -66,7 +69,8 @@ export const MAX_ITEMS = 8;
 
 /** Stats derived from progression. Étoiles (sparing) raise max HP, Encre (defeating) raises attack. */
 export function maxHp(s: GameState): number {
-  return 20 + Math.floor(s.etoiles / 4) * 4;
+  // Chapter 4: « Coton chaud », the cotton taken from the felt sheep for Dodo, until the end of that night.
+  return 20 + Math.floor(s.etoiles / 4) * 4 + Number(s.flags.c4_coton_chaud ?? 0);
 }
 
 export function level(s: GameState): number {
@@ -128,7 +132,27 @@ export interface Meta {
   poems: SavedPoem[];
   /** Bonus chapter « Les rêves des autres » completed at least once. */
   bonusDone: boolean;
+  // --- v2 « Il fait toujours nuit » (docs/HISTOIRE.md §5, « Méta et nouvelle partie+ ») ---
+  /** Nights Noa has dreamt the Pays de Coton: 365 on a first run, +1 per ending (Beaux rêves included). */
+  nuits: number;
+  /** What the player answered to « Laquelle est vraie ? » in the corridor of 41 doors (null = never asked). */
+  callVersion: CallAnswer | null;
+  /** After the secret ending, Dodo never speaks again, in any run. */
+  dodoSilent: boolean;
+  /** Times the fake credits (« fausse aube ») were reached; 0 = never. */
+  fauxGenerique: number;
+  /** When the Beaux rêves ending was last reached (ms timestamp, 0 = never): its title screen counts the real days. */
+  beauxRevesAt: number;
+  /** Endings seen with version 1.1 of the game (copied by the migration): the fake credits remember them. */
+  endingsV1: string[];
+  /** The ending reached last ('' = none since version 2): it picks the title screen (scenes/title.ts). */
+  lastEnding: string;
+  /** Format version of this memory (see META_VERSION). */
+  metaVersion: number;
 }
+
+/** The three answers to « Laquelle est vraie ? » (the player's choice: the game never says which one is right). */
+export type CallAnswer = 'douce' | 'dure' | 'sais_pas';
 
 export interface SavedPoem {
   title: string;
@@ -154,6 +178,14 @@ export function newMeta(): Meta {
     seen: [],
     poems: [],
     bonusDone: false,
+    nuits: 365,
+    callVersion: null,
+    dodoSilent: false,
+    fauxGenerique: 0,
+    beauxRevesAt: 0,
+    endingsV1: [],
+    lastEnding: '',
+    metaVersion: META_VERSION,
   };
 }
 
@@ -169,6 +201,8 @@ export interface Settings {
   reduceFlashes: boolean;
   crt: boolean;
   storyMode: boolean;
+  /** Accessibility: real-time waits (the 30 seconds on the towel, chapter 5) are cut short. */
+  shortWaits: boolean;
   touch: 'auto' | 'on' | 'off';
   touchOpacity: number;
   touchSize: number;
@@ -189,6 +223,7 @@ export function defaultSettings(): Settings {
     reduceFlashes: false,
     crt: false,
     storyMode: false,
+    shortWaits: false,
     touch: 'auto',
     touchOpacity: 0.55,
     touchSize: 1,
@@ -218,8 +253,28 @@ export function hasSave(): boolean {
 export function readSave(): GameState | null {
   const s = loadJSON<GameState | null>(SAVE_KEY, null);
   if (!s || typeof s !== 'object') return null;
-  // Forward-compatible: fill missing fields with defaults.
-  return { ...newState(s.playerName ?? ''), ...s };
+  return migrateSave(s);
+}
+
+/**
+ * Brings a save of any older version up to SAVE_VERSION. Missing fields get their defaults (forward-compatible).
+ * v1 → v2: a v1.1 run in chapters 1–3 or interludes I–II resumes as is. A save taken in the v1.1 finale (interlude 3,
+ * after the end of chapter 3) now wakes up where version 2 goes after chapter 3: the false dawn (story/fausse-aube.ts
+ * replays it from the white when a save is loaded on its maps). What the v1.1 finale and its epilogue had seen (fin_*,
+ * ep_*: version 2 reuses the epilogue's flag names) is forgotten.
+ */
+export function migrateSave(raw: Partial<GameState>): GameState {
+  const s: GameState = { ...newState(raw.playerName ?? ''), ...raw, flags: { ...(raw.flags ?? {}) } };
+  const from = typeof raw.version === 'number' ? raw.version : 1;
+  if (from < 2) {
+    if (Number(s.flags.interlude ?? 0) === 3) {
+      for (const k of Object.keys(s.flags)) if (k.startsWith('fin_') || k.startsWith('ep_')) delete s.flags[k];
+      // In tiles, like every save (director.save): the 'bed' spawn of chambre_faux.
+      Object.assign(s, { chapter: 3, map: 'chambre_faux', x: 2, y: 5, dir: 'up', party: [] });
+    }
+  }
+  s.version = SAVE_VERSION;
+  return s;
 }
 
 export function writeSave(s: GameState): void {
@@ -232,7 +287,23 @@ export function deleteSave(): void {
 }
 
 export function readMeta(): Meta {
-  return { ...newMeta(), ...loadJSON<Partial<Meta>>(META_KEY, {}) };
+  return migrateMeta(loadJSON<Partial<Meta>>(META_KEY, {}));
+}
+
+/**
+ * Brings the persistent memory up to META_VERSION. A memory without `metaVersion` comes from v1.1 (or is new):
+ * its endings are copied to `endingsV1`, and every ending already seen counts as one more night.
+ */
+export function migrateMeta(raw: Partial<Meta>): Meta {
+  const m: Meta = { ...newMeta(), ...raw };
+  const from = typeof raw.metaVersion === 'number' ? raw.metaVersion : 1;
+  if (from < 2) {
+    const v1 = Array.isArray(raw.endings) ? [...new Set(raw.endings)] : [];
+    m.endingsV1 = v1;
+    m.nuits = 365 + v1.length;
+  }
+  m.metaVersion = META_VERSION;
+  return m;
 }
 
 export function writeMeta(m: Meta): void {

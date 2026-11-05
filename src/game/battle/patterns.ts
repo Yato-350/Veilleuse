@@ -3,6 +3,10 @@ import { rng } from '../../engine/math';
 import type { Emotion } from '../../engine/palette';
 import type { BulletWorld } from './bullets';
 import { BONUS_PATTERNS } from './patterns-bonus';
+import { CH3_PATTERNS } from './patterns-ch3';
+import { CH4_PATTERNS } from './patterns-ch4';
+import { CH5_PATTERNS } from './patterns-ch5';
+import { CH6_PATTERNS } from './patterns-ch6';
 
 export interface PatternCtx {
   /** Difficulty modifier: 0 = gentle, grows with agitation and turn count. */
@@ -515,6 +519,14 @@ export const PATTERNS: Record<string, Pattern> = {
       }
     },
   },
+  // Chapter 3, version 2 (Bracelet): see patterns-ch3.ts.
+  ...CH3_PATTERNS,
   // Bonus chapter (Maman's dream): see patterns-bonus.ts.
   ...BONUS_PATTERNS,
+  // Chapter 4 « La Maison Cousue »: see patterns-ch4.ts.
+  ...CH4_PATTERNS,
+  // Chapter 5 « La Marée Blanche »: see patterns-ch5.ts.
+  ...CH5_PATTERNS,
+  // Chapter 6 « Le Ventre de Dodo » and the final battle: see patterns-ch6.ts.
+  ...CH6_PATTERNS,
 };

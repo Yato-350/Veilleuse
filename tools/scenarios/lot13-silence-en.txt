@@ -1,0 +1,41 @@
+# Lot 13, English check: Silence, played in English — a copy of lot9b-silence.txt with lang=en, its French text
+# checks replaced by the English of the catalogs (src/i18n/en/), and no string of the run shown untranslated
+# (i18nMissing, dev builds).
+query: debug=script&name=fin_silence&lang=en
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: (window.__nuits0 = V.G.meta.nuits, 1)
+zuntil: V.G.state.map === 'appartement_silence'
+zuntil: SAW('STOREROOM')
+shot:debarras
+assert: V.world.entities.some((e) => e.id === 's_pancarte') && !V.world.entities.some((e) => e.sprite === 'prop_toybox')
+zuntil: TXT().includes('Who?')
+shot:qui
+zuntil: SAW('Nobody moves.')
+zuntil: V.scene() === 'ImageScene' && V.game.top.key === 'fin_silence'
+wait:1500
+shot:fin-silence
+zuntil: V.scene() === 'CreditsScene'
+assert: V.G.meta.endings.includes('silence') && V.G.meta.lastEnding === 'silence' && V.G.meta.nuits === window.__nuits0 + 1
+KeyZ:15000
+waitfor: V.game.top.phase === 'end'
+KeyZ
+waitfor: V.game.top.phase === 'help'
+wait:1500
+shot:aide
+KeyZ
+waitfor: V.scene() === 'TitleScene'
+wait:2500
+shot:titre
+assert: V.game.top.variant === 'silence_v2'
+ArrowDown
+KeyZ
+waitfor: V.game.top.constructor.name === 'GalleryScene'
+wait:800
+shot:carnet
+assert: V.game.top.entries.some((e) => e.captions.some((c) => c.includes('______'))) && !V.game.top.entries.some((e) => [e.title, e.kind, ...e.captions].some((c) => c.includes('Mina')))
+assert: window.__veilleuse.i18nMissing().length === 0

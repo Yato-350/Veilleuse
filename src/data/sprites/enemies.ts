@@ -10,7 +10,7 @@ import { corrupt } from '../../engine/palette';
 // ---------------------------------------------------------------------------------------------------------------------
 
 /** Splits template art into rows (strips blank edges and common indentation, like the engine). */
-function rows(src: string): string[] {
+export function rows(src: string): string[] {
   const lines = src.replace(/\r/g, '').split('\n');
   while (lines.length && lines[0]!.trim() === '') lines.shift();
   while (lines.length && lines[lines.length - 1]!.trim() === '') lines.pop();
@@ -26,10 +26,10 @@ const LIGHT = (() => {
 })();
 
 /** Colour ramp: [highlight, base, shade, deep shade]. */
-type Ramp = [string, string, string, string];
+export type Ramp = [string, string, string, string];
 
 /** A mutable character grid with a few drawing primitives. */
-class Pix {
+export class Pix {
   readonly w: number;
   readonly h: number;
   private g: string[][];
@@ -314,7 +314,7 @@ class Pix {
 }
 
 /** Small deterministic random generator (scribbles, wool curls…). */
-function seeded(seed: number): () => number {
+export function seeded(seed: number): () => number {
   let s = seed >>> 0;
   return () => {
     s = (s + 0x6d2b79f5) >>> 0;

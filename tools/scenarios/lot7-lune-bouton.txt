@@ -1,0 +1,30 @@
+# Review fix (docs/HISTOIRE.md § 5, « Indices pour la trouver »; docs/INDICES.md): in a new game+ where the secret ending
+# can be reached (an Aube in the memory), Lady Moon, talked to a fourth time while Noa has the Golden Button: « Le bouton
+# secret… faut appuyer fort. »; Mina: « C'est un SECRET, j'ai dit ! ». Then the T8 line comes one talk later. Without an
+# Aube in the memory (lot7-village), the fourth talk is still « Il y en a un qui fait semblant ».
+query: debug=script&name=c1_village&lang=fr&meta=endings:aube
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+eval: (V.G.state.keyItems.push('bouton_dore'), V.G.state.flags.c1_bouton = true, 1)
+assert: V.G.meta.endings.includes('aube')
+go:34/9
+interact:lune
+zuntil: IDLE()
+interact:lune
+zuntil: IDLE()
+interact:lune
+zuntil: IDLE()
+assert: SAW('Aller. Et retour.') && !SAW('bouton secret')
+interact:lune
+zuntil: SAW('faut appuyer fort')
+shot:lune-bouton
+zuntil: IDLE()
+assert: SAW('Le bouton secret') && SAW('C\'est un SECRET, j\'ai dit !') && V.G.state.flags.c1_lune_bouton === 1 && !SAW('Il respire trop fort')
+interact:lune
+zuntil: IDLE()
+assert: SAW('Il y en a un qui fait semblant. Il respire trop fort.')

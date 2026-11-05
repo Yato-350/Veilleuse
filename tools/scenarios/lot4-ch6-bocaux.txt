@@ -1,0 +1,61 @@
+# Lot 4 (chapter 6 world): the wadding and the riddle of night 0. The shelves of jars (one label at a time), the empty
+# place where « Nuit 1 » fell, the jars labelled in advance, the sealed seam (« rapporte la nuit qu'il a oubliée »),
+# the fallen jar in the puddle and, behind it, the jar without a label: a phone vibrating (c6_bocal0). The seam opens;
+# Chaussette's shop; the way into the music box.
+query: debug=script&name=chapter6_bocaux&lang=fr
+god
+wait:1500
+auto
+eval: window.__veilleuse.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => window.__veilleuse.world.removeEntity(e))
+go:9/4
+interact:etagere_a
+auto
+shot:etiquette
+choose:0
+auto
+choose:1
+auto
+assert: window.__veilleuse.G.state.flags.c6_bocaux === 2
+go:25/4
+interact:etagere_trou
+auto
+assert: window.__veilleuse.G.state.flags.c6_trou
+go:29/4
+interact:etagere_avance
+auto
+go:33/4
+interact:bocal_ce_soir
+auto
+go:39/14
+interact:couture
+auto
+shot:couture
+assert: window.__veilleuse.G.state.flags.c6_couture_vue && !window.__veilleuse.G.state.flags.c6_couture
+go:10/17
+interact:nuit1
+auto
+shot:prendre
+choose:0
+auto
+shot:nuitzero
+assert: window.__veilleuse.G.state.flags.c6_bocal0 && !window.__veilleuse.world.get('bocal_zero')
+go:39/14
+interact:couture
+auto
+shot:ouverte
+assert: window.__veilleuse.G.state.flags.c6_couture && window.__veilleuse.world.get('couture').solid === false
+go:20/22
+interact:nid
+auto
+go:33/18
+interact:chaussette
+auto
+shot:chaussette
+KeyX
+auto
+go:39/13
+wait:300
+ArrowUp:400
+waitfor: window.__veilleuse.world.map.id === 'boite_a_musique'
+auto
+shot:boite

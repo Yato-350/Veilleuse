@@ -1,0 +1,63 @@
+# Lot 4 (chapter 6 world): from the threshold to the end. Dodo comes down from the ceiling of the voice chamber; the
+# final battle (dodo_v2) is played through its four phases (the sheep, DORMIR, the knocks in the dark answered two
+# then three, her words with the Bouton doré and the Pile chargée); « Ouvrir les yeux » records fin_route 'aube' and
+# afterFinalBattle wakes up into the finale (the version 1.1 finale until production lot 9: interlude 9, Noa's room).
+query: debug=script&name=chapter6_final&bouton=1&pile=1&regarder=1&sheep=auto&lang=fr
+god
+wait:1500
+zuntil: window.__veilleuse.scene() === 'Battle'
+shot:descente
+auto
+write:joie
+auto
+write:tristesse
+auto
+write:colere
+auto
+assert: window.__veilleuse.game.top.enemies[0].def.sprite === 'b_dodo_torn'
+write:Dors.
+auto
+write:Arrête d'appeler.
+auto
+write:Demain.
+auto
+assert: window.__veilleuse.game.top.menuLabels[0] === 'FRAPPER'
+menu:0
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+ArrowRight
+KeyZ
+wait:2500
+auto
+menu:0
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+ArrowRight
+ArrowRight
+KeyZ
+wait:2500
+auto
+assert: window.__veilleuse.game.top.menuLabels[1] === 'ÉCRIRE'
+write:je suis là
+auto
+menu:2
+wait:300
+eval: window.__veilleuse.game.top.list.idx = window.__veilleuse.game.top.list.items.indexOf('Bouton doré')
+KeyZ
+auto
+menu:2
+wait:300
+eval: window.__veilleuse.game.top.list.idx = window.__veilleuse.game.top.list.items.indexOf('Pile chargée')
+KeyZ
+auto
+write:bonne nuit
+auto
+write:pardon
+auto
+assert: window.__veilleuse.game.top.menuLabels[3] === 'OUVRIR LES YEUX'
+menu:3
+auto
+shot:choix
+choose:0
+zuntil: window.__veilleuse.G.state.flags.interlude === 9
+assert: window.__veilleuse.G.state.flags.fin_route === 'aube' && window.__veilleuse.G.state.flags.c6_final
+wait:2000
+shot:reveil

@@ -21,7 +21,9 @@ export type BulletShape =
   | 'plane'
   | 'hanger'
   | 'sprite'
-  | 'ring';
+  | 'ring'
+  /** Drawn by the bullet's own `draw` (noodles, needles, plates, letters…); hit as a circle, or a centered box. */
+  | 'custom';
 
 export interface Bullet {
   x: number;
@@ -49,6 +51,8 @@ export interface Bullet {
   sprite?: string;
   alpha: number;
   update?: (b: Bullet, w: BulletWorld) => void;
+  /** Own drawing for `shape: 'custom'` (fill color already set to the bullet's emotion color, alpha applied). */
+  draw?: (g: CanvasRenderingContext2D, b: Bullet, color: string, t: number) => void;
   data: Record<string, number>;
 }
 
@@ -61,6 +65,8 @@ export interface Soul {
   inv: number;
   /** Half-size of the hitbox. */
   hit: number;
+  /** Frames during which the soul cannot move (pinned by a needle). */
+  pin: number;
 }
 
 /** Holds bullets during an enemy turn. */
@@ -68,7 +74,7 @@ export class BulletWorld {
   bullets: Bullet[] = [];
   box: Rect = { x: 100, y: 86, w: 120, h: 56 };
   t = 0;
-  soul: Soul = { x: 160, y: 114, emo: 'neutre', emo2: null, inv: 0, hit: 2 };
+  soul: Soul = { x: 160, y: 114, emo: 'neutre', emo2: null, inv: 0, hit: 2, pin: 0 };
   /** Called when the soul is hit by a bullet. */
   onHit: ((b: Bullet) => void) | null = null;
   /** Called when a bullet passes harmlessly through the soul (resonance). */
@@ -84,6 +90,21 @@ export class BulletWorld {
    * areas…) keep their color: they are part of a boss's design.
    */
   recolor: Emotion | null = null;
+  /** Extra drawing of a pattern under the bullets (light cones, table cloths…), clipped to the box. */
+  pre: ((g: CanvasRenderingContext2D, w: BulletWorld) => void) | null = null;
+  /** Extra drawing over the bullets, under the soul (darkness that hides the bullets…), clipped to the box. */
+  post: ((g: CanvasRenderingContext2D, w: BulletWorld) => void) | null = null;
+  /** The pattern draws its own darkness: the fear veil around the soul is not added on top. */
+  dark = false;
+  /** The pattern reshapes `box` while it runs: the drawn box follows it. */
+  liveBox = false;
+  /**
+   * Damage over time (chapter 5: the Gel's droplets sting after they landed): `n` HP, straight off the heart, outside
+   * the bullets' hit rules (no invincibility frames, not absorbed by a shield). Set by the battle.
+   */
+  onSting: ((n: number) => void) | null = null;
+  /** Speed multiplier of the heart (chapter 6: wet cotton stuck to it slows it down). Reset by `clear()`. */
+  slow = 1;
 
   spawn(p: Partial<Bullet>): Bullet {
     const b: Bullet = {
@@ -120,6 +141,12 @@ export class BulletWorld {
     this.zones = [];
     this.shield = 0;
     this.recolor = null;
+    this.pre = null;
+    this.post = null;
+    this.dark = false;
+    this.liveBox = false;
+    this.slow = 1;
+    this.soul.pin = 0;
   }
 
   /** Resonance with the current soul (one or two colors). */
@@ -181,9 +208,11 @@ export class BulletWorld {
             b.data.resonated = 1;
             this.onResonate?.(b);
           }
-        } else if (this.soul.inv <= 0) {
+        } else if (this.soul.inv <= 0 && b.dmg > 0) {
+          // (Harmless projectiles — dmg 0: decor, a figure walking in the box — never strike.)
           this.strike(b);
-          if (b.shape !== 'rect' && b.shape !== 'ring') b.dead = true;
+          // (`data.pierce`: big objects — a needle, a key — are not used up by a hit.)
+          if (b.shape !== 'rect' && b.shape !== 'ring' && !b.data.pierce) b.dead = true;
         }
       }
     }
@@ -194,7 +223,7 @@ export class BulletWorld {
         continue;
       }
       const s = this.soul;
-      if (s.inv <= 0 && !this.passes(z.emo) && s.x + s.hit > z.x && s.x - s.hit < z.x + z.w && s.y + s.hit > z.y && s.y - s.hit < z.y + z.h) {
+      if (s.inv <= 0 && z.dmg > 0 && !this.passes(z.emo) && s.x + s.hit > z.x && s.x - s.hit < z.x + z.w && s.y + s.hit > z.y && s.y - s.hit < z.y + z.h) {
         this.strike({ dmg: z.dmg, emo: z.emo } as Bullet);
       }
     }
@@ -207,6 +236,11 @@ export class BulletWorld {
     const soulRect = { x: s.x - s.hit, y: s.y - s.hit, w: s.hit * 2, h: s.hit * 2 };
     if (b.shape === 'rect') {
       return soulRect.x < b.x + b.w && soulRect.x + soulRect.w > b.x && soulRect.y < b.y + b.h && soulRect.y + soulRect.h > b.y;
+    }
+    if (b.shape === 'custom' && b.data.hw !== undefined) {
+      const hw = b.data.hw;
+      const hh = b.data.hh ?? hw;
+      return soulRect.x < b.x + hw && soulRect.x + soulRect.w > b.x - hw && soulRect.y < b.y + hh && soulRect.y + soulRect.h > b.y - hh;
     }
     if (b.shape === 'ring') {
       const d = Math.hypot(s.x - b.x, s.y - b.y);
@@ -230,7 +264,11 @@ export class BulletWorld {
       }
     }
     g.globalAlpha = 1;
+    this.pre?.(g, this);
+    g.globalAlpha = 1;
     for (const b of this.bullets) drawBullet(g, b, this.soul.emo, this.t, this.soul.emo2, shapes);
+    g.globalAlpha = 1;
+    this.post?.(g, this);
     g.globalAlpha = 1;
   }
 }
@@ -353,9 +391,26 @@ export function drawBullet(g: CanvasRenderingContext2D, b: Bullet, soulEmo: Emot
     case 'sprite':
       if (b.sprite && hasSpr(b.sprite)) drawSprite(g, spr(b.sprite), x, y + Math.floor(spr(b.sprite).h / 2));
       break;
+    case 'custom':
+      b.draw?.(g, b, color, t);
+      break;
   }
-  if (shapes && b.emo !== 'neutre' && b.warn <= 0) drawShapeTokens(g, b);
+  // (`data.lie`: a projectile whose color lies — chapter 6 — shows a « ? » above it instead of its true shape.)
+  if (shapes && b.data.lie && b.warn <= 0) drawLieToken(g, b.x, b.y - 8);
+  else if (shapes && b.emo !== 'neutre' && b.warn <= 0) drawShapeTokens(g, b);
   g.globalAlpha = 1;
+}
+
+/** The « ? » token of a projectile whose color lies: a dark chip with a white question mark. */
+const LIE_ICON = ['.###.', '#...#', '...#.', '..#..', '.....', '..#..'];
+function drawLieToken(g: CanvasRenderingContext2D, cx: number, cy: number): void {
+  const x = Math.round(cx) - 3;
+  const y = Math.round(cy) - 4;
+  g.fillStyle = '#0b0710';
+  g.fillRect(x + 1, y, 5, 8);
+  g.fillRect(x, y + 1, 7, 6);
+  g.fillStyle = '#fffaf2';
+  LIE_ICON.forEach((r, j) => [...r].forEach((c, i) => c === '#' && g.fillRect(x + 1 + i, y + 1 + j, 1, 1)));
 }
 
 /** Accessibility shapes over a colored projectile: one token at its center, several along bars and rings. */

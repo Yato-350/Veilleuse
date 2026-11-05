@@ -4,6 +4,7 @@ import { getGlyph, measure, wrap } from '../src/engine/font';
 import { GLYPHS, ACCENTS } from '../src/engine/font-data';
 import { hash2, Rng, clamp, rectsOverlap } from '../src/engine/math';
 import { parseRows } from '../src/engine/sprite';
+import { Fx } from '../src/engine/fx';
 import { layoutRich, parseRich, plainText } from '../src/game/ui/richtext';
 import {
   allyActsOn,
@@ -25,11 +26,21 @@ import {
 import { soulLabel } from '../src/engine/palette';
 import { WORD_POOLS } from '../src/data/words';
 import { EnemyRuntime } from '../src/game/battle/enemy';
+import { ENEMIES } from '../src/data/enemies';
+import { BulletWorld } from '../src/game/battle/bullets';
 import type { EnemyDef } from '../src/game/battle/types';
-import { attack, defense, level, maxHp, newState, readSave, writeSave, hasSave, deleteSave, readMeta } from '../src/game/state';
-import { useMemoryStorage } from '../src/engine/storage';
+import { attack, defense, level, maxHp, newState, readSave, writeSave, hasSave, deleteSave, readMeta, writeMeta, migrateSave, SAVE_VERSION, type GameState } from '../src/game/state';
+import { MAPS } from '../src/data/maps';
+import { REAL, wakePhase } from '../src/game/story/common';
+import { saveJSON, useMemoryStorage } from '../src/engine/storage';
 import { nameReaction } from '../src/game/scenes/nameentry';
 import { composePoem } from '../src/game/scenes/poem';
+import { drownedCountV2, knockRound, sheepFor } from '../src/game/battle/final-v2';
+import { validCount } from '../src/game/scenes/sheepcount';
+import { DODO_WORDS_V2, MINA_WORDS_V2 } from '../src/data/words';
+import { ITEMS } from '../src/data/items';
+import { dawnEnding } from '../src/game/story/endings';
+import { G } from '../src/game/state';
 
 describe('math', () => {
   it('hash2 is deterministic and in [0,1)', () => {
@@ -91,6 +102,12 @@ describe('rich text', () => {
   });
   it('honors explicit newlines', () => {
     expect(layoutRich(parseRich('a\nb'), 200).length).toBe(2);
+  });
+  it('closes a speed change with {/spd} (no literal tag left)', () => {
+    expect(plainText('{spd:0.5}lent{/spd} vite')).toBe('lent vite');
+    const chars = parseRich('{spd:0.5}a{/spd}b');
+    expect(chars.find((c) => c.ch === 'a')?.speed).toBe(0.5);
+    expect(chars.find((c) => c.ch === 'b')?.speed).toBe(1);
   });
 });
 
@@ -221,9 +238,9 @@ describe('battle 1.1: bittersweet words', () => {
     // A single-emotion word is still upsetting when hated, whatever the need.
     expect(evaluateWord({ text: 'rire', emotion: 'joie' }, { emotion: 'joie' }, ['joie']).verdict).toBe('bad');
   });
-  it('chapters 2 and 3 have bittersweet words, chapter 1 none; all pool words are unique', () => {
+  it('chapters 2 to 4 have bittersweet words, chapter 1 none; all pool words are unique', () => {
     expect(WORD_POOLS[1]!.some((w) => w.emotion2)).toBe(false);
-    for (const ch of [2, 3]) {
+    for (const ch of [2, 3, 4]) {
       const doux = WORD_POOLS[ch]!.filter((w) => w.emotion2);
       expect(doux.length).toBeGreaterThanOrEqual(3);
       for (const w of doux) expect(wordEmotions(w)).toEqual(['joie', 'tristesse']);
@@ -248,6 +265,21 @@ describe('battle 1.1: Mina the ally', () => {
     expect(allyState(ctx({ flags: { interlude: 1 } }))).toBe('none');
     expect(allyState(ctx({ chapter: 0 }))).toBe('none');
     expect(allyState(ctx({ chapter: 4 }))).toBe('none');
+  });
+  it('chapter 4: Mina n°366 (party « mina366 ») helps, and sits frozen once La Couseuse was beaten', () => {
+    expect(allyState(ctx({ chapter: 4, party: ['mina366'] }))).toBe('mina366');
+    expect(allyState(ctx({ chapter: 4, party: ['mina366'], flags: { c4_couseuse: 'vaincue' } }))).toBe('still');
+    expect(allyState(ctx({ chapter: 4, party: ['mina366'], flags: { c4_couseuse: 'epargnee' } }))).toBe('mina366');
+    expect(allyState(ctx({ chapter: 4, party: [] }))).toBe('none');
+    expect(allyState(ctx({ chapter: 4, party: ['mina366'], noAlly: true }))).toBe('none');
+    expect(allyState(ctx({ chapter: 4, party: ['mina366'], flags: { interlude: 4 } }))).toBe('none');
+    expect(allyState(ctx({ chapter: 3, party: ['mina366'] }))).toBe('none');
+  });
+  it('chapter 5: nobody at Noa\'s side, only Mina\'s empty frame (crossed by the red thread)', () => {
+    expect(allyState(ctx({ chapter: 5, party: ['mina366'] }))).toBe('absent');
+    expect(allyState(ctx({ chapter: 5, party: [] }))).toBe('absent');
+    expect(allyState(ctx({ chapter: 5, party: [], noAlly: true }))).toBe('none');
+    expect(allyState(ctx({ chapter: 5, party: [], flags: { interlude: 4 } }))).toBe('none');
   });
   it('leaves an empty slot in chapter 3 once she was erased', () => {
     expect(allyState(ctx({ chapter: 3, party: [], flags: { c3_mina_erased: true } }))).toBe('absent');
@@ -285,6 +317,146 @@ describe('battle 1.1: Mina the ally', () => {
   });
 });
 
+describe('chapter 4 battles', () => {
+  it('has the special words of its fights in the chapter 4 pool, and fear words for Le Petit Homme', () => {
+    const texts = WORD_POOLS[4]!.map((w) => w.text);
+    for (const w of ['découdre', 'rendre', 'ouvrir', 'merci', 'reste', 'pâtes', 'mot du frigo']) expect(texts).toContain(w);
+    expect(WORD_POOLS[4]!.filter((w) => w.emotion === 'peur').length).toBeGreaterThanOrEqual(4);
+  });
+  it('declares the fights the story calls, with their special words', () => {
+    for (const id of ['pate_froide', 'mot_aimante', 'de_chevalier', 'poupee_brouillon', 'cle', 'poupee_maman', 'couseuse', 'petit_homme']) expect(ENEMIES[id]).toBeTruthy();
+    expect(ENEMIES.poupee_maman!.specialWords!.map((w) => w.text).sort()).toEqual(['merci', 'reste']);
+    expect(ENEMIES.couseuse!.needs.at(-1)!.word).toBe('découdre');
+    expect(ENEMIES.petit_homme!.needs.map((n) => n.emotion ?? n.word)).toEqual(['peur', 'tristesse', 'rendre']);
+    expect(ENEMIES.cle!.needs.at(-1)!.word).toBe('ouvrir');
+  });
+  it('lets harmless projectiles (dmg 0) pass through the soul without using up the shield', () => {
+    const w = new BulletWorld();
+    w.box = { x: 0, y: 0, w: 100, h: 100 };
+    w.soul.x = 50;
+    w.soul.y = 50;
+    w.shield = 2;
+    let hits = 0;
+    w.onHit = () => hits++;
+    const b = w.spawn({ x: 50, y: 50, r: 3, dmg: 0, data: { pierce: 1 } });
+    w.update();
+    expect(hits).toBe(0);
+    expect(w.shield).toBe(2);
+    expect(b.dead).toBe(false);
+  });
+});
+
+describe('chapter 5 battles', () => {
+  it('has the special words of its fights in the chapter 5 pool: « fièvre », « pardon », « je ne sais pas » (neutral), the bittersweet « coquillage »', () => {
+    const pool = WORD_POOLS[5]!;
+    const texts = pool.map((w) => w.text);
+    for (const w of ['fièvre', 'pardon', 'je ne sais pas', 'coquillage']) expect(texts).toContain(w);
+    expect(pool.find((w) => w.text === 'je ne sais pas')!.emotion).toBe('neutre');
+    expect(wordEmotions(pool.find((w) => w.text === 'coquillage')!)).toEqual(['joie', 'tristesse']);
+  });
+  it('declares the fights the story calls, with their special words', () => {
+    for (const id of ['crabe_bracelet', 'mouette', 'masque', 'gel', 'thermometre', 'gribouille_noire', 'vitre']) expect(ENEMIES[id]).toBeTruthy();
+    expect(ENEMIES.vitre!.needs.map((n) => n.emotion ?? n.word)).toEqual(['tristesse', 'je ne sais pas']);
+    expect(ENEMIES.vitre!.specialWords!.map((w) => w.text).sort()).toEqual(['je ne sais pas', 'pardon']);
+    expect(ENEMIES.vitre!.boss && ENEMIES.vitre!.noFlee).toBe(true);
+    expect(ENEMIES.thermometre!.needs[0]!.word).toBe('fièvre');
+    expect(ENEMIES.gribouille_noire!.noInk).toBe(true);
+  });
+  it('the Gribouille Noire can never be calmed, whatever is written', () => {
+    const e = new EnemyRuntime(ENEMIES.gribouille_noire!);
+    for (const w of WORD_POOLS[5]!) e.applyWord(w);
+    expect(e.spareable).toBe(false);
+  });
+  it('La Vitre: Tristesse ×2 then « je ne sais pas »; « pardon » comes first after « Oui » at the portal', () => {
+    const e = new EnemyRuntime(ENEMIES.vitre!);
+    e.applyWord({ text: 'je ne sais pas', emotion: 'neutre' });
+    expect(e.step).toBe(0);
+    e.applyWord({ text: 'marée', emotion: 'tristesse' });
+    e.applyWord({ text: 'neige', emotion: 'tristesse' });
+    expect(e.step).toBe(1);
+    e.applyWord({ text: 'je ne sais pas', emotion: 'neutre' });
+    expect(e.spareable).toBe(true);
+    // (What the battle does on its first turn when flags.c5_menti is set.)
+    const m = new EnemyRuntime(ENEMIES.vitre!);
+    m.def = { ...m.def, needs: [{ word: 'pardon' }, ...m.def.needs] };
+    m.total = needTotal(m.def.needs);
+    m.applyWord({ text: 'marée', emotion: 'tristesse' });
+    expect(m.step).toBe(0);
+    m.applyWord({ text: 'pardon', emotion: 'tristesse' });
+    expect(m.step).toBe(1);
+    expect(m.total).toBe(4);
+  });
+});
+
+describe('chapter 6 battles and the final battle v2', () => {
+  it('has the special words of its fights in the chapter 6 pool (« regarder », « pardon »), and the knocks as words', () => {
+    const texts = WORD_POOLS[6]!.map((w) => w.text);
+    for (const w of ['regarder', 'pardon', 'je suis là', 'bonne nuit']) expect(texts).toContain(w);
+    expect(WORD_POOLS[6]!.find((w) => w.text === 'regarder')!.emotion).toBe('neutre');
+  });
+  it('declares the fights the story calls, with their needs', () => {
+    for (const id of ['aiguille', 'bouton_pendu', 'bourre', 'mouton_numerote', 'pile', 'dodo_v2']) expect(ENEMIES[id]).toBeTruthy();
+    expect(ENEMIES.aiguille!.needs).toEqual([{ emotion: 'tristesse', count: 2 }]);
+    expect(ENEMIES.bourre!.needs[0]!.word).toBe('pardon');
+    expect(ENEMIES.pile!.needs.map((n) => n.emotion ?? n.word)).toEqual(['joie', 'garder']);
+    expect(ENEMIES.pile!.noFlee && ENEMIES.dodo_v2!.noFlee && ENEMIES.dodo_v2!.boss).toBe(true);
+    expect(ENEMIES.dodo_v2!.music).toBe('dodo_v2');
+  });
+  it('Le Bouton Pendu: « regarder » calms it at once; Tristesse ×2 too', () => {
+    const a = new EnemyRuntime(ENEMIES.bouton_pendu!);
+    a.applyWord({ text: 'regarder', emotion: 'neutre' });
+    expect(a.spareable).toBe(true);
+    const b = new EnemyRuntime(ENEMIES.bouton_pendu!);
+    b.applyWord({ text: 'adieu', emotion: 'tristesse' });
+    b.applyWord({ text: 'manquer', emotion: 'tristesse' });
+    expect(b.spareable).toBe(true);
+  });
+  it('phase 1 counts one sheep per death (41 at most), or her 41 nights when the player never died', () => {
+    expect(sheepFor(0)).toBe(41);
+    expect(sheepFor(3)).toBe(3);
+    expect(sheepFor(120)).toBe(41);
+  });
+  it('phase 4: her notebook (« je suis là », « bonne nuit »), ink drowns at most two of her words', () => {
+    const texts = MINA_WORDS_V2.map((w) => w.text);
+    for (const w of ['je suis là', 'bonne nuit', 'merci', 'pardon', 'au revoir', 'je t\'aime', 'lumière', 'matin']) expect(texts).toContain(w);
+    expect(DODO_WORDS_V2.map((w) => w.text)).toContain('Dors.');
+    expect([0, 2, 3, 6, 9, 40].map(drownedCountV2)).toEqual([0, 0, 1, 2, 2, 2]);
+  });
+  it('phase 3: blind rounds among the radiator\'s knocks; after two mistakes she knocks in plain view, alone', () => {
+    const a = knockRound('A', false);
+    expect(a.blind).toBe(true);
+    expect(a.seqs.map(validCount)).toEqual(a.seqs.map(() => 1));
+    expect(knockRound('B', false).seqs.map(validCount)).toEqual([3, 3, 3]);
+    expect(knockRound('A', true)).toMatchObject({ blind: false, seqs: [['S']] });
+    expect(knockRound('B', true)).toMatchObject({ blind: false, seqs: [['S', 'S', 'S']] });
+    expect(knockRound('rien', false).seqs.map(validCount)).toEqual([0]);
+  });
+  it('the Bouton doré and the Pile chargée are key items usable in battle', () => {
+    expect(ITEMS.bouton_dore).toMatchObject({ key: true, battleKey: true });
+    expect(ITEMS.pile_chargee).toMatchObject({ key: true, battleKey: true });
+  });
+  it('once the eyes are open: Aube, Aube blanche (3 drawings corrected or more), or Veilleuse when every condition holds', () => {
+    const keep = { state: G.state, meta: G.meta };
+    try {
+      G.state = newState();
+      G.meta = readMeta();
+      expect(dawnEnding()).toBe('aube');
+      G.state.flags.c5_corrige = 3;
+      expect(dawnEnding()).toBe('aube_blanche');
+      Object.assign(G.state.flags, { c5_corrige: 1, c5_fievre: true, c6_pile: true, i4_pile: true });
+      G.meta.callVersion = 'sais_pas';
+      expect(dawnEnding()).toBe('aube');
+      G.meta.endings = ['aube'];
+      expect(dawnEnding()).toBe('veilleuse');
+      G.state.flags.c1_bouton_vendu = true;
+      expect(dawnEnding()).toBe('aube');
+    } finally {
+      G.state = keep.state;
+      G.meta = keep.meta;
+    }
+  });
+});
+
 describe('state & saves', () => {
   it('derives stats from progression', () => {
     const s = newState('Léa');
@@ -310,6 +482,123 @@ describe('state & saves', () => {
     deleteSave();
     expect(hasSave()).toBe(false);
     expect(readMeta().endings).toEqual([]);
+  });
+
+  // v1.1 saves (version 1), one per moment of a run: every one must still load in v2.
+  const V11 = (chapter: number, map: string, flags: GameState['flags'], extra: Partial<GameState> = {}): Partial<GameState> => ({
+    version: 1,
+    playerName: 'Sacha',
+    chapter,
+    map,
+    x: 40,
+    y: 60,
+    dir: 'down',
+    hp: 18,
+    etoiles: 5,
+    encre: 1,
+    items: ['biscuit'],
+    keyItems: [],
+    souvenirs: ['souvenir_fenetre'],
+    flags,
+    kills: { gribouille: 1 },
+    spares: { nuage: 2 },
+    cleared: ['c1_e1'],
+    party: chapter > 0 ? ['mina'] : [],
+    playtime: 1234,
+    savedAt: 1,
+    weapon: 'crayon',
+    armor: 'pyjama',
+    ...extra,
+  });
+  const V11_SAVES: Record<string, Partial<GameState>> = {
+    prologue: V11(0, 'chambre', { interlude: 0, p_reply: 'aime', world: 'real' }),
+    chapter1: V11(1, 'prairie', { interlude: 0, c1_sheep_round: 2, world: 'dream' }),
+    interlude1: V11(1, 'appartement', { interlude: 1, i1_ate: true, world: 'real' }),
+    chapter2: V11(2, 'foret', { interlude: 0, world: 'dream' }),
+    interlude2: V11(2, 'appartement_nuit', { interlude: 2, i2_reply: 'pardon', world: 'real' }),
+    chapter3: V11(3, 'hopital', { interlude: 0, world: 'ink' }),
+    finale: V11(3, 'chambre_mina', { interlude: 3, fin_room: true, world: 'real' }),
+    // The v1.1 epilogue (shop and garden) ran at interlude 3 too, and version 2 reuses its ep_* flag names.
+    epilogue: V11(3, 'jardin', { interlude: 3, fin_room: true, fin_route: 'aube', ep_vl: 'lune', ep_paid: true, ep_garden: true, ep_maman_wait: true, ep_placed: true, ep_poem: true, ep_dodo: 'garde', world: 'real' }),
+    // A very old save: no version, no playerChar, no souvenirs.
+    legacy: { playerName: 'Léa', chapter: 1, map: 'prairie', x: 1, y: 1, flags: { interlude: 0 } } as Partial<GameState>,
+  };
+
+  it('loads a v1.1 save taken at every step of a run (migration v1 → v2)', () => {
+    useMemoryStorage();
+    for (const [step, raw] of Object.entries(V11_SAVES)) {
+      saveJSON('save.v1', raw);
+      const s = readSave()!;
+      expect(s, step).not.toBeNull();
+      expect(s.version, step).toBe(SAVE_VERSION);
+      expect(MAPS[s.map], `${step}: map ${s.map}`).toBeDefined();
+      expect(s.chapter, step).toBe(raw.chapter);
+      // The v1.1 finale (and its epilogue) wakes up into the false dawn (version 2 goes there after chapter 3), on the bed
+      // spawn, in tiles like every save.
+      const toFalseDawn = step === 'finale' || step === 'epilogue';
+      expect(s.map, step).toBe(toFalseDawn ? 'chambre_faux' : raw.map);
+      if (toFalseDawn) expect([s.x, s.y], step).toEqual([MAPS.chambre_faux!.spawns.bed!.x, MAPS.chambre_faux!.spawns.bed!.y]);
+      expect(s.playerName, step).toBe(raw.playerName);
+      expect(s.playerChar, step).toBe('noa');
+      expect(Array.isArray(s.souvenirs) && Array.isArray(s.cleared), step).toBe(true);
+      // Every flag survives, except what the v1.1 finale and epilogue had seen (fin_*, ep_*): the moment stays 3 (REAL.i3).
+      const flags = { ...raw.flags };
+      if (toFalseDawn) {
+        for (const k of Object.keys(flags)) if (k.startsWith('fin_') || k.startsWith('ep_')) delete flags[k];
+        expect(s.flags.interlude, step).toBe(REAL.i3);
+      }
+      expect(s.flags, step).toEqual(flags);
+      // Saving and loading again changes nothing (no double migration).
+      writeSave(s);
+      expect({ ...readSave()!, savedAt: 0 }, step).toEqual({ ...s, savedAt: 0 });
+    }
+    deleteSave();
+  });
+
+  it('keeps the v1.1 run order: interludes I and II stay 1 and 2, only the old finale moves (to the false dawn)', () => {
+    expect(migrateSave({ version: 1, map: 'appartement', flags: { interlude: 1 } })).toMatchObject({ map: 'appartement', flags: { interlude: 1 } });
+    expect(migrateSave({ version: 1, map: 'appartement_nuit', flags: { interlude: 2 } })).toMatchObject({ map: 'appartement_nuit', flags: { interlude: 2 } });
+    const old = migrateSave({ version: 1, chapter: 3, map: 'chambre_mina', party: ['mina'], flags: { interlude: 3, fin_room: true, fin_carnet: true, fin_route: 'aube', c3_veilleuse: true } });
+    expect(old).toMatchObject({ map: 'chambre_faux', chapter: 3, party: [], flags: { interlude: REAL.i3, c3_veilleuse: true } });
+    expect(Object.keys(old.flags).filter((k) => k.startsWith('fin_'))).toEqual([]);
+    // A v2 save at interlude III (3) is not touched.
+    expect(migrateSave({ version: 2, map: 'chambre', flags: { interlude: 3 } })).toMatchObject({ map: 'chambre', flags: { interlude: 3 } });
+    expect([1, 2, 3, 4, 6].map((n) => wakePhase(n as 1 | 2 | 3 | 4 | 6))).toEqual([REAL.i1, REAL.i2, REAL.i3, REAL.i4, REAL.finale]);
+  });
+
+  it('migrates the v1.1 meta memory: endings copied to endingsV1, one night per ending', () => {
+    useMemoryStorage();
+    expect(readMeta()).toMatchObject({ nuits: 365, endingsV1: [], callVersion: null, dodoSilent: false, fauxGenerique: 0, beauxRevesAt: 0 });
+    saveJSON('meta.v1', { launches: 7, deaths: 12, endings: ['aube', 'silence'], names: ['Sacha'], poems: [], seen: ['fin_aube'] });
+    const m = readMeta();
+    expect(m.endings).toEqual(['aube', 'silence']);
+    expect(m.endingsV1).toEqual(['aube', 'silence']);
+    expect(m.nuits).toBe(367);
+    expect(m.deaths).toBe(12);
+    expect(m.metaVersion).toBe(2);
+    // Once written in the v2 format, v2 endings are never mistaken for v1.1 ones.
+    m.endings.push('aube_blanche');
+    m.nuits++;
+    writeMeta(m);
+    const again = readMeta();
+    expect(again.endingsV1).toEqual(['aube', 'silence']);
+    expect(again.nuits).toBe(368);
+  });
+});
+
+describe('screen effects', () => {
+  it('« Réduire les flashs »: no glitch bursts, and a continuous glitch stays below the tearing level', () => {
+    const f = new Fx();
+    f.pulseGlitch(20);
+    expect(f.glitchLevel).toBeCloseTo(0.6);
+    const calm = new Fx();
+    calm.reduceFlashes = true;
+    calm.pulseGlitch(20);
+    expect(calm.glitchLevel).toBe(0);
+    calm.glitch = 0.8;
+    expect(calm.glitchLevel).toBeLessThan(0.125);
+    calm.glitch = 0.06;
+    expect(calm.glitchLevel).toBeCloseTo(0.06);
   });
 });
 

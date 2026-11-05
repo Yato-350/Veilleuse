@@ -1,0 +1,23 @@
+# Lot 3 (chapter 5 battles): Crabe-Bracelet and Mouette together on the overexposed beach (Mina's empty frame, the red
+# thread). The crab wants Tristesse ×2; the gull Colère then Joie.
+query: debug=script&name=bt_ch5_duo&lang=fr
+god
+wait:1500
+auto
+shot:plage
+write:tristesse
+auto
+write:tristesse
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable
+menu:3
+choose:0
+auto
+write:colere
+auto
+write:joie
+auto
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.debug_battle === 'spare:crabe_bracelet+mouette'

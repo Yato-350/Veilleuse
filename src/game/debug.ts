@@ -1,4 +1,3 @@
-import { audio } from '../engine/audio';
 import { H, W } from '../engine/constants';
 import { drawText } from '../engine/font';
 import { fx } from '../engine/fx';
@@ -11,24 +10,38 @@ import { Battle } from './battle/battle';
 import { PATTERNS } from './battle/patterns';
 import { runScript } from './director';
 import { world } from './overworld/world';
+import type { MapDef } from './overworld/types';
+import { MAPS } from '../data/maps';
 import { G, maxHp, newState } from './state';
-import { TitleScene } from './scenes/title';
+import { TitleScene, TITLE_VARIANTS, type TitleVariant } from './scenes/title';
 import { ImageScene } from './scenes/image';
 import { DEBUG_SCRIPTS } from './story';
 import { CreditsScene } from './scenes/credits';
 import { GalleryScene } from './scenes/gallery';
 import { composePoem } from './scenes/poem';
+import { applyMetaSpec, enableRing } from './meta';
+import { setClock } from './clock';
 
 /**
  * Developer entry points, driven by URL parameters (used by tools/shot.mjs for visual checks):
- *   ?debug=sheet&filter=b_&scale=3      sprite sheet (all sprites whose key starts with `filter`)
+ *   ?debug=sheet&filter=b_&scale=3      sprite sheet (all sprites whose key starts with `filter`; several prefixes: a,b; &base: no @variants)
  *   ?debug=map&map=prairie&spawn=default&chapter=1&party=mina&flags=a,b=2
+ *   ?debug=map&map=chambre&world=feutre   any map seen in another world material (feutre, stylo, blanc, ouate, faux…)
  *   ?debug=battle&enemies=nuage,pissenlit&chapter=1&emotion=joie
  *   ?debug=pattern&id=rain&emotion=tristesse
  *   ?debug=image&key=souvenir_fenetre
  *   ?debug=script&name=chapter1_intro&map=prairie
  *   ?debug=title | ?debug=credits
+ *   ?debug=title&variant=point_de_croix|continuer_seul|soleil_blanc|silence_v2|veilleuse|night|dawn|dream (&days=23)
+ *   ?debug=credits&mode=faux   the fake credits of the false dawn (stop, choice, rewind / let roll, cross-stitch)
+ *   ?debug=credits&mode=aide   the credits followed by the help card
  *   ?debug=gallery&seen=some|all|none&poems=3&open=1   title screen + « Carnet de souvenirs » with sample memories
+ * With any mode:
+ *   &meta=endings:aube,callVersion:douce   a simulated memory (docs/HISTOIRE.md § 5): any Meta field, lists with « | »
+ *                                          (endings:aube|silence), booleans alone (dodoSilent), beauxRevesAt in days ago,
+ *                                          nights following the endings unless given (nuits:367). See meta.ts applyMetaSpec.
+ *                                          In memory only: a script that saves the memory (an ending…) writes it.
+ *   &clock=3:14                            the real clock reads 3:14 from now on (the night narrator, the 3:14 call…)
  */
 export function startDebug(p: URLSearchParams): void {
   const mode = p.get('debug') ?? '';
@@ -42,13 +55,23 @@ export function startDebug(p: URLSearchParams): void {
   }
   for (const it of (p.get('items') ?? '').split(',').filter(Boolean)) G.state.items.push(it);
   for (const it of (p.get('keys') ?? '').split(',').filter(Boolean)) G.state.keyItems.push(it);
+  if (p.get('meta')) {
+    const unknown = applyMetaSpec(G.meta, p.get('meta')!);
+    if (unknown.length) console.error(`Unknown meta fields: ${unknown.join(', ')}`);
+  }
+  if (p.get('clock') && !setClock(p.get('clock')!)) console.error(`Bad clock: ${p.get('clock')} (expected h:mm)`);
+  // The 3:14 call only rings in debug when the clock is given (a bot run at 3:14 a.m. stays deterministic).
+  enableRing(p.has('clock'));
   fx.setFade(0);
   switch (mode) {
     case 'sheet':
-      return showSheet(p.get('filter') ?? '', Number(p.get('scale') ?? 3), p.get('chars') !== null);
+      return showSheet(p.get('filter') ?? '', Number(p.get('scale') ?? 3), p.get('chars') !== null, p.get('base') !== null);
     case 'map': {
+      const id = p.get('map') ?? 'chambre';
+      const w = p.get('world');
+      if (w && MAPS[id]) MAPS[id] = { ...MAPS[id]!, world: w as MapDef['world'] };
       game.replace(world);
-      world.load(p.get('map') ?? 'chambre', p.get('spawn') ?? 'default');
+      world.load(id, p.get('spawn') ?? 'default');
       return;
     }
     case 'battle': {
@@ -113,14 +136,24 @@ export function startDebug(p: URLSearchParams): void {
       if (p.get('open') !== '0') game.push(new GalleryScene());
       return;
     }
-    case 'credits':
+    case 'credits': {
       game.replace(new BlackScene());
-      void CreditsScene.play();
+      const m = p.get('mode');
+      if (m === 'faux') {
+        game.replace(world);
+        void runScript(async (d) => {
+          await DEBUG_SCRIPTS.socle_faux_generique!(d);
+        });
+      } else void CreditsScene.play({ helpCard: m === 'aide' });
       return;
+    }
     case 'title':
-    default:
-      audio.unlock();
-      game.replace(new TitleScene());
+    default: {
+      // (No audio.unlock() here: without a user gesture the browser refuses it; the first key press unlocks audio.)
+      const v = p.get('variant');
+      if (p.get('days')) G.meta.beauxRevesAt = Date.now() - Number(p.get('days')) * 86400000;
+      game.replace(new TitleScene(v && (TITLE_VARIANTS as string[]).includes(v) ? { variant: v as TitleVariant } : {}));
+    }
   }
 }
 
@@ -146,10 +179,12 @@ function showError(msg: string): void {
 }
 
 /** Renders a large sprite sheet into the page (outside the game canvas) for visual review. */
-function showSheet(filter: string, scale: number, includeChars: boolean): void {
+function showSheet(filter: string, scale: number, includeChars: boolean, baseOnly = false): void {
   const entries: Array<[string, HTMLCanvasElement, number, number]> = [];
+  const prefixes = filter.split(',');
   for (const [k, s] of Object.entries(SPR)) {
-    if (k.startsWith(filter)) entries.push([k, s.img, s.w, s.h]);
+    if (baseOnly && k.includes('@')) continue;
+    if (prefixes.some((f) => k.startsWith(f))) entries.push([k, s.img, s.w, s.h]);
   }
   if (includeChars) {
     for (const [id, set] of Object.entries(CHARS)) {

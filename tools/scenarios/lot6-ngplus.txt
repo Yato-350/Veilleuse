@@ -1,0 +1,15 @@
+# Lot 6 (docs/HISTOIRE.md § 3.3 item 8, § 5): new game after a version 2 ending. When Dodo wakes up, he knows the
+# player knows: « Tu reviens. Tu sais, toi. … Tu ne lui diras rien, hein ? »
+query: debug=script&name=prologue_chambre&lang=fr
+wait:1500
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: (V.G.meta.endings = ['aube_blanche'], V.G.meta.endingsV1 = [], 1)
+interact:bed
+zuntil: SAW('Tu ne lui diras rien, hein ?')
+shot:ngplus
+auto
+assert: SAW('Tu sais, toi.') && !SAW('On s\'est déjà dit bonne nuit') && V.G.state.flags.p_dodo === true

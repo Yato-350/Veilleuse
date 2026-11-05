@@ -10,9 +10,24 @@ export interface Particle {
   max: number;
   color: string;
   size: number;
-  kind: 'dot' | 'glow' | 'streak' | 'flake' | 'drip' | 'star';
+  kind: 'dot' | 'glow' | 'streak' | 'flake' | 'drip' | 'star' | 'ooze' | 'pool';
   phase: number;
   screen: boolean;
+  /** 'ooze' only: the ground line where the drop stops and spreads into a 'pool'. */
+  floor?: number;
+  /** 'ooze' only: where the drop came from (it leaves a short wet streak behind it). */
+  top?: number;
+}
+
+/** A cut that keeps oozing for a while (Particles.bleed). */
+interface Wound {
+  x: number;
+  y: number;
+  floor: number;
+  t: number;
+  color: string;
+  dark: string;
+  gentle: boolean;
 }
 
 export type ParticleMode = 'fireflies' | 'cotton' | 'dust' | 'rain' | 'ink' | 'petals' | 'stars' | 'snow' | 'none';
@@ -22,10 +37,43 @@ export class Particles {
   list: Particle[] = [];
   mode: ParticleMode = 'none';
   private t = 0;
+  private wounds: Wound[] = [];
 
   setMode(m: ParticleMode | undefined): void {
     this.mode = m ?? 'none';
     this.list = [];
+    this.wounds = [];
+  }
+
+  /**
+   * Ink oozing from a cut in world space (the bleeding pencil trees of chapter 2): thick drops well up at (x, y) for
+   * `frames`, run down to `floor` and spread there into small pools that dry out slowly. Without `gentle`, the cut
+   * first spits a short spray; `gentle` (the « reduce flashes » option) keeps only the slow drops.
+   */
+  bleed(x: number, y: number, floor: number, opts: { frames?: number; color?: string; dark?: string; gentle?: boolean } = {}): void {
+    const color = opts.color ?? '#3a1630';
+    const dark = opts.dark ?? '#1a0a18';
+    const gentle = opts.gentle ?? false;
+    this.wounds.push({ x, y, floor, t: opts.frames ?? 150, color, dark, gentle });
+    if (gentle) return;
+    for (let i = 0; i < 9; i++) {
+      const a = rng.range(Math.PI * 0.75, Math.PI * 1.25) + (i % 2 ? Math.PI : 0);
+      const s = rng.range(0.5, 1.3);
+      this.list.push({
+        x,
+        y,
+        vx: Math.cos(a) * s,
+        vy: -rng.range(0.4, 1.1),
+        life: 0,
+        max: 240,
+        color: i % 3 ? color : dark,
+        size: 1,
+        kind: 'ooze',
+        phase: 0,
+        screen: false,
+        floor: floor + rng.int(-2, 3),
+      });
+    }
   }
 
   burst(x: number, y: number, color: string, n = 12, speed = 1.5, kind: Particle['kind'] = 'dot'): void {
@@ -159,9 +207,44 @@ export class Particles {
         screen: true,
       });
     }
+    for (const w of this.wounds) {
+      w.t--;
+      if (w.t % (w.gentle ? 10 : 5) !== 0) continue;
+      this.list.push({
+        x: w.x + rng.int(-1, 1),
+        y: w.y,
+        vx: rng.range(-0.04, 0.04),
+        vy: 0.05,
+        life: 0,
+        max: w.gentle ? 520 : 420,
+        color: rng.chance(0.3) ? w.dark : w.color,
+        size: rng.pick([1, 2, 2]),
+        kind: 'ooze',
+        phase: rng.range(0, 6),
+        screen: false,
+        floor: w.floor + rng.int(-1, 2),
+        top: w.y,
+      });
+    }
+    this.wounds = this.wounds.filter((w) => w.t > 0);
     for (const p of this.list) {
       p.life++;
-      if (p.kind === 'glow') {
+      if (p.kind === 'ooze') {
+        // Thick: it hangs at the cut a moment, then runs down; at the floor it spreads into a pool.
+        p.vy = Math.min(p.vy + (p.life < 18 ? 0.004 : 0.03), 1.4);
+        p.vx *= 0.9;
+        if (p.floor !== undefined && p.y + p.vy >= p.floor) {
+          p.y = p.floor;
+          p.kind = 'pool';
+          p.vx = 0;
+          p.vy = 0;
+          p.size = 1;
+          p.max = Math.max(p.max, p.life + 260);
+        }
+      } else if (p.kind === 'pool') {
+        if (p.size < 6 && p.life % 14 === 0) p.size++;
+        continue;
+      } else if (p.kind === 'glow') {
         p.vx += Math.sin(p.life * 0.05 + p.phase) * 0.01;
         p.vy += Math.cos(p.life * 0.04 + p.phase) * 0.01;
       } else if (p.kind === 'flake') {
@@ -198,6 +281,21 @@ export class Particles {
           break;
         case 'drip':
           g.fillRect(x, y, p.size, p.size * 3);
+          break;
+        case 'ooze': {
+          // a drop with a wet streak behind it, as long as it has run (up to 10 px)
+          const tail = p.top === undefined ? 0 : Math.max(0, Math.min(10, Math.round(p.y - p.top)));
+          if (tail > 0) {
+            g.globalAlpha = Math.max(0, fade) * 0.6;
+            g.fillRect(x, y - tail, 1, tail);
+            g.globalAlpha = Math.max(0, fade);
+          }
+          g.fillRect(x, y, p.size, p.size + 1);
+          break;
+        }
+        case 'pool':
+          g.globalAlpha = Math.max(0, Math.min(1, (p.max - p.life) / 60));
+          g.fillRect(x - (p.size >> 1), y, p.size + 1, 1);
           break;
         case 'star': {
           const tw = Math.sin((p.life / p.max) * Math.PI);

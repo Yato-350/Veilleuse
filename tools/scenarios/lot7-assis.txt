@@ -1,0 +1,21 @@
+# Lot 7 (docs/HISTOIRE.md § 2.7, § 3.4): chapter 1, sitting with Mina on the big pillow. A flake on Noa's nose, he
+# coughs; Mina: « Te mets pas trop près de moi si t'es enrhumé. Maman dit. », then she laughs it off (T6). The rest
+# of the scene is untouched (« Ce n'était pas le froid », « Promis. »).
+query: debug=script&name=c1_hill_sit&lang=fr
+wait:1000
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+zuntil: SAW('Kof. Kof.')
+shot:toux
+zuntil: SAW('Maman dit.')
+shot:enrhume
+zuntil: V.dialogue.choices && V.dialogue.choices.length === 2
+assert: SAW('Ça rend pas malade, le coton.')
+choose:0
+zuntil: V.dialogue.choices && V.dialogue.choices.length === 2
+choose:0
+zuntil: !V.dialogue.busy && V.world.busy === 0
+assert: SAW('Ce n\'était pas le froid.') && V.G.state.flags.c1_promesse === true

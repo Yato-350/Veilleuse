@@ -1,0 +1,22 @@
+# Lot 0 proof: title variants. The v1.1 night title, then each v2 variant (one screenshot each).
+query: debug=title&lang=fr&days=23
+wait:1500
+shot:night
+assert: window.__veilleuse.scene() === 'TitleScene'
+eval: (() => { const T = window.__veilleuse.game.top.constructor; window.__veilleuse.game.replace(new T({ variant: 'point_de_croix', single: { label: 'Continuer', onPick: () => {} } })); return 1; })()
+wait:2200
+shot:point_de_croix
+assert: window.__veilleuse.game.top.items.length === 1
+eval: (() => { const T = window.__veilleuse.game.top.constructor; window.__veilleuse.game.replace(new T({ variant: 'continuer_seul' })); return 1; })()
+wait:2200
+shot:continuer_seul
+assert: window.__veilleuse.game.top.items.length === 1
+eval: (() => { const T = window.__veilleuse.game.top.constructor; window.__veilleuse.game.replace(new T({ variant: 'soleil_blanc' })); return 1; })()
+wait:2200
+shot:soleil_blanc
+eval: (() => { const T = window.__veilleuse.game.top.constructor; window.__veilleuse.game.replace(new T({ variant: 'silence_v2' })); return 1; })()
+wait:2200
+shot:silence_v2
+eval: (() => { const T = window.__veilleuse.game.top.constructor; window.__veilleuse.game.replace(new T({ variant: 'veilleuse' })); return 1; })()
+wait:2200
+shot:veilleuse

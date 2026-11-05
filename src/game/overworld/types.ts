@@ -5,7 +5,8 @@ import type { Director } from '../director';
 export type Script = (d: Director) => Promise<void> | void;
 export type Cond = () => boolean;
 
-export type World = 'dream' | 'real' | 'ink' | 'void';
+/** Map material: v1.1 worlds, then the v2 ones (palette.ts V2_WORLDS: felt, ballpoint, white-out, cotton, too-bright). */
+export type World = 'dream' | 'real' | 'ink' | 'void' | 'feutre' | 'stylo' | 'blanc' | 'ouate' | 'faux';
 
 export interface TileDef {
   /** Sprite key (or keys for random variation). */

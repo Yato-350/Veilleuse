@@ -1,0 +1,280 @@
+# Lot 12, chapter 4 « The Sewn House » in English (src/i18n/en/story-chapter4.ts): the whole chapter the short way
+# (as lot1-ch4-full), read in English — the ballpoint card, "It isn't her notebook anymore. It's yours.", thin Dodo
+# ("Look. I fixed it."), Mina No. 366 ("Noa! We're home! Only better!"), the plate "for nobody" and the Doll-Mom, Night
+# 1/41 and Mom on the wall phone ("You're a big boy. You can manage, right?"), the pillow fort joke ("So he counts
+# boys."), the fridge notes in the shoe box, the tailor's tags ("Mina No. 31: …"), the Seamstress spared (T3: "Three
+# hundred and sixty-five times." … "You're the only new thing, {player}."), the knocking hallway, Night 42/41 (T4: "You
+# didn't leave it in the hall."), the Little Man spared, Mina unravelling — and no string of the run is missing from the
+# catalog (i18nMissing).
+query: debug=script&name=chapter4&sheep=auto&lang=en
+god
+wait:1500
+eval: window.V = window.__veilleuse
+eval: (window.TXT = () => (V.dialogue.pages[V.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join('')).join(' '), 1)
+wait:2500
+shot:card
+# The wandering monsters would interrupt the remote interactions of the bot: mark them beaten (the regular fights
+# have their own scenarios, lot1-battle-*).
+eval: V.G.state.cleared.push('c4_de_1', 'c4_brouillon_1', 'c4_pate_1', 'c4_pate_2', 'c4_pate_3', 'c4_mot_1', 'c4_brouillon_2', 'c4_de_2', 'c4_brouillon_3')
+zuntil: V.dialogue.busy && window.TXT().includes('It isn\'t her notebook anymore.')
+wait:2500
+shot:notebook
+zuntil: V.dialogue.busy && window.TXT().includes('Look. I fixed it.')
+wait:2500
+shot:dodo
+zuntil: V.dialogue.busy && window.TXT().includes('Only better!')
+wait:2500
+shot:mina
+auto
+assert: V.G.state.party.includes('mina366')
+# The looping dinner: eat twice, then get up; the Doll-Mom (« merci »).
+go:21/17
+ArrowRight:700
+zuntil: V.dialogue.busy && window.TXT().includes('"for nobody"')
+wait:2500
+shot:table
+auto
+assert: V.dialogue.choices && window.TXT() === '…'
+choose:0
+auto
+choose:0
+auto
+choose:1
+auto
+assert: V.game.top.ally === 'mina366'
+wait:2500
+shot:maman
+write:tristesse
+auto
+write:merci
+auto
+menu:3
+choose:0
+zuntil: V.dialogue.busy && window.TXT().includes('Night 1/41')
+wait:2500
+shot:night1
+auto
+assert: V.G.state.flags.c4_maman === 'merci' && V.G.state.flags.c4_diner === 2 && V.G.state.flags.c4_nuit === 1
+# Night 1: the wall phone, the Noa doll eating alone.
+interact:tel
+zuntil: V.dialogue.busy && window.TXT().includes('You can manage, right?')
+wait:2500
+shot:call1
+auto
+interact:poupee_noa
+auto
+interact:horloge
+auto
+choose:0
+auto
+# Back in the felt: Mina woken, Dodo fed with two sheep, the pillow fort.
+interact:mina_chaise
+auto
+interact:dodo
+auto
+choose:1
+auto
+interact:mouton_1
+auto
+choose:0
+zuntil: V.dialogue.busy && window.TXT().includes('Warm Cotton')
+wait:2500
+shot:coton
+auto
+interact:mouton_2
+auto
+choose:0
+auto
+assert: V.G.state.flags.c4_coton === 2
+go:24/8
+interact:mouton_plateau
+auto
+interact:coussin
+auto
+choose:2
+zuntil: V.dialogue.busy && window.TXT().includes('So he counts boys.')
+wait:2500
+shot:joke
+auto
+assert: V.G.state.flags.c4_cabane === true
+# Night 9: the phone (Saturday), Magnet Word, the shoe box.
+interact:horloge
+auto
+choose:0
+auto
+interact:tel
+auto
+choose:0
+zuntil: V.dialogue.busy && window.TXT().includes('You don\'t feel like it.')
+wait:2500
+shot:envie
+auto
+interact:frigo
+auto
+write:colere
+auto
+write:joie
+auto
+write:joie
+auto
+menu:3
+choose:0
+auto
+interact:boite
+zuntil: V.game.top.constructor.name === 'PaperScene'
+wait:1500
+shot:notes
+auto
+interact:horloge
+auto
+choose:0
+auto
+# Night 22: Key, the hatch.
+interact:mina_chaise
+auto
+interact:horloge
+auto
+choose:0
+auto
+interact:tel
+auto
+interact:porte
+auto
+write:tristesse
+auto
+eval: V.game.top.menuDisabled = [false, false, false, false]
+write:ouvrir
+auto
+menu:3
+choose:0
+auto
+assert: V.G.state.flags.c4_trappe === true
+interact:horloge
+auto
+choose:0
+auto
+interact:mina_chaise
+auto
+# The attic: tags, crowns, No. 365 carried to the curtain, the Seamstress spared, T3.
+interact:echelle
+auto
+choose:0
+auto
+assert: V.G.state.map === 'grenier'
+interact:mq_31
+zuntil: V.dialogue.busy && window.TXT().includes('Mina No. 31')
+wait:2500
+shot:tag
+auto
+interact:mq_364
+auto
+interact:couronnes
+zuntil: V.dialogue.busy && window.TXT().includes('You don\'t need to count.')
+wait:2500
+shot:crowns
+auto
+interact:mq_365
+auto
+choose:0
+auto
+write:tristesse
+auto
+write:tristesse
+auto
+write:découdre
+auto
+menu:3
+choose:0
+zuntil: V.dialogue.busy && window.TXT().includes('Three hundred and sixty-five times.')
+wait:2500
+shot:t3
+zuntil: V.dialogue.busy && window.TXT().includes('You\'re the only new thing')
+wait:2500
+shot:newthing
+auto
+assert: V.G.state.flags.c4_t3 === true
+interact:trappe
+auto
+interact:horloge
+auto
+choose:0
+auto
+assert: V.G.state.flags.c4_nuit === 35
+# Night 35: the phone, the nightlight taken.
+interact:tel
+zuntil: V.dialogue.busy && window.TXT().includes('Still coughing?')
+wait:2500
+shot:call35
+auto
+interact:veilleuse
+auto
+choose:0
+auto
+go:10/8
+ArrowLeft:400
+auto
+assert: V.G.state.map === 'couloir_coups'
+# The knocking hallway: two, three, then three in the dark.
+go:14/4
+ArrowRight:300
+zuntil: V.game.top.answering && !V.dialogue.busy
+wait:2500
+shot:knock
+ArrowRight
+KeyZ
+auto
+go:32/4
+ArrowRight:300
+zuntil: V.game.top.answering && !V.dialogue.busy
+ArrowRight
+ArrowRight
+KeyZ
+auto
+go:50/4
+ArrowRight:300
+zuntil: V.dialogue.choices
+assert: window.TXT() === 'How many knocks?'
+choose:0
+zuntil: V.game.top.answering && !V.dialogue.busy
+ArrowRight
+KeyZ
+auto
+assert: V.G.state.flags.c4_coups === 3
+# Night 42 out of 41: T4, the Little Man spared, Mina unravels, the memory.
+go:62/4
+ArrowRight:400
+zuntil: V.dialogue.busy && window.TXT().includes('Night 42/41.')
+wait:2500
+shot:night42
+zuntil: V.dialogue.busy && window.TXT().includes('You didn\'t leave it in the hall.')
+wait:2500
+shot:t4
+zuntil: V.dialogue.busy && window.TXT().includes('where\'s my nightlight?')
+wait:2500
+shot:mina42
+zuntil: V.game.top.constructor.name === 'Battle'
+assert: V.game.top.ally === 'mina366'
+auto
+shot:petithomme
+write:peur
+auto
+write:tristesse
+auto
+write:tristesse
+auto
+write:rendre
+auto
+# Let the last battle text ("* The Little Man is calm…") go before sparing, or a late Z would land on STRIKE.
+until:menu
+assert: V.game.top.enemies.every((e) => e.spareable)
+menu:3
+choose:0
+zuntil: V.dialogue.busy && window.TXT().includes('She unravels gently')
+wait:2500
+shot:unravel
+zuntil: V.game.top.constructor.name === 'ImageScene'
+wait:2500
+shot:souvenir
+assert: V.G.state.souvenirs.includes('lumiere') && V.G.state.flags.c4_mina366 === 'merci' && V.G.state.flags.c4_fin === true
+# Checked on the memory, before Interlude IV (src/game/story/real-nuit.ts, its own catalog) takes over.
+assert: V.i18nMissing().length === 0

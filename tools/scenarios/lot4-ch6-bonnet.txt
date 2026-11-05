@@ -1,0 +1,58 @@
+# Lot 4 (chapter 6 world): the voice chamber and T9. The camera climbs the module REC / PLAY; PLAY on the module; the
+# little girl in the knitted hat, from behind. At the threshold the notebook opens outside battle with three words:
+# « partir » first (the way out leads back into the same room, the word is crossed out), then « regarder »: her face
+# drawn in pencil (bonnet_visage), « T'as mis le temps, gros bêta. », she finishes her sentence, she does not know
+# what was said on the phone either (c6_regarder). Then Dodo comes down from the ceiling and the final battle starts.
+query: debug=script&name=chapter6_bonnet&lang=fr
+god
+wait:1500
+eval: window.T = () => (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ')
+zuntil: window.T().includes('haute comme une église')
+wait:1500
+shot:module
+auto
+go:15/11
+interact:module
+auto
+interact:module
+auto
+shot:menu_module
+choose:0
+auto
+go:15/18
+wait:200
+ArrowUp:400
+waitfor: window.__veilleuse.game.top.constructor.name === 'NotebookPick' || window.__veilleuse.dialogue.busy
+zuntil: window.__veilleuse.game.top.constructor.name === 'NotebookPick'
+wait:600
+shot:carnet
+ArrowDown
+wait:100
+ArrowDown
+wait:100
+KeyZ
+wait:1500
+auto
+assert: window.__veilleuse.G.state.flags.c6_partir && !window.__veilleuse.G.state.flags.c6_seuil
+shot:boucle
+go:15/18
+wait:200
+ArrowUp:400
+zuntil: window.__veilleuse.game.top.constructor.name === 'NotebookPick'
+wait:600
+shot:carnet2
+KeyZ
+wait:1500
+zuntil: window.__veilleuse.game.top.constructor.name === 'ImageScene' || window.T().includes('gros bêta')
+wait:2600
+shot:visage
+zuntil: window.T().includes('gros bêta')
+wait:600
+shot:beta
+zuntil: window.T().includes('on sait pas, tous les deux')
+wait:600
+shot:sait_pas
+zuntil: window.__veilleuse.scene() === 'Battle'
+assert: window.__veilleuse.G.state.flags.c6_regarder && window.__veilleuse.G.state.flags.c6_seuil && window.__veilleuse.G.state.flags.c6_final
+wait:2000
+shot:combat

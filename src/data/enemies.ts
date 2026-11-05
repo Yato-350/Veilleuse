@@ -1,10 +1,14 @@
 import type { BattleHooks, EnemyDef } from '../game/battle/types';
 import { DEV_ENEMIES } from './enemies-dev';
+import { CH3_ENEMIES } from './enemies-ch3';
+import { CH4_ENEMIES } from './enemies-ch4';
+import { CH5_ENEMIES } from './enemies-ch5';
+import { CH6_ENEMIES } from './enemies-ch6';
 
 /**
  * Enemy registry. See docs/CONTENT_CONTRACT.md § 5.
  * Balance (Noa: 20 PV, ATQ 4, DÉF 1): ch1 PV 12–20 / ATQ 0–2, boss 1 PV 60; ch2 PV 20–30 / ATQ 2–3, boss 2 PV 90;
- * ch3 PV 30–40 / ATQ 3–4; Dodo PV 999 (cannot be beaten by force).
+ * ch3 PV 30–40 / ATQ 3–4 (Bracelet, the last stretch of the corridor, ATQ 5: the bridge to chapter 4); ch4 PV 38–42 / ATQ 5; ch5 PV 40–46 / ATQ 5, La Vitre 180; ch6 PV 30–48 / ATQ 5–6; Dodo PV 999 (cannot be beaten by force).
  * The `check` text hints at what the enemy needs (Plume & Cœur) without naming the rule.
  */
 /**
@@ -535,6 +539,27 @@ export const ENEMIES: Record<string, EnemyDef> = {
     bg: 'hospital',
   },
 
+  // Version 2 — Bracelet (src/data/enemies-ch3.ts)
+  ...CH3_ENEMIES,
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Chapitre 4 — La Maison Cousue (src/data/enemies-ch4.ts)
+  // -------------------------------------------------------------------------------------------------------------------
+
+  ...CH4_ENEMIES,
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Chapitre 5 — La Marée Blanche (src/data/enemies-ch5.ts)
+  // -------------------------------------------------------------------------------------------------------------------
+
+  ...CH5_ENEMIES,
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Chapitre 6 — Le Ventre de Dodo, et le combat final v2 (src/data/enemies-ch6.ts, src/game/battle/final-v2.ts)
+  // -------------------------------------------------------------------------------------------------------------------
+
+  ...CH6_ENEMIES,
+
   // -------------------------------------------------------------------------------------------------------------------
   // Final — Dodo (scénarisé par le chapitre 3 via des hooks ; valeurs par défaut ici)
   // -------------------------------------------------------------------------------------------------------------------
@@ -610,7 +635,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     emotion: 'peur',
     needs: [{ emotion: 'joie', count: 3 }],
     hates: ['colere'],
-    check: 'Quelqu\'un, quelque part, a appuyé. Elle sonne pour ne pas rester seule. Les mots doux la calment, pas les cris.',
+    check: 'Elle sonne pour ne pas rester seule. Les mots doux la calment, pas les cris.',
     flavor: [
       '* Driiing. Driiing.',
       '* La petite lumière rouge clignote au-dessus d\'une porte.',
@@ -645,7 +670,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     emotion: 'colere',
     needs: [{ emotion: 'tristesse', count: 3 }],
     hates: ['colere'],
-    check: 'Le quatrième de la nuit. Il te fait tenir debout. Il tremble d\'impatience : il attend que tu avoues que tu es fatiguée.',
+    check: 'Le quatrième de la nuit. Il tremble : il attend que tu avoues que tu es fatiguée.',
     flavor: [
       '* Café Serré tremble dans sa tasse.',
       '* Ça sent le café brûlé de trois heures du matin.',
@@ -683,7 +708,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
       { text: 'plier', emotion: 'tristesse' },
       { text: 'garder', emotion: 'joie' },
     ],
-    check: 'Le linge d\'il y a un an. Tout au fond, un pyjama à étoiles qu\'on ne lave pas : il sent encore. Il faudrait le plier, doucement.',
+    check: 'Un pyjama à étoiles qu\'on ne lave pas : il sent encore. Il faudrait le plier, doucement.',
     flavor: [
       '* Le Panier soupire. Une chaussette dépasse.',
       '* Tout au fond, ça sent encore un peu la petite fille.',

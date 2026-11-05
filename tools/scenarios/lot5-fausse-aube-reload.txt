@@ -1,0 +1,13 @@
+# Lot 5 (§ 3.9, point 7): the false dawn saves at its very start; a save loaded on its maps (here: taken later, in the
+# bedroom, Maman already in the kitchen) plays it again from the white — « Tu te réveilles. », Maman on the bed.
+query: debug=script&name=fausse_aube_appart&lang=fr
+wait:1500
+auto
+eval: (() => { const v = window.__veilleuse; const s = JSON.parse(JSON.stringify(v.G.state)); s.map = 'chambre_faux'; s.x = 40; s.y = 94; localStorage.setItem('veilleuse.save.v1', JSON.stringify(s)); return s.flags.fa_maman; })()
+eval: window.__veilleuse.flow.continueGame().then(() => 1)
+waitfor: window.__veilleuse.dialogue.busy
+shot:blanc
+assert: window.__veilleuse.fx.fadeAlpha > 0.9 && window.__veilleuse.world.get('maman_lit')
+auto
+shot:chambre
+assert: window.__veilleuse.G.state.flags.fa_maman === true && window.__veilleuse.world.map.id === 'chambre_faux' && !window.__veilleuse.world.get('maman_lit')

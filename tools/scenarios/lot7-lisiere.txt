@@ -1,0 +1,16 @@
+# Lot 7 (docs/HISTOIRE.md § 2.8, T7): from chapter 2 on, Dodo's lines carry static. At the Forest Edge, two words of his
+# greeting crackle (« abîmée », « moi »); the rest of the scene is version 1.1, with Mina's « Tu es revenu ! Tu as dormi
+# super longtemps » (the sentence of every night, T3).
+query: debug=script&name=c2_start&lang=fr
+wait:600
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.STATIC = []
+eval: (setInterval(() => { const D = V.dialogue; if (!D.busy) return; const p = D.pages[D.pageIdx]; if (!p) return; const w = p.lines.flat().filter((c) => c.fx === 'static').map((c) => c.ch).join(''); if (w && !STATIC.includes(w)) STATIC.push(w); }, 50), 1)
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+zuntil: SAW('Restez sur le chemin.')
+shot:abimee
+zuntil: V.G.state.flags.c2_intro === true && !V.dialogue.busy && V.world.busy === 0
+assert: SAW('Tu as dormi super longtemps') && STATIC.includes('abîmée') && STATIC.includes('moi')

@@ -1,0 +1,22 @@
+# Lot 8 (§ 2.7 T6): corridor, stage 1. Maman on the phone, a new last line: « Il croit que c'est lui. Je n'arrive pas à
+# lui dire que non. » Then the second taped drawing (the little figure nearer to the glass door; Mina: « Je te mets dans
+# tous mes dessins. Comme ça, t'es là. »).
+query: debug=script&name=c3_maman&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+eval: V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => (V.G.state.cleared.push(e.id), V.world.removeEntity(e.id)))
+ArrowRight:500
+zuntil: SAW('Je n\'arrive pas à lui dire que non.')
+shot:maman
+zuntil: IDLE()
+assert: SAW('la voix de Maman')
+go:20/3
+ArrowUp
+interact:dessin_1
+zuntil: IDLE()
+assert: SAW('plus près de la porte vitrée') && SAW('Comme ça, t\'es là.')

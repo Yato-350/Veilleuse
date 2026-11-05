@@ -1,0 +1,22 @@
+# Lot 13, accessibility (§ 6.4): the fake credits with « Réduire les flashs » on: no glitch burst while they stop and
+# rewind (the stuck line fades softly instead of blinking), never a flash above a quarter of the screen's light.
+query: debug=credits&mode=faux&lang=fr
+eval: window.V = window.__veilleuse
+eval: (V.G.settings.reduceFlashes = true, V.fx.reduceFlashes = true, window.MAXF = 0, window.MAXG = 0, setInterval(() => { window.MAXF = Math.max(window.MAXF, V.fx.flashAlpha); window.MAXG = Math.max(window.MAXG, V.fx.glitchLevel); }, 16), 1)
+waitfor: window.__veilleuse.game.top.phase === 'stopped' && window.__veilleuse.game.top.stopT > 80
+shot:stop1
+KeyZ
+KeyZ:9000
+waitfor: window.__veilleuse.game.top.phase === 'end'
+KeyZ
+waitfor: window.__veilleuse.scene() === 'TitleScene'
+wait:1200
+KeyZ
+waitfor: window.__veilleuse.game.top.phase === 'stopped' && window.__veilleuse.game.top.stopT > 80
+ArrowRight
+KeyZ
+wait:1500
+shot:rewind
+waitfor: window.__veilleuse.scene() === 'WorldScene' && window.__veilleuse.dialogue.busy
+auto
+assert: window.MAXF <= 0.25 && window.MAXG <= 0.1

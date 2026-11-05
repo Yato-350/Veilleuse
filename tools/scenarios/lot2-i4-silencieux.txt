@@ -1,0 +1,16 @@
+# Review fix (docs/HISTOIRE.md § 5 « Dodo ne parle plus jamais »): Interlude IV after the secret ending. Dodo's back seam
+# is open; the question « Tu devrais dormir. » keeps its words but has Noa's blip (as « Tu reviens toujours. » in
+# Interlude III, lot10-dodo-silencieux-i3). Without the secret ending it is still Dodo's blip (lot2-i4-*).
+query: debug=script&name=interlude4_coups&lang=fr&meta=dodoSilent&flags=i4_coups,i4_dodo
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+auto
+assert: V.G.meta.dodoSilent === true
+interact:dodo_plush
+zuntil: V.dialogue.choices
+assert: TXT() === 'Tu devrais dormir.' && V.dialogue.blipVoice() === 'noa'
+shot:question
+choose:1
+zuntil: !V.dialogue.busy
+assert: !V.G.state.flags.i4_fin

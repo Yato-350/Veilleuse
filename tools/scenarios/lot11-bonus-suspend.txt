@@ -1,0 +1,16 @@
+# Review fix: the suspend save (the tab hidden or closed, src/main.ts suspendSave) never overwrites a main run's save
+# with the bonus run « Les rêves des autres » (the same rule as the bonus save point). No debug parameter here, so the
+# suspend save is live: a main run is saved in chapter 4, the bonus starts as from the title, then the page is hidden.
+query: lang=fr
+wait:1500
+eval: window.V = window.__veilleuse
+eval: (localStorage.setItem('veilleuse.save.v1', JSON.stringify({ version: 2, playerName: 'Sacha', chapter: 4, map: 'maison_feutre', x: 10, y: 8, dir: 'down', hp: 20, flags: { interlude: 3, c4_maman: 'merci' } })), Object.assign(V.G.meta, { runInProgress: true, endings: ['aube'], names: ['Sacha'] }), V.flow.startBonus(), 1)
+auto
+assert: V.G.state.flags.bonus === 1 && V.G.state.map === 'b_service'
+waitfor: V.world.controllable && !V.dialogue.busy
+eval: (window.dispatchEvent(new Event('pagehide')), document.dispatchEvent(new Event('visibilitychange')), 1)
+assert: V.readSave().map === 'maison_feutre' && !V.readSave().flags.bonus && V.readSave().flags.c4_maman === 'merci'
+shot:bonus
+# Without a main save to protect, the bonus run is suspend-saved like any run.
+eval: (localStorage.removeItem('veilleuse.save.v1'), window.dispatchEvent(new Event('pagehide')), 1)
+assert: V.readSave().map === 'b_service' && V.readSave().flags.bonus === 1

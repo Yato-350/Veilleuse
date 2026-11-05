@@ -1,0 +1,27 @@
+# Review fix (docs/HISTOIRE.md § 2.10, T9 in chapter 4): in the ballpoint nights, Mina's room is a rectangle blackened
+# so hard that the paper tore; in its hatching, a little round hat with two ears is scribbled (tile t_c4_noir_bonnet,
+# drawn by hand for the ballpoint world). The first look is the room (and, from Night 9, the knocks of the radiator);
+# the second look finds it: « Un rond. Deux petites oreilles. Un bonnet, ou un mouton. » — « Tu ne l'as pas dessiné
+# exprès. ».
+query: debug=script&name=chapter4_nuit22&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+auto
+assert: V.world.map.id === 'maison_stylo' && V.world.tilemap.tileAt(23, 6)?.art === 't_c4_noir_bonnet'
+go:23/8
+eval: (V.world.player.dir = 'up', 1)
+wait:400
+shot:chambre-noire
+interact:chambre_mina
+zuntil: IDLE()
+assert: SAW('Tu l\'as coloriée en noir.') && SAW('C\'est le radiateur.') && !SAW('Dans les hachures')
+interact:chambre_mina
+zuntil: SAW('Dans les hachures')
+shot:bonnet
+zuntil: IDLE()
+assert: SAW('Un bonnet, ou un mouton.') && SAW('Tu ne l\'as pas dessiné exprès.') && V.G.state.flags.c4_chambre_noire === 2

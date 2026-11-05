@@ -1,0 +1,54 @@
+# Lot 6: the bedroom's clues can be reached by a player at night too (Interludes III and IV, docs/HISTOIRE.md
+# § 3.10, § 3.12). Dodo sits on the side of the bed (from the side: Dodo; from below: the bed), the wall answers at
+# the foot of the bed, and the calendar hangs where it can be faced (by the window). III: the narrator gets Dodo wrong
+# (« Ton mouton. » … « …Le mouton de Mina. »); IV: the calendar (« elle va mieux !! »), the wall, the bed.
+query: debug=script&name=interlude1_chambre&lang=fr
+wait:800
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: (V.G.state.flags.interlude = 3, 1)
+load:chambre/bed
+wait:1200
+auto
+go:2/4
+ArrowLeft:80
+KeyZ
+zuntil: V.dialogue.choices
+choose:1
+auto
+assert: SAW('Dodo. Ton mouton.') && SAW('…Le mouton de Mina.') && V.G.state.flags.i3_dodo === true
+go:1/5
+ArrowUp:80
+KeyZ
+auto
+assert: SAW('Ton lit. Les draps sont froids, alors que tu viens d\'en sortir.')
+go:1/5
+ArrowLeft:80
+KeyZ
+zuntil: V.dialogue.choices
+choose:1
+auto
+assert: SAW('À hauteur d\'oreiller, la peinture est usée.')
+go:12/3
+ArrowUp:80
+KeyZ
+auto
+assert: SAW('Le calendrier de l\'année dernière.')
+eval: (V.G.state.flags.interlude = 4, 1)
+load:chambre/bed
+wait:1200
+auto
+go:12/3
+ArrowUp:80
+KeyZ
+auto
+assert: SAW('« elle va mieux !! »')
+go:2/4
+ArrowLeft:80
+KeyZ
+auto
+assert: SAW('Dodo. Sa couture du dos a lâché.')
+shot:iv

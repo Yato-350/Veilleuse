@@ -1,0 +1,123 @@
+# Lot 12, Interlude III « The Bag » in English (src/i18n/en/story-real-nuit.ts), 4:06, Noa answers the stranger:
+# "No birds. No sun."; the narrator gets Dodo wrong ("Dodo. Your sheep." … "…Mina's sheep."), the belly crackles
+# ("…ood night, N…") and "You didn't hear anything."; the pinned « Mina 🐑 » thread unlocked ("Your thumb hovers over
+# it."), nine months of "good night", the stranger, the reply "Sorry. It was my sister's." → "It was." (the past tense);
+# the call log "Mina 🐑. Incoming. 3:14. 0:41." → "You don't remember this call." → "Forty-one seconds. You were asleep.";
+# the photo turned over on the third try ("With scissors."), the door opens by itself; the hall closet, the bag
+# ("Mina's things — Pediatrics, 3rd fl. — rm. 304"), its four objects and the polaroid ("… It was me."); back in bed,
+# "You always come back.", and chapter 4 begins — no string of the run is missing from the catalog (i18nMissing).
+query: debug=script&name=interlude3&lang=en
+eval: window.V = window.__veilleuse
+eval: (window.TXT = () => (V.dialogue.pages[V.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join('')).join(' '), 1)
+wait:1500
+zuntil: V.dialogue.busy && window.TXT() === 'No birds. No sun.'
+wait:1200
+shot:wake
+auto
+interact:dodo_plush
+zuntil: V.dialogue.busy && window.TXT() === '…Mina\'s sheep.'
+wait:1500
+shot:mina-sheep
+zuntil: V.dialogue.choices
+assert: window.TXT() === 'Press his belly?'
+choose:0
+zuntil: V.dialogue.busy && window.TXT() === '"…ood night, N…"'
+zuntil: V.dialogue.busy && window.TXT() === 'You didn\'t hear anything.'
+wait:1200
+shot:nothing
+auto
+assert: V.G.state.flags.i3_dodo === true && V.G.state.flags.i3_ventre === 1
+interact:phone
+zuntil: V.dialogue.busy && window.TXT() === 'Your phone. 4:06.'
+zuntil: V.game.top.constructor.name === 'PhoneScene' && V.game.top.mode === 'browse'
+shot:contacts
+KeyZ
+zuntil: V.dialogue.choices
+assert: window.TXT() === 'Your thumb hovers over it.'
+choose:0
+zuntil: V.dialogue.busy && window.TXT() === 'You wrote every evening. For nine months.'
+zuntil: V.game.top.mode === 'choose'
+shot:reply
+choose:0
+zuntil: V.dialogue.busy && window.TXT() === '"It was."'
+wait:1200
+shot:it-was
+zuntil: V.game.top.mode === 'browse'
+shot:thread
+ArrowLeft
+wait:300
+ArrowRight
+zuntil: V.dialogue.busy && window.TXT() === 'You don\'t remember this call.'
+wait:1200
+shot:calls
+zuntil: V.game.top.mode === 'browse'
+KeyZ
+zuntil: V.dialogue.busy && window.TXT() === 'You were asleep.'
+zuntil: V.game.top.mode === 'browse'
+KeyX
+auto
+assert: V.G.state.flags.i3_reply === 'pardon' && V.G.state.flags.i3_appel === true && V.G.state.flags.i3_appel_n === 1 && !V.G.state.flags.i3_porte
+interact:n_photo
+auto
+interact:n_photo
+auto
+interact:n_photo
+zuntil: V.scene() === 'ImageScene'
+wait:800
+zuntil: V.dialogue.busy && window.TXT() === 'With scissors.'
+wait:1200
+shot:photo
+auto
+assert: V.G.state.flags.i3_photo === true && V.G.state.flags.i3_porte === true
+shot:door
+interact:n_porte
+wait:1500
+auto
+assert: V.G.state.map === 'appartement_tard'
+shot:hall
+interact:t_placard
+zuntil: V.dialogue.busy && window.TXT() === '"Mina\'s things — Pediatrics, 3rd fl. — rm. 304"'
+wait:1500
+shot:tag
+auto
+choose:0
+auto
+choose:0
+auto
+choose:0
+auto
+choose:0
+auto
+choose:0
+auto
+choose:0
+auto
+assert: window.TXT() === 'In the bag:' && V.dialogue.choices.length === 2
+shot:bag
+choose:0
+zuntil: V.scene() === 'ImageScene'
+wait:1200
+shot:polaroid
+zuntil: V.dialogue.busy && window.TXT() === '… It was me.'
+wait:1200
+shot:it-was-me
+auto
+assert: V.G.state.flags.i3_sac === true && V.G.state.flags.i3_sac_couronne && V.G.state.flags.i3_sac_telephone
+go:6/3
+ArrowUp:120
+KeyZ
+wait:1500
+auto
+assert: V.G.state.map === 'chambre'
+interact:dodo_plush
+zuntil: V.dialogue.busy && window.TXT() === 'You always come back.'
+wait:1200
+shot:come-back
+auto
+assert: window.TXT() === 'Sleep?'
+choose:0
+zuntil: V.G.state.chapter === 4 && V.G.state.map === 'maison_feutre'
+wait:1500
+shot:ch4
+assert: V.G.state.flags.i3_fin === true && V.G.state.flags.interlude === 0
+assert: V.i18nMissing().length === 0

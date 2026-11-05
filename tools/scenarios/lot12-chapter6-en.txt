@@ -1,0 +1,208 @@
+# Lot 12, chapter 6 « Inside Dodo » in English (src/i18n/en/story-chapter6.ts): the whole chapter the short way (as
+# lot4-ch6-full), read in English — the card ("Chapter 6 — Inside Dodo", "It's always night."), the walls replaying the
+# prologue ("It's night."), T7 ("Can't sleep?" said twice, DODO becomes NOA: "It's yours.", "I'm what you do with her
+# voice."), a shelf of jars to "Night 364: almost." and its cut sentence ("I just wanted to t—"), tonight's jar
+# ("Night 365:"), night 0 behind the fallen jar, the third baby tooth (Mina: "…you big dummy."), the lullaby whole,
+# three doors of each version of the call (the gentle one fixed in the upper branch for the proof: "Promise promise.
+# Sleep, Mina." / "Sleep."), « Which one is true? » answered "I don't know", 3:38 ("Her: forty-one nights." / "…I
+# wasn't asleep."), the Battery spared, the threshold's notebook ("look", "close your eyes", "leave"), her face and
+# "I just wanted to tell you that I knew." — and no string of the run is missing from the catalog (i18nMissing),
+# checked when the final battle starts.
+query: debug=script&name=chapter6&sheep=auto&lang=en
+god
+eval: window.V = window.__veilleuse
+eval: (window.TXT = () => (V.dialogue.pages[V.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join('')).join(' '), 1)
+wait:5200
+shot:card
+waitfor: V.scene() === 'WorldScene' && V.dialogue.busy
+assert: window.TXT() === 'Cotton.'
+auto
+assert: V.G.state.flags.c6_intro && V.world.map.id === 'couture'
+go:9/6
+wait:400
+zuntil: V.dialogue.busy && window.TXT() === '"It\'s night."'
+wait:1500
+shot:replay
+auto
+go:12/6
+wait:400
+auto
+go:15/7
+wait:400
+auto
+go:18/7
+wait:400
+auto
+assert: V.G.state.flags.c6_mur_4
+go:19/7
+waitfor: V.dialogue.busy
+zuntil: V.dialogue.busy && window.TXT().includes('Say it with me.')
+zuntil: V.dialogue.busy && window.TXT() === 'It\'s yours.'
+wait:800
+shot:t7
+zuntil: V.dialogue.busy && window.TXT().includes('…over you. Sweet dreams.')
+wait:2500
+shot:flashback
+zuntil: V.dialogue.busy && window.TXT() === 'I\'m what you do with her voice.'
+wait:1200
+shot:voice
+zuntil: V.G.state.flags.c6_t7 === true
+auto
+assert: V.world.map.id === 'couture'
+go:24/15
+wait:200
+ArrowDown:500
+waitfor: V.world.map.id === 'ouate'
+auto
+eval: V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => V.world.removeEntity(e))
+interact:etagere_c
+zuntil: V.dialogue.choices
+assert: window.TXT() === 'Read the next one?'
+choose:0
+zuntil: V.dialogue.choices
+choose:0
+zuntil: V.dialogue.choices
+choose:0
+zuntil: V.dialogue.choices
+choose:0
+zuntil: V.dialogue.choices
+choose:0
+zuntil: V.dialogue.busy && window.TXT() === 'The label: "Night 364: almost."'
+wait:1200
+shot:jar
+zuntil: V.dialogue.busy && window.TXT().includes('"I just wanted to t—"')
+auto
+interact:bocal_ce_soir
+zuntil: V.dialogue.busy && window.TXT() === 'A jar set a little apart. The label only says: "Night 365:"'
+auto
+go:39/14
+interact:couture
+zuntil: V.dialogue.busy && window.TXT() === '"To get through, bring back the night he forgot."'
+auto
+go:10/17
+interact:nuit1
+zuntil: V.dialogue.choices
+assert: window.TXT() === 'Take it?'
+choose:0
+zuntil: V.dialogue.busy && window.TXT().includes('Night zero. The one before all the others.')
+wait:1200
+shot:night0
+auto
+go:39/14
+interact:couture
+auto
+assert: V.G.state.flags.c6_couture
+go:39/13
+ArrowUp:400
+waitfor: V.world.map.id === 'boite_a_musique'
+auto
+eval: V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => V.world.removeEntity(e))
+go:15/6
+interact:dent_1
+auto
+interact:dent_2
+auto
+interact:dent_3
+zuntil: V.dialogue.busy && window.TXT() === 'But you\'re the one who cried, you big dummy.'
+wait:1200
+shot:tooth
+auto
+interact:manivelle
+auto
+choose:0
+zuntil: V.game.top.roundNo === 2
+zuntil: V.game.top.roundNo === 3
+zuntil: V.G.state.flags.c6_boite === true
+zuntil: V.dialogue.busy && window.TXT().includes('She used to sing it. Mom. In the armchair.')
+wait:1200
+shot:lullaby
+auto:60000
+go:14/18
+ArrowDown:600
+waitfor: V.world.map.id === 'couloir_41'
+auto
+eval: (V.G.state.flags.c6_haut = 'douce', 1)
+go:37/3
+wait:250
+zuntil: V.dialogue.busy && window.TXT() === 'Noa?'
+auto
+go:43/3
+wait:250
+zuntil: V.dialogue.busy && window.TXT() === '…Mina? It\'s three o\'clock.'
+auto
+go:75/3
+wait:250
+zuntil: V.dialogue.busy && window.TXT() === 'Promise promise. Sleep, Mina.'
+wait:1200
+shot:gentle
+auto
+go:43/17
+wait:250
+zuntil: V.dialogue.busy && window.TXT() === 'What? It\'s three o\'clock.'
+auto
+go:57/17
+wait:250
+zuntil: V.dialogue.busy && window.TXT() === '…Stop calling. You\'ll get sick again because of me.'
+auto
+go:75/17
+wait:250
+zuntil: V.dialogue.busy && window.TXT() === 'Sleep.'
+wait:1200
+shot:harsh
+auto
+go:89/3
+interact:porte41_haut
+auto
+go:89/17
+interact:porte41_bas
+zuntil: V.dialogue.choices
+assert: window.TXT() === 'Which one is true?' && V.dialogue.choices.length === 3
+wait:600
+shot:question
+choose:2
+zuntil: V.world.map.id === 'chambre'
+zuntil: V.dialogue.busy && window.TXT() === 'She unplugs the nightlight.'
+wait:1200
+shot:338
+zuntil: V.G.state.flags.c6_fenetres === true
+zuntil: V.dialogue.busy && window.TXT() === '…I wasn\'t asleep.'
+wait:1200
+shot:asleep
+auto
+assert: V.G.meta.callVersion === 'sais_pas' && V.world.map.id === 'couloir_41'
+go:20/27
+interact:pile
+auto
+assert: V.scene() === 'Battle'
+write:joie
+auto
+write:garder
+auto
+menu:3
+choose:0
+zuntil: V.dialogue.busy && window.TXT().includes('It has one sentence left.')
+auto
+go:25/24
+ArrowUp:500
+waitfor: V.world.map.id === 'voix'
+zuntil: !V.dialogue.busy && V.G.state.flags.c6_voix_vue
+auto
+go:15/18
+ArrowUp:400
+zuntil: V.game.top.constructor.name === 'NotebookPick'
+wait:600
+shot:notebook
+KeyZ
+zuntil: V.dialogue.busy && window.TXT() === 'No pigtails. Just the hat.'
+wait:1500
+shot:drawn
+zuntil: V.dialogue.busy && window.TXT() === 'Took you long enough, you big dummy.'
+wait:1200
+shot:face
+zuntil: V.dialogue.busy && window.TXT() === 'I just wanted to tell you that I knew.'
+wait:1500
+shot:knew
+zuntil: V.scene() === 'Battle'
+assert: V.G.state.flags.c6_regarder && V.G.state.flags.c6_pile && V.G.state.keyItems.includes('pile_chargee')
+eval: console.log('i18nMissing: ' + JSON.stringify(V.i18nMissing()))
+assert: V.i18nMissing().length === 0

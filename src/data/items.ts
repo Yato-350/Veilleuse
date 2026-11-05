@@ -26,6 +26,24 @@ export const ITEMS: Record<string, ItemDef> = {
   pluie: { id: 'pluie', name: 'Flacon de pluie', desc: 'Il pleut à l\'intérieur. Donne de la TRISTESSE.', emotion: 'tristesse', price: 6, useText: 'Une petite pluie tombe sur ton cœur.' },
   orage: { id: 'orage', name: 'Bocal d\'orage', desc: 'Ça gronde là-dedans. Donne de la COLÈRE.', emotion: 'colere', price: 6, useText: 'Le tonnerre roule dans ta poitrine.' },
   pomme: { id: 'pomme', name: 'Pomme d\'amour', desc: 'Rouge et brillante, comme à la fête foraine. Rend 15 PV.', heal: 15, price: 12, useText: 'Le caramel craque sous la dent.' },
+  // Version 2 — Chaussette's new stock (chapter 1, § 3.4).
+  yeux: {
+    id: 'yeux',
+    name: 'Yeux de rechange',
+    desc: 'Deux boutons pour le prix d\'un. Pour les jours où on ne veut pas voir. Calme le cœur, rend 10 PV.',
+    heal: 10,
+    emotion: 'neutre',
+    price: 7,
+    useText: 'Tu poses les deux boutons sur tes paupières, comme des rondelles de concombre. Un moment, plus rien à voir.',
+  },
+  // Version 2 — chapter 3: what the paper vending machine gives for B4 (§ 3.8).
+  coton_gris: {
+    id: 'coton_gris',
+    name: 'Coton gris',
+    desc: 'Une poignée de coton, encore tiède. Ça sent l\'hôpital. Et un peu la lessive de chez toi. Rend 5 PV.',
+    heal: 5,
+    useText: 'Tu le serres dans ta main. Il est encore tiède.',
+  },
   // Key items
   veilleuse_poche: { id: 'veilleuse_poche', name: 'Veilleuse de poche', desc: 'Une toute petite lune qui brille. Pour ceux qui ont peur du noir.', key: true, battleKey: true },
   ballon: { id: 'ballon', name: 'Ballon rouge', desc: 'Il tire doucement vers le haut, comme s\'il voulait rentrer chez lui.', key: true },
@@ -34,6 +52,23 @@ export const ITEMS: Record<string, ItemDef> = {
   crayons: { id: 'crayons', name: 'Boîte de crayons', desc: 'Il manque le jaune.', key: true },
   crayon_jaune: { id: 'crayon_jaune', name: 'Crayon jaune', desc: 'Le jaune des soleils de Mina.', key: true },
   dessin: { id: 'dessin', name: 'Dessin plié', desc: 'Un dessin de Mina, plié en quatre.', key: true },
+  // Version 2 — chapter 3: Bracelet, spared, closed round Noa's wrist (cosmetic).
+  bracelet_noa: { id: 'bracelet_noa', name: 'Bracelet « NOA »', desc: 'Un bracelet d\'hôpital, refermé sur ton poignet. Il dit « NOA ». Il n\'y a pas de numéro de chambre.', key: true },
+  // Version 2 — the final battle (chapter 6): both are used from the OBJET menu in its last phase.
+  bouton_dore: {
+    id: 'bouton_dore',
+    name: 'Bouton doré',
+    desc: 'Le bouton du trésor de Mina. Quand on le serre fort, il fait un drôle de petit bruit.',
+    key: true,
+    battleKey: true,
+  },
+  pile_chargee: {
+    id: 'pile_chargee',
+    name: 'Pile chargée',
+    desc: 'Une pile bouton, LR44. Elle est encore tiède. Il lui reste une phrase.',
+    key: true,
+    battleKey: true,
+  },
 };
 
 export function itemName(id: string): string {

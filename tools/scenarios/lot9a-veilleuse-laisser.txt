@@ -1,0 +1,15 @@
+# Lot 9 (first half): every condition of the secret ending holds, but Noa leaves Dodo stitched (« Le laisser »): the
+# radiator knocks three times (« C'est le chauffage. Mina disait que c'était toi. » — « …Je sais. »), the sun rises
+# (fin_aube) and the epilogue begins: the Aube ending.
+query: debug=script&name=finale_veilleuse&lang=fr
+wait:1500
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('Je sais que tu ne dormais pas')
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('pas dans le noir')
+zuntil: window.__veilleuse.dialogue.choices
+choose:1
+zuntil: (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join("")).join(" ").includes('Mina disait que c')
+shot:radiateur
+assert: window.__veilleuse.G.state.flags.fin_ending === 'aube'
+zuntil: window.__veilleuse.scene() === 'ImageScene' && window.__veilleuse.game.top.key === 'fin_aube'
+assert: window.__veilleuse.G.state.flags.fin_ending === 'aube'
+zuntil: window.__veilleuse.G.state.map === 'bazar'

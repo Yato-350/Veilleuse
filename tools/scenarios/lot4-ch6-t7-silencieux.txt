@@ -1,0 +1,26 @@
+# Review fixes (docs/HISTOIRE.md § 5 « Dodo ne parle plus jamais », § 2.8 T7, § 2.9 T8). After the secret ending
+# (meta.dodoSilent) the plush said nothing in the prologue: T7 no longer claims it did (« Cette nuit, dans ta chambre,
+# je n'ai rien dit. »), and the wall that replays the prologue quotes the line this run had (« Sur l'oreiller, Dodo. Une
+# peluche. Juste une peluche. »). In the flashback, track 1 is Mina's recorded voice: her blip, under Dodo's name. The
+# narrator's corrections after T7 leave the call to the corridor (« Tu as toujours entendu. »).
+query: debug=script&name=chapter6_t7&lang=fr&meta=dodoSilent
+god
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: window.WHO = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) { SEEN.push(t); WHO.push([V.dialogue.speaker?.name ?? '', V.dialogue.blipVoice()]); } }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.BY = (s) => WHO[SEEN.findIndex((t) => t.includes(s))] ?? []
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+assert: V.G.meta.dodoSilent === true
+zuntil: SAW('je n\'ai rien dit')
+shot:rien-dit
+zuntil: SAW('Bonne nuit, Noa ! Dodo veille')
+wait:400
+assert: BY('Bonne nuit, Noa ! Dodo veille')[0] === 'Dodo' && BY('Bonne nuit, Noa ! Dodo veille')[1] === 'mina'
+zuntil: V.G.state.flags.c6_t7 === true && IDLE()
+assert: SAW('Mais d\'habitude, c\'est la première chose que je dis.') && !SAW('C\'est la première chose que je t\'ai dite') && SAW('Tu as toujours entendu.') && !SAW('Tu te souviens de l\'appel.')
+eval: (V.world.hooks.run(V.MAPS.couture.triggers.find((t) => t.once === 'c6_mur_4').script), 1)
+zuntil: SAW('Juste une peluche.') && IDLE()
+assert: SAW('« Sur l\'oreiller, Dodo. Une peluche. Juste une peluche. »') && !SAW('quelque chose te regarde')

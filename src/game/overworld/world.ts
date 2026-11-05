@@ -7,6 +7,7 @@ import { type Scene } from '../../engine/game';
 import { input } from '../../engine/input';
 import { clamp, DIR_VEC, rectsOverlap, rng, type Dir, type Rect, pointInRect, hash2 } from '../../engine/math';
 import { ctx2d, makeCanvas } from '../../engine/sprite';
+import { WORLD_BG } from '../../engine/palette';
 import { MAPS } from '../../data/maps';
 import { hasSpr } from '../assets';
 import { G, setFlag } from '../state';
@@ -96,9 +97,11 @@ export class WorldScene implements Scene {
 
     // Follower
     this.follower = null;
-    if (G.state.party.includes('mina') && !map.noFollower) {
-      const f = new Entity('mina', 'follower', p.x, p.y - 1);
-      f.char = 'mina';
+    // The party follower: Mina, or the felt Mina n°366 of chapter 4.
+    const fc = G.state.party.find((c) => c === 'mina' || c === 'mina366');
+    if (fc && !map.noFollower) {
+      const f = new Entity(fc, 'follower', p.x, p.y - 1);
+      f.char = fc;
       f.variant = variant;
       f.dir = p.dir;
       f.solid = false;
@@ -188,6 +191,11 @@ export class WorldScene implements Scene {
 
   get(id: string): Entity | undefined {
     return this.entities.find((e) => e.id === id);
+  }
+
+  /** Hides the map name banner (a map reloaded in the middle of a scene). */
+  hideBanner(): void {
+    this.bannerT = 0;
   }
 
   addEntity(e: Entity): Entity {
@@ -575,7 +583,7 @@ export class WorldScene implements Scene {
     }
     const cx = Math.round(this.camX);
     const cy = Math.round(this.camY);
-    g.fillStyle = this.map.bg ?? (this.world === 'real' ? '#0a0b12' : '#1a1424');
+    g.fillStyle = this.map.bg ?? WORLD_BG[this.world] ?? (this.world === 'real' ? '#0a0b12' : '#1a1424');
     g.fillRect(0, 0, W, H);
     if (this.tilemap.ground) g.drawImage(this.tilemap.ground, -cx, -cy);
     this.tilemap.drawAnimated(g, cx, cy, this.frame, W, H);

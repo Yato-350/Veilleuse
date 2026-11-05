@@ -1,0 +1,30 @@
+# Lot 4: the knocks of the final battle in Story mode (accessibility): her knocks only, no false knock of the radiator,
+# slower. Round A (she knocks once: « t'es là ? ») is answered with two knocks, round B (three: « bonne nuit ») with
+# three; then phase 4 opens.
+query: debug=script&name=dodo_v2_histoire&lang=fr
+god
+wait:1500
+auto
+shot:noir
+assert: window.__veilleuse.game.top.menuLabels[0] === 'FRAPPER'
+menu:0
+zuntil: window.__veilleuse.game.top.skin === 'coups' && window.__veilleuse.game.top.queue.length > 0
+assert: window.__veilleuse.game.top.queue.every((q) => q.kind !== 'B')
+wait:1500
+shot:mur
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+ArrowRight
+KeyZ
+wait:2500
+auto
+menu:0
+zuntil: window.__veilleuse.game.top.skin === 'coups' && window.__veilleuse.game.top.queue.length > 0
+assert: window.__veilleuse.game.top.queue.every((q) => q.kind !== 'B')
+zuntil: window.__veilleuse.game.top.answering && !window.__veilleuse.dialogue.busy
+ArrowRight
+ArrowRight
+KeyZ
+wait:2500
+auto
+shot:p4
+assert: window.__veilleuse.game.top.menuLabels[1] === 'ÉCRIRE'

@@ -1,0 +1,19 @@
+# Lot 3 (chapter 5 world): the short way (« Oui. »), and La Vitre broken by force: it bursts into ink, an empty bed
+# behind it; souvenir « La vitre fendue » (one hand, cracks, ink running); then the fall.
+query: debug=script&name=chapter5_vitre&menti=1&lang=fr
+god
+wait:1500
+auto
+go:11/12
+wait:300
+auto
+assert: window.__veilleuse.game.top.enemies[0].total === 4
+eval: window.__veilleuse.game.top.enemies[0].hp = 3
+hit
+waitfor: window.__veilleuse.G.state.flags.c5_vitre === 'brisee'
+zuntil: window.__veilleuse.game.top.constructor.name === 'ImageScene'
+wait:2500
+shot:souvenir
+zuntil: window.__veilleuse.G.state.flags.c5_fin
+auto
+assert: window.__veilleuse.G.state.souvenirs.includes('vitre_brisee') && !window.__veilleuse.G.state.souvenirs.includes('vitre')

@@ -1,0 +1,23 @@
+# Lot 4 (chapter 6 battles): L'Aiguille (Colère) wants Tristesse ×2. Its needle dashes across the box leaving running
+# stitches; a sewing needle that hits sews the heart (its color holds for two turns, « COUSU »).
+query: debug=script&name=bt_aiguille&lang=fr
+god
+wait:1500
+auto
+shot:menu
+write:tristesse
+until:dodge
+wait:2600
+shot:dodge
+auto
+eval: window.__veilleuse.game.top.emoLockUntil = window.__veilleuse.game.top.turn + 1
+write:joie
+auto
+assert: window.__veilleuse.game.top.soulEmo === 'tristesse'
+write:tristesse
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.debug_battle === 'spare:aiguille'

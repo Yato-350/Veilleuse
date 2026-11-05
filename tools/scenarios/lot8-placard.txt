@@ -1,0 +1,19 @@
+# Lot 8 (§ 2.10 T9, placardTalk): the Closet Monster, spared in chapter 1, after he lit the marsh. Talked to: « Le soir,
+# une petite fille au bonnet regarde par ta fenêtre. Elle ne frappe pas. Elle regarde si ta lumière est allumée. »;
+# Mina's double: closets see everything crooked, through the keyhole; it was the moon. Then his old lines.
+query: debug=script&name=c3_placard&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+interact:placard
+zuntil: SAW('regarde par ta fenêtre')
+shot:placard
+zuntil: IDLE()
+assert: SAW('Par le trou de la serrure.') && V.G.state.flags.c3_placard === 1
+interact:placard
+zuntil: IDLE()
+assert: SAW('Je garde la lumière.')

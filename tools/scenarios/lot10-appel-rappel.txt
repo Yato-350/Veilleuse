@@ -1,0 +1,19 @@
+# Lot 10 (docs/HISTOIRE.md § 5 « Méta », row « meta.callVersion »): in a new game, at the end of the corridor of the
+# 41 doors, Dodo reminds the previous answer (&meta=callVersion:douce): « La dernière fois, tu as choisi la douce. »,
+# « C'est pratique, la mémoire. ». The new answer replaces it (here « La dure »). Nobody says which one is true.
+query: debug=script&name=chapter6_fenetres&lang=fr&meta=callVersion:douce
+god
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+assert: V.G.meta.callVersion === 'douce'
+zuntil: SAW('La dernière fois, tu as choisi la douce.')
+shot:rappel
+zuntil: V.dialogue.choices
+assert: SAW('C\'est pratique, la mémoire.')
+choose:1
+waitfor: V.G.state.flags.c6_appel === true
+assert: V.G.meta.callVersion === 'dure' && V.readMeta().callVersion === 'dure'

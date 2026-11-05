@@ -1,0 +1,9 @@
+# Review fix (design decision): « Les rêves des autres » opens on the title after any of the three dawns — here an Aube
+# blanche only — and stays closed after the endings that never wake up (Beaux rêves, Silence).
+query: debug=title&lang=fr&meta=endings:aube_blanche,lastEnding:aube_blanche
+wait:1500
+assert: window.__veilleuse.game.top.items.some((i) => i.label === 'Les rêves des autres')
+shot:titre
+eval: (Object.assign(window.__veilleuse.G.meta, { endings: ['beaux_reves', 'silence'], lastEnding: 'silence' }), window.__veilleuse.flow.toTitle(), 1)
+wait:1500
+assert: window.__veilleuse.scene() === 'TitleScene' && !window.__veilleuse.game.top.items.some((i) => i.label === 'Les rêves des autres')

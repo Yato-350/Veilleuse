@@ -36,22 +36,27 @@ export class WarningScene implements Scene {
     g.fillRect(0, 0, W, H);
     const a = Math.min(1, this.t / 40);
     g.globalAlpha = a;
-    drawText(g, tr('AVERTISSEMENT'), W / 2, 18, { align: 'center', color: '#ffd84a' });
-    drawWrapped(
+    // The text of docs/HISTOIRE.md § 6.3, then where to find help (§ 6.4).
+    drawText(g, tr('AVERTISSEMENT'), W / 2, 8, { align: 'center', color: '#ffd84a' });
+    const body = drawWrapped(
       g,
       tr(
-        'Ce jeu aborde le deuil, la maladie d\'un enfant, la culpabilité et des pensées sombres. Il contient des scènes et des effets visuels qui peuvent être perturbants. Il n\'est pas adapté aux jeunes enfants ni aux personnes facilement impressionnables.',
+        'Veilleuse parle du deuil, de la maladie et de la mort d\'un enfant, de la culpabilité, du repli sur soi et de pensées sombres. Le jeu contient de l\'horreur psychologique, des images inquiétantes (poupées et peluches décousues, encre qui coule comme du sang), de faux plantages et des effets visuels qui peuvent perturber. Il n\'est pas adapté aux jeunes enfants ni aux personnes facilement impressionnables.',
       ),
-      30,
-      40,
-      W - 60,
-      { color: '#d8cfe0', align: 'center' },
+      18,
+      24,
+      W - 36,
+      { color: '#d8cfe0', align: 'center', lineHeight: 12 },
     );
-    drawWrapped(g, tr('Joue de préférence avec un casque, dans le noir.'), 30, 118, W - 60, { color: '#8a7f96', align: 'center' });
+    drawWrapped(g, tr('Si tu traverses un moment difficile, tu n\'es pas seul·e : en France, le 3114 répond gratuitement, jour et nuit.'), 18, 30 + body * 12, W - 36, {
+      color: '#ffe991',
+      align: 'center',
+      lineHeight: 12,
+    });
     g.globalAlpha = 1;
     if (this.t > (G.meta.warningSeen ? 20 : 90)) {
-      drawText(g, tr('Appuie sur A (ou touche l\'écran)'), W / 2, H - 22, { align: 'center', color: '#fffaf2' });
-      nextArrow(g, W / 2 - 2, H - 9, this.t);
+      drawText(g, tr('Appuie sur A (ou touche l\'écran)'), W / 2, H - 19, { align: 'center', color: '#fffaf2' });
+      nextArrow(g, W / 2 - 2, H - 7, this.t);
     }
   }
 }

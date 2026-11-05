@@ -1,0 +1,19 @@
+# Lot 4 (chapter 6 battles): Le Bouton Pendu (Peur), an eye-button swinging on its thread. « regarder » calms it at once
+# (its pendulum sweeps the box, buttons rain).
+query: debug=script&name=bt_bouton_pendu&lang=fr
+god
+wait:1500
+auto
+shot:menu
+write:tristesse
+until:dodge
+wait:2400
+shot:dodge
+auto
+write:regarder
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable
+menu:3
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.debug_battle === 'spare:bouton_pendu'

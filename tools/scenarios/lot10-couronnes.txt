@@ -1,0 +1,28 @@
+# Lot 10 (docs/HISTOIRE.md § 5 « Méta », row « meta.nuits »: « une couronne de plus dans le grenier à chaque partie »).
+# The pile of paper crowns in the chapter 4 attic counts the nights already dreamt: meta.nuits − 1. A first run (365
+# nights): « Trois cent soixante-quatre. », no crown apart. Three runs that reached an ending (&meta=…: 368 nights):
+# « Trois cent soixante-sept. », « Trois de plus que la première fois. », three crowns fallen apart from the pile.
+query: debug=script&name=chapter4_grenier&lang=fr
+wait:1500
+auto
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+assert: V.G.meta.nuits === 365 && !V.world.entities.some((e) => e.id === 'couronne_1')
+interact:couronnes
+auto
+assert: SAW('Trois cent soixante-quatre. Tu n\'as pas besoin de compter. Tu le sais.') && !SAW('de plus que')
+# Three endings in the memory.
+eval: (V.G.meta.endings = ['aube', 'silence', 'beaux_reves'], V.G.meta.nuits = 368, 1)
+load:grenier/trappe
+wait:800
+go:5/9
+wait:300
+shot:couronnes
+assert: ['couronne_1', 'couronne_2', 'couronne_3'].every((id) => V.world.entities.some((e) => e.id === id)) && !V.world.entities.some((e) => e.id === 'couronne_4')
+interact:couronne_2
+auto
+assert: SAW('Trois cent soixante-sept. Tu n\'as pas besoin de compter. Tu le sais.') && SAW('Trois de plus que la première fois.')
+# The same memory given in the URL: ?debug=…&meta=endings:aube|silence|beaux_reves sets 368 nights the same way.

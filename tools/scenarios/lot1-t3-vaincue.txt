@@ -1,0 +1,22 @@
+# Review fix (docs/HISTOIRE.md § 2.4 T3, § 3.2 the player's arc): La Couseuse, beaten. The label on the machine says
+# the loop, then Dodo says the rest, so this branch keeps T3's player beat: « Chaque nuit, il vient. Chaque nuit, il
+# l'arrête avant la fin. » — « Chaque matin, il oublie. C'était bien, comme ça. » — « Et puis toi, {player}. […] Tu es
+# la seule chose nouvelle. » — « Maintenant, personne ne la recoudra. »
+query: debug=script&name=chapter4_grenier&lang=fr
+god
+wait:1500
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+auto
+interact:mq_365
+auto
+choose:0
+auto
+assert: V.scene() === 'Battle'
+eval: (V.game.top.enemies[0].hp = 3, 1)
+hit
+zuntil: V.G.state.flags.c4_couseuse === 'vaincue' && V.G.state.flags.c4_t3 === true && !V.dialogue.busy && V.world.busy === 0
+assert: SAW('Chaque matin, il oublie. C\'était bien, comme ça.') && SAW('Tu es la seule chose nouvelle.') && SAW('Maintenant, personne ne la recoudra.')

@@ -98,7 +98,9 @@ export class Fx {
     this.shakeTime = Math.max(this.shakeTime, frames);
   }
 
+  /** A burst of glitch (none with « Réduire les flashs »). */
   pulseGlitch(frames = 20): void {
+    if (this.reduceFlashes) return;
     this.glitchPulse = Math.max(this.glitchPulse, frames);
   }
 
@@ -135,8 +137,10 @@ export class Fx {
     if (Math.abs(this.bars - this.barsTarget) < 0.01) this.bars = this.barsTarget;
   }
 
+  /** With « Réduire les flashs », a steady faint colour fringe at most: no tearing (applyGlitch tears from 0.125). */
   get glitchLevel(): number {
-    return Math.min(1, this.glitch + (this.glitchPulse > 0 ? 0.6 : 0));
+    const level = Math.min(1, this.glitch + (this.glitchPulse > 0 ? 0.6 : 0));
+    return this.reduceFlashes ? Math.min(level, 0.1) : level;
   }
 
   private buildVignette(): HTMLCanvasElement {

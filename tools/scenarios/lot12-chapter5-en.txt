@@ -1,0 +1,207 @@
+# Lot 12, chapter 5 « The White Tide » in English (src/i18n/en/story-chapter5.ts): the whole chapter the short way
+# (as lot3-ch5-full), read in English — the correction-fluid card ("It's a lovely day." over "It's night."), the beach
+# without shadows, a shell held to the ear (Mom humming off-key), Mina of before asleep on the towel and Noa's only line
+# ("You're so lame, you sleep all the time."), the sheet, the gate ("Are you all right?"), the airlock knocks ("You
+# there?"), the drawing to correct ("Draw yourself in?"), the voices through the wall ("With her blood counts…"), the
+# visit ("Big brother's coughing?"), the Glass, the fall — and no string of the run is missing from the catalog
+# (i18nMissing), checked just before Noa sinks into chapter 6. The words drawn in the sand are the English sprite
+# (prop_c5_ecrit_en: "NOA IS A CRAB / SO IS MINA / NO ITS U").
+query: debug=script&name=chapter5&lang=en
+god
+eval: window.V = window.__veilleuse
+eval: (window.TXT = () => (V.dialogue.pages[V.dialogue.pageIdx]?.lines ?? []).map((l) => l.map((c) => c.ch).join('')).join(' '), 1)
+wait:5000
+shot:card
+zuntil: V.dialogue.busy && window.TXT().includes('You have no shadow.')
+wait:1800
+shot:shadow
+auto
+assert: V.world.map.id === 'plage' && V.G.state.flags.c5_intro
+eval: V.G.state.cleared.push('c5_crabe_1', 'c5_mouette_1', 'c5_mouette_2', 'c5_plage_duo', 'c5_gel_1', 'c5_gel_2', 'c5_masque_1', 'c5_masque_2', 'c5_noire_1', 'c5_noire_2', 'c5_thermo_lac', 'c5_gel_lac')
+eval: V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => V.world.removeEntity(e))
+shot:plage
+assert: V.world.entities.some((e) => e.sprite === 'prop_c5_ecrit_en') && !V.world.entities.some((e) => e.sprite === 'prop_c5_ecrit')
+interact:mina_avant
+zuntil: V.dialogue.busy && window.TXT().includes('Look, Noa! I\'ve got forty-two!')
+wait:1800
+shot:mina
+auto
+interact:coquillages_0
+auto
+assert: window.TXT() === 'One of them is bigger than the others. Hold it to your ear?'
+choose:0
+zuntil: V.dialogue.busy && window.TXT().includes('It\'s Mom.')
+wait:1800
+shot:shell
+auto
+interact:coquillages_3
+auto
+choose:1
+auto
+interact:coquillages_4
+auto
+choose:0
+auto
+interact:coquillage42
+auto
+choose:0
+auto
+assert: V.G.state.flags.c5_coquillages === 14 && V.G.state.flags.c5_coquillage42
+interact:mina_avant
+auto
+assert: V.G.state.flags.c5_donnes === 14
+eval: V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => V.world.removeEntity(e))
+interact:mina_avant
+auto
+assert: V.G.state.flags.c5_sieste
+go:15/13
+wait:400
+eval: V.G.settings.shortWaits = true
+interact:mina_dort
+auto
+assert: !V.G.state.flags.c5_maree
+wait:5500
+interact:mina_dort
+zuntil: V.dialogue.busy && window.TXT() === 'You\'re so lame, you sleep all the time.'
+wait:1500
+shot:nulle
+auto:90000
+assert: V.G.state.flags.c5_maree && V.G.state.flags.c5_drap && V.G.state.flags.c5_nulle
+shot:drap
+go:22/24
+interact:portail
+auto
+assert: window.TXT() === '"Are you all right?"'
+shot:gate
+choose:0
+auto
+assert: V.G.state.flags.c5_menti && V.world.map.id === 'sas'
+interact:porte_1
+auto
+choose:0
+auto
+go:37/7
+wait:300
+auto
+interact:porte_2
+auto
+go:39/7
+wait:300
+auto
+interact:porte_2
+auto
+choose:0
+auto
+go:45/7
+wait:300
+auto
+interact:porte_3
+auto
+go:47/7
+wait:300
+auto
+interact:porte_3
+auto
+assert: window.TXT() === 'One knock. "You there?"'
+shot:knock
+choose:1
+auto
+choose:0
+auto
+go:55/7
+wait:300
+auto
+interact:porte_4
+auto
+go:57/7
+wait:300
+auto
+interact:porte_4
+auto
+choose:0
+zuntil: V.dialogue.busy && window.TXT().includes('I\'m on your side of every door.')
+wait:1800
+shot:inside
+auto
+go:64/7
+wait:300
+auto
+interact:porte_5
+auto
+ArrowRight:900
+auto
+assert: V.world.map.id === 'lac_blanc' && V.G.state.flags.c5_lac
+eval: V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => V.world.removeEntity(e))
+go:17/4
+wait:300
+auto
+go:20/3
+interact:dessin_mina
+auto
+assert: window.TXT() === 'Draw yourself in?'
+shot:draw-in
+choose:0
+zuntil: V.game.top.drawing === 'mina' && V.game.top.tracing && !V.dialogue.busy
+KeyZ:7000
+auto
+assert: V.G.state.flags.c5_corrige === 1
+go:38/12
+interact:cabane
+auto
+interact:fauteuil
+auto
+choose:0
+zuntil: V.dialogue.busy && window.TXT().includes('With her blood counts, it can come from anywhere.')
+wait:1800
+shot:voices
+zuntil: V.dialogue.busy && window.TXT().includes('So I tell him she\'s getting better.')
+wait:1800
+shot:promise
+auto
+go:65/31
+wait:400
+auto
+go:24/22
+interact:porte_verre
+auto
+assert: V.world.map.id === 'chambre_verre'
+interact:silhouette
+auto
+assert: window.TXT() === 'Draw with her?'
+choose:1
+zuntil: V.game.top.tracing && !V.dialogue.busy
+KeyZ:5200
+zuntil: V.game.top.tracing && V.game.top.tracing.who === 'noa' && !V.dialogue.busy
+KeyZ:4500
+waitfor: V.game.top.result.coughed === true
+zuntil: V.dialogue.busy && window.TXT().includes('Big brother\'s coughing?')
+wait:1800
+shot:nurse
+auto
+assert: V.G.state.flags.c5_visite
+go:11/12
+wait:300
+auto
+assert: V.game.top.enemies[0].total === 4
+wait:1800
+shot:vitre
+write:pardon
+auto
+write:tristesse
+auto
+write:tristesse
+auto
+write:je ne sais pas
+auto
+assert: V.game.top.enemies[0].spareable
+menu:3
+choose:0
+zuntil: V.G.state.flags.c5_fin
+zuntil: V.dialogue.busy && window.TXT().includes('Everything you touch gets sick.')
+wait:1800
+shot:dodo
+zuntil: V.dialogue.busy && window.TXT().includes('That\'s the worst part.')
+wait:4000
+shot:fin
+assert: V.G.state.flags.c5_vitre === 'epargnee' && V.G.state.flags.c5_corrige === 1 && V.G.state.flags.c5_menti
+assert: V.i18nMissing().length === 0

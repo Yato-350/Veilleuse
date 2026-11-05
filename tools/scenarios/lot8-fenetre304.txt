@@ -1,0 +1,18 @@
+# Lot 8 (§ 2.10 T9): room 304, the window looked at twice. The second time, low on the misted glass, at a child's
+# height, a fingertip drawing: a circle and two pointed ears — « Un mouton. Ou un bonnet. C'est difficile à dire. »
+query: debug=script&name=c3_fenetre304&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+zuntil: IDLE()
+interact:fenetre304
+zuntil: IDLE()
+assert: SAW('Colline aux Couvertures') && !SAW('Un mouton. Ou un bonnet.')
+interact:fenetre304
+zuntil: SAW('Un mouton. Ou un bonnet.')
+shot:buee
+zuntil: IDLE()

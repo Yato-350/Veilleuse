@@ -13,13 +13,14 @@ import { director, runScript } from './game/director';
 import { flow } from './game/flow';
 import { world } from './game/overworld/world';
 import { setupPwa } from './game/pwa';
-import { G, newState, readMeta, readSave, readSettings, writeMeta, deleteSave, maxHp } from './game/state';
+import { G, hasSave, newState, readMeta, readSave, readSettings, writeMeta, deleteSave, maxHp } from './game/state';
 import { dialogue } from './game/ui/dialogue';
 import { applySettings } from './game/ui/options';
 import { TitleScene } from './game/scenes/title';
 import { WarningScene } from './game/scenes/warning';
-import { startBonus, startPrologue } from './game/story';
-import { setupMeta } from './game/meta';
+import { dreamAgain, startBonus, startPrologue } from './game/story';
+import { cameBack, setupMeta } from './game/meta';
+import { nowMs, resetClock, setClock, shiftClock } from './game/clock';
 import { startDebug } from './game/debug';
 import { openMenu } from './game/scenes/menu';
 import { bindLanguage, isLang, missing } from './i18n';
@@ -88,6 +89,22 @@ function boot(): void {
       await startBonus(d);
     });
   };
+  flow.dreamAgain = async () => {
+    // Beaux rêves: he never woke up. The same name, no prologue, back to the Pays de Coton (flags.br_retour).
+    const name = G.meta.names[G.meta.names.length - 1] ?? '';
+    if (G.meta.runInProgress) G.meta.resets++;
+    G.meta.newGames++;
+    G.meta.runInProgress = true;
+    writeMeta(G.meta);
+    deleteSave();
+    G.state = newState(name);
+    G.state.flags.br_retour = true;
+    G.state.hp = maxHp(G.state);
+    game.replace(world);
+    await runScript(async (d) => {
+      await dreamAgain(d);
+    });
+  };
   flow.continueGame = async () => {
     const s = readSave();
     if (!s) return flow.toTitle();
@@ -106,9 +123,11 @@ function boot(): void {
   const params = new URLSearchParams(location.search);
 
   // Suspend save: phones kill backgrounded apps, so save when the game is hidden or closed — only while exploring
-  // freely (never mid-battle or mid-cutscene), so that « Continuer » always resumes in a consistent state.
+  // freely (never mid-battle or mid-cutscene), so that « Continuer » always resumes in a consistent state. The bonus run
+  // never overwrites a main run's save (the same rule as its save point, story/bonus.ts savePointHosp).
   const suspendSave = (): void => {
     if (params.has('debug') || !G.meta.runInProgress || game.top !== world || !world.map || !world.controllable) return;
+    if (G.state.flags.bonus && hasSave() && !readSave()?.flags.bonus) return;
     director.save();
   };
   document.addEventListener('visibilitychange', () => {
@@ -144,6 +163,13 @@ function boot(): void {
     fx,
     scene,
     i18nMissing,
+    // Navigation and save/meta readers, for bot scenarios (e.g. loading a v1.1 save: tools/scenarios/).
+    flow,
+    readSave,
+    readMeta,
+    // The real clock as the game reads it (set: 'h:mm', shift: ms), and the return to the tab (from, to: ms).
+    clock: { set: setClock, shift: shiftClock, reset: resetClock, now: nowMs },
+    cameBack,
   };
 }
 

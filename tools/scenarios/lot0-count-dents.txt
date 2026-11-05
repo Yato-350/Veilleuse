@@ -1,0 +1,12 @@
+# Lot 0 proof: the counting scene, « dents » skin (the music box at the heart of Dodo): three rounds, each tooth put
+# back plays the next note of the lullaby; sewing pins are decoys.
+query: debug=script&name=count_dents&sheep=auto&lang=fr
+wait:1000
+KeyZ
+KeyZ
+KeyZ
+KeyZ
+wait:2500
+shot:round1
+auto:90000
+assert: window.__veilleuse.scene() === 'WorldScene'

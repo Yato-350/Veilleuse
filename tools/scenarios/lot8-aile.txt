@@ -1,0 +1,49 @@
+# Lot 8 (§ 2.10 T9, « room304Window » — see docs/INDICES.md: Mina is erased before room 304, so the window is the
+# corridor's, in the last wing): walking past it, the night glass reflects Noa and someone smaller in a hat with sheep's
+# ears, while Mina, in her pigtails, stands beside him; he turns his head, the reflection is Mina again (« J'ai de
+# l'encre sur le nez ? »). Room 303½ (307, 306, 305, 303½: the airlock, Mina's hygiene rules), the last taped drawing
+# (the glass door, a small hand flat on the other side; « J'avais plus de bleu. »), the last paper nurse (the doors are
+# never quite closed, for the light).
+query: debug=script&name=c3_aile&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+ArrowRight:600
+zuntil: SAW('oreilles de mouton')
+shot:reflet1
+zuntil: SAW('Avec ses couettes')
+shot:reflet2
+zuntil: SAW('il y a toi, et une petite fille')
+shot:reflet3
+zuntil: IDLE()
+assert: SAW('encre sur le nez') && V.G.state.flags.c3_reflet === true && !V.world.entities.some((e) => e.id === 'reflet')
+go:19/3
+ArrowUp
+interact:porte_19
+zuntil: SAW('Chambre 307.')
+zuntil: IDLE()
+go:46/3
+ArrowUp
+interact:porte_46
+zuntil: SAW("Chambre 303½.")
+shot:sas
+zuntil: IDLE()
+assert: SAW("le pire ennemi des chevalières")
+go:56/3
+ArrowUp
+interact:dessin_3
+zuntil: SAW("posée à plat")
+shot:dessin3
+zuntil: IDLE()
+assert: SAW("plus de bleu")
+go:53/5
+ArrowDown
+interact:nadia_2
+zuntil: SAW("Pour la lumière")
+shot:nadia2
+zuntil: IDLE()
+assert: SAW('Chut. Ici, on ne ferme jamais tout à fait les portes.')

@@ -1,0 +1,6 @@
+# v1.1 path: a new game starts with the prologue (« Il fait nuit », 23:52), in Noa's room, until free roam.
+query: debug=script&name=prologue&lang=fr
+auto:60000
+shot:free
+assert: window.__veilleuse.G.state.map === 'chambre' && !window.__veilleuse.G.state.flags.interlude
+assert: window.__veilleuse.scene() === 'WorldScene'

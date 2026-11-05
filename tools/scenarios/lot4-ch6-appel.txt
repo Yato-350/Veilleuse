@@ -1,0 +1,282 @@
+# Lot 4 (chapter 6 world): the corridor of the forty-one doors (T8). One door per second of the call: the fourteen
+# doors of the trunk (3:14, the phone vibrating, the headphones, the nightlight, « Vas-y, ma puce. Il t'écoute. »),
+# then the corridor splits and both versions play, one per branch (&haut=douce fixes which branch carries which, for
+# the proof only; in a game it is drawn at random). Door 41 of the first branch opens on door 14; door 41 of the
+# second opens on the end: « Laquelle est vraie ? » (G.meta.callVersion = 'sais_pas' here), the button eyes become
+# two windows on 3:38 (Maman unplugs the nightlight; the plush fallen on the threshold saw it), « Je ne dormais
+# pas. », the headphones, and the Pile, spared (c6_pile, the Pile chargée); the seam to the voice opens.
+query: debug=script&name=chapter6_appel&haut=douce&lang=fr
+god
+wait:1500
+auto
+eval: window.T = () => (window.__veilleuse.dialogue.pages[window.__veilleuse.dialogue.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ')
+shot:debut
+go:3/10
+wait:250
+auto
+go:5/10
+wait:250
+auto
+go:7/10
+wait:250
+auto
+go:9/10
+wait:250
+auto
+go:11/10
+wait:250
+auto
+go:13/10
+wait:250
+auto
+go:15/10
+wait:250
+auto
+go:17/10
+wait:250
+auto
+shot:porte8
+go:19/10
+wait:250
+auto
+go:21/10
+wait:250
+auto
+go:23/10
+wait:250
+auto
+go:25/10
+wait:250
+auto
+go:27/10
+wait:250
+auto
+go:29/10
+wait:250
+auto
+assert: window.__veilleuse.G.state.flags.c6_porte_14 && window.__veilleuse.G.state.flags.c6_porte_1
+go:32/10
+wait:300
+auto
+assert: window.__veilleuse.G.state.flags.c6_fourche
+go:37/3
+wait:250
+auto
+go:39/3
+wait:250
+wait:300
+shot:silence
+auto
+go:41/3
+wait:250
+auto
+go:43/3
+wait:250
+waitfor: window.__veilleuse.dialogue.busy
+wait:1600
+shot:haut18
+auto
+go:45/3
+wait:250
+auto
+go:47/3
+wait:250
+auto
+go:49/3
+wait:250
+auto
+go:51/3
+wait:250
+auto
+go:53/3
+wait:250
+auto
+go:55/3
+wait:250
+auto
+go:57/3
+wait:250
+waitfor: window.__veilleuse.dialogue.busy
+wait:1600
+shot:haut25
+auto
+go:59/3
+wait:250
+auto
+go:61/3
+wait:250
+auto
+go:63/3
+wait:250
+auto
+go:65/3
+wait:250
+auto
+go:67/3
+wait:250
+auto
+go:69/3
+wait:250
+auto
+go:71/3
+wait:250
+auto
+go:73/3
+wait:250
+auto
+go:75/3
+wait:250
+waitfor: window.__veilleuse.dialogue.busy
+wait:1600
+shot:haut34
+auto
+go:77/3
+wait:250
+auto
+go:79/3
+wait:250
+auto
+go:81/3
+wait:250
+auto
+go:83/3
+wait:250
+auto
+go:85/3
+wait:250
+auto
+go:87/3
+wait:250
+auto
+assert: window.__veilleuse.G.state.flags.c6_haut_40 && window.__veilleuse.G.state.flags.c6_haut_34
+go:89/3
+interact:porte41_haut
+auto
+assert: window.__veilleuse.G.state.flags.c6_ecoute_haut && window.__veilleuse.world.player.y < 12 * 16
+go:32/12
+wait:200
+go:37/17
+wait:250
+auto
+go:39/17
+wait:250
+auto
+go:41/17
+wait:250
+auto
+go:43/17
+wait:250
+waitfor: window.__veilleuse.dialogue.busy
+wait:1600
+shot:bas18
+auto
+go:45/17
+wait:250
+auto
+go:47/17
+wait:250
+auto
+go:49/17
+wait:250
+auto
+go:51/17
+wait:250
+auto
+go:53/17
+wait:250
+auto
+go:55/17
+wait:250
+auto
+go:57/17
+wait:250
+waitfor: window.__veilleuse.dialogue.busy
+wait:1600
+shot:bas25
+auto
+go:59/17
+wait:250
+auto
+go:61/17
+wait:250
+auto
+go:63/17
+wait:250
+auto
+go:65/17
+wait:250
+auto
+go:67/17
+wait:250
+auto
+go:69/17
+wait:250
+auto
+go:71/17
+wait:250
+auto
+go:73/17
+wait:250
+auto
+go:75/17
+wait:250
+waitfor: window.__veilleuse.dialogue.busy
+wait:1600
+shot:bas34
+auto
+go:77/17
+wait:250
+auto
+go:79/17
+wait:250
+auto
+go:81/17
+wait:250
+auto
+go:83/17
+wait:250
+auto
+go:85/17
+wait:250
+auto
+go:87/17
+wait:250
+auto
+assert: window.__veilleuse.G.state.flags.c6_bas_40 && window.__veilleuse.G.state.flags.c6_bas_34
+go:89/17
+interact:porte41_bas
+zuntil: window.__veilleuse.dialogue.choices
+shot:question
+choose:2
+zuntil: window.__veilleuse.world.map.id === 'chambre'
+zuntil: window.T().includes('3:38')
+wait:500
+shot:fenetres
+zuntil: window.T().includes('débranche')
+wait:500
+shot:debranche
+zuntil: window.__veilleuse.world.map.id === 'couloir_41' && window.T().includes('quarante et une secondes')
+wait:500
+shot:secondes
+auto
+assert: window.__veilleuse.G.meta.callVersion === 'sais_pas' && window.__veilleuse.G.state.flags.c6_appel && window.__veilleuse.G.state.flags.c6_fenetres
+go:8/27
+interact:casque
+auto
+assert: window.__veilleuse.G.state.flags.c6_casque
+go:20/27
+interact:pile
+auto
+write:joie
+auto
+write:garder
+auto
+menu:3
+choose:0
+auto
+shot:apres
+assert: window.__veilleuse.G.state.flags.c6_pile === true && window.__veilleuse.G.state.flags.c6_pile_fait && window.__veilleuse.world.get('sortie').solid === false
+go:25/24
+wait:200
+ArrowUp:500
+waitfor: window.__veilleuse.world.map.id === 'voix'

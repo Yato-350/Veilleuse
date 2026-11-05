@@ -1,5 +1,6 @@
 import { audio } from '../../engine/audio';
 import { H, W } from '../../engine/constants';
+import { fx } from '../../engine/fx';
 import { game, type Scene } from '../../engine/game';
 import { input } from '../../engine/input';
 import { ILLUSTRATIONS } from '../../data/illustrations';
@@ -30,11 +31,16 @@ export class ImageScene implements Scene {
 
   private async play(): Promise<void> {
     audio.sfx('whoosh', { pitch: 1.4, vol: 0.4 });
+    // Shown after a fade to black (or to the dawn's cream): the fade is drawn over every scene, so it is lifted while
+    // the illustration is up, then put back as it closes (the scene below is never seen in between).
+    const fade = fx.fadeAlpha > 0.01 ? { alpha: fx.fadeAlpha, color: fx.fadeColor } : null;
+    if (fade) void fx.fadeIn(18);
     await game.until(() => this.alpha >= 1);
     if (this.captions.length) await dialogue.say(this.captions, { style: this.opts.style ?? 'paper' });
     else await game.until(() => input.pressed('a') || input.pressed('b'));
     this.captionsDone = true;
     this.closing = true;
+    if (fade) void fx.fade(fade.alpha, 12, fade.color);
     await game.until(() => this.alpha <= 0);
     game.remove(this);
     this.resolve?.();

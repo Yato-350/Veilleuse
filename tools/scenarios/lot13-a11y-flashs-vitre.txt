@@ -1,0 +1,22 @@
+# Lot 13, accessibility (§ 6.4): La Vitre with « Réduire les flashs » on: its cracks spread and the glass bursts into
+# ink without a white flash (the burst stays under a quarter of the screen's light) and without a glitch burst.
+query: debug=script&name=vitre&lang=fr
+god
+wait:1500
+eval: window.V = window.__veilleuse
+eval: (V.G.settings.reduceFlashes = true, V.fx.reduceFlashes = true, window.MAXF = 0, window.MAXG = 0, setInterval(() => { window.MAXF = Math.max(window.MAXF, V.fx.flashAlpha); window.MAXG = Math.max(window.MAXG, V.fx.glitchLevel); }, 16), 1)
+auto
+hit
+auto
+hit
+until:dodge
+wait:1500
+shot:fissures
+auto
+eval: window.__veilleuse.game.top.enemies[0].hp = 3
+hit
+waitfor: window.__veilleuse.G.state.flags.c5_vitre === 'brisee'
+wait:300
+shot:eclat
+zuntil: window.__veilleuse.G.state.flags.debug_battle === 'win:vitre'
+assert: window.MAXF <= 0.25 && window.MAXG <= 0.1

@@ -1,0 +1,44 @@
+# Lot 3 (chapter 5 world): the glass room « Semaine 5 ». The visit (the drawing game: the two pens cross on the moon,
+# the cough, the nurse's shadow), then La Vitre spared with Tristesse and « je ne sais pas » (the long way: no
+# « pardon » needed), souvenir « La vitre » (two hands), the fall: Dodo opens his seam, the floor turns to cotton.
+query: debug=script&name=chapter5_visite&lang=fr
+god
+wait:1500
+auto
+shot:chambre
+interact:silhouette
+auto
+choose:0
+zuntil: window.__veilleuse.game.top.tracing && !window.__veilleuse.dialogue.busy
+KeyZ:5200
+zuntil: window.__veilleuse.game.top.tracing && window.__veilleuse.game.top.tracing.who === 'noa' && !window.__veilleuse.dialogue.busy
+KeyZ:4500
+waitfor: window.__veilleuse.game.top.result.coughed === true
+wait:1600
+shot:toux
+auto
+assert: window.__veilleuse.G.state.flags.c5_visite
+assert: window.__veilleuse.world.map.id === 'chambre_verre'
+shot:sas
+# Up to the glass: La Vitre.
+go:11/12
+wait:300
+auto
+assert: window.__veilleuse.game.top.enemies && window.__veilleuse.game.top.enemies[0].def.id === 'vitre'
+write:tristesse
+auto
+write:tristesse
+auto
+write:je ne sais pas
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable
+menu:3
+choose:0
+zuntil: window.__veilleuse.game.top.constructor.name === 'ImageScene'
+wait:2500
+shot:souvenir
+auto
+assert: window.__veilleuse.G.state.flags.c5_vitre === 'epargnee'
+assert: window.__veilleuse.G.state.souvenirs.includes('vitre')
+assert: window.__veilleuse.G.state.flags.c5_fin
+shot:chute

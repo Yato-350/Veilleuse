@@ -1,0 +1,98 @@
+# Lot 2 (Interlude IV « Le placard », 4:44): the whole interlude; to the knock in Mina's wall, Noa answers nothing: another knock, fainter, then nothing.
+# Same path as lot2-i4-deux.txt (the open wardrobe, the drawer, the fridge note, Maman's room) up to Dodo and sleep.
+query: debug=script&name=interlude4&sheep=auto&lang=fr
+wait:1500
+auto
+shot:wake
+interact:n_armoire
+auto
+interact:n_boite_mots
+auto
+interact:n_boite_veilleuse
+auto
+interact:n_thermometre
+auto
+choose:0
+auto
+interact:n_bureau
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.i4_armoire && window.__veilleuse.G.state.flags.i4_mots && window.__veilleuse.G.state.flags.i4_boite && window.__veilleuse.G.state.flags.i4_thermo
+shot:room
+interact:n_porte
+wait:1500
+auto
+assert: window.__veilleuse.G.state.map === 'appartement_tard'
+shot:hall
+interact:t_frigo
+auto
+choose:0
+auto
+interact:gaziniere
+zuntil: window.__veilleuse.scene() === 'PaperScene'
+wait:1500
+shot:mot
+auto
+assert: window.__veilleuse.G.state.flags.i4_mot === true
+interact:t_porte_maman
+auto
+choose:0
+wait:1500
+auto
+assert: window.__veilleuse.G.state.map === 'chambre_maman'
+shot:maman
+interact:reveil
+zuntil: window.__veilleuse.scene() === 'PaperScene'
+wait:1200
+shot:postit
+auto
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.i4_reveil && window.__veilleuse.G.state.flags.i4_pile
+interact:m_miroir
+zuntil: window.__veilleuse.scene() === 'ImageScene'
+wait:1200
+shot:chut
+auto
+interact:m_kit
+auto
+interact:m_couture
+auto
+interact:m_dents
+auto
+choose:0
+auto
+interact:m_commode
+auto
+choose:0
+auto
+interact:m_chaise
+auto
+interact:m_planning
+auto
+shot:maman2
+assert: window.__veilleuse.G.state.flags.i4_dessin && window.__veilleuse.G.state.flags.i4_kit && window.__veilleuse.G.state.flags.i4_dents && window.__veilleuse.G.state.flags.i4_lettre && window.__veilleuse.G.state.items.includes('bonbon')
+go:6/8
+ArrowDown:500
+wait:1500
+auto
+assert: window.__veilleuse.G.state.map === 'appartement_tard'
+go:6/3
+ArrowUp:120
+KeyZ
+wait:1200
+zuntil: window.__veilleuse.dialogue.choices
+shot:knock
+choose:1
+auto
+assert: window.__veilleuse.G.state.flags.i4_knock === 'rien'
+shot:after
+interact:dodo_plush
+auto
+choose:0
+auto
+shot:dodo
+choose:0
+auto
+assert: window.__veilleuse.G.state.flags.i4_fin === true

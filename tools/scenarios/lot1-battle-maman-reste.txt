@@ -1,0 +1,10 @@
+# Lot 1 (chapter 4 battles): the Poupée-Maman, « reste » path (complicity): she sits back down for ever, Dodo says
+# « Tu vois ? Tout le monde peut rester. », the battle ends at once (outcome 'scripted').
+query: debug=script&name=poupee_maman&lang=fr
+god
+wait:1500
+auto
+write:reste
+auto
+assert: window.__veilleuse.G.state.flags.c4_maman === 'reste' && window.__veilleuse.G.state.flags.c4_reste === true
+assert: window.__veilleuse.G.state.flags.debug_battle === 'scripted:'

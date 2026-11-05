@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 // @ts-expect-error — plain JS tool, no type declarations
 import { findMissing, readManifest, extractStrings } from '../tools/i18n-missing.mjs';
 import { CATALOG_PARTS, EN } from '../src/i18n/en';
@@ -8,6 +8,7 @@ import { ACCENTS, GLYPHS } from '../src/engine/font-data';
 import { measure } from '../src/engine/font';
 import { DODO_WORDS, MINA_WORDS, POEM_WORDS, WORD_POOLS } from '../src/data/words';
 import { ENEMIES } from '../src/data/enemies';
+import { layoutRich, parseRich } from '../src/game/ui/richtext';
 
 type Missing = { file: string; line: number; value: string; dynamic: boolean };
 
@@ -137,5 +138,70 @@ describe('i18n API', () => {
     expect(missing.has('Distribué')).toBe(true);
     expect(missing.has('Delivered')).toBe(false);
     expect(missing.has('Options')).toBe(false);
+  });
+});
+
+describe('battle texts fit their box', () => {
+  afterEach(() => bindLanguage(() => 'fr'));
+  it('« Observer »: every enemy\'s description wraps into two lines under the stats line, in French and English', () => {
+    const bad: string[] = [];
+    for (const lang of ['fr', 'en'] as const) {
+      bindLanguage(() => lang);
+      for (const e of Object.values(ENEMIES)) {
+        // Battle text box: 296 px wide, 10 px margins (see TEXT_BOX in src/game/battle/battle.ts).
+        const lines = layoutRich(parseRich(`* ${tr(e.check)}`), 276).length;
+        if (lines > 2) bad.push(`${lang} ${e.id}: ${lines} lines`);
+      }
+    }
+    expect(bad).toEqual([]);
+  });
+  it('box texts (flavor, spare, kill) hold in three lines, and speech bubbles in six, in French and English', () => {
+    const bad: string[] = [];
+    for (const lang of ['fr', 'en'] as const) {
+      bindLanguage(() => lang);
+      for (const e of Object.values(ENEMIES)) {
+        const box = [...e.flavor, e.flavorCalm, e.spareText, e.killText].filter((x): x is string => !!x);
+        for (const t of box) if (layoutRich(parseRich(tr(t)), 276).length > 3) bad.push(`${lang} ${e.id} box: ${t}`);
+        const bubbles = [...e.talk, ...e.reactGood, ...e.reactBad, ...e.reactNeutral, ...Object.values(e.reactSpecial ?? {})];
+        for (const t of bubbles) if (layoutRich(parseRich(tr(t)), 92).length > 6) bad.push(`${lang} ${e.id} bubble: ${t}`);
+      }
+    }
+    expect(bad).toEqual([]);
+  });
+  it('chapter 3 (Bracelet), chapter 6 and final battle narrations (« * » lines said in the battle box) hold in three lines, in French and English', () => {
+    const files = ['src/data/enemies-ch3.ts', 'src/data/enemies-ch6.ts', 'src/game/battle/final-v2.ts', 'src/game/battle/final-common.ts'];
+    const texts = files.flatMap((f) => (extractStrings(readFileSync(f, 'utf8')) as Missing[]).map((m) => m.value)).filter((t) => t.startsWith('* '));
+    expect(texts.length).toBeGreaterThan(40);
+    const bad: string[] = [];
+    for (const lang of ['fr', 'en'] as const) {
+      bindLanguage(() => lang);
+      for (const t of texts) if (layoutRich(parseRich(tr(t).replace('{0}', 'Mouton n°212').replace(/\{[1-9n]\}/g, '364')), 276).length > 3) bad.push(`${lang}: ${JSON.stringify(t)}`);
+    }
+    expect(bad).toEqual([]);
+  });
+});
+
+describe('paper pages fit', () => {
+  afterEach(() => bindLanguage(() => 'fr'));
+  it('every line written on a paper page (d.paper in the story modules) stays on the page, in French and English', () => {
+    // PaperScene: a 220 px page; the lines start 24 px in, so 194 px are left before the edge (lines are not wrapped).
+    const texts: string[] = [];
+    for (const f of readdirSync('src/game/story')) {
+      const src = readFileSync(`src/game/story/${f}`, 'utf8');
+      for (let i = src.indexOf('.paper('); i >= 0; i = src.indexOf('.paper(', i + 1)) {
+        let depth = 0;
+        let j = i + 6;
+        for (; j < src.length; j++) if (src[j] === '(') depth++;
+        else if (src[j] === ')' && --depth === 0) break;
+        for (const m of src.slice(i, j).matchAll(/'((?:[^'\\]|\\.)*)'/g)) texts.push(m[1]!.replace(/\\'/g, "'"));
+      }
+    }
+    expect(texts.length).toBeGreaterThan(30);
+    const bad: string[] = [];
+    for (const lang of ['fr', 'en'] as const) {
+      bindLanguage(() => lang);
+      for (const t of texts) if (measure(trLine(t)) > 194) bad.push(`${lang} ${measure(trLine(t))}px: ${JSON.stringify(trLine(t))}`);
+    }
+    expect(bad).toEqual([]);
   });
 });

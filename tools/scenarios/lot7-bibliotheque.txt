@@ -1,0 +1,56 @@
+# Lot 7 (docs/HISTOIRE.md § 2.2, § 2.4, § 3.6): chapter 2, the Owl's library, with Mina. The shelf of unread books,
+# looked at again: one book has been read and read, every page says « Tu es revenu ! Tu as dormi super longtemps. » (T3);
+# Mina's double, handwriting lines. The shelf of tales, again: « Et celui-ci, quelqu'un l'a écouté à travers un
+# téléphone. Il ne finit pas. » (T8); Mina: « Saleté de réseau ! ». The notebook on the desk, then the Owl's new topic:
+# « Ce carnet n'a que trois pays. Le reste, quelqu'un d'autre le gribouille. » (T1); Mina: the last pages are for scribbles.
+query: debug=script&name=c2_bibliotheque&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+# The shelf of unread books: first the titles, then the book that repeats one sentence
+go:4/5
+interact:etagere_illisible
+zuntil: IDLE()
+assert: SAW('Les pages ne sont même pas coupées.') && !SAW('Sauf un.')
+interact:etagere_illisible
+zuntil: V.game.top.constructor.name === 'PaperScene'
+assert: SAW('la tranche est toute grise de doigts')
+wait:7000
+shot:livre
+zuntil: IDLE()
+assert: SAW('Tu ne comptes pas les pages.') && SAW('Celle-là, elle est déjà belle, pourtant.')
+# The shelf of tales: the tale heard through a telephone
+go:2/5
+interact:etagere_contes
+zuntil: IDLE()
+assert: SAW('Je suis connue !') && !SAW('à travers un téléphone')
+interact:etagere_contes
+zuntil: SAW('Il ne finit pas.')
+shot:telephone
+zuntil: IDLE()
+assert: SAW('Saleté de réseau !') && V.G.state.flags.c2_contes === 2
+# The notebook with star stickers, then the Owl's new topic
+go:12/9
+interact:carnet_etoiles
+zuntil: V.dialogue.choices && V.dialogue.choices.length === 2
+choose:1
+zuntil: IDLE()
+assert: V.G.state.flags.c2_carnet === true
+interact:hibou
+zuntil: V.dialogue.choices && V.dialogue.choices.length === 5
+# Five topics now (the list wraps around, so walk down to « Le carnet »)
+ArrowDown
+ArrowDown
+ArrowDown
+KeyZ
+zuntil: SAW('Le reste, quelqu\'un d\'autre le gribouille.')
+shot:hibou
+zuntil: V.dialogue.choices && V.dialogue.choices.length === 5
+assert: SAW('Les dernières pages d\'un cahier, c\'est toujours pour les gribouillis.') && V.G.state.flags.c2_carnet_hibou === true
+ArrowUp
+KeyZ
+zuntil: IDLE()

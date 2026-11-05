@@ -2,7 +2,8 @@
 
 Ce document est la **référence unique** pour produire le contenu du jeu (pixel art, tuiles, ennemis, musique,
 illustrations, cartes, scénario). Chaque fichier de contenu a **un seul propriétaire** ; tout le reste du code est
-considéré comme stable. Lire aussi `docs/GAME_DESIGN.md` (histoire, personnages, systèmes).
+considéré comme stable. Lire aussi `docs/HISTOIRE.md` (la bible de la version 2 : vérité, révélations, scènes, fins,
+limites de contenu) et `docs/GAME_DESIGN.md` (personnages, systèmes).
 
 - Résolution interne : **320×180**. Tuiles : **16×16**. Personnages : **16×24**.
 - Langue de tout le texte affiché : **français** (accents, « guillemets », … autorisés : la police les gère).
@@ -31,11 +32,17 @@ Requêtes utiles pour `tools/shot.mjs` (la capture PNG peut ensuite être **lue*
 | `debug=image&key=souvenir_fenetre` | affiche une illustration |
 | `debug=script&name=<nom>&map=<carte>` | joue un script de `DEBUG` (voir § 8) |
 | `debug=title` | écran titre |
+| `…&meta=endings:aube,callVersion:douce` | avec n'importe quel mode : simule une mémoire (§ 5 de `HISTOIRE.md` ; tout champ de `Meta`, listes séparées par `\|`, booléen seul = vrai, `beauxRevesAt` en jours, nuits = 365 + une par fin sauf `nuits:N` ; voir `applyMetaSpec` dans `src/game/meta.ts`) |
+| `…&clock=3:14` | avec n'importe quel mode : l'horloge réelle du jeu lit 3 h 14 (narrateur de nuit, appel de 3 h 14, `{time}`) |
 
 Touches : flèches = déplacement, `KeyZ`/`Enter` = A (valider), `KeyX`/`Escape` = B, `KeyC` = menu.
 Exemple : `node tools/shot.mjs "debug=map&map=village" /tmp/v.png --keys "ArrowUp:800,KeyZ,wait:600"`.
 
 Les captures font 1280×720 (le jeu ×4). Mettre les captures dans le scratchpad, **jamais** dans le dépôt.
+
+Bot de test (`tools/play.mjs`, étapes de haut niveau : `auto`, `choose:N`, `write:mot`, `interact:id`…) et scénarios
+rejouables : `node tools/play.mjs --scenario tools/scenarios/<fichier>.txt` ou `node tools/run-scenarios.mjs [filtres]`
+(format dans `tools/scenarios/README.md` ; chaque lot y range ses preuves, `v11-…` vérifient que la 1.1 joue encore).
 
 ---
 
@@ -132,6 +139,7 @@ export const CHARS: Record<string, CharDef> = {
 | `maman` | 16×28. Adulte fatiguée, cheveux châtains attachés, manteau beige, cernes. Tons sobres (monde réel). | — |
 | `mouton` | 16×20 dans un canevas 16×24 (pieds en bas). Mouton debout, laine blanche bouffante (`w/W/g`), visage gris (`d`), oreilles et joues roses. | `ink` |
 | `mouton_rose`, `mouton_bleu`, `mouton_jaune` | Même dessin que `mouton` avec `opts.colors` qui recolore la laine. | `ink` |
+| `moutonnier`, `mouton_borgne` | v2, chapitre 1 : le Moutonnier aux yeux cousus (deux croix de fil blanc) et le mouton borgne du village (laine lilas, un trou et un bout de fil à la place d'un œil). Visages redessinés par `sheepFace()`. | `ink` |
 
 ### 2.2 Portraits (32×32) — clés `face_<id>_<expression>`
 
@@ -156,6 +164,7 @@ Portraits cadrés buste/visage, fond transparent, contour `k`. Ils sont affiché
 | `npc_lune`, `npc_lune_2` | 32×32 | Madame Lune : croissant jaune endormi, bonnet de nuit bleu, « zzz ». |
 | `npc_hibou`, `npc_hibou_2` | 16×20 | Hibou bibliothécaire en papier plié, lunettes rondes. |
 | `npc_agneau` | 12×14 | Petit agneau (enfant du village). |
+| `npc_bonnet_loin`, `npc_bonnet_loin_fondu` | 16×24 | v2 (`chapter6.ts`) : la petite fille au bonnet, de dos et délavée dans le crépuscule du rêve (silhouette des ch. 1 à 3, T9) ; `_fondu` = un pixel sur deux, juste avant qu'elle disparaisse. |
 | `npc_placard` | 32×40 | Le Monstre du Placard apaisé : armoire sombre, yeux jaunes doux dans la fente, petits bras-cintres. |
 | `npc_gomme` | 24×20 | Gomme apaisée : gomme rose usée, visage doux. |
 | `npc_luciole`, `npc_luciole_2` | 8×8 | Luciole lumineuse (jaune/crème). |
@@ -278,6 +287,20 @@ conseillée en tuiles (largeur×hauteur, alignée en bas). Les objets muraux («
 | `prop_clock` | 12×12 | mur | horloge |
 | `prop_picture` | 16×12 | mur | tableau encadré |
 
+**Monde réel, la longue nuit** (Interludes III et IV, v2 — `NIGHT` dans `props.ts`) : `prop_casque` (casque au fil
+enroulé), `prop_desk_tiroir` (bureau, tiroir entrouvert), `prop_mur_use` (mur, peinture usée à hauteur d'oreiller),
+`prop_radiateur` (radiateur et son tuyau), `prop_coton` / `prop_coton_2` (flocons de rembourrage gris),
+`prop_dodo_plush_decousu` (Dodo, couture du dos ouverte), `prop_veilleuse_fele` (veilleuse fêlée, `c4_fele`),
+`prop_boite_chaussures` (les 41 mots du frigo), `prop_boite_veilleuse` (« Pour Noa, 4 ans »), `prop_thermometre`,
+`prop_placard_entree` / `_ouvert` (placard de l'entrée, 2×1), `prop_sac_hopital` / `_ouvert` (sac de Pédiatrie),
+`prop_photo_bebe` (mur), `prop_lit_maman` (2×2, défait), `prop_reveil_vieux` / `_2` (réveil à cloches, tic),
+`prop_postit`, `prop_boite_couture`, `prop_kit_vocal`, `prop_boite_dents`, `prop_commode` (2×1), `prop_miroir_dessin`
+(mur), `prop_panier`. Planche : `?debug=sheet&filter=prop_casque,prop_lit_maman,…&base`.
+
+**Monde réel, le final** (« Le carnet », v2 — `FINALE` dans `props.ts`) : `prop_bed_mina_bonnet` (16×32, 1×2 : le lit
+de Mina, le bonnet à oreilles de mouton posé sur l'oreiller), `prop_bonnet_oreiller` (le bonnet seul, 13×10),
+`prop_mur_use_mina` (la peinture usée sur le papier peint de Mina ; sa variante `@real` garde ses couleurs).
+
 **Rêve — Pays de Coton**
 
 | Clé | Taille | Empreinte | Description |
@@ -368,6 +391,7 @@ Sprites : `b_<id>` et `b_<id>_2` (combat, ~32–64 px, contour `k` conseillé), 
 | `gomme` (boss, fém.) | colère | gomme rose géante | `[{ emotion: 'tristesse', count: 2 }, { word: 'garder' }]`, `specialWords: [{text:'garder', emotion:'tristesse'}, {text:'souvenir', emotion:'tristesse'}]` | `eraser_sweep`, `eraser_shrink` |
 | `bip` | peur | moniteur cardiaque vivant | `[{ emotion: 'tristesse', count: 3 }]` | `ecg` |
 | `perfusion` (fém.) | tristesse | pied à perfusion à tête de poche | `[{ emotion: 'joie', count: 3 }]` | `drip` |
+| `bracelet` (v2, `src/data/enemies-ch3.ts`) | peur | bracelet d'hôpital qui rampe comme un ver ; l'étiquette « MINA — 304 », retournée « NOA — ??? », puis « NOA » | `[{ emotion: 'tristesse', count: 2 }, { word: 'prénom' }]`, `specialWords: [{text:'prénom', emotion:'tristesse'}]`, déteste `joie` | `bracelet_wrap`, `bracelet_holes` (`src/game/battle/patterns-ch3.ts`) |
 | `dodo` (boss final) | neutre | Dodo géant | scénarisé par le chapitre 3 (`needs: [{ emotion: 'joie', count: 6 }]` par défaut) | `sheep_count`, `lullaby`, `dodo_rings`, `dodo_storm` |
 
 Note `gribouille` : c'est l'ennemi du tutoriel ; `needs: [{ emotion: 'joie' }]` et pas de `hates`, ou tout autre
@@ -375,8 +399,13 @@ besoin simple — le tutoriel guide le joueur.
 
 Équilibrage (Noa : 20 PV, ATQ 4, DÉF 1 au départ ; +4 PV max toutes les 4 Étoiles) :
 chapitre 1 → PV 12–20, ATQ 0–2 ; boss 1 → PV 60, ATQ 2 ; chapitre 2 → PV 20–30, ATQ 2–3 ; boss 2 → PV 90, ATQ 3 ;
-chapitre 3 → PV 30–40, ATQ 3–4 ; Dodo → PV 999 (ne peut pas être vaincu par la force).
+chapitre 3 → PV 30–40, ATQ 3–4 (Bracelet, dernière boucle du couloir : PV 38, ATQ 5, le pont vers le chapitre 4) ;
+Dodo → PV 999 (ne peut pas être vaincu par la force).
 Récompenses en Boutons : 3–8 (ch. 1), 6–12 (ch. 2), 10–15 (ch. 3), boss 20–40.
+Mesure de la fin de l'acte I (lot 8) : `?debug=script&name=bt_acte1&enemies=bip,perfusion` lance un vrai combat avec
+les stats attendues à la fin du chapitre 3 (14 Étoiles, Plume dorée, Cape de Mina, Mina à côté ; `&chapter=4&ally=mina366`
+pour La Couseuse, `&armor=plaid` sans la cape) ; `c3_battle&acte1` fait de même pour le combat court contre Dodo.
+Combat de debug du Bracelet : `?debug=script&name=bt_bracelet`.
 
 Textes (`EnemyDef`) : `check` (Observer), `flavor` (3–5 lignes « * … »), `flavorCalm`, `talk` (4–6 répliques de
 bulle), `reactGood`/`reactBad`/`reactNeutral` (2–4 chacun), `reactSpecial` (mot → réplique), `spareText`, `killText`.
@@ -386,6 +415,66 @@ l'enfance, de la maladie et du deuil, avec délicatesse.
 Motifs d'attaque disponibles (`src/game/battle/patterns.ts`) : `ink_drops`, `ink_wiggle`, `rain`, `rain_puddles`,
 `horns`, `horns_charge`, `seeds`, `seeds_wind`, `yarn`, `hangers`, `closet_doors`, `shavings`, `planes`, `sparks`,
 `eraser_sweep`, `eraser_shrink`, `ecg`, `drip`, `sheep_count`, `lullaby`, `dodo_rings`, `dodo_storm`, `calm`.
+
+**Chapitre 4 — La Maison Cousue** (`src/data/enemies-ch4.ts`, sprites `src/data/sprites/enemies-ch4.ts`, motifs
+`src/game/battle/patterns-ch4.ts`, fonds `feutre` / `stylo` / `noir`) :
+
+| id | Émotion | Besoin | Motifs | Particularité |
+|---|---|---|---|---|
+| `pate_froide` (fém.) | tristesse | tristesse ×2, déteste joie | `noodle_rain`, `mold_spores` | nouilles blanches, pattes de fourchette |
+| `mot_aimante` | colère | colère, puis joie ×2 | `magnet_letters`, `chatter_teeth` | lettres attirées par le cœur |
+| `de_chevalier` | colère | tristesse ×3 | `pin_rain`, `pin_lance` | |
+| `poupee_brouillon` (fém.) | peur | tristesse ×2, déteste joie | `scribble_box`, `chalk_lines` | inflige la peur ; la boîte se redessine |
+| `cle` (fém.) | peur | tristesse, puis « ouvrir » | `tumblers`, `key_turn` | verrouille un bouton du menu par tour |
+| `poupee_maman` (fém.) | neutre | tristesse puis « merci », ou « reste » | `slow_plates`, `four_plates` | ne tombe jamais ; drapeaux `c4_maman`, `c4_reste` |
+| `couseuse` (boss, fém.) | colère → peur | tristesse ×2, puis « découdre » | `stitch_walls`, `needle_pin`, `stitch_cage` | coud les boutons du menu ; chaque mot écrit en découd un |
+| `petit_homme` (boss) | colère → peur | peur, tristesse ×2, puis « rendre » | `doors_slam`, `noodle_rain`, `dark_noodles`, `dark_doors`, `dark_knocks` | phase 2 : arène noire, seul le cône de la veilleuse montre les projectiles |
+
+Alliée : Mina n°366 (`G.state.party` contient `'mina366'`, chapitre 4), figée si `c4_couseuse === 'vaincue'`. Les
+boss lui donnent une aide propre (hook `onAlly`). Moteur : `Bullet.draw` (`shape: 'custom'`, `data.hw/hh` = boîte de
+collision, `data.pierce`), `BulletWorld.pre/post/dark/liveBox`, `soul.pin`, `Battle.backdrop`, `allySay`,
+`prepareDodge`, `detune`.
+
+**Chapitre 5 — La Marée Blanche** (`src/data/enemies-ch5.ts`, sprites `src/data/sprites/enemies-ch5.ts`, motifs
+`src/game/battle/patterns-ch5.ts`, fonds `plage` (plage surexposée) / `blanc` (hôpital blanc au stylo bleu)) :
+
+| id | Émotion | Besoin | Motifs | Particularité |
+|---|---|---|---|---|
+| `crabe_bracelet` | colère | tristesse ×2 | `pincer_arcs`, `bracelet_clasp` | coquille = bracelet « MINA — PÉD. 3 — 304 » ; le fermoir se referme autour du cœur |
+| `mouette` (fém.) | joie | colère, puis joie | `gull_dive`, `word_theft` | dès le tour 2 vole un mot par tour (le dernier écrit) et troue le carnet (`Battle.stolenWords`, `tornSlots`) ; les rend une fois apaisée ; « Mine ! » devient « Mina » |
+| `masque` | peur | joie ×2, déteste colère | `mask_pleats`, `mask_elastics` | réduit et étouffe la boîte de texte (`Battle.textInset`, `muffle`) |
+| `gel` | colère | tristesse ×2 | `gel_drops`, `snowflakes` | gouttes collantes qui piquent 3 fois (`BulletWorld.onSting`, dégâts sur la durée) ; boîte gercée ; flocons blancs en figures |
+| `thermometre` | peur → colère (38) | mot « fièvre » | `thermo_digits`, `thermo_mercury`, `thermo_scream` | le chiffre monte de 0,7 par tour ; à 40 il hurle (attaque pleine largeur) ; « ça va » le fait sauter |
+| `gribouille_noire` (fém.) | neutre | aucun (`noInk`) | `black_scribbles` | ne s'apaise pas, les mots glissent, chaque coup la dédouble (3 à l'écran, sans fin) ; fuir réussit toujours ; sa mort ne compte jamais comme Encre |
+| `vitre` (boss, fém.) | tristesse | tristesse ×2, puis « je ne sais pas » ; « pardon » d'abord si `c5_menti` | `vitre_buee`, `vitre_condensation`, `vitre_fissures` | buée (le cœur l'essuie), empreintes de mains, fissures ; pose `c5_vitre = 'epargnee'` (les mains se rejoignent) ou `'brisee'` (lit vide) ; pas de fuite ; musique `vitre` |
+
+`EnemyDef.noInk` : ennemi qui n'est pas un sentiment (pas de besoins, fuite toujours réussie, ni Encre, ni kill, ni
+Boutons). Au chapitre 5, personne à côté de Noa : le cadre de Mina reste vide dans le HUD, traversé par le fil rouge
+(`allyState` → `'absent'`). Combats de debug : `?debug=script&name=vitre|vitre_menti|bt_crabe_bracelet|bt_mouette|
+bt_masque|bt_gel|bt_thermometre|bt_gribouille_noire|bt_ch5_duo`. Le mini-jeu de dessin à deux est
+`src/game/scenes/drawtogether.ts` (démos `dessin_visite`, `dessin_corriger`).
+
+**Chapitre 6 — Le Ventre de Dodo** (`src/data/enemies-ch6.ts`, sprites `src/data/sprites/enemies-ch6.ts`, motifs
+`src/game/battle/patterns-ch6.ts`, fonds `ventre` (caverne de coton humide, fil rouge, épingles) / `voix` (le module
+vocal REC/PLAY, sa croûte de pile qui pourrit, `CH6_BG.rot` 0–1), `src/game/battle/bg-ch6.ts`) :
+
+| id | Émotion | Besoin | Motifs | Particularité |
+|---|---|---|---|---|
+| `aiguille` (fém.) | colère | tristesse ×2 | `aiguille_points`, `aiguille_couture` | file en laissant des points de couture ; une aiguille qui touche (`data.sew`) coud le cœur : couleur bloquée 2 tours (`Battle.emoLockUntil`, « COUSU ») |
+| `bouton_pendu` | peur | « regarder » (d'un coup) ou tristesse ×2 | `bouton_balancier`, `bouton_pluie` | l'œil-bouton de Dodo au bout d'un fil ; balancier qui balaie la boîte |
+| `bourre` (fém.) | tristesse | « pardon » | `bourre_colle`, `bourre_moisi` | le coton des moutons vidés (seulement si `c4_coton` > 0 : au scénario de décider) ; se colle au cœur et le ralentit (`BulletWorld.slow`) |
+| `mouton_numerote` | joie | joie | `mouton_tampon`, `mouton_saute` | par groupes ; chacun porte un numéro de nuit (« Mouton n°212 ») ; épargné dans le désordre (un numéro plus grand pas encore calme), il se dédouble (4 à l'écran au plus) |
+| `pile` (fém.) | neutre → tristesse | joie, puis « garder » | `pile_fuite`, `pile_gresille` | rencontre unique, pas de fuite ; la piste 1 ralentit à chaque tour (voix `pile`…`pile4`, musique qui se désaccorde) ; épargnée : objet clé `pile_chargee`, `c6_pile = true` ; vaincue : `c6_pile = false`, `c6_pile_morte` |
+| `dodo_v2` (boss final) | neutre | — | voir `src/game/battle/final-v2.ts` | 4 phases (moutons des morts, DORMIR et les couleurs qui mentent, les coups dans le noir, les mots de Mina) ; issue dans `fin_route` ; musique `dodo_v2` |
+
+Le combat final v2 se lance par `runFinalBattleV2(d, from = 1)` (`src/game/battle/final-v2.ts`), qui rend la route
+(`'aube'` | `'beaux_reves'` | `'silence'`, aussi dans `flags.fin_route`) ; la suite est
+`afterFinalBattle(d, route)` (`src/game/story/endings.ts`). Les coups de la phase 3 passent par
+`CountingScene.open('coups', [knockRound(...)])` (mode Histoire : coups plus lents, pas de faux coups). Objets de la
+phase 4 : `bouton_dore` (piste brouillée, une grosse fissure) et `pile_chargee` (si `c6_pile` : la piste 1 entière,
+nette). Combats de debug : `?debug=script&name=bt_aiguille|bt_bouton_pendu|bt_bourre|bt_pile|bt_moutons|bt_ch6_duo`
+et `dodo_v2|dodo_v2_objets|dodo_v2_deux|dodo_v2_histoire|dodo_v2_coups|dodo_v2_mots|dodo_v2_encre|dodo_v2_silence|
+dodo_v2_fin|dodo_v2_fin_silence` (voir l'en-tête de `src/game/battle/debug-battles.ts`).
 
 ---
 
@@ -407,7 +496,9 @@ title: {
 Jetons : note (`C4`, `F#3`, `Bb2`), accord (`C4+E4+G4`), `.` silence, `-` tenir la note précédente, `x`/`X` coup
 de batterie (instruments `kick`, `snare`, `hat`). `|` est ignoré (lisibilité). Chaque canal boucle sur sa propre
 longueur. Instruments : `square`, `pulse25`, `pulse12`, `triangle`, `sine`, `saw`, `musicbox`, `piano`, `pad`,
-`bass`, `pluck`, `bell`, `organ`, `kick`, `snare`, `hat`. Options de canal : `vol`, `transpose`, `reverb`, `pan`, `detune`.
+`bass`, `pluck`, `bell`, `organ`, `kick`, `snare`, `hat`, et (v2, chapitre 5) `gull` (cri de mouette), `breath`
+(souffle : bruit filtré qui monte et retombe sur la durée de la note), `air` (ventilation continue). Options de canal :
+`vol`, `transpose`, `reverb`, `pan`, `detune`.
 
 **Leitmotiv — « La Berceuse de la Veilleuse »** (do majeur, 3/4, croches, 6 pas par mesure) — à décliner partout :
 
@@ -438,6 +529,12 @@ Accords : C G Am G | C G G7 C | F Dm G C | F Dm G C
 | `void` | vide : drones, notes isolées, silence pesant |
 | `ending` | fin : arrangement émouvant de la berceuse (piano + cordes/pad), lumineux |
 | `gameover` | game over : courte phrase triste, boucle lente |
+| `plage` | ch. 5, la plage d'avant : berceuse en majeur, trop aiguë, sans basse ; la mer respire, des mouettes au loin |
+| `sas` | ch. 5, le sas : ventilation, un souffle qui retient parfois, un bip, quelques notes de la berceuse très espacées |
+| `vitre` | ch. 5, boss La Vitre : berceuse au piano en do mineur, harmoniques de verre, buée, deux coups « je suis là » |
+| `ventre` | ch. 6, dans la peluche : un battement de cœur étouffé par le coton, la berceuse sur une boîte à musique à trous (des mesures entières manquent) |
+| `appel` | ch. 6, le couloir des 41 portes : presque rien, l'air d'une chambre noire, un téléphone qui vibre sur un bureau, une note aiguë de temps en temps |
+| `dodo_v2` | combat final v2 : la valse de Dodo retournée, plus lente et plus lourde, battement de cœur au kick, la berceuse en mineur harmonique qui perd des mesures, son écho désaccordé une croche en retard |
 
 ---
 
@@ -459,27 +556,55 @@ hachures, couleurs vives sur papier), style pixel sombre pour les souvenirs rée
 | `carnet_page3` | dessin de la forêt de crayons et du hibou |
 | `carnet_page4` | dernière page : la lune, une veilleuse, et l'écriture « Si tu as peur du noir, regarde la lune. Moi je serai ta veilleuse. — Mina » |
 | `fin_aube` | aube à la fenêtre de la chambre de Mina, silhouettes de Maman et Noa enlacés |
-| `fin_beaux_reves` | Noa endormi dans son lit, Dodo veille, tout est bleu nuit, immobile |
-| `fin_silence` | le Pays de Coton noyé d'encre, vide |
+| `fin_aube_blanche` | la même aube, mais le soleil est un rond de correcteur blanc cerclé de stylo bleu (pas de rayons) |
+| `lune_finie` | le dessin des deux enfants sous la lune, fini par Mina seule, plié en quatre, « FINI. (sans toi mais avec toi) » |
+| `fin_veilleuse` | la chambre de Mina à l'aube : la veilleuse branchée près de son lit, Dodo recousu au fil bleu, le dessin au mur |
+| `fin_beaux_reves` | Noa à seize ans, assis dans son lit, réveillé, casque, Dodo dans les bras ; 14, 15, 16 au crayon sur le chambranle |
+| `fin_silence` | la porte de Mina en plein jour, une pancarte « DÉBARRAS », la trace des lettres décollées, pas de lumière dessous |
 | `tv_mina` | image de vidéo familiale à la télé : Mina qui montre un dessin, lignes de balayage |
 
 `SOUVENIRS` : `fenetre` (titre « La fenêtre », image `souvenir_fenetre`), `dessin` (« Le dessin inachevé »),
-`veilleuse` (« La veilleuse »), chacun avec 2–4 légendes poignantes (`captions`).
+`veilleuse` (« La veilleuse »), `lumiere` (« La lumière sous la porte », chapitre 4), chacun avec 2–5 légendes
+poignantes (`captions`).
+
+v2 : une illustration par fichier de chapitre, autonome (ses propres petites primitives), ajoutée à `ILLUSTRATIONS`
+par décomposition comme `illustrations-bonus.ts`. Chapitre 4 : `src/data/illustrations-ch4.ts` →
+`souvenir_lumiere` (le couloir la nuit, le trait de lumière sous la porte, l'ombre d'une main posée à plat, le
+radiateur). Toute nouvelle illustration va aussi dans `CATALOG` de `src/game/scenes/gallery.ts`.
+Fins v2 (lot 9) : `fin_aube_blanche` et `lune_finie` reprennent les peintures de `fin_aube` et `souvenir_dessin` dans
+`illustrations.ts` ; `fin_beaux_reves`, `fin_silence` et `fin_veilleuse` sont dans `src/data/illustrations-fins.ts`.
+Interludes III et IV : `src/data/illustrations-nuit.ts` → `polaroid_dodo` (T2, le polaroïd au fond du sac) et
+`dessin_chut` (T5, le dessin du miroir de Maman) ; `photo_decoupee` (la photo de l'été, le visage de Noa découpé) est
+dessinée à côté de `photo_famille` dans `illustrations.ts`, dont elle reprend la peinture.
+Chapitre 6 : `src/data/illustrations-ch6.ts` → `bonnet_visage` (T9 : la Petite au Bonnet, de face, dans le noir du
+ventre ; son bonnet et son gilet sont en laine, son visage est une feuille blanche qu'un crayon dessine sous les yeux
+du joueur : fatiguée, souriante, sans couettes ; à t = 0, la vignette de la galerie, le visage est encore blanc).
+C'est la seule fois où son vrai visage apparaît (§ 1.5, règle 2 de la bible). Portraits : `face_bonnet_neutral` (sans
+visage, des lignes de construction au crayon) et `face_bonnet_drawn` ; locuteurs `petite` (« La Petite au Bonnet »)
+puis `bonnet` (« Mina ») une fois qu'on l'a regardée (`c6_regarder`).
 
 ---
 
 ## 8. Cartes et scénario (équipes RÉEL, CH1, CH2, CH3)
 
-**Le déroulé scène par scène de toute l'histoire est dans `docs/SCENARIO.md` : c'est la référence narrative.**
+**La référence narrative de la version 2 est `docs/HISTOIRE.md` ; le déroulé scène par scène est dans
+`docs/SCENARIO.md` (les scènes de la v1.1, un encadré « v2 » sur chaque section retouchée et le résumé des segments
+nouveaux).**
 
 ### 8.1 Propriété
 
 | Équipe | Cartes (`src/data/maps/…`) | Scénario (`src/game/story/…`) |
 |---|---|---|
 | RÉEL | `real.ts` → `REAL_MAPS` : `chambre`, `appartement`, `appartement_nuit`, `chambre_mina` | `real.ts` : `prologue`, `interlude1`, `interlude2`, `finale`, `DEBUG` |
+| RÉEL (v2) | `real.ts` : accessoires de nuit de `chambre` (`isNuit()`), `appartement_tard`, `chambre_maman` | `real-nuit.ts` : `interlude3`, `interlude4`, `DEBUG` |
 | CH1 | `chapter1.ts` → `CHAPTER1_MAPS` : `prairie`, `village`, `boutique`, `maison_mouton`, `colline` | `chapter1.ts` : `start`, `DEBUG` |
-| CH2 | `chapter2.ts` → `CHAPTER2_MAPS` : `lisiere`, `foret`, `clairiere`, `bibliotheque`, `atelier` | `chapter2.ts` : `start`, `DEBUG` |
-| CH3 | `chapter3.ts` → `CHAPTER3_MAPS` : `ruines`, `hopital`, `chambre_304`, `vide` | `chapter3.ts` : `start`, `DEBUG` |
+| CH2 | `chapter2.ts` → `CHAPTER2_MAPS` : `lisiere`, `foret`, `clairiere`, `bibliotheque`, `sentier_gomme`, `atelier` | `chapter2.ts` : `start`, `DEBUG` |
+| CH3 | `chapter3.ts` → `CHAPTER3_MAPS` : `ruines`, `hopital`, `salle_jeux`, `chambre_304`, `vide` | `chapter3.ts` : `start`, `DEBUG` |
+| FAUSSE AUBE (v2) | `fausse-aube.ts` → `FAUSSE_AUBE_MAPS` : `chambre_faux`, `appartement_faux` | `fausse-aube.ts` : `play`, `DEBUG` |
+| CH4 (v2) | `chapter4.ts` → `CHAPTER4_MAPS` : `maison_feutre`, `maison_stylo`, `grenier`, `couloir_coups` | `chapter4.ts` : `start`, `DEBUG` |
+| CH5 (v2) | `chapter5.ts` → `CHAPTER5_MAPS` : `plage`, `sas`, `lac_blanc`, `chambre_verre` | `chapter5.ts` : `start`, `DEBUG` |
+| CH6 (v2) | `chapter6.ts` → `CHAPTER6_MAPS` : `couture`, `ouate`, `boite_a_musique`, `couloir_41`, `voix` | `chapter6.ts` : `start`, `DEBUG` ; combat final `src/game/battle/final-v2.ts` |
+| FINS (v2) | `endings.ts` → `ENDINGS_MAPS` : `appartement_br`, `appartement_silence` | `endings.ts` : les cinq fins, `DEBUG` |
 
 Les chapitres ne se connectent **que** via `src/game/story/common.ts` :
 `enterDream(d, n)` (s'endormir → chapitre n), `wakeUp(d, n)` (se réveiller après le chapitre n),
@@ -490,8 +615,14 @@ Les chapitres ne se connectent **que** via `src/game/story/common.ts` :
   `enterDream(d, 3)` ; `finale` (route de l'aube) par `finishGame(d, 'aube')`.
 - `chapter1.start` / `chapter2.start` : charger la première carte (`d.load(map, spawn)`), jouer l'ouverture, rendre la
   main. La fin du chapitre (après le boss et le souvenir) appelle `await wakeUp(d, n)`.
-- `chapter3` gère le combat final contre Dodo et ses trois issues : `wakeUp(d, 3)` (aube), `finishGame(d,
-  'beaux_reves')`, `finishGame(d, 'silence')` (route du silence : `isSilenceRoute()` de `common.ts`).
+- `chapter3` gère le combat (court, v2) contre Dodo : toutes ses issues mènent à `wakeUp(d, 3)`, la fausse aube. Les
+  fins (`finishGame(d, 'aube' | 'aube_blanche' | 'beaux_reves' | 'silence' | 'veilleuse')`) sont dans `endings.ts`
+  et suivent le combat final du chapitre 6 (route du silence : `isSilenceRoute()` de `common.ts`). Aube, Aube
+  blanche et Veilleuse passent par l'épilogue (`epilogue.ts`, variante lue dans `flags.fin_ending`), qui appelle
+  `finishGame`. `finishGame` retient la fin dans la mémoire (`endings`, `lastEnding` qui choisit l'écran titre,
+  `nuits` + 1, `beauxRevesAt`, `dodoSilent`) et ajoute la carte d'aide (3114) après Beaux rêves, Silence et Aube
+  blanche. La « Fin heureuse » du faux générique n'appelle jamais `finishGame`. Cartes des fins :
+  `appartement_br`, `appartement_silence` (`src/data/maps/endings.ts`).
 - Un `start` de chapitre commence écran noir (`fx` à 1) : il doit faire `d.load(...)` puis `await d.fadeIn()`, et
   peut d'abord appeler `await d.chapter('Chapitre 1', 'Le Pays de Coton', 'sous-titre')`.
 
@@ -521,9 +652,16 @@ export const CHAPTER1_MAPS: Record<string, MapDef> = {
   sprite est centré horizontalement sur l'empreinte et posé sur son bord bas (`ox`/`oy` pour ajuster).
   `solid: false` pour les décors traversables, `under: true` pour les tapis, `over: true` pour ce qui passe devant.
 - `world` : `'dream'` | `'real'` (variantes réelles + obscurité) | `'ink'` (tuiles et sprites corrompus) | `'void'`.
+  Version 2 (`V2_WORLDS`, `src/engine/palette.ts`) : `'feutre'` (ch. 4, feutre chaud, contours cousus),
+  `'stylo'` (nuits du ch. 4, stylo bille sur papier quadrillé), `'blanc'` (ch. 5, blanc sur blanc, trait bleu),
+  `'ouate'` (ch. 6, coton jauni), `'faux'` (fausse aube, sursaturé). Les variantes `clé@monde` de chaque sprite et
+  personnage sont construites à la demande (`?debug=map&map=village&world=feutre` pour essayer une carte existante).
 - `darkness` (0–1) + `light` sur props/PNJ (`{ r, color, flicker }`) + `playerLight` pour l'éclairage.
 - `ambience` : `'rain' | 'static' | 'wind' | 'hum' | 'none'` ; `particles` : `'fireflies' | 'cotton' | 'dust' |
-  'rain' | 'ink' | 'petals' | 'stars' | 'snow'`.
+  'rain' | 'ink' | 'petals' | 'stars' | 'snow'`. Effets ponctuels : `world.particles.burst(x, y, couleur)` (éclats) et
+  `world.particles.bleed(x, y, sol, { color, dark, frames, gentle })` (encre épaisse qui perle d'une coupe, coule
+  jusqu'à `sol` et y fait une flaque : les arbres-crayons du ch. 2 ; `gentle: G.settings.reduceFlashes` retire la
+  giclée).
 - Murs vus de face : rangée `*_wall_top` (dessus), puis `*_wall` (haut de la face), puis `*_wall_base` (bas) ; le
   sol commence en dessous. Les portes : `door_top` dans la rangée `wall`, `door` dans la rangée `wall_base`, avec un
   `warp` `{ door: true }` sur la case `door` (on interagit face à la porte).
@@ -564,6 +702,12 @@ const mots = await d.poem('Pour Mina');              // poème à la DDLC → Wo
 Effets visuels directs : `import { fx } from '../../engine/fx'` (`fx.glitch = 0.3`, `fx.gray`, `fx.tint`,
 `fx.vignette`), `import { setPageTitle } from '../meta'` (titre d'onglet inquiétant), `G.state` / `G.meta` pour la
 mémoire (`G.meta.newGames`, `G.meta.deaths`, `G.meta.endings`), `isLateNight()` de `src/game/meta.ts`.
+Mémoire v2 (§ 5 « Méta et nouvelle partie+ ») : `G.meta.nuits` (365, +1 par fin ; `runsBefore()` = parties finies),
+`numberWords(n, feminine)` / `NumberWords` (nombre en toutes lettres dans la langue du jeu), `sawV2Ending()`
+(`real.ts`, ouvre les répliques NG+), `G.meta.dodoSilent`, `G.meta.fauxGenerique`, `G.meta.callVersion`. L'heure
+réelle passe par `src/game/clock.ts` (`now()`), jamais par `new Date()`, pour que `&clock=` et le bot la règlent.
+Le bip de Dodo pour le narrateur la nuit, la page « Pendant ton absence » et l'appel de 3 h 14 sont gérés par
+`meta.ts` (rien à faire dans les scripts : ils attendent que le joueur soit libre).
 
 **Combats de boss** : passer des `hooks` (`BattleHooks` de `src/game/battle/types.ts`) — `onMenu(b, i)` (intercepter
 un bouton du menu principal, ex. « DORMIR »), `beforeTurn` (dialogues
@@ -574,7 +718,11 @@ de poche pour le Placard), `onWord`, `words` (remplacer le carnet), `menuLabels`
 ### 8.4 Texte : balisage et ton
 
 - Balises : `{c:y}jaune{/c}` (couleurs `y r b p v g o l a`), `{wave}…{/wave}`, `{shake}…{/shake}`,
-  `{glitch}…{/glitch}`, `{p:30}` (pause), `{spd:0.5}` (vitesse), `{player}` (nom du joueur), `{time}` (heure réelle).
+  `{glitch}…{/glitch}`, `{p:30}` (pause), `{spd:0.5}…{/spd}` (vitesse), `{player}` (nom du joueur), `{time}` (heure réelle).
+- Version 2 : `{static}…{/static}` (friture : lettres qui sautent, bip remplacé par du grésillement) ;
+  `{as:noa}` / `{as:noa:sad}` (à partir de là, la boîte appartient à un autre personnage : nom, portrait et bip
+  changent au milieu de la boîte, T7) ; `{voice:noa}` (seul le bip change). `dialogue.narratorVoice` donne un bip au
+  narrateur (`nightNarratorVoice(heure, G.meta.dodoSilent)` : le bip de Dodo entre minuit et 5 h).
 - Une boîte = 3 lignes ≈ 42 caractères chacune (avec portrait) : couper les répliques longues en plusieurs boîtes.
 - **Noa** parle très peu (phrases courtes, souvent « … »). **Mina** : énergique, imaginative, invente des titres
   (« Princesse-Chevalière »), tutoie tout le monde, fautes d'enfant mignonnes occasionnelles. **Dodo** : doux,
@@ -585,7 +733,8 @@ de poche pour le Placard), `onWord`, `words` (remplacer le carnet), `menuLabels`
 
 ### 8.5 Drapeaux (flags)
 
-Préfixes : `p_` (prologue), `i1_`, `i2_` (interludes), `c1_`, `c2_`, `c3_` (chapitres), `fin_` (finale).
+Préfixes : `p_` (prologue), `i1_`, `i2_` (interludes), `c1_`, `c2_`, `c3_` (chapitres), `fin_` (finale), `m_` (posés
+par la méta, `src/game/meta.ts` : `m_appel_314`, `m_absence`).
 Drapeaux partagés :
 
 | Drapeau | Posé par | Lu par | Sens |
@@ -596,11 +745,79 @@ Drapeaux partagés :
 | `c1_chaussette_paire` | CH1 | CH2 | la Chaussette Perdue a retrouvé sa paire (Chaussette marchande heureuse) |
 | `fin_route` | CH3 | RÉEL | `'aube'` quand Noa choisit de se réveiller |
 
+**v2, indices du chapitre 1** (`src/game/story/chapter1.ts`, liste de contrôle `docs/INDICES.md`) : drapeaux
+documentés en tête du module. Lus par les lots suivants : `c1_bouton` (Mina a donné le Bouton doré, objet clé
+`bouton_dore` lu par le combat final), `c1_bouton_vendu` (vendu à Chaussette : ni bouton au combat final, ni fin
+secrète ; un joueur qui n'est jamais revenu au trésor avec Mina n'a ni le bouton ni ce drapeau), `c1_code` (Mina a
+expliqué le code des coups), `c1_bonnet_vu`. Le locuteur `mouton` s'appelle maintenant « Mouton » (tous les moutons du
+rêve) ; le Moutonnier a son locuteur `moutonnier`.
+
+**v2, chapitre 4** (`src/game/story/chapter4.ts`, cartes `src/data/maps/chapter4.ts`) : tous les drapeaux `c4_*`
+sont documentés en tête du module. Lus par les lots suivants : `c4_maman` (`merci`|`reste`), `c4_reste`, `c4_coton`
+(0–4, les Bourres du ch. 6), `c4_couseuse` (`epargnee`|`vaincue`), `c4_fele` (veilleuse fêlée). Simples traces, posées
+mais jamais relues : `c4_petit_homme` (`epargne`|`vaincu`), `c4_mina366` (`merci`|`silence`), `c4_fin`. Couches : `maison_feutre` (monde `feutre`) et
+`maison_stylo` (monde `stylo`, même plan, accessoires selon `c4_nuit` ∈ 1, 9, 22, 35, 42) ; l'horloge du salon
+passe de l'une à l'autre. Aides de script : `look(lignes, répliqueMina?)`, `byNight({1: …, 22: …})`.
+Mina n°366 suit Noa par `d.follower('mina366')` (ses répliques : `MINA_LINES`, `mina366Talk`).
+
+**v2, Interludes III et IV** (`src/game/story/real-nuit.ts`) : drapeaux `i3_*` et `i4_*` documentés en tête du module.
+Lus par les lots suivants : `i3_reply` (`pardon` | `bonnenuit` | `rien`), `i3_photo`, `i3_sac` (le polaroïd vu),
+`i4_knock` (`deux` | `trois` | `rien` | `un`), `i4_pile` (la pile du réveil prise), `i4_dessin`, `i4_reveil`,
+`i4_lettre`, `i4_mot`. Pendant ces interludes, `chambre` montre ses accessoires de nuit (cartes `real.ts` : `DAY()` /
+`NIGHT()`), le couloir est `appartement_tard` (nom selon l'heure) et la chambre de Maman `chambre_maman` (IV).
+`STORY.wake[4]` = Interlude IV ; l'Interlude III est joué à la fin de la fausse aube (`fausse-aube.ts`, `STORY.wake[3]`).
+
+**v2, indices du monde réel** (`src/game/story/real.ts`, liste de contrôle `docs/INDICES.md`) : drapeaux `p_*`, `i1_*`
+et `i2_*` documentés en tête du module (compteurs d'examen `<moment>_n_<objet>`). Dans `chambre`, Dodo (`dodo_plush`)
+occupe la moitié droite du bas du lit (`PLUSH`) : depuis le côté du lit, on examine Dodo ; depuis le bas, le lit. Les
+tuiles de mur au-dessus du lit et de la table de nuit ne peuvent pas être regardées : le mur contre le lit répond au
+pied du lit, côté gauche (`BED_WALL`, `mur` / `n_mur`), le calendrier est accroché près de la fenêtre (12, 2) et la
+plante est en (12, 4). Le téléphone s'ouvre sur la liste des contacts (`PhoneScene.home`) dès le prologue, « Mina 🐑 »
+épinglé et verrouillé ; à partir de l'Interlude II, le fil de Maman contient une année (`mamanYear`) que l'histoire
+fait défiler (`PhoneScene.scrollToMessage`). `sawV2Ending()` ouvre la réplique de nouvelle partie+ du prologue,
+`G.meta.fauxGenerique` celle de l'Interlude II, `G.meta.dodoSilent` le prologue sans Dodo (dessin `dessin_chasse`).
+
+**v2, chapitre 3 raccourci et fausse aube** (`src/game/story/chapter3.ts`, `src/game/story/fausse-aube.ts`, cartes
+`src/data/maps/fausse-aube.ts` : `chambre_faux` et `appartement_faux`, monde `faux`) : le combat contre Dodo du
+chapitre 3 n'a plus que les phases 1 et 2 ; « pardon » écrit trois fois, il cède, et [Se réveiller] / [Rester]
+mènent tous deux à `wakeUp(d, 3)` = la fausse aube (`fa_reste` retient [Rester]). Drapeaux `fa_*` documentés en tête
+du module : `fa_debut` (sauvegarde automatique juste après : une sauvegarde chargée sur ces cartes rejoue la fausse
+aube depuis le blanc), `fa_reste`, `fa_tours` (passages du faux générique, 1–3), `fa_fin` ; `G.meta.fauxGenerique`
+compte les faux génériques atteints. La non-fin « Fin heureuse » n'est jamais enregistrée comme une fin. La fausse aube
+finit par `realNuit.interlude3(d)`. Le monde `faux` prend les boîtes de dialogue du monde réel. Une sauvegarde v1.1
+prise pendant le final v1.1 (interlude 3) se réveille dans la fausse aube (`migrateSave`, drapeaux `fin_*` oubliés).
+Toute la nuit est branchée : chapitre 3 → fausse aube → III → ch. 4 → IV → ch. 5 ⇣ ch. 6 → `STORY.wake[6]` = final
+(`real.finale`, réécrit au lot 9) ; preuve : scénario `tools/scenarios/v2_aube.txt`.
+
+**v2, chapitre 5** (`src/game/story/chapter5.ts`, cartes `src/data/maps/chapter5.ts` : `plage` (monde `dream`),
+`sas`, `lac_blanc`, `chambre_verre` (monde `blanc`)) : drapeaux `c5_*` documentés en tête du module. Lus par les lots
+suivants : `c5_corrige` (0–5 ; ≥ 3 → *Aube blanche*), `c5_fievre` (condition de la fin secrète) / `c5_menti`,
+`c5_vitre` (`epargnee`|`brisee`), `c5_visite`, `c5_serviette`, `c5_coquillages` (0–42), `c5_coquillage42`, `c5_fin`.
+`STORY.dream[5]` = `chapter5.start` (l'Interlude IV y entre) ; la fin du chapitre tombe dans le chapitre 6 par
+`fallInto(d, 6)`. L'attente de 30 s sur la serviette
+(`sleepWaitMs()`) passe à 5 s avec le mode Histoire ou l'option « Réduire les attentes » (`G.settings.shortWaits`).
+Les sprites du chapitre gardent leurs couleurs dans le monde `blanc` (`keep()` : `clé@blanc` = même dessin) ; le point
+de sauvegarde aussi (seule lumière jaune de l'hôpital). Souvenir 5 : `souvenir_vitre` (épargnée) ou
+`souvenir_vitre_brisee` (`src/data/illustrations-ch5.ts`).
+
+**v2, chapitre 6** (`src/game/story/chapter6.ts`, cartes `src/data/maps/chapter6.ts` : `couture`, `ouate`,
+`boite_a_musique`, `couloir_41`, `voix`, toutes en monde `ouate`) : drapeaux `c6_*` documentés en tête du module. Lus
+par les lots suivants : `c6_t7` (dès T7, la boîte blanche parle avec le bip de Noa : `tell()`), `c6_bocal0`,
+`c6_boite`, `c6_appel` (la réponse est dans `G.meta.callVersion` : `douce` | `dure` | `sais_pas`), `c6_fenetres`,
+`c6_pile` / `c6_pile_morte` (posés par le combat), `c6_regarder`, `c6_seuil`, `c6_final`, et `fin_route` (posé par le
+combat final : `aube` | `beaux_reves` | `silence`). `STORY.dream[6]` = `chapter6.start` (le chapitre 5 y tombe par
+`fallInto(d, 6)`) ; le seuil lance `runFinalBattleV2(d)` puis `afterFinalBattle(d, route)` (`endings.ts`). Dans le
+couloir, quelle branche porte quelle version de l'appel est tirée une fois par partie (`c6_haut`) ; le jeu ne dit
+jamais laquelle est la vraie (règle des 41 secondes, bible § 1.5). Les sprites du chapitre gardent leurs couleurs
+dans la peluche (`keep()` : `clé@ouate`). Aides de script : `tell()` (narrateur, bip de Noa après T7), `look`,
+`looks`, `voice()` (Dodo sans portrait), `murmur()` (une phrase qui flotte hors des murs), `reload()` (carte rechargée
+en pleine scène, sans bandeau).
+
 ### 8.6 Objets
 
 Voir `src/data/items.ts` (`bonbon`, `lait`, `biscuit`, `chocolat`, `gateau`, `mouchoir`, `bulles`, `pluie`,
-`orage`, `pomme` ; clés : `veilleuse_poche`, `ballon`, `chaussette_bleue`, `cle_mina`, `crayons`, `crayon_jaune`,
-`dessin`). Équipements : `G.state.weapon` (`crayon` → `cire` → `plume`) et `G.state.armor` (`pyjama` → `plaid` →
+`orage`, `pomme`, v2 : `yeux` (Yeux de rechange, chez Chaussette) ; clés : `veilleuse_poche`, `ballon`, `chaussette_bleue`, `cle_mina`, `crayons`, `crayon_jaune`,
+`dessin` ; v2, chapitre 6, utilisables en combat : `bouton_dore`, `pile_chargee`). Équipements : `G.state.weapon` (`crayon` → `cire` → `plume`) et `G.state.armor` (`pyjama` → `plaid` →
 `cape`) à donner par le scénario (ch1 : `cire`, ch2 : `plaid`, ch3 : `cape` / `plume`).
 
 ### 8.7 Musiques et ambiances par lieu
@@ -608,4 +825,10 @@ Voir `src/data/items.ts` (`bonbon`, `lait`, `biscuit`, `chocolat`, `gateau`, `mo
 `chambre`/`appartement` → `room`/`interlude` + `rain` ; `prairie` → `meadow` ; `village` → `village` ;
 `boutique` → `shop` ; `colline` → `mina` ; boss → `boss` ; `lisiere`/`foret`/`clairiere` → `forest` ;
 `bibliotheque` → `village` (calme) ; `atelier` → `boss` pendant le combat ; `ruines` → `dodo` ; `hopital` /
-`chambre_304` → `hospital` + `hum` ; `vide` → `void` puis `dodo_battle` ; finale → `ending`.
+`chambre_304` → `hospital` + `hum` ; `vide` → `void` puis `dodo_battle` ; finale → `ending`. Chapitre 5 : `plage` →
+`plage` + `wind` (après la marée : plus lente, désaccordée) ; `sas` → `sas` + `hum` ; `lac_blanc` et
+`chambre_verre` → silence (`wind` / `hum`) ; la Vitre → `vitre`. Fausse aube : `chambre_faux` / `appartement_faux`
+→ pas de musique, des oiseaux (les trois mêmes pépiements en boucle) ; le faux générique → `faux_generique` (joué à
+l'envers quand il remonte). Chapitre 6 : `couture`, `ouate`, `boite_a_musique` → `ventre` (la
+boîte se tait une fois la berceuse jouée en entier, `hum`) ; `couloir_41` → `appel` ; `voix` → silence + `hum` ; le
+combat final → `dodo_v2`.

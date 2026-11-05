@@ -1,0 +1,25 @@
+# Lot 7 (docs/HISTOIRE.md § 3.6): chapter 2, Eraser's workshop before the fight, with Mina. The jar of eraser crumbs,
+# « À JETER »: « Certaines ont une bouche. » Mina's double: they are yawning, bedtime for crumbs. Once Eraser is spared,
+# the jar stands open, one crumb left asleep at the bottom.
+query: debug=script&name=c2_bocal&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+assert: V.world.get('bocal_miettes').sprite === 'prop_bocal_miettes'
+interact:bocal_miettes
+zuntil: SAW('Certaines ont une bouche.')
+shot:bocal
+zuntil: IDLE()
+assert: SAW('« À JETER »') && SAW('Elles bâillent.') && V.G.state.flags.c2_bocal === true
+eval: (V.G.state.flags.c2_boss_done = true, V.G.state.flags.c2_gomme_spared = true, 1)
+load:atelier/south
+wait:600
+assert: V.world.get('bocal_miettes').sprite === 'prop_bocal_miettes_ouvert'
+interact:bocal_miettes
+zuntil: IDLE()
+assert: SAW('Il en reste une, tout au fond. Elle dort.')
+shot:ouvert

@@ -1,0 +1,23 @@
+# Lot 6 (docs/HISTOIRE.md § 3.3 item 9, § 5 « meta.dodoSilent »): once the secret ending has been seen, Dodo does not
+# wake up in the prologue. What he used to say is one of Mina's treasure-hunt drawings above the bed
+# (« REGARDE SOUS LE LIT »), and Noa slides under the bed alone; chapter 1 starts.
+query: debug=script&name=prologue_seul&lang=fr
+wait:1500
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+assert: V.G.meta.dodoSilent === true && V.world.entities.some((e) => e.id === 'dessin_chasse')
+shot:room
+go:1/5
+ArrowUp:80
+KeyZ
+auto
+assert: SAW('Il ne dit rien.') && SAW('« REGARDE SOUS LE LIT »') && SAW('Le scotch est neuf.') && !V.G.state.flags.p_dodo
+assert: !V.world.entities.some((e) => e.id === 'dodo' && e.visible)
+KeyZ
+zuntil: V.dialogue.choices
+choose:0
+zuntil: V.G.state.chapter === 1 && V.G.state.map === 'prairie'
+assert: SAW('Personne ne te dit de fermer les yeux.') && !V.G.state.flags.p_dodo

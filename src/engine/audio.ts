@@ -19,7 +19,12 @@ export type Instrument =
   | 'kick'
   | 'snare'
   | 'hat'
-  | 'organ';
+  | 'organ'
+  // v2 chapter 5: a gull's cry (the note sets its pitch), a breath (filtered noise swelling in and out over the note's
+  // length, the note sets the hiss), the air of a ventilation duct (steady filtered noise, a slow flutter).
+  | 'gull'
+  | 'breath'
+  | 'air';
 
 export interface Channel {
   inst: Instrument;
@@ -149,7 +154,22 @@ export type Sfx =
   | 'pop'
   | 'erase'
   | 'bark'
-  | 'baa';
+  | 'baa'
+  // v2: radio static (dialogue {static}), one knock on a wall, a knock in a radiator pipe, a tooth clicking into a
+  // music-box comb, a fingernail scratching a wall, a phone vibrating on a desk.
+  | 'static'
+  | 'knock1'
+  | 'pipe'
+  | 'tooth'
+  | 'scratch'
+  | 'buzz'
+  // v2 chapter 4: a sewing-machine needle punching through felt, a long thread pulled out of stuffing.
+  | 'stitch'
+  | 'thread'
+  // v2 chapter 5: a cough held back behind a mask.
+  | 'cough'
+  // v2 false dawn: a little bird outside the window (two quick rising chirps).
+  | 'bird';
 
 export type Ambience = 'rain' | 'static' | 'wind' | 'hum' | 'none';
 
@@ -166,7 +186,10 @@ export const VOICES: Record<string, Voice> = {
   narrator: { wave: 'triangle', pitch: 330, vary: 0.02, len: 0.05, vol: 0.2 },
   noa: { wave: 'triangle', pitch: 260, vary: 0.04, len: 0.05, vol: 0.22 },
   mina: { wave: 'square', pitch: 740, vary: 0.12, len: 0.035, vol: 0.09 },
-  dodo: { wave: 'sine', pitch: 520, vary: 0.08, len: 0.06, vol: 0.25 },
+  /** Noa's blip an octave higher (docs/HISTOIRE.md § 2.8): the same voice, made small and sweet. */
+  dodo: { wave: 'triangle', pitch: 520, vary: 0.04, len: 0.05, vol: 0.24 },
+  /** Mina n°366, the felt Mina (chapter 4): Mina's voice, flattened, a little lower, as if replayed. */
+  mina366: { wave: 'square', pitch: 680, vary: 0.02, len: 0.045, vol: 0.08 },
   dododark: { wave: 'sawtooth', pitch: 110, vary: 0.15, len: 0.08, vol: 0.12 },
   maman: { wave: 'triangle', pitch: 360, vary: 0.03, len: 0.05, vol: 0.22 },
   monster: { wave: 'sawtooth', pitch: 140, vary: 0.2, len: 0.06, vol: 0.08 },
@@ -176,6 +199,11 @@ export const VOICES: Record<string, Voice> = {
   owl: { wave: 'triangle', pitch: 420, vary: 0.1, len: 0.05, vol: 0.2 },
   eraser: { wave: 'square', pitch: 300, vary: 0.05, len: 0.04, vol: 0.09 },
   tv: { wave: 'sawtooth', pitch: 900, vary: 0.4, len: 0.03, vol: 0.05 },
+  /** La Pile (chapter 6): Dodo's voice on a dying battery, lower and slower each turn. */
+  pile: { wave: 'sine', pitch: 500, vary: 0.06, len: 0.06, vol: 0.22 },
+  pile2: { wave: 'sine', pitch: 410, vary: 0.05, len: 0.08, vol: 0.2 },
+  pile3: { wave: 'sine', pitch: 320, vary: 0.04, len: 0.11, vol: 0.18 },
+  pile4: { wave: 'sine', pitch: 230, vary: 0.03, len: 0.15, vol: 0.16 },
   none: { wave: 'sine', pitch: 0, vol: 0 },
 };
 
@@ -201,6 +229,11 @@ export class AudioEngine {
   tempoScale = 1;
   private pendingMusic: string | null = null;
   muted = false;
+  /** Music plays backwards (steps in reverse order, notes swell in and stop dead): the fake credits rewinding. */
+  reverse = false;
+  /** While holding, the sequence stops where it is and its last note rings on (see `hold`). */
+  private held: { at: number; nodes: OscillatorNode[]; gain: GainNode } | null = null;
+  private lastFreq = 523.25;
 
   register(id: string, t: Track): void {
     this.tracks.set(id, t);
@@ -347,6 +380,7 @@ export class AudioEngine {
   }
 
   stopMusic(fade = 0.6): void {
+    if (this.held) this.hold(false);
     if (!this.ctx || !this.playing) {
       this.pendingMusic = null;
       return;
@@ -368,6 +402,12 @@ export class AudioEngine {
     const ctx = this.ctx;
     const p = this.playing;
     if (!ctx || !p) return;
+    if (this.held) {
+      // Frozen: push the timeline forward so nothing new is scheduled until release.
+      p.startTime += ctx.currentTime - this.held.at;
+      this.held.at = ctx.currentTime;
+      return;
+    }
     const ahead = ctx.currentTime + 0.12;
     if (p.tempo !== this.tempoScale) {
       // Re-anchor so the next step keeps its position in time when the tempo changes.
@@ -385,7 +425,7 @@ export class AudioEngine {
       const when = p.startTime + step * stepDur;
       for (const ch of p.channels) {
         if (ch.length === 0) continue;
-        const local = step % ch.length;
+        const local = this.reverse ? ch.length - 1 - (step % ch.length) : step % ch.length;
         if (p.track.loop === false && step >= ch.length) continue;
         for (const ev of ch.events) {
           if (ev.step === local) this.playNote(ch, ev, when, ev.len * stepDur, p.gain);
@@ -410,8 +450,74 @@ export class AudioEngine {
       const midi = midi0 + (ch.transpose ?? 0);
       let freq = midiToFreq(midi);
       if (wob > 0) freq *= 1 + (Math.random() - 0.5) * 0.04 * wob - 0.03 * wob;
-      this.synth(ch.inst, freq, when, dur, vol / Math.sqrt(ev.midis.length), out, ch);
+      if (ch === this.playing?.channels[0]) this.lastFreq = freq;
+      if (this.reverse) this.backwardsNote(freq, when, Math.max(0.3, dur), vol / Math.sqrt(ev.midis.length), out);
+      else this.synth(ch.inst, freq, when, dur, vol / Math.sqrt(ev.midis.length), out, ch);
     }
+  }
+
+  /** A note played backwards: it swells in from silence and stops dead. */
+  private backwardsNote(freq: number, when: number, dur: number, vol: number, out: AudioNode): void {
+    const ctx = this.ctx!;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, when);
+    g.gain.exponentialRampToValueAtTime(vol * 0.8, when + dur * 0.92);
+    g.gain.linearRampToValueAtTime(0, when + dur);
+    g.connect(out);
+    const send = ctx.createGain();
+    send.gain.value = 0.4;
+    g.connect(send).connect(this.reverbBus);
+    const o = this.osc(this.waves.musicbox ? 'musicbox' : 'triangle', freq, when);
+    o.connect(g);
+    o.start(when);
+    o.stop(when + dur + 0.02);
+  }
+
+  /**
+   * Freezes the music on its last note (true) — the fake credits stopping on a line — or lets it go on (false).
+   * The held note rings with a slow, slightly sour vibrato.
+   */
+  hold(on: boolean): void {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    if (on && !this.held) {
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.16, ctx.currentTime + 0.08);
+      gain.connect(this.musicBus);
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 4.2;
+      const depth = ctx.createGain();
+      depth.gain.value = this.lastFreq * 0.006;
+      lfo.connect(depth);
+      const nodes = [lfo];
+      for (const [type, mul, det] of [
+        ['sine', 1, 0],
+        ['triangle', 2, 6],
+      ] as const) {
+        const o = this.osc(type, this.lastFreq * mul, ctx.currentTime);
+        o.detune.value = det;
+        depth.connect(o.frequency);
+        const g = ctx.createGain();
+        g.gain.value = mul === 1 ? 1 : 0.25;
+        o.connect(g).connect(gain);
+        o.start();
+        nodes.push(o);
+      }
+      lfo.start();
+      this.held = { at: ctx.currentTime, nodes, gain };
+    } else if (!on && this.held) {
+      const h = this.held;
+      this.held = null;
+      h.gain.gain.setTargetAtTime(0, ctx.currentTime, 0.12);
+      for (const n of h.nodes) n.stop(ctx.currentTime + 0.8);
+    }
+  }
+
+  /** One note on an instrument (story puzzles: the music-box comb plays the lullaby note by note). */
+  note(inst: Instrument, midi: number, dur = 0.5, vol = 0.5): void {
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    this.synth(inst, midiToFreq(midi), this.ctx.currentTime + 0.01, dur, vol * 0.35, this.sfxBus);
   }
 
   private osc(type: string, freq: number, when: number): OscillatorNode {
@@ -516,6 +622,63 @@ export class AudioEngine {
         env.linearRampToValueAtTime(vol * 0.9, when + 0.01);
         env.setValueAtTime(vol * 0.7, Math.max(when + 0.02, end - 0.03));
         env.linearRampToValueAtTime(0, end);
+        break;
+      }
+      case 'gull': {
+        // « Kyaa »: a quick rise, a long fall, a fast vibrato; two partials, thin.
+        const o1 = add('triangle', freq);
+        const o2 = add('sine', freq * 2.02);
+        for (const [o, k] of [[o1, 1], [o2, 2.02]] as const) {
+          o.frequency.setValueAtTime(freq * k * 0.92, when);
+          o.frequency.linearRampToValueAtTime(freq * k * 1.18, when + 0.06);
+          o.frequency.exponentialRampToValueAtTime(freq * k * 0.74, when + Math.max(0.2, dur));
+        }
+        const lfo = ctx.createOscillator();
+        lfo.frequency.value = 26;
+        const lg = ctx.createGain();
+        lg.gain.value = freq * 0.03;
+        lfo.connect(lg);
+        lg.connect(o1.frequency);
+        lfo.start(when);
+        lfo.stop(when + Math.max(0.2, dur) + 0.1);
+        env.setValueAtTime(0, when);
+        env.linearRampToValueAtTime(vol * 0.5, when + 0.03);
+        env.exponentialRampToValueAtTime(0.001, when + Math.max(0.2, dur));
+        stop = when + Math.max(0.2, dur) + 0.05;
+        break;
+      }
+      case 'breath':
+      case 'air': {
+        // Noise through a band-pass at the note's pitch: a breath swells and fades; the air of a duct just stays.
+        // (A looping source: a duct can blow for longer than the two seconds of the noise buffer.)
+        const n = ctx.createBufferSource();
+        n.buffer = this.noiseBuf;
+        n.loop = true;
+        n.start(when, Math.random() * 1.5);
+        n.stop(end + 0.5);
+        const f = ctx.createBiquadFilter();
+        f.type = 'bandpass';
+        f.frequency.value = Math.min(6000, freq * (inst === 'breath' ? 4 : 1.5));
+        f.Q.value = inst === 'breath' ? 0.7 : 0.4;
+        n.connect(f).connect(g);
+        if (inst === 'breath') {
+          env.setValueAtTime(0, when);
+          env.linearRampToValueAtTime(vol * 1.2, when + dur * 0.55);
+          env.linearRampToValueAtTime(0, when + dur + 0.4);
+        } else {
+          env.setValueAtTime(0, when);
+          env.linearRampToValueAtTime(vol * 0.8, when + 0.3);
+          env.setValueAtTime(vol * 0.8, end);
+          env.linearRampToValueAtTime(0, end + 0.3);
+          const lfo = ctx.createOscillator();
+          lfo.frequency.value = 0.7;
+          const lg = ctx.createGain();
+          lg.gain.value = freq * 0.25;
+          lfo.connect(lg).connect(f.frequency);
+          lfo.start(when);
+          lfo.stop(end + 0.4);
+        }
+        stop = end + 0.5;
         break;
       }
       case 'organ': {
@@ -736,6 +899,56 @@ export class AudioEngine {
         break;
       case 'bark':
         this.tone('sawtooth', 300, 150, 0.15, 0.1 * v);
+        break;
+      case 'static':
+        // A short crackle of radio « friture »: band-passed noise and two tiny clicks.
+        this.noiseBurst(0.07, 0.16 * v, 'bandpass', 2400 * p);
+        this.noiseBurst(0.02, 0.2 * v, 'highpass', 5000, t + 0.02 + Math.random() * 0.03);
+        break;
+      case 'knock1':
+        this.tone('sine', 120 * p, 62 * p, 0.12, 0.55 * v);
+        this.noiseBurst(0.06, 0.22 * v, 'lowpass', 520 * p);
+        break;
+      case 'pipe':
+        // A knock in the old radiator pipe: metallic, ringing, slightly out of tune.
+        this.tone('sine', 410 * p, 400 * p, 0.5, 0.16 * v);
+        this.tone('sine', 1130 * p, 1122 * p, 0.3, 0.07 * v);
+        this.tone('triangle', 96 * p, 70 * p, 0.08, 0.3 * v);
+        this.noiseBurst(0.04, 0.12 * v, 'bandpass', 1800 * p);
+        break;
+      case 'tooth':
+        this.tone('square', 2400 * p, 1800 * p, 0.02, 0.05 * v);
+        this.noiseBurst(0.025, 0.1 * v, 'highpass', 4000);
+        break;
+      case 'scratch':
+        this.noiseBurst(0.45, 0.07 * v, 'bandpass', 3200 * p);
+        this.noiseBurst(0.3, 0.05 * v, 'bandpass', 2100 * p, t + 0.2);
+        break;
+      case 'stitch':
+        this.tone('square', 1900 * p, 900 * p, 0.025, 0.06 * v);
+        this.tone('triangle', 150 * p, 70 * p, 0.06, 0.25 * v, t + 0.01);
+        this.noiseBurst(0.03, 0.12 * v, 'highpass', 3500, t + 0.005);
+        break;
+      case 'cough':
+        // Two dry, muffled bursts: « khh — khh ».
+        this.noiseBurst(0.13, 0.38 * v, 'bandpass', 720 * p);
+        this.tone('sawtooth', 170 * p, 90 * p, 0.11, 0.05 * v);
+        this.noiseBurst(0.18, 0.32 * v, 'bandpass', 560 * p, t + 0.2);
+        this.tone('sawtooth', 150 * p, 80 * p, 0.14, 0.045 * v, t + 0.2);
+        break;
+      case 'bird':
+        // Two quick rising chirps, the second one a little higher, and a falling tail.
+        this.tone('sine', 2300 * p, 3400 * p, 0.06, 0.07 * v);
+        this.tone('sine', 2600 * p, 3900 * p, 0.05, 0.06 * v, t + 0.09);
+        this.tone('sine', 3600 * p, 2500 * p, 0.09, 0.04 * v, t + 0.16);
+        break;
+      case 'thread':
+        this.tone('sawtooth', 260 * p, 820 * p, 0.38, 0.035 * v);
+        this.noiseBurst(0.38, 0.09 * v, 'bandpass', 2600 * p);
+        break;
+      case 'buzz':
+        // A phone vibrating on a wooden desk.
+        [0, 0.12, 0.24, 0.5, 0.62, 0.74].forEach((d) => this.tone('sawtooth', 58, 56, 0.1, 0.09 * v, t + d));
         break;
       case 'baa': {
         const o = this.osc('sawtooth', 380 * p, t);

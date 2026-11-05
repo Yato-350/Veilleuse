@@ -1,0 +1,31 @@
+# Lot 8 (§ 2.7 T6, § 3.8): corridor, stage 0. The overheard nurse now starts with « Le grand frère qui toussait ? On l'a
+# renvoyé. Pauvre gamin. »; then Noa coughs and the narrator has an ordinary reason (« La poussière de papier,
+# sûrement. »), Mina: « Mets ta main devant ta bouche ! ». The first taped drawing: the little blue figure far from a
+# door with a window. The corridor's paper nurse: « Suis les dessins. »
+query: debug=script&name=c3_voix&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+ArrowRight:500
+zuntil: SAW('Pauvre gamin')
+shot:nurse
+zuntil: SAW('poussière de papier')
+shot:toux
+zuntil: IDLE()
+assert: SAW('Mets ta main devant ta bouche')
+go:29/3
+ArrowUp
+interact:dessin_0
+zuntil: SAW('Très loin de lui')
+shot:dessin0
+zuntil: IDLE()
+go:40/4
+ArrowUp
+interact:nadia_1_0
+zuntil: SAW('Suis les dessins')
+shot:nadia1
+zuntil: IDLE()

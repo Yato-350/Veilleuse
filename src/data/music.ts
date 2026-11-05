@@ -153,11 +153,15 @@ const LULLABY_B = [
 ].join(' | ');
 
 const LULLABY = join(LULLABY_A, LULLABY_B);
+/** The leitmotif's melody as a tracker pattern (the music-box teeth of chapter 6 play it note by note). */
+export const LULLABY_PATTERN = LULLABY;
 const CH_A = ['C', 'G', 'Am', 'G', 'C', 'G', 'G7', 'C'];
 const CH_B = ['F', 'Dm', 'G7', 'C', 'F', 'Dm', 'G7', 'C'];
 const CH_LULLABY = [...CH_A, ...CH_B];
 /** Night shift / Le Réveil (bonus chapter): A minor. */
 const GARDE_CHORDS = ['Am', 'F', 'C', 'G', 'Am', 'F', 'Dm', 'E'];
+/** La Vitre (chapter 5): the lullaby's chords in C minor (harmonic: G major on the dominant), spelled for chord(). */
+const VITRE_CHORDS = ['Cm', 'G', 'G#', 'G', 'Cm', 'G', 'G7', 'Cm', 'Fm', 'Fm', 'G7', 'Cm', 'Fm', 'G#', 'G7', 'Cm'];
 
 /** Same melody in 4/4 (8 eighth-note steps per bar): each 3/4 bar stretched with a dotted feel. */
 const LULLABY_44_A = [
@@ -183,6 +187,12 @@ const LULLABY_44_B = [
 ].join(' | ');
 
 const ch = (inst: Channel['inst'], pattern: string, o: Omit<Channel, 'inst' | 'pattern'> = {}): Channel => ({ inst, pattern, ...o });
+/** Replaces whole bars of a pattern with rests (a voice that cuts out, like a bad phone line). */
+const dropBars = (p: string, bars: number[]): string =>
+  p
+    .split(' | ')
+    .map((b, i) => (bars.includes(i) ? rest(b.split(/\s+/).filter(Boolean).length) : b))
+    .join(' | ');
 
 // ---------------------------------------------------------------------------
 // Tracks
@@ -684,7 +694,315 @@ export const TRACKS: Record<string, Track> = {
       ch('hat', drums('x . x . x . x . x . x . x . x .', 8), { vol: 0.08 }),
     ],
   },
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Chapter 4 « La Maison Cousue »
+  // -------------------------------------------------------------------------------------------------------------------
+
+  /**
+   * La Maison Cousue (the felt layer) — the lullaby on a music box that has been mended: two combs out of tune with
+   * each other (one flat, one sharp, so every note beats), a felt-muffled waltz bass, the cuckoo clock ticking once a
+   * bar. At the very end the tune lands one semitone off, and starts again as if nothing happened. 16 bars 3/4.
+   */
+  maison: {
+    bpm: 62,
+    stepsPerBeat: 2,
+    vol: 0.8,
+    channels: [
+      ch('musicbox', LULLABY.replace(/C5 - - - - -$/, 'C#5 - - - - -'), { vol: 0.5, reverb: 0.6, detune: -24 }),
+      ch('musicbox', transpose(LULLABY, 12), { vol: 0.07, reverb: 0.8, detune: 33 }),
+      ch('pad', padLine(CH_LULLABY, 3, 6), { vol: 0.12, reverb: 0.7, detune: 16 }),
+      ch('triangle', figure(CH_LULLABY, 2, 'R - - 5 - -'), { vol: 0.28 }),
+      ch('bell', rep('G6 . . . . .', 16), { vol: 0.035, reverb: 0.3 }),
+    ],
+  },
+
+  /**
+   * La Maison Cousue, the ballpoint nights — the same lullaby as if heard through a phone held at arm's length: thin
+   * and nasal, an octave up, cutting out for whole bars (a bad line), a hiss under it, the fridge humming. 16 bars 3/4.
+   */
+  maison_nuit: {
+    bpm: 54,
+    stepsPerBeat: 2,
+    vol: 0.7,
+    channels: [
+      ch('pulse12', dropBars(transpose(LULLABY, 12), [3, 6, 7, 11, 14]), { vol: 0.07, detune: -14 }),
+      ch('pulse12', dropBars(transpose(LULLABY, 12), [0, 1, 2, 4, 5, 8, 9, 10, 12, 13, 15]), { vol: 0.035, detune: 22 }),
+      ch('hat', rep('x x x x x x', 16), { vol: 0.012 }),
+      ch('sine', rep('C3 - - - - -', 16), { vol: 0.07 }),
+      ch('pad', padLine(CH_LULLABY.map(() => 'Am'), 2, 6), { vol: 0.05, detune: -8 }),
+    ],
+  },
+
+  /**
+   * La Couseuse — a sewing machine that never stops: needle ticks in sixteenths with a stutter, the pedal on the kick,
+   * and over it the lullaby in C minor on a detuned music box that skips like a stuck record (the same bar, again,
+   * again — one night after another). 8 bars 4/4.
+   */
+  couseuse: {
+    bpm: 132,
+    stepsPerBeat: 4,
+    vol: 0.72,
+    channels: [
+      ch(
+        'musicbox',
+        join(
+          'Eb5 - - - . . D5 - C5 - - - . . . .',
+          'Eb5 - - - . . D5 - C5 - - - . . . .',
+          'Eb5 - - - . . D5 - C5 - - - D5 - Eb5 -',
+          'G5 - - - - - - - . . . . . . . .',
+          'Ab5 - - - G5 - Eb5 - - - - - D5 - - -',
+          'Ab5 - - - G5 - Eb5 - - - - - D5 - - -',
+          'C5 - - - Bb4 - C5 - D5 - - - Eb5 - D5 -',
+          'C5 - - - - - - - . . . . B4 - - -',
+        ),
+        { vol: 0.32, reverb: 0.55, detune: -38 },
+      ),
+      ch('musicbox', transpose(rep('Eb6 . . . . . . . . . . . D6 . . .', 8), 0), { vol: 0.07, reverb: 0.8, detune: 30 }),
+      ch('pulse12', rep('G6 . G6 G6 G6 . G6 G6 G6 . G6 G6 G6 . G6 .', 8), { vol: 0.035 }),
+      ch('organ', padLine(['Cm', 'Cm', 'Ab', 'Ab', 'Fm', 'Fm', 'G', 'G'].map(fixFlat), 3, 16), { vol: 0.07, detune: 14 }),
+      ch('bass', figure(['Cm', 'Cm', 'Ab', 'Ab', 'Fm', 'Fm', 'G', 'G'].map(fixFlat), 2, 'R . R . R . R . R . R . 8 . R .'), { vol: 0.36 }),
+      ch('kick', drums('X . . . . . x . X . . . . . . .', 8), { vol: 0.42 }),
+      ch('snare', drums('. . . . x . . . . . . . x . . x', 8), { vol: 0.16 }),
+      ch('hat', drums('x . x x x . x x x . x x x . x x', 8), { vol: 0.11 }),
+    ],
+  },
+
+  /**
+   * Le Petit Homme de la Maison — a small man's march in 3/4: the lullaby in C minor, low on the piano; very faint and
+   * out of tune above it, the same lullaby in major on a music box (the nightlight he will not let go of); knocks on
+   * the kick, one, two, three, then nothing; a heartbeat. 16 bars 3/4.
+   */
+  petit_homme: {
+    bpm: 100,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch('piano', transpose(toHarmonicMinor(LULLABY), -12), { vol: 0.34, reverb: 0.4 }),
+      ch('musicbox', transpose(LULLABY, 12), { vol: 0.06, reverb: 0.85, detune: 48 }),
+      ch('organ', padLine(['Cm', 'G', 'Ab', 'G', 'Cm', 'G', 'G7', 'Cm', 'Fm', 'Ab', 'G7', 'Cm', 'Fm', 'Db', 'G7', 'Cm'].map(fixFlat), 3, 6), {
+        vol: 0.08,
+        detune: -12,
+      }),
+      ch('bass', figure(['Cm', 'G', 'Ab', 'G', 'Cm', 'G', 'G7', 'Cm', 'Fm', 'Ab', 'G7', 'Cm', 'Fm', 'Db', 'G7', 'Cm'].map(fixFlat), 2, 'R - - L - -'), {
+        vol: 0.42,
+      }),
+      ch('kick', drums(join('X . . . . .', 'X . X . . .', 'X . X . X .', '. . . . . .'), 4), { vol: 0.5 }),
+      ch('triangle', rep('C2 . C2 . . .', 16), { vol: 0.28 }),
+      ch('snare', drums('. . . . . x', 16), { vol: 0.1 }),
+    ],
+  },
+
+  /**
+   * La Marée Blanche, the beach of before — the lullaby in major, too high and too clean, like a photo left in the
+   * sun: a music box an octave up, a thin pad, harp-like arpeggios, and no bass at all (nothing to stand on). The sea
+   * breathes in and out every two bars; gulls cry far away, never on the beat. 16 bars 3/4.
+   */
+  plage: {
+    bpm: 64,
+    stepsPerBeat: 2,
+    vol: 0.72,
+    channels: [
+      ch('musicbox', transpose(LULLABY, 12), { vol: 0.34, reverb: 0.75 }),
+      ch('pluck', figure(CH_LULLABY, 5, '. 3 5 8 5 3'), { vol: 0.06, reverb: 0.6, pan: 0.3 }),
+      ch('pad', padLine(CH_LULLABY, 4, 6), { vol: 0.06, reverb: 0.8, detune: 6 }),
+      ch('breath', rep(join(hold('C4', 6), rest(6)), 8), { vol: 0.07 }),
+      ch(
+        'gull',
+        join(
+          rest(6),
+          '. . . . E6 -',
+          rest(6),
+          rest(6),
+          '. D6 - . . .',
+          rest(6),
+          rest(6),
+          rest(6),
+          rest(6),
+          '. . F6 - . .',
+          rest(6),
+          '. . . . . .',
+          'E6 - . . D6 -',
+          rest(6),
+          rest(6),
+          '. . . . . .',
+        ),
+        { vol: 0.05, reverb: 0.8, pan: -0.4 },
+      ),
+    ],
+  },
+
+  /**
+   * Le sas — almost no music: the air of the ventilation that never stops, a breath that comes too close to the
+   * microphone and sometimes holds (two bars of nothing), a monitor beeping somewhere, and a few notes of the lullaby
+   * left far apart, as if someone tried to remember it through a mask. 16 bars 3/4.
+   */
+  sas: {
+    bpm: 54,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch('air', hold('C3', 96), { vol: 0.16 }),
+      ch('breath', join(hold('A3', 9), rest(3), hold('A3', 9), rest(3), hold('A3', 9), rest(3), rest(12), hold('A3', 9), rest(3), hold('A3', 7), rest(5), rest(12), hold('A3', 9), rest(3)), { vol: 0.09 }),
+      ch('pulse12', rep('A6 . . . . . . . . . . .', 8), { vol: 0.02 }),
+      ch(
+        'musicbox',
+        join(
+          'E5 - - . . .',
+          rest(6),
+          '. . . D5 - -',
+          rest(6),
+          'C5 - - . . .',
+          rest(6),
+          rest(6),
+          '. . . . . G4',
+          'A5 - - . . .',
+          rest(6),
+          '. . . G5 - -',
+          rest(6),
+          'E5 - - . . .',
+          rest(6),
+          rest(6),
+          rest(6),
+        ),
+        { vol: 0.16, reverb: 0.9, detune: -18 },
+      ),
+      ch('pad', padLine(['Am', 'Am', 'F', 'F', 'C', 'C', 'G', 'G', 'Am', 'Am', 'F', 'F', 'Dm', 'Dm', 'E', 'E'], 3, 6), { vol: 0.035, reverb: 0.7, detune: -10 }),
+    ],
+  },
+
+  /**
+   * La Vitre — the lullaby on a piano in C minor, behind glass: muffled in the low register, with glass harmonics high
+   * above, a little out of tune with each other. Noa's breath fogs it every two bars; on the other side, two knocks,
+   * « je suis là », every fourth bar. A slow, heavy waltz bass. 16 bars 3/4.
+   */
+  vitre: {
+    bpm: 80,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch('piano', transpose(toHarmonicMinor(LULLABY), -12), { vol: 0.3, reverb: 0.5 }),
+      ch('bell', transpose(dropBars(toHarmonicMinor(LULLABY), [1, 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15]), 12), { vol: 0.05, reverb: 0.9, detune: 28 }),
+      ch('organ', padLine(VITRE_CHORDS, 3, 6), { vol: 0.07, reverb: 0.6, detune: -8 }),
+      ch('bass', figure(VITRE_CHORDS, 2, 'R - - 5 - -'), { vol: 0.34 }),
+      ch('breath', rep(join(hold('G3', 6), rest(6)), 8), { vol: 0.08 }),
+      ch('kick', drums(join(rest(6), rest(6), rest(6), 'X . X . . .'), 4), { vol: 0.32 }),
+      ch('hat', drums('. . x . x .', 16), { vol: 0.05 }),
+    ],
+  },
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Chapter 6 « Le Ventre de Dodo »
+  // -------------------------------------------------------------------------------------------------------------------
+
+  /**
+   * Le Ventre de Dodo — inside the plush: a heartbeat heard through cotton (lub-dub, then a long rest), and the lullaby
+   * on a music box with holes in it — whole bars missing, as if the cylinder had lost its pins — in C minor, far away,
+   * a little flat. Under it, a drone, and the cotton breathing. 16 bars 3/4.
+   */
+  ventre: {
+    bpm: 58,
+    stepsPerBeat: 2,
+    vol: 0.8,
+    channels: [
+      ch('kick', drums(join('X . x . . .', rest(6)), 8), { vol: 0.26 }),
+      ch('musicbox', dropBars(toMinor(LULLABY), [1, 3, 4, 6, 9, 10, 12, 13, 15]), { vol: 0.24, reverb: 0.9, detune: -22 }),
+      ch('musicbox', transpose(dropBars(toMinor(LULLABY), [0, 2, 5, 7, 8, 11, 14, 15]), -12), { vol: 0.07, reverb: 0.95, detune: 26 }),
+      ch('pad', padLine(['Cm', 'Cm', 'G#', 'G#', 'Fm', 'Fm', 'G', 'G', 'Cm', 'Cm', 'G#', 'G#', 'Fm', 'G', 'Cm', 'Cm'], 2, 6), { vol: 0.09, reverb: 0.8, detune: -12 }),
+      ch('breath', rep(join(hold('E3', 9), rest(3)), 8), { vol: 0.05 }),
+    ],
+  },
+
+  /**
+   * L'appel — the corridor of the 41 doors: almost nothing. The air of a dark room, a phone vibrating on a wooden
+   * desk (two buzzes, a pause, two buzzes… then it stops for a long time), one high note now and then, like a
+   * second ticking past. 16 bars 4/4.
+   */
+  appel: {
+    bpm: 60,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch('air', hold('C3', 128), { vol: 0.1 }),
+      ch(
+        'saw',
+        join(
+          'A#1 A#1 . A#1 A#1 . . .',
+          rest(8),
+          'A#1 A#1 . A#1 A#1 . . .',
+          rest(8),
+          'A#1 A#1 . A#1 A#1 . . .',
+          rest(8),
+          rest(8),
+          rest(8),
+          rest(8),
+          'A#1 A#1 . A#1 A#1 . . .',
+          rest(8),
+          rest(8),
+          rest(8),
+          rest(8),
+          rest(8),
+          rest(8),
+        ),
+        { vol: 0.07 },
+      ),
+      ch('bell', join('. . . . . . . .', 'E6 . . . . . . .', rest(8), rest(8), '. . . . D6 . . .', rest(8), rest(8), rest(8), rest(8), '. . C6 . . . . .', rest(8), rest(8), rest(8), rest(8), '. . . . . . B5 .', rest(8)), {
+        vol: 0.035,
+        reverb: 0.95,
+        detune: -15,
+      }),
+      ch('sine', rep(join(hold('C2', 8), rest(8)), 8), { vol: 0.05 }),
+    ],
+  },
+
+  /**
+   * Dodo, the final battle of version 2 — the dark waltz of version 1.1 turned inside out: slower, heavier, a heartbeat
+   * on the kick (lub-dub), the lullaby in harmonic minor on a music box that loses bars, and the same tune echoed one
+   * step late an octave up on a thin pulse, out of tune (a voice repeating what another says). An organ breathing the
+   * chords; a bass that drags. 32 bars 3/4.
+   */
+  dodo_v2: {
+    bpm: 112,
+    stepsPerBeat: 2,
+    vol: 0.72,
+    channels: [
+      ch('musicbox', join(dropBars(toHarmonicMinor(LULLABY), [3, 7, 11]), dropBars(toHarmonicMinor(LULLABY), [1, 4, 6, 9, 12, 14, 15])), { vol: 0.3, reverb: 0.5, detune: -30 }),
+      ch(
+        'pulse12',
+        join(transpose(toHarmonicMinor(LULLABY), 12), transpose(toHarmonicMinor(LULLABY), 12))
+          .split(' ')
+          .map((_tok, i, a) => (i === 0 ? '.' : a[i - 1]!))
+          .join(' '),
+        { vol: 0.035, detune: 38 },
+      ),
+      ch('organ', rep(padLine(['Cm', 'G', 'G#', 'G', 'Cm', 'G', 'G7', 'Cm', 'Fm', 'G#', 'G7', 'Cm', 'Fm', 'C#', 'G7', 'Cm'], 3, 6), 2), { vol: 0.08, detune: -10 }),
+      ch('bass', rep(figure(['Cm', 'G', 'G#', 'G', 'Cm', 'G', 'G7', 'Cm', 'Fm', 'G#', 'G7', 'Cm', 'Fm', 'C#', 'G7', 'Cm'], 2, 'R - - - 5 -'), 2), { vol: 0.42 }),
+      ch('kick', drums('X . x . . .', 32), { vol: 0.46 }),
+      ch('snare', drums(join(rest(6), rest(6), rest(6), '. . . . x .'), 8), { vol: 0.12 }),
+      ch('hat', drums('. . x . . x', 32), { vol: 0.05 }),
+    ],
+  },
+
+  /**
+   * Faux générique — the fake credits of the false dawn (§ 3.9): the ending's lullaby, but too sweet. A major third
+   * higher, a little too fast, music box and piano in octaves over a bright pad, and a little bell ringing the same
+   * high note on every other bar, like a toy that loops. Written to be heard backwards as well (audio.reverse, while
+   * the credits rewind): long held notes that swell in, almost nothing struck. 16 bars 3/4.
+   */
+  faux_generique: {
+    bpm: 80,
+    stepsPerBeat: 2,
+    vol: 0.82,
+    channels: [
+      ch('musicbox', transpose(LULLABY, 4), { vol: 0.46, reverb: 0.6 }),
+      ch('piano', transpose(LULLABY, -8), { vol: 0.2, reverb: 0.55 }),
+      ch('pad', padLine(CH_LULLABY.map((c) => transposeChord(c, 4)), 3, 6), { vol: 0.24, reverb: 0.75 }),
+      ch('triangle', figure(CH_LULLABY.map((c) => transposeChord(c, 4)), 2, 'R - - - - -'), { vol: 0.24 }),
+      ch('bell', rep(join('G#6 - - - - -', rest(6)), 8), { vol: 0.05, reverb: 0.9 }),
+    ],
+  },
 };
+
 
 /** Spells flats as sharps so chord() can parse them (Bb → A#). */
 function fixFlat(sym: string): string {

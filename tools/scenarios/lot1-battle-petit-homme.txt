@@ -1,0 +1,27 @@
+# Lot 1 (chapter 4 battles): Le Petit Homme de la Maison, spared. A fear word starts phase 2 (the black arena, only the
+# nightlight's cone shows the projectiles; Mina n°366 embroiders a thread of light on turn 3), then Tristesse ×2 and
+# « rendre »: his arms open, the light falls, the stitches of his mouth pop.
+query: debug=script&name=petit_homme&lang=fr
+god
+wait:1500
+auto
+write:peur
+auto
+assert: window.__veilleuse.game.top.bgKind === 'noir'
+write:tristesse
+until:dodge
+wait:1500
+assert: window.__veilleuse.game.top.bw.dark === true
+shot:dark
+auto
+write:tristesse
+auto
+write:rendre
+auto
+assert: window.__veilleuse.game.top.enemies[0].spareable
+menu:3
+choose:0
+wait:2000
+shot:open
+auto
+assert: window.__veilleuse.G.state.flags.debug_battle === 'spare:petit_homme'

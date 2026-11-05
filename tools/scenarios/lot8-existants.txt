@@ -1,0 +1,25 @@
+# Lot 8 (checklist, existing chapter 3 clues kept as they are): stage 2 of the corridor, the night nurse's voice
+# (« Ton frère va te l'apporter, c'est ça ? », T4 / T8, the soft version's proof); room 304, the nightlight « n'a jamais
+# été branchée » (T4: Maman put it there, after), then the dissolution and Dodo's reveal, far too kind (« Tu vois ? Tu
+# peux partir quand tu veux. », T1).
+query: debug=script&name=c3_dessin&stage=2&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.IDLE = () => !V.dialogue.busy && V.world.busy === 0
+eval: (delete V.G.state.flags.c3_heard_2, V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => (V.G.state.cleared.push(e.id), V.world.removeEntity(e.id))), 1)
+go:29/4
+ArrowRight:700
+log
+zuntil: SAW('Ton frère va te l\'apporter, c\'est ça ?')
+zuntil: IDLE()
+eval: (Object.assign(V.G.state.flags, { c3_door304: true, c3_mina_erased: true, c3_loop: 3, c3_304_in: true }), V.G.state.party = [], V.world.setFollower(null), 1)
+load:chambre_304/door
+wait:600
+interact:r304_light
+zuntil: SAW('Elle n\'a jamais été branchée.')
+zuntil: SAW('Tu peux partir quand tu veux.')
+shot:partir

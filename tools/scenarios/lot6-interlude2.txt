@@ -1,0 +1,60 @@
+# Lot 6 (docs/HISTOIRE.md § 3.7): Interlude II « La porte », 3:33, by walking and pressing Z. Entering the hallway:
+# three knocks in Mina's wall, then nothing. The bathroom: the reflection with its eyes closed. Dodo in the corridor:
+# his paws are clean. The TV wakes up (one frame of the video jumps). Then, in a new game where the fake credits
+# were already reached (meta.fauxGenerique), Dodo speaks in the real world with his blip and no portrait.
+query: debug=script&name=interlude2_corridor&lang=fr
+wait:800
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: window.WHO = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) { SEEN.push(t); WHO.push([V.dialogue.speaker?.name ?? '', V.dialogue.portrait]); } }, 50), 1)
+eval: window.BY = (s) => WHO[SEEN.findIndex((t) => t.includes(s))] ?? []
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+auto
+assert: V.G.state.map === 'appartement_nuit' && SAW('Trois coups. Dans le mur de Mina.') && SAW('Puis rien.') && V.G.state.flags.i2_coups === true
+# The bathroom
+go:14/3
+ArrowUp:80
+KeyZ
+auto
+choose:0
+auto
+assert: SAW('Dans le miroir, ton reflet a les yeux fermés.') && V.G.state.flags.i2_reflet === true
+shot:reflet
+# The TV
+go:16/5
+ArrowRight:600
+wait:300
+zuntil: V.scene() === 'WorldScene' && !V.dialogue.busy && V.world.busy === 0
+assert: V.G.state.flags.i2_tv === true && SAW('Au milieu, une image a sauté.')
+# Maman's door, twice
+go:18/3
+ArrowUp:80
+KeyZ
+auto
+KeyZ
+auto
+assert: SAW('Il n\'y a pas de serrure.')
+# Dodo in the corridor
+go:11/5
+ArrowUp:80
+KeyZ
+auto
+assert: SAW('Ses pattes sont propres.') && V.G.state.flags.i2_dodo_back === true
+# Back to bed: Dodo speaks (NG+: the fake credits were seen in an earlier run)
+eval: (V.G.state.flags.i2_voicemail = true, V.G.meta.fauxGenerique = 1, 1)
+go:6/3
+ArrowUp:120
+KeyZ
+waitfor: V.G.state.map === 'chambre'
+auto
+go:1/5
+ArrowUp:80
+KeyZ
+zuntil: V.dialogue.choices
+shot:dodo-reel
+assert: SAW('Tu sais ce qui se passe quand on se réveille') && SAW('ça ne s\'arrête pas au générique')
+assert: BY('On perd tout.')[0] === 'Dodo' && BY('On perd tout.')[1] === null && BY('Dors, Noa.')[0] === 'Dodo' && BY('Dors, Noa.')[1] === null
+choose:0
+zuntil: V.G.state.chapter === 3
