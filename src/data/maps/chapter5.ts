@@ -531,7 +531,7 @@ const CHAMBRE_VERRE: MapDef = {
     P('prop_nightstand', 6, 4, { script: C5.nightstand }),
     WALL('prop_c5_dessins_vitre', 15, 2, -2, { w: 3, script: C5.drawingsOnGlass }),
     // --- The Vitre.
-    P('prop_c5_porte_verre_ouverte', 11, 10, { w: 2, h: 2, id: 'porte_vitre', script: C5.vitreDoor }),
+    P('prop_c5_porte_verre_ouverte', 11, 10, { w: 2, h: 2, id: 'porte_vitre', solid: false, script: C5.vitreDoor }),
     WALL('prop_c5_semaine', 9, 11, -6, { id: 'semaine', script: C5.weekSheet }),
     // --- The antechamber.
     P('prop_c5_lavabo', 2, 12, { script: C5.sink }),
