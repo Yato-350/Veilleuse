@@ -1,0 +1,12 @@
+# Regression: in the glass room (chapter 5), the open glass door must not block the doorway. Noa walks from the
+# entrance up through the door to the drawing table, then the visit starts at the table (no teleport, no eval).
+query: debug=script&name=chapter5_visite&lang=fr
+auto
+wait:300
+ArrowUp:2600
+wait:300
+assert: Math.floor(window.__veilleuse.world.player.y / 16) < 10
+KeyZ
+wait:600
+assert: window.__veilleuse.dialogue.open === true || window.__veilleuse.dialogue.pages.length > 0
+shot:table
