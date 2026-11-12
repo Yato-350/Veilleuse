@@ -112,7 +112,7 @@ function boot(): void {
     G.state.hp = Math.max(1, Math.min(G.state.hp, maxHp(G.state)));
     world.busy = 0;
     game.replace(world);
-    world.load(s.map, { x: s.x, y: s.y, dir: s.dir });
+    world.load(s.map, { x: s.x, y: s.y, dir: s.dir }, { unstick: true });
     fx.setFade(1);
     await fx.fadeIn(40);
   };

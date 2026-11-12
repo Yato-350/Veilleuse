@@ -1,0 +1,27 @@
+# Regression: saving while standing right above an NPC must not put Noa inside it on « Continuer ». Thin Dodo (the
+# felt save point of chapter 4) stands at (11, 16) with a small collision box at his feet: Noa walks down into him
+# from (11, 15) and stops with his feet still in row 16. The save used to keep that tile, Dodo's own; continuing then
+# placed Noa inside Dodo, and every step was blocked. Noa must come back next to Dodo, free to walk.
+query: debug=script&name=chapter4_retour&lang=fr
+wait:1500
+auto
+interact:mina_chaise
+auto
+go:11/15
+ArrowDown:700
+wait:200
+assert: Math.floor((window.__veilleuse.world.player.y - 2) / 16) === 16 && Math.floor(window.__veilleuse.world.player.x / 16) === 11
+KeyZ
+auto
+choose:0
+auto
+assert: window.__veilleuse.readSave().map === 'maison_feutre'
+eval: window.__veilleuse.flow.continueGame().then(() => 1)
+wait:1500
+assert: !window.__veilleuse.world.blocked(window.__veilleuse.world.player, window.__veilleuse.world.player.x, window.__veilleuse.world.player.y)
+assert: Math.floor(window.__veilleuse.world.player.x / 16) === 11 && Math.floor(window.__veilleuse.world.player.y / 16) === 15
+eval: (window.__y0 = window.__veilleuse.world.player.y, 1)
+ArrowUp:400
+wait:100
+assert: window.__veilleuse.world.player.y < window.__y0 - 4
+shot:libre
