@@ -128,9 +128,10 @@ contrôles se placent sur les côtés.
 
 **Application Android (APK)** : télécharger `Veilleuse-x.y.z.apk` dans la
 [dernière version](https://github.com/Yato-350/Veilleuse/releases/latest), l'ouvrir sur le téléphone et autoriser
-l'installation depuis cette source. L'APK de la version 2.0 n'est pas encore publié (voir la
-[feuille de route](docs/ROADMAP.md)) ; en attendant, la 2.0 se joue dans le navigateur et s'installe comme
-application (PWA) sur Android, iPhone et iPad. L'APK est construit par le workflow
+l'installation depuis cette source. Si la version 1.0 est déjà installée, la désinstaller d'abord (elle était
+signée avec une clé de test) ; à partir de la 2.0, chaque nouvelle version s'installe par-dessus la précédente. Le
+jeu se joue aussi dans le navigateur et s'installe comme application (PWA) sur Android, iPhone et iPad. L'APK est
+construit par le workflow
 [Android APK](.github/workflows/android.yml) (Capacitor) : *Actions → Android APK → Run workflow*, avec un numéro de
 version (`v2.0.0`…) pour publier une nouvelle *Release*, ou vide pour un simple test. Chaque version publie aussi un
 fichier `.aab` pour le Google Play Store.
