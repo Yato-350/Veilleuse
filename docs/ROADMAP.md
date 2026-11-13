@@ -72,8 +72,8 @@ production au § 7). Durée : 3 h 30 à 4 h 30.
   `&etoiles=N`). Les deux cas durs : La Couseuse et Le Petit Homme de la Maison (chapitre 4), avec les Étoiles du
   début du chapitre et le plaid au lieu de la cape de Mina. À surveiller aussi : la phase 4 du combat final ne doit pas
   devenir triviale avec beaucoup d'Étoiles.
-- ⏳ Publication de la version Android 2.0.0 (APK et `.aab`) : reportée par l'auteur, elle attend les secrets de
-  signature du dépôt (voir le README, « Clé de signature Android »)
+- ✅ Publication de la version Android 2.0.0 (APK et `.aab`), signée avec la clé stable des secrets du dépôt (voir
+  le README, « Clé de signature Android ») : les versions suivantes s'installeront par-dessus
 - ⏳ Écoute de la musique : les onze morceaux v2 (maison, maison_nuit, couseuse, petit_homme, plage, sas, vitre,
   ventre, appel, dodo_v2, faux_generique) et les effets de musique tenue ou inversée n'ont été vérifiés que par
   `tools/music-check.mjs` (boucles et tessiture), pas encore écoutés

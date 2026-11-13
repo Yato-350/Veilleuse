@@ -75,7 +75,7 @@ export class WorldScene implements Scene {
   }
 
   /** Loads a map and places the player at a spawn. */
-  load(mapId: string, spawn: string | SpawnDef, opts: { keepMusic?: boolean } = {}): void {
+  load(mapId: string, spawn: string | SpawnDef, opts: { keepMusic?: boolean; unstick?: boolean } = {}): void {
     const map = MAPS[mapId];
     if (!map) throw new Error(`Unknown map ${mapId}`);
     this.map = map;
@@ -171,6 +171,7 @@ export class WorldScene implements Scene {
       e.brain = enemyBrain(ed.wander ?? 2, this);
       this.entities.push(e);
     }
+    if (opts.unstick) this.unstick();
 
     this.particles.setMode(map.particles);
     this.playerLight = map.playerLight ?? 40;
@@ -187,6 +188,31 @@ export class WorldScene implements Scene {
     for (const t of map.triggers ?? []) if (rectsOverlap(this.player.box, this.trigRect(t))) this.triggersInside.add(t);
     this.warpLock = (map.warps ?? []).some((w) => !w.door && rectsOverlap(this.player.box, this.warpRect(w)));
     if (map.onEnter) void this.hooks.run(map.onEnter);
+  }
+
+  /**
+   * A save keeps a tile, rounded from where Noa stood: right above an NPC (talking to Dodo, the save point of chapter
+   * 4), it is the NPC's own tile, and continuing would put Noa inside it, unable to take a step. Moves Noa to the
+   * nearest free tile around, the one behind him first (where he came from).
+   */
+  private unstick(): void {
+    const p = this.player;
+    if (!this.blocked(p, p.x, p.y)) return;
+    const [vx, vy] = DIR_VEC[p.dir];
+    let best: { x: number; y: number } | null = null;
+    let bestD = Infinity;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const x = p.x + dx * TILE;
+        const y = p.y + dy * TILE;
+        const d = Math.hypot(x - (p.x - vx * 4), y - (p.y - vy * 4));
+        if (d < bestD && !this.blocked(p, x, y)) [best, bestD] = [{ x, y }, d];
+      }
+    }
+    if (!best) return;
+    p.x = best.x;
+    p.y = best.y;
+    if (this.follower) [this.follower.x, this.follower.y] = [p.x, p.y - 1];
   }
 
   get(id: string): Entity | undefined {

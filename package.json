@@ -1,6 +1,6 @@
 {
   "name": "veilleuse",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "private": true,
   "description": "Veilleuse — un RPG narratif en pixel art, dérangeant et psychologique, sur le deuil, les rêves et la culpabilité. Jouable dans le navigateur et sur mobile.",
   "type": "module",
