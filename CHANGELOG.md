@@ -2,6 +2,14 @@
 
 Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
+## [2.0.1] — 2026-11
+
+### Corrigé
+- **Sauvegarde** : après une sauvegarde faite juste au-dessus d'un personnage (en parlant à Dodo par le haut au
+  chapitre 4, ou par la sauvegarde automatique quand on quitte l'application), « Continuer » remettait Noa dans le
+  personnage, sans pouvoir faire un pas. Noa revient maintenant sur la case libre la plus proche, celle d'où il venait ;
+  les sauvegardes déjà coincées repartent aussi.
+
 ## [2.0.0] — 2026-11
 
 La deuxième version de l'histoire, « Il fait toujours nuit » : plus sombre, plus psychologique, toujours tendre. Le
