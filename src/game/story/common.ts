@@ -5,7 +5,8 @@ import type { Director } from '../director';
 import { flow } from '../flow';
 import type { PropDef, Script } from '../overworld/types';
 import { world } from '../overworld/world';
-import { G, deleteSave, maxHp, writeMeta } from '../state';
+import { G, deleteSave, inkRoute, maxHp, writeMeta } from '../state';
+import type { Entity } from '../overworld/entity';
 import { CreditsScene } from '../scenes/credits';
 import { ShopScene } from '../scenes/shop';
 import { setPageTitle } from '../meta';
@@ -171,3 +172,44 @@ export function isSilenceRoute(): boolean {
 /** Shorthand for a flag check in map conditions. */
 export const f = (name: string) => () => !!G.state.flags[name];
 export const nf = (name: string) => () => !G.state.flags[name];
+
+// ---------------------------------------------------------------------------------------------------------------------
+// The road of the ink: the inhabitants of the dream back away from Noa
+// ---------------------------------------------------------------------------------------------------------------------
+
+/** What the inhabitants say, the first time Noa talks to each of them on the road of the ink (in this order). */
+export const INK_FEAR: string[][] = [
+  ['Un pas en arrière, en te voyant arriver.', '« Ne me fais pas de mal. »'],
+  ['Un regard vers tes mains. Elles sont bleues jusqu\'aux poignets.', '« Monstre. »'],
+  ['« C\'est toi. Celui qui laisse des flaques partout. »'],
+  ['Un long silence. Puis, tout bas :', '« Les autres ne sont pas rentrés, hier soir. Tu sais pourquoi, toi. »'],
+  ['« On compte les absents, le soir. Ça prend de plus en plus longtemps. »'],
+  ['« Monstre. »', 'C\'est dit tout bas. Comme on dit un prénom.'],
+  ['« S\'il te plaît. Pas moi. »'],
+  ['Un regard vers la sortie. Un autre vers toi.', '« …Tu vas me faire pareil ? »'],
+  ['« On t\'a vu, sur le chemin. Tout le monde t\'a vu. »'],
+  ['« Tu sens l\'encre. Ça ne part pas au lavage, tu sais. »'],
+];
+
+/** Who never backs away: Noa's own (Dodo, Mina, Maman, the little girl in the hat), and Chaussette, who has her own words. */
+const NO_FEAR = /^(dodo|mina|maman|petite|bonnet|chaussette|noa)/;
+
+/**
+ * world.beforeTalk: on the road of the ink (inkRoute), the first time Noa talks to an inhabitant of a dream map, it backs
+ * away and says what it thinks of him; then its usual words follow. Once per inhabitant (flags encre_peur_<map>_<id>).
+ */
+export function inkFear(e: Entity): Script | null {
+  const map = world.map;
+  if (!map || map.world === 'real' || G.state.playerChar !== 'noa' || !inkRoute(G.state)) return null;
+  if (NO_FEAR.test(e.id) || (e.who && NO_FEAR.test(e.who))) return null;
+  const key = `encre_peur_${map.id}_${e.id}`;
+  if (G.state.flags[key]) return null;
+  return async (d) => {
+    const n = Object.keys(G.state.flags).filter((k) => k.startsWith('encre_peur_')).length;
+    G.state.flags[key] = true;
+    e.emote = { ch: '!', t: 0 };
+    audio.sfx('step', { pitch: 0.7, vol: 0.4 });
+    await d.wait(16);
+    await d.say(INK_FEAR[n % INK_FEAR.length]!);
+  };
+}

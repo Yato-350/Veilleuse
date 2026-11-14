@@ -10,7 +10,7 @@ import { ctx2d, makeCanvas } from '../../engine/sprite';
 import { WORLD_BG } from '../../engine/palette';
 import { MAPS } from '../../data/maps';
 import { hasSpr } from '../assets';
-import { G, setFlag } from '../state';
+import { G, inkRoute, setFlag, totalKills } from '../state';
 import { dialogue } from '../ui/dialogue';
 import { Entity } from './entity';
 import { Particles } from './particles';
@@ -64,6 +64,8 @@ export class WorldScene implements Scene {
   hideHud = false;
   /** Script run when the player talks to the follower (Mina). */
   followerTalk: Script | undefined;
+  /** Story hook: a script to play before talking to an NPC, or null (the inhabitants afraid of the road of the ink). */
+  beforeTalk: ((e: Entity) => Script | null) | undefined;
   frame = 0;
 
   get world(): string {
@@ -172,6 +174,7 @@ export class WorldScene implements Scene {
       this.entities.push(e);
     }
     if (opts.unstick) this.unstick();
+    this.spawnInkPuddles(map);
 
     this.particles.setMode(map.particles);
     this.playerLight = map.playerLight ?? 40;
@@ -499,17 +502,62 @@ export class WorldScene implements Scene {
       return;
     }
     if (target) {
-      if (target.kind === 'npc' && target.char) target.dir = opposite(p.dir);
-      void this.hooks.run(async (d) => {
-        if (target.interact) await target.interact(d);
-        else if (target.text) await d.say(target.text, target.who);
-      });
+      this.talkTo(target);
       return;
     }
     if (door) {
       const doors = (this.map.warps ?? []).filter((w) => w.door && w.x === door.x && w.y === door.y);
       this.doWarp(doors.find((w) => !w.cond || w.cond()) ?? door);
     }
+  }
+
+  /** Talks to (or looks at) an entity: NPCs turn to face Noa; the story may play something first (beforeTalk). */
+  private talkTo(target: Entity): void {
+    if (target.kind === 'npc' && target.char) target.dir = opposite(this.player.dir);
+    const before = target.kind === 'npc' ? (this.beforeTalk?.(target) ?? null) : null;
+    void this.hooks.run(async (d) => {
+      if (before) await before(d);
+      if (target.interact) await target.interact(d);
+      else if (target.text) await d.say(target.text, target.who);
+    });
+  }
+
+  /** An ink puddle on the floor of tile (tx, ty), under everything (k: which of the two shapes). */
+  addInkPuddle(tx: number, ty: number, k: number): void {
+    const e = new Entity(`flaque_${tx}_${ty}`, 'prop', tx * TILE + 8, ty * TILE + 13);
+    e.sprite = k % 2 ? 'prop_flaque_encre_2' : 'prop_flaque_encre';
+    e.rect = { x: tx * TILE, y: ty * TILE + 3, w: TILE, h: 10 };
+    e.solid = false;
+    e.shadow = false;
+    e.layer = -1;
+    e.variant = this.variant;
+    this.entities.push(e);
+  }
+
+  /**
+   * Ink that never dries (the road of the ink): a puddle where each overworld enemy was killed (G.state.inkSpots), and,
+   * while Noa kills nearly everyone (inkRoute), more stains along the paths of every dream map where creatures roam.
+   */
+  private spawnInkPuddles(map: MapDef): void {
+    if (map.world === 'real') return;
+    const spots: Array<[number, number]> = [...(G.state.inkSpots?.[map.id] ?? [])];
+    if (map.enemies?.length && inkRoute(G.state)) {
+      const want = spots.length + Math.min(10, 2 + Math.floor(totalKills(G.state) / 3));
+      const seed = [...map.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7);
+      const p = this.player;
+      for (let i = 0; spots.length < want && i < 300; i++) {
+        const tx = Math.floor(hash2(i, seed, 1) * this.tilemap.w);
+        const ty = Math.floor(hash2(i, seed, 2) * this.tilemap.h);
+        const cell = { x: tx * TILE, y: ty * TILE, w: TILE, h: TILE };
+        if (this.tilemap.solidAt(cell.x + 8, cell.y + 8)) continue;
+        if (Math.abs(p.x - (cell.x + 8)) < TILE * 3 && Math.abs(p.y - (cell.y + 8)) < TILE * 3) continue;
+        if (spots.some(([x, y]) => Math.abs(x - tx) < 2 && Math.abs(y - ty) < 2)) continue;
+        if (this.entities.some((e) => e.kind === 'prop' && rectsOverlap(e.box, cell))) continue;
+        if ((map.warps ?? []).some((wp) => rectsOverlap(this.warpRect(wp), cell))) continue;
+        spots.push([tx, ty]);
+      }
+    }
+    spots.forEach(([tx, ty], k) => this.addInkPuddle(tx, ty, k));
   }
 
   private interact(): void {
@@ -528,12 +576,7 @@ export class WorldScene implements Scene {
     }
     const target = candidates.sort((a, b) => dist(a, pt) - dist(b, pt))[0];
     if (target) {
-      // NPCs turn to face the player.
-      if (target.kind === 'npc' && target.char) target.dir = opposite(this.player.dir);
-      void this.hooks.run(async (d) => {
-        if (target.interact) await target.interact(d);
-        else if (target.text) await d.say(target.text, target.who);
-      });
+      this.talkTo(target);
       return;
     }
     // Door warps (several conditional warps may share a tile: the first whose condition passes wins).

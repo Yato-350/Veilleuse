@@ -1,0 +1,49 @@
+# The road of the ink (inkRoute: four killed or more, almost nobody spared). Noa kills the cloud of the meadow for
+# real: its ink stays where it fell (G.state.inkSpots), and is still there when the map is loaded again, with more
+# stains along the paths. In the village, the first time Noa talks to an inhabitant (A button), it backs away
+# (« Ne me fais pas de mal. »), then says its usual words; the second time, only its usual words. Played in English.
+query: debug=map&map=prairie&chapter=1&flags=c1_tutorial&lang=en
+god
+wait:800
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: (V.G.state.kills = { gribouille: 3 }, V.G.state.encre = 9, 1)
+eval: (() => { const e = V.world.get('c1_nuage_1'); e.brain = null; const p = V.world.player; p.x = e.x; p.y = e.y + 12; p.dir = 'up'; return 1; })()
+ArrowUp:300
+waitfor: V.scene() !== 'WorldScene'
+auto
+hit
+auto
+hit
+auto
+hit
+auto
+hit
+auto
+hit
+auto
+hit
+auto
+waitfor: V.scene() === 'WorldScene' && V.world.busy === 0
+assert: V.G.state.cleared.includes('c1_nuage_1') && (V.G.state.inkSpots.prairie || []).length === 1
+assert: V.world.entities.some((e) => e.id.startsWith('flaque_') && e.layer === -1)
+shot:flaque
+eval: (V.world.load('prairie', 'default'), 1)
+wait:300
+assert: V.world.entities.filter((e) => e.id.startsWith('flaque_')).length >= 4
+shot:taches
+eval: (V.world.load('village', 'default'), 1)
+wait:300
+eval: (() => { const p = V.world.player; p.x = 8 * 16 + 8; p.y = 11 * 16 + 14; p.dir = 'up'; return 1; })()
+ArrowUp:250
+KeyZ
+auto
+assert: SAW('A step back, as you come closer.') && SEEN.length >= 2
+eval: (window.N = SEEN.length, 1)
+KeyZ
+auto
+assert: SEEN.slice(N).every((t) => !t.includes('A step back')) && SEEN.length > N
+assert: V.i18nMissing().length === 0

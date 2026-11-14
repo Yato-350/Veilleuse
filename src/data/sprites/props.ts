@@ -1664,7 +1664,21 @@ const JAR_SHELF = (() => {
   return p.toString();
 })();
 
+/** Ink left where Noa killed something (the road of the ink): a glossy puddle that never dries, two shapes. */
+function inkPuddle(v: 0 | 1): string {
+  const p = pix([16, 10]);
+  if (v === 0) p.oval(7.5, 5, 7, 3.4, 'i').oval(12.5, 3, 2.6, 1.8, 'i').oval(2.5, 7, 2.2, 1.6, 'i');
+  else p.oval(8, 5.5, 6.5, 3, 'i').oval(3.5, 3.5, 2.8, 2, 'i').oval(13, 7.5, 2.4, 1.5, 'i');
+  // The dream's light caught on wet ink, and a few splashes around.
+  p.px(5, 4, 'J').px(6, 4, 'z').px(6, 3, 'J').px(10, 6, 'z').px(11, 6, 'z');
+  if (v === 0) p.px(0, 2, 'i').px(15, 8, 'i').px(14, 9, 'z');
+  else p.px(15, 1, 'i').px(1, 8, 'i').px(0, 9, 'z');
+  return p.toString();
+}
+
 const DREAM: Record<string, SpriteDef> = {
+  prop_flaque_encre: inkPuddle(0),
+  prop_flaque_encre_2: inkPuddle(1),
   prop_tree: withColors(TREE, DREAM_COLORS),
   prop_tree_b: withColors(TREE_B, MINT_COLORS),
   prop_tree_small: withColors(TREE_SMALL, DREAM_COLORS),
