@@ -145,6 +145,15 @@ const ABSENT_LINES_5 = [
   '* Ici, il fait trop clair pour une veilleuse.\n* Le cadre de Mina reste vide quand même.',
 ];
 
+/** Bosses have half again as many HP outside Story mode (players' feedback: the big fights ended too fast). */
+export const BOSS_HP_FACTOR = 1.5;
+
+/** A boss's definition for this battle: more HP outside Story mode (the scripted 999-HP bosses stay as they are). */
+export function tougherBoss(def: EnemyDef): EnemyDef {
+  if (!def.boss || def.hp >= 999 || G.settings.storyMode) return def;
+  return { ...def, hp: Math.round(def.hp * BOSS_HP_FACTOR) };
+}
+
 /** A battle. `await new Battle(...).run()` resolves with the outcome. */
 export class Battle implements Scene {
   enemies: EnemyRuntime[];
@@ -236,7 +245,7 @@ export class Battle implements Scene {
   lie = false;
 
   constructor(defs: EnemyDef[], opts: BattleOptions = {}) {
-    this.enemies = defs.map((d) => new EnemyRuntime(d));
+    this.enemies = defs.map((d) => new EnemyRuntime(tougherBoss(d)));
     this.opts = opts;
     this.hooks = { ...defs[0]?.hooks, ...opts.hooks };
     this.hp = G.state.hp;
@@ -468,7 +477,9 @@ export class Battle implements Scene {
     // Attack
     const src = alive[rng.int(0, alive.length - 1)]!;
     const pid = this.hooks.pattern?.(this, this.turn) ?? rng.pick(src.def.patterns);
-    const power = Math.min(3, Math.max(...alive.map((e) => e.agitation)) + Math.floor(this.turn / 4) + (alive.length > 1 ? 1 : 0));
+    // Bosses (outside Story mode) attack one notch harder, up to a fourth level.
+    const boss = !G.settings.storyMode && alive.some((e) => e.def.boss) ? 1 : 0;
+    const power = Math.min(3 + boss, Math.max(...alive.map((e) => e.agitation)) + Math.floor(this.turn / 4) + (alive.length > 1 ? 1 : 0) + boss);
     await this.runPattern(pid, power, src.emotion);
     if (this.hp > 0 && this.combatEmo === 'tristesse') this.heal(1, false);
   }
