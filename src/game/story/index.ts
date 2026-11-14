@@ -1,6 +1,8 @@
 import type { Script } from '../overworld/types';
 import { STORY, enterDream, inkFear } from './common';
 import { world } from '../overworld/world';
+import { Entity } from '../overworld/entity';
+import { deletedSprite } from '../files';
 import { G } from '../state';
 import { tr } from '../../i18n';
 import * as real from './real';
@@ -20,6 +22,7 @@ import * as battleDebug from '../battle/debug-battles';
 /** Talking to Mina while she follows Noa: a line depending on where you are. */
 const MINA_LINES: Record<string, string[]> = { ...chapter1.MINA_LINES, ...chapter2.MINA_LINES, ...chapter3.MINA_LINES, ...bonus.MINA_LINES };
 world.beforeTalk = inkFear;
+Entity.glitched = (e) => deletedSprite(e.sprite, e.char, e.id);
 world.followerTalk = async (d) => {
   if (G.state.party.includes('mina366')) return chapter4.mina366Talk(d);
   const lines = MINA_LINES[G.state.map] ?? ['Quoi ? J\'ai quelque chose sur la figure ?'];

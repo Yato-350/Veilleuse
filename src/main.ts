@@ -12,6 +12,7 @@ import { buildAll } from './game/assets';
 import { director, runScript } from './game/director';
 import { flow } from './game/flow';
 import { world } from './game/overworld/world';
+import { Entity } from './game/overworld/entity';
 import { setupPwa } from './game/pwa';
 import { G, hasSave, newState, readMeta, readSave, readSettings, writeMeta, deleteSave, maxHp } from './game/state';
 import { dialogue } from './game/ui/dialogue';
@@ -170,6 +171,8 @@ function boot(): void {
     // The real clock as the game reads it (set: 'h:mm', shift: ms), and the return to the tab (from, to: ms).
     clock: { set: setClock, shift: shiftClock, reset: resetClock, now: nowMs },
     cameBack,
+    // Whether an entity is drawn as a deleted character's glitch (« Fichiers », src/game/files.ts).
+    glitched: (e: Entity) => !!Entity.glitched?.(e),
   };
 }
 

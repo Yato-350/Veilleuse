@@ -16,6 +16,8 @@
     "src/game/scenes/drawtogether.ts",
     "src/game/scenes/shop.ts",
     "src/game/scenes/title.ts",
+    "src/game/scenes/files.ts",
+    "src/game/files.ts",
     "src/game/scenes/warning.ts",
     "src/game/ui/dialogue.ts",
     "src/game/ui/draw.ts",

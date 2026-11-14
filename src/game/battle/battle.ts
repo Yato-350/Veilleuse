@@ -4,11 +4,12 @@ import { drawChar, drawOutlined, drawText, LINE_HEIGHT, measure } from '../../en
 import { fx } from '../../engine/fx';
 import { game, type Scene } from '../../engine/game';
 import { hits, input } from '../../engine/input';
-import { clamp, lerp, rng, type Rect } from '../../engine/math';
+import { clamp, hash2, lerp, rng, type Rect } from '../../engine/math';
+import { deletedSprite, isDeleted, scrambled } from '../files';
 import { EMOTION_COLOR, EMOTION_DARK, emotionColorName, emotionLabel, soulLabel, type Emotion } from '../../engine/palette';
 import { tf, tn, tr, translated } from '../../i18n';
 import { vibrate } from '../../engine/screen';
-import { drawSprite, silhouette } from '../../engine/sprite';
+import { drawGlitched, drawSprite, silhouette } from '../../engine/sprite';
 import { ITEMS } from '../../data/items';
 import { WORD_POOLS } from '../../data/words';
 import { hasSpr, spr } from '../assets';
@@ -949,7 +950,8 @@ export class Battle implements Scene {
   /** Shows speech bubbles next to enemies; resolves when the player confirms. */
   bubble(lines: Array<{ e: EnemyRuntime; text: string }>): Promise<void> {
     this.bubbles = lines.map(({ e, text }) => {
-      const chars = layoutRich(parseRich(tr(text), { player: G.state.playerName }), 92);
+      const said = deletedSprite(e.def.id, e.def.sprite) ? scrambled(tr(text)) : tr(text);
+      const chars = layoutRich(parseRich(said, { player: G.state.playerName }), 92);
       return { e, chars, shown: 0, total: chars.reduce((a, l) => a + l.length, 0) };
     });
     return new Promise((resolve) => {
@@ -1596,6 +1598,11 @@ export class Battle implements Scene {
       }
       return;
     }
+    if (deletedSprite(e.def.id, e.def.sprite)) {
+      // A deleted file (« Fichiers »): the enemy is a corrupted sprite.
+      drawGlitched(g, s, sx, sy, Math.floor(this.t / 6), { calm: fx.reduceFlashes, scaleX: scale, scaleY: scale });
+      return;
+    }
     drawSprite(g, e.flash > 0 ? silhouette(s, '#fffaf2') : s, sx, sy, scale !== 1 || e.alpha !== 1 ? { scaleX: scale, scaleY: scale, alpha: e.alpha } : undefined);
     // HP bar after hits
     if (e.hpBarT > 0) {
@@ -1707,6 +1714,20 @@ export class Battle implements Scene {
   /** Mina's portrait in the top-left corner, with three pips filling up to her next action (or her empty slot). */
   private drawAlly(g: CanvasRenderingContext2D): void {
     if (this.ally === 'none') return;
+    if (isDeleted('mina')) {
+      // Mina's file was deleted: her corner is faded and stutters sideways (steady with « Réduire les flashs »).
+      const k = fx.reduceFlashes ? 1 : hash2(Math.floor(this.t / 6), 3, 17);
+      g.save();
+      g.globalAlpha = 0.55;
+      g.translate(k < 0.2 ? Math.round((k / 0.2 - 0.5) * 6) : 0, 0);
+      this.drawAllyInner(g);
+      g.restore();
+      return;
+    }
+    this.drawAllyInner(g);
+  }
+
+  private drawAllyInner(g: CanvasRenderingContext2D): void {
     const { x, y, w, h } = ALLY_SLOT;
     if (this.ally === 'absent') {
       const flicker = (this.allyT > 0 || this.allyTalking) && Math.floor(this.t / 8) % 2 === 0;

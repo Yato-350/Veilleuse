@@ -18,6 +18,7 @@ import { ImageScene } from './scenes/image';
 import { DEBUG_SCRIPTS } from './story';
 import { CreditsScene } from './scenes/credits';
 import { GalleryScene } from './scenes/gallery';
+import { FilesScene } from './scenes/files';
 import { composePoem } from './scenes/poem';
 import { applyMetaSpec, enableRing } from './meta';
 import { setClock } from './clock';
@@ -36,6 +37,7 @@ import { setClock } from './clock';
  *   ?debug=credits&mode=faux   the fake credits of the false dawn (stop, choice, rewind / let roll, cross-stitch)
  *   ?debug=credits&mode=aide   the credits followed by the help card
  *   ?debug=gallery&seen=some|all|none&poems=3&open=1   title screen + « Carnet de souvenirs » with sample memories
+ *   ?debug=files&open=1                 title screen + « Fichiers » (after a first ending; &meta=deleted:dodo|mina)
  * With any mode:
  *   &meta=endings:aube,callVersion:douce   a simulated memory (docs/HISTOIRE.md § 5): any Meta field, lists with « | »
  *                                          (endings:aube|silence), booleans alone (dodoSilent), beauxRevesAt in days ago,
@@ -134,6 +136,13 @@ export function startDebug(p: URLSearchParams): void {
       });
       game.replace(new TitleScene());
       if (p.get('open') !== '0') game.push(new GalleryScene());
+      return;
+    }
+    case 'files': {
+      // The files are offered after a first ending (in memory only, like every &meta).
+      if (!G.meta.endings.length) G.meta.endings = ['aube'];
+      game.replace(new TitleScene());
+      if (p.get('open') !== '0') game.push(new FilesScene());
       return;
     }
     case 'credits': {

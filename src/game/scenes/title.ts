@@ -15,6 +15,8 @@ import { CreditsScene } from './credits';
 import { install } from '../pwa';
 import { NameEntryScene } from './nameentry';
 import { GalleryScene } from './gallery';
+import { FilesScene } from './files';
+import { filesUnlocked } from '../files';
 import { lang, tf, tn, tr } from '../../i18n';
 import { now as clockNow } from '../clock';
 
@@ -159,6 +161,8 @@ export class TitleScene implements Scene {
     if (bonusUnlocked()) {
       this.items.push({ label: 'Les rêves des autres', action: () => this.leave(() => flow.startBonus()), color: '#f8b6cf' });
     }
+    // After a first ending, too: the characters' files (src/game/files.ts).
+    if (filesUnlocked()) this.items.push({ label: 'Fichiers', action: () => game.push(new FilesScene()), color: '#aab0d8' });
     this.items.push({ label: 'Options', action: () => (this.options = new OptionsPanel()) });
     if (canInstall()) this.items.push({ label: 'Installer le jeu', action: () => void install(), color: '#a7c7f0' });
     this.items.push({ label: 'Crédits', action: () => game.push(new CreditsScene(false)) });
@@ -259,9 +263,10 @@ export class TitleScene implements Scene {
       });
       return;
     }
-    // 1.1 added entries (souvenirs, bonus): a long menu starts higher and tightens so it never leaves the screen.
+    // 1.1 added entries (souvenirs, bonus), 2.2 the files: a long menu starts higher and tightens so it never leaves
+    // the screen, nor climbs over « Fais de beaux rêves. ».
     const n = this.items.length;
-    const gap = n >= 7 ? 12 : 13;
+    const gap = n >= 8 ? 11 : n >= 7 ? 12 : 13;
     const startY = Math.min(108, 156 - (n - 1) * gap);
     this.items.forEach((it, i) => {
       const y = startY + i * gap;

@@ -1398,6 +1398,7 @@ faits peuvent lever (l'infection) et laisse celle que Noa seul peut porter (les 
 | Heure réelle 3:14, pendant un interlude | Le téléphone vibre : « Mina 🐑 — appel entrant », puis « appel manqué ». On ne peut pas répondre. |
 | `meta.dodoSilent` | Prologue sans Dodo (§3.3) |
 | Toute fin v2 | Prologue : « Tu reviens. Tu sais, toi. Tu ne lui diras rien, hein ? » |
+| `meta.deleted` (« Fichiers », après une première fin) | `dodo.chr`, `mina.chr` ou `maman.chr` supprimé : chaque réplique du personnage devient de la friture (▓█░) sous « ??? », sans portrait, et son sprite clignote, dans le monde et en combat. Aucune scène n'est retirée. Dodo commente tant que son fichier existe (« Tu ne peux pas m'effacer. Je suis dans tous les autres. »). La corbeille restaure. `noa.chr` est « en cours d'utilisation ». |
 
 ---
 
