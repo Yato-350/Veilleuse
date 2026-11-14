@@ -156,7 +156,7 @@ export class FilesScene implements Scene {
     drawText(g, tr(this.inBin ? 'Corbeille' : 'Fichiers'), x + 5, y + 3, { color: '#fffaf2' });
     hits.add(this, 'close', x + w - 14, y, 14, 13);
     drawText(g, 'x', x + w - 9, y + 2, { color: '#8a8fb0' });
-    drawText(g, this.inBin ? 'C:/Veilleuse/corbeille/' : 'C:/Veilleuse/personnages/', x + 5, y + 17, { color: '#5c6080' }); // i18n-ignore
+    drawText(g, tr(this.inBin ? 'C:/Veilleuse/corbeille/' : 'C:/Veilleuse/personnages/'), x + 5, y + 17, { color: '#5c6080' });
     this.rows().forEach((r, i) => {
       const ry = y + 31 + i * ROW_H;
       const sel = i === this.idx && !this.confirm;

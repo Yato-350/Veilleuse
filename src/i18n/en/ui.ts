@@ -357,6 +357,8 @@ export const UI: Record<string, string> = {
   'Fichiers': 'Files',
   'Corbeille': 'Recycle bin',
   'Corbeille ({0})': 'Recycle bin ({0})',
+  'C:/Veilleuse/personnages/': 'C:/Veilleuse/characters/',
+  'C:/Veilleuse/corbeille/': 'C:/Veilleuse/recycle-bin/',
   '14 Ko': '14 KB',
   '365 Ko': '365 KB',
   '8 Ko': '8 KB',
