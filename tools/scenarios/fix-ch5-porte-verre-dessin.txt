@@ -1,0 +1,11 @@
+# Regression: in the glass room (chapter 5), Noa must stay visible while he walks through the open glass door. The
+# door is a 2×2 prop sorted by depth with its bottom edge (row 12): in the doorway, Noa's feet are above that edge, so
+# the opaque door was drawn over him and he vanished into it. Like every open door, it is drawn on the floor now.
+query: debug=script&name=chapter5_visite&lang=fr
+auto
+wait:300
+ArrowUp:1100
+wait:100
+assert: (() => { const w = window.__veilleuse.world, p = w.player; return p.y > 160 && p.y < 192 && Math.floor(p.x / 16) >= 11 && Math.floor(p.x / 16) <= 12; })()
+assert: (() => { const w = window.__veilleuse.world, p = w.player, d = w.get('porte_vitre'); const order = (a, b) => a.layer - b.layer || a.sortY - b.sortY || a.uid - b.uid; return !!d && order(d, p) < 0; })()
+shot:porte

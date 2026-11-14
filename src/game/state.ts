@@ -34,6 +34,8 @@ export interface GameState {
   armor: string;
   /** Walking character the player controls ('noa'; 'maman' in the bonus chapter). */
   playerChar: string;
+  /** Where Noa killed an overworld enemy, per map (tiles): ink puddles that never dry. */
+  inkSpots: Record<string, Array<[number, number]>>;
 }
 
 export function newState(playerName = ''): GameState {
@@ -62,6 +64,7 @@ export function newState(playerName = ''): GameState {
     weapon: 'crayon',
     armor: 'pyjama',
     playerChar: 'noa',
+    inkSpots: {},
   };
 }
 
@@ -107,6 +110,15 @@ export function totalKills(s: GameState): number {
 
 export function totalSpares(s: GameState): number {
   return Object.values(s.spares).reduce((a, b) => a + b, 0);
+}
+
+/**
+ * The road of the ink, as the dream sees it: at least four killed, and almost nobody spared (one for five killed at
+ * most). The inhabitants back away from Noa, and more ink stains the paths. Softer than isSilenceRoute (story/common).
+ */
+export function inkRoute(s: GameState): boolean {
+  const kills = totalKills(s);
+  return kills >= 4 && totalSpares(s) * 5 <= kills;
 }
 
 // ---------------------------------------------------------------------------

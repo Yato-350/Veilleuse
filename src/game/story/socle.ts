@@ -8,7 +8,7 @@ import { TitleScene } from '../scenes/title';
 import { game } from '../../engine/game';
 import { world } from '../overworld/world';
 import { dateLabel, PhoneScene, type PhoneCall, type PhoneContact, type PhoneMessage, type PhoneTab } from '../scenes/phone';
-import { wakeUp } from './common';
+import { phoneDelete, wakeUp } from './common';
 import { DrawTogetherScene } from '../scenes/drawtogether';
 
 /*
@@ -194,7 +194,8 @@ async function phoneDemo(d: Director, tab: PhoneTab): Promise<void> {
     }
     const ev = await ph.browse();
     if (ev.kind === 'close') break;
-    if (ev.kind === 'locked') {
+    if (ev.kind === 'delete') await phoneDelete(d, ph, ev.id);
+    else if (ev.kind === 'locked') {
       refused++;
       if (refused === 1) await d.say('Tu ne l\'ouvres pas. Pas ce soir.');
       else {

@@ -2,6 +2,30 @@
 
 Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
+## [2.1.0] — 2026-11
+
+Retours d'une partie entière (fin de l'aube, la veilleuse posée devant la tombe de Mina).
+
+### Ajouté
+- **Route de l'encre** : quand Noa tue presque tout le monde, les habitants du rêve reculent la première fois qu'il
+  leur parle (« Ne me fais pas de mal. », « Monstre. »…) ; une flaque d'encre reste là où il a tué, et d'autres
+  taches s'ajoutent le long des chemins.
+- **Chaussette** apprend ce qui est arrivé à sa paire (un fil bleu à pois sur la manche de Noa) : « Monstre. ». Elle
+  reste froide jusqu'au chapitre 6.
+- **Fin Silence** : Dodo dit combien Noa en a tué, en toutes lettres.
+- **Téléphone** : une corbeille pour effacer une conversation (ou le bouton menu)… et Dodo la remet, en parlant au
+  joueur.
+
+### Modifié
+- **Boss** : 50 % de points de vie en plus et des attaques plus serrées, hors mode Histoire.
+- L'évier fait « Plic. Plac. Ploc. ».
+- Générique : « Canada et États-Unis : 988 ».
+
+### Corrigé
+- **Chapitre 5** : Noa ne disparaît plus dans la porte de verre ouverte de la chambre 304.
+- **Carnet de combat** : le mot qu'on écrit n'est plus « en gras » (il était doublé par une ombre, illisible sur
+  la page).
+
 ## [2.0.1] — 2026-11
 
 ### Corrigé

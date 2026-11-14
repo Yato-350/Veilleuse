@@ -198,6 +198,9 @@ export const chaussetteRuines: Script = async (d) => {
     d.set('c3_chaussette');
     if (isSilenceRoute()) {
       await d.say(['Ah. C\'est toi.', 'Je n\'ai plus beaucoup de clients, tu sais. Plus personne, en fait.', 'Mais une boutique, ça reste ouvert. C\'est comme ça.'], 'chaussette:neutral');
+    } else if (flag('c1_chaussette_monstre')) {
+      await d.say(['Ah. Toi.', 'L\'encre a tout pris. Ma boutique, mes bocaux, ma laine. Ça doit te plaire.'], 'chaussette:neutral');
+      await d.say('J\'ai gardé un étal. Achète, si tu veux. Je ne t\'appellerai plus « mon chou ».', 'chaussette:neutral');
     } else if (paire) {
       await d.say(['Mes chéris ! Vous êtes vivants !', 'Avec ma paire, on a sauvé ce qu\'on a pu de la boutique avant que l\'encre arrive.'], 'chaussette:happy');
       await d.say('Tiens, prends ça. Pour la route. On ne sait jamais ce qui t\'attend là-bas.', 'chaussette:happy');

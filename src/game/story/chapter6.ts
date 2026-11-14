@@ -687,6 +687,11 @@ export const nest: Script = async (d) => {
 
 export const chaussette: Script = async (d) => {
   const n = bump('c6_chaussette');
+  if (flag('c1_chaussette_monstre')) {
+    if (n === 1) await d.say(['Toi. Même ici, tout au fond.', 'Il fait chaud, dans le ventre de Dodo. Pas assez pour oublier une paire.'], 'chaussette:neutral');
+    await shop(['lait', 'chocolat', 'biscuit', 'pomme', 'mouchoir', 'bulles', 'pluie', 'gateau'], 'Prends ce qu\'il te faut. Et va-t\'en.');
+    return;
+  }
   if (n === 1) {
     await d.say(['Mon chou ! Tu tombes bien.', 'Enfin… tu tombes. Moi aussi, je suis tombée. Par la couture, la tête la première. Une chaussette n\'a pas vraiment de tête, mais tu vois l\'idée.'], 'chaussette:happy');
     await d.say(['Il fait chaud, ici. Ça sent le doudou mouillé et la lessive de ta maman.', 'Pour une chaussette, c\'est presque le paradis.'], 'chaussette:neutral');

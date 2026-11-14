@@ -251,7 +251,7 @@ const appartProps = (night: boolean): PropDef[] => [
   P('prop_fridge', 26, 3, { id: 'a_frigo', script: R.fridge }),
   WALL('prop_drawings', 27, 2, -6, { script: R.kitchenDrawings }),
   P('prop_counter', 27, 3, { w: 2, text: ['Le plan de travail. Une pile d\'assiettes propres. Personne ne mange vraiment, ici.'] }),
-  P('prop_sink', 29, 3, { text: ['L\'évier. Le robinet goutte.', 'Plic. Plic. Plic.'] }),
+  P('prop_sink', 29, 3, { text: ['L\'évier. Le robinet goutte.', 'Plic. Plac. Ploc.'] }),
   P('prop_stove', 30, 3, { text: ['La gazinière. Une casserole de pâtes froides.'], script: R.stove }),
   P('prop_counter', 31, 3, { w: 2, text: ['Des factures. Un rendez-vous chez « Dr Lambert » entouré au feutre rouge. C\'était il y a longtemps.'] }),
   P('prop_table', 28, 6, { w: 2, script: R.kitchenTable }),

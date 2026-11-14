@@ -10,7 +10,7 @@ import { translated } from '../../i18n';
 import { setPageTitle } from '../meta';
 import { CountingScene, type SheepRound } from '../scenes/sheepcount';
 import { dateLabel, PhoneScene, type PhoneCall, type PhoneContact, type PhoneMessage, type PhoneReply } from '../scenes/phone';
-import { enterDream, REAL, realPhase } from './common';
+import { enterDream, phoneDelete, REAL, realPhase } from './common';
 import { inBed, leoThread, mamanThread, PHONE_CLOCK, shortDate } from './real';
 
 /**
@@ -396,7 +396,8 @@ export const phone: Script = async (d) => {
   for (;;) {
     const ev = await ph.browse();
     if (ev.kind === 'close') break;
-    if (ev.kind === 'locked' && ev.id === 'mina') await unlockMina(d, ph);
+    if (ev.kind === 'delete') await phoneDelete(d, ph, ev.id);
+    else if (ev.kind === 'locked' && ev.id === 'mina') await unlockMina(d, ph);
     else if (ev.kind === 'open') await openedThread(d, ph, ev.id);
     else if (ev.kind === 'tab' && ev.tab === 'calls') await callLogSeen(d, ph);
     else if (ev.kind === 'call') await callTapped(d, ev.index);
@@ -1025,7 +1026,7 @@ export const counter = look(
 
 export const sink = look(
   'evier',
-  [['L\'évier. Le robinet goutte. Plic. Plic.', 'Tu comptes sans le vouloir. Trente-neuf. Quarante. Quarante et un.'], 'Tu t\'arrêtes avant quarante-deux.'],
+  [['L\'évier. Le robinet goutte. Plic. Plac. Ploc.', 'Tu comptes sans le vouloir. Trente-neuf. Quarante. Quarante et un.'], 'Tu t\'arrêtes avant quarante-deux.'],
   [['Tu fermes le robinet plus fort.', 'Plic.']],
 );
 

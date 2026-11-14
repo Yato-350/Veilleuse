@@ -71,6 +71,8 @@ export type PhoneEvent =
   | { kind: 'locked'; id: string }
   | { kind: 'tab'; tab: PhoneTab }
   | { kind: 'call'; index: number }
+  /** The bin in an open thread's header (or the menu button): the player wants that conversation gone. */
+  | { kind: 'delete'; id: string }
   | { kind: 'close' };
 
 // Month abbreviations, picked by language in dateLabel (not catalog entries).
@@ -248,6 +250,22 @@ export class PhoneScene implements Scene {
     this.showCalls();
     this.sel = Math.max(0, Math.min(index, this.calls.length - 1));
     this.listScroll = Number.MAX_SAFE_INTEGER;
+  }
+
+  /** Takes a conversation off the list (its messages are kept); returns what `restoreContact` needs to put it back. */
+  removeContact(id: string): { contact: PhoneContact; index: number } | null {
+    const index = this.contacts.findIndex((c) => c.id === id);
+    if (index < 0) return null;
+    const contact = this.contacts.splice(index, 1)[0]!;
+    if (this.current?.id === id) this.showList();
+    this.sel = Math.max(0, Math.min(this.sel, this.contacts.length - 1));
+    return { contact, index };
+  }
+
+  /** Puts a removed conversation back where it was in the list. */
+  restoreContact(removed: { contact: PhoneContact; index: number }): void {
+    if (this.contacts.some((c) => c.id === removed.contact.id)) return;
+    this.contacts.splice(Math.min(removed.index, this.contacts.length), 0, removed.contact);
   }
 
   /** Locks or unlocks a contact (the padlock in the list). */
@@ -470,6 +488,10 @@ export class PhoneScene implements Scene {
         this.manual = true;
         this.scroll += hit.id === 'scroll:up' ? -2 : 2;
       }
+      if (this.home && this.current && (input.pressed('menu') || tapId === 'delete')) {
+        audio.sfx('select', { pitch: 0.7 });
+        return this.emit({ kind: 'delete', id: this.current.id });
+      }
       if (input.pressed('b') || input.repeat('left') || tapId === 'back') {
         audio.sfx('cancel');
         if (this.home) this.showList();
@@ -599,6 +621,17 @@ export class PhoneScene implements Scene {
       // Back arrow (touch: tap it).
       hits.add(this, 'back', s.x + s.w - 16, s.y + 10, 16, 12);
       drawText(g, '←', s.x + s.w - 9, s.y + 9, { color: '#8a8fb0' });
+      // A small bin (touch: tap it; keys: the menu button): delete the conversation.
+      hits.add(this, 'delete', s.x + s.w - 30, s.y + 10, 14, 12);
+      const bx = s.x + s.w - 26;
+      const by = s.y + 12;
+      g.fillStyle = '#8a8fb0';
+      g.fillRect(bx + 2, by, 3, 1);
+      g.fillRect(bx, by + 1, 7, 1);
+      g.fillRect(bx + 1, by + 3, 5, 5);
+      g.fillStyle = COL.header;
+      g.fillRect(bx + 2, by + 4, 1, 3);
+      g.fillRect(bx + 4, by + 4, 1, 3);
       hits.add(this, 'scroll:up', AREA.x, AREA.y, AREA.w, AREA.h / 2);
       hits.add(this, 'scroll:down', AREA.x, AREA.y + AREA.h / 2, AREA.w, AREA.h / 2);
     }

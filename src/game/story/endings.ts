@@ -1,10 +1,11 @@
 import { TILE } from '../../engine/constants';
 import { fx } from '../../engine/fx';
 import type { Director } from '../director';
-import { setPageTitle } from '../meta';
+import { NumberWords, setPageTitle } from '../meta';
 import type { Script } from '../overworld/types';
 import { world } from '../overworld/world';
-import { G } from '../state';
+import { G, totalKills } from '../state';
+import { tf } from '../../i18n';
 import { composePoem } from '../scenes/poem';
 import { finishGame, REAL, wakeUp, type EndingId } from './common';
 import { epilogue } from './epilogue';
@@ -404,6 +405,7 @@ export async function endingSilence(d: Director): Promise<void> {
   d.music(null, 1);
   d.ambience('none');
   world.extraDarkness = 0.4;
+  await d.say(tf('{0}. Je les ai tous comptés, un par un. Comme des moutons, pour t\'endormir.', NumberWords(totalKills(G.state))), 'dodotorn:creepy');
   await d.say(['Dors, maintenant.', 'Il n\'y a plus rien à réveiller.'], 'dodotorn:creepy');
   fx.glitch = 0.15;
   await d.fadeOut(120);
@@ -556,9 +558,10 @@ export const DEBUG: Record<string, Script> = {
     await d.fadeIn(10);
     await afterFinalBattle(d, 'beaux_reves');
   },
-  /** Silence: from the threshold of the voice chamber, on the route of the ink. */
+  /** Silence: from the threshold of the voice chamber, on the route of the ink (&kills=N: how many, default 23). */
   fin_silence: async (d) => {
     G.state.chapter = 6;
+    if (!Object.keys(G.state.kills).length) G.state.kills = { gribouille: Number(new URLSearchParams(location.search).get('kills') ?? 23) };
     G.state.flags.c6_voix_vue = true;
     d.load('voix', 'seuil');
     await d.fadeIn(10);

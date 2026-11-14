@@ -714,4 +714,7 @@ export const STORY_CHAPTER3: Record<string, string> = {
   'En bas, la vitre est embuée. À hauteur d\'enfant.': 'Down low, the glass is misted over. At a child\'s height.',
   'Quelqu\'un y a dessiné du bout du doigt : un rond, et deux oreilles pointues.': 'Someone drew in it with a fingertip: a circle, and two pointed ears.',
   'Un mouton. Ou un bonnet. C\'est difficile à dire.': 'A sheep. Or a hat. It\'s hard to tell.',
+  // Chaussette knows about her pair
+  'L\'encre a tout pris. Ma boutique, mes bocaux, ma laine. Ça doit te plaire.': 'The ink took everything. My shop, my jars, my wool. You must like that.',
+  'J\'ai gardé un étal. Achète, si tu veux. Je ne t\'appellerai plus « mon chou ».': 'I kept one stall. Buy something, if you want. I won\'t call you "sweetie" anymore.',
 };

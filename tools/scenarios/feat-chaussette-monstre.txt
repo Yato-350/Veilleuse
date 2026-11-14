@@ -1,0 +1,20 @@
+# Chaussette finds out that Noa killed her pair (the lost sock of the hill path): a blue polka-dot thread on his
+# sleeve, « Monstre. », and she stays cold afterwards (chapter 1, then the shop). Played in English so that a missing
+# translation fails the run.
+query: debug=map&map=boutique&chapter=1&flags=c1_sock_done&lang=en
+wait:800
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+interact:chaussette
+auto
+assert: V.G.state.flags.c1_chaussette_monstre === true && SAW('Monster.') && SAW('With polka dots.')
+interact:chaussette
+auto
+assert: SAW('I don\'t talk to monsters.')
+interact:comptoir
+wait:600
+shot:boutique
+assert: V.i18nMissing().length === 0

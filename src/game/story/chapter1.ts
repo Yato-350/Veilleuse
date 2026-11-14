@@ -500,7 +500,25 @@ export const houseShelf: Script = async (d) => {
 // Chaussette (shop) and the lost sock
 // ---------------------------------------------------------------------------
 
+/**
+ * Chaussette finds out that Noa killed her pair (the lost sock of the hill path): a blue polka-dot thread caught on his
+ * sleeve. Once, at the first meeting after the fight, in chapter 1 or 2 (c1_chaussette_monstre). True if it happened.
+ */
+export async function chaussetteSeesThread(d: Director): Promise<boolean> {
+  if (!flag('c1_sock_done') || flag('c1_chaussette_paire') || flag('c1_chaussette_monstre')) return false;
+  d.set('c1_chaussette_monstre');
+  await d.say(['Attends, mon chou. Tu as un fil qui dépasse de ta manche.', 'Un fil bleu.{p:30} À pois.'], 'chaussette:neutral');
+  await d.wait(40);
+  await d.say(['C\'était ma paire.', 'Elle cherchait juste le chemin de la maison. Elle ne faisait de mal à personne.'], 'chaussette:neutral');
+  await d.wait(30);
+  await d.say('{shake}Monstre.{/shake}', 'chaussette:neutral');
+  if (withMina()) await d.say('…', 'mina:sad');
+  await d.say(['Chaussette ne te regarde plus.', 'Elle range ses bocaux un par un, en te tournant le dos.']);
+  return true;
+}
+
 export const chaussetteShop: Script = async (d) => {
+  if (await chaussetteSeesThread(d)) return;
   if (flag('c1_chaussette_paire') && !flag('c1_chaussette_merci')) {
     d.set('c1_chaussette_merci');
     await d.say(['TOI ! C\'est toi qui as retrouvé ma paire !', 'On ne s\'était pas vues depuis la grande lessive de l\'an dernier !'], 'chaussette:happy');
@@ -515,7 +533,11 @@ export const chaussetteShop: Script = async (d) => {
   const paire = flag('c1_chaussette_paire');
   await shop(
     ['bonbon', 'lait', 'biscuit', 'mouchoir', 'yeux', 'bulles', 'pluie', 'orage', 'pomme'],
-    paire ? 'Bienvenue, bienvenue ! On est deux maintenant, alors les prix sont deux fois plus doux !' : 'Bienvenue chez Chaussette ! Tout est cousu main. Enfin… pied.',
+    paire
+      ? 'Bienvenue, bienvenue ! On est deux maintenant, alors les prix sont deux fois plus doux !'
+      : flag('c1_chaussette_monstre')
+        ? 'Prends ce que tu veux. Et va-t\'en.'
+        : 'Bienvenue chez Chaussette ! Tout est cousu main. Enfin… pied.',
     undefined,
     paire ? 0.5 : 0,
   );
@@ -549,6 +571,7 @@ export const chaussetteTalk: Script = async (d) => {
     await d.say('Ah, te voilà, mon chou ! Comme d\'habitude ?', 'chaussette:happy');
     await d.say('…Oh. Pardon, je te confonds. Toutes les têtes fatiguées se ressemblent, à cette heure-ci.', 'chaussette:neutral');
   }
+  if (await chaussetteSeesThread(d)) return;
   if (d.has('bouton_dore') && flag('c1_bouton_offre') && !flag('c1_bouton_offre2')) {
     d.set('c1_bouton_offre2');
     await d.say(['Ton bouton doré… Toujours pas à vendre ?', 'Je monte à soixante. C\'est mon dernier prix.'], 'chaussette:neutral');
@@ -563,6 +586,10 @@ export const chaussetteTalk: Script = async (d) => {
   }
   if (flag('c1_chaussette_paire')) {
     await d.say(['Ma paire et moi, on ne se quitte plus.', 'Même dans la machine à laver !'], 'chaussette:happy');
+    return;
+  }
+  if (flag('c1_chaussette_monstre')) {
+    await d.say(['…', 'Je vends. Je ne parle pas aux monstres.'], 'chaussette:neutral');
     return;
   }
   await d.say([

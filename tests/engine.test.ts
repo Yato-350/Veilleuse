@@ -623,3 +623,23 @@ describe('story helpers', () => {
     expect(poem[poem.length - 1]).toBe('— Noa');
   });
 });
+
+describe('bosses (players\' feedback: the big fights ended too fast)', () => {
+  const boss = (hp: number): EnemyDef => ({ ...ENEMIES.couseuse!, hp });
+  it('have half again as many HP outside Story mode', async () => {
+    const { tougherBoss, BOSS_HP_FACTOR } = await import('../src/game/battle/battle');
+    const was = G.settings.storyMode;
+    try {
+      G.settings.storyMode = false;
+      expect(BOSS_HP_FACTOR).toBe(1.5);
+      expect(tougherBoss(boss(150)).hp).toBe(225);
+      // Scripted bosses (999 HP) and ordinary enemies stay as they are.
+      expect(tougherBoss(boss(999)).hp).toBe(999);
+      expect(tougherBoss({ ...ENEMIES.nuage!, boss: false }).hp).toBe(ENEMIES.nuage!.hp);
+      G.settings.storyMode = true;
+      expect(tougherBoss(boss(150)).hp).toBe(150);
+    } finally {
+      G.settings.storyMode = was;
+    }
+  });
+});

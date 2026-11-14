@@ -331,6 +331,14 @@ export class Director {
     if (result.outcome === 'lose') return;
     if (!G.state.cleared.includes(e.id)) G.state.cleared.push(e.id);
     world.removeEntity(e);
+    // Killed: its ink stays on the floor, for good (the road of the ink).
+    if (result.killed.length) {
+      const tx = Math.floor(e.x / TILE);
+      const ty = Math.floor((e.y - 2) / TILE);
+      const spots = ((G.state.inkSpots ??= {})[world.map.id] ??= []);
+      spots.push([tx, ty]);
+      world.addInkPuddle(tx, ty, spots.length - 1);
+    }
     // Spared enemies leave a friendly sparkle.
     if (result.spared.length) world.particles.burst(e.x, e.y - 8, '#ffe991', 14, 1.2);
     else world.particles.burst(e.x, e.y - 6, '#0b0710', 14, 1);
