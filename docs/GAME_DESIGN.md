@@ -278,7 +278,7 @@ sa pluie bleue ne te touche plus. L'empathie protège, littéralement.
   à coudre (bouclier), elle brode (le blanc colorié). Si La Couseuse est vaincue, elle se fige dans son cadre jusqu'à la
   fin du chapitre. Aux chapitres 5 et 6, le cadre vide reste.
 - **L'aide après trois défaites**, à partir du chapitre 5, vient de la fillette au bonnet, et non plus de Mina.
-- **Le combat final** (chapitre 6, arène `voix`, musique `dodo_v2`) — on ne frappe pas le sommeil :
+- **Le combat final** (chapitre 6, arène `voix`, musique `reste`) — on ne frappe pas le sommeil :
   1. **Les moutons** : un par défaite du joueur (`meta.deaths`, au plus 41 ; sans défaite, 41, « ses nuits ») ;
   2. **DORMIR** : le menu se change en DORMIR, les mots du carnet sont ceux de Dodo, sous-titrés comme des répliques de
      l'appel ; un tour, annoncé, **les couleurs mentent** (des crayons jaunes qui blessent un cœur jaune, HUD « ? ») ;

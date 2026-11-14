@@ -40,7 +40,7 @@ import type { BattleHooks, WordDef } from './types';
 /*
  * The final battle of version 2 — Dodo, at the heart of the voice module (docs/HISTOIRE.md § 3.14, « Combat final »).
  * Enemy `dodo_v2` (src/data/enemies-ch6.ts), arena `voix` (the battery's crust spreads as the fight goes on), music
- * `dodo_v2`. You do not strike sleep. Four phases:
+ * `reste` (the slow `dodo_v2` waltz plays after it, in the ending). You do not strike sleep. Four phases:
  *
  *   1 « Les moutons »   turns 1–3. One sheep per death of the player (G.meta.deaths, up to 41) — none: 41, « ses
  *                       nuits » — jumping the box, counted by a tally of pen strokes over the arena. Dodo speaks with

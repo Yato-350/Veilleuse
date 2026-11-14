@@ -28,7 +28,7 @@ import { setClock } from './clock';
  *   ?debug=sheet&filter=b_&scale=3      sprite sheet (all sprites whose key starts with `filter`; several prefixes: a,b; &base: no @variants)
  *   ?debug=map&map=prairie&spawn=default&chapter=1&party=mina&flags=a,b=2
  *   ?debug=map&map=chambre&world=feutre   any map seen in another world material (feutre, stylo, blanc, ouate, faux…)
- *   ?debug=battle&enemies=nuage,pissenlit&chapter=1&emotion=joie
+ *   ?debug=battle&enemies=nuage,pissenlit&chapter=1&emotion=joie   (&music=couseuse: force a track)
  *   ?debug=pattern&id=rain&emotion=tristesse
  *   ?debug=image&key=souvenir_fenetre
  *   ?debug=script&name=chapter1_intro&map=prairie
@@ -81,7 +81,7 @@ export function startDebug(p: URLSearchParams): void {
       if (!ids.length) return showError(`Unknown enemies: ${p.get('enemies')}`);
       const b = new Battle(
         ids.map((id) => ENEMIES[id]!),
-        { emotion: (p.get('emotion') as never) ?? undefined, tutorial: true },
+        { emotion: (p.get('emotion') as never) ?? undefined, tutorial: true, music: p.get('music') ?? undefined },
       );
       game.replace(b);
       void b.run();

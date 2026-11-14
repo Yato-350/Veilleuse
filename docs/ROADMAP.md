@@ -77,6 +77,9 @@ production au § 7). Durée : 3 h 30 à 4 h 30.
 - ⏳ Écoute de la musique : les onze morceaux v2 (maison, maison_nuit, couseuse, petit_homme, plage, sas, vitre,
   ventre, appel, dodo_v2, faux_generique) et les effets de musique tenue ou inversée n'ont été vérifiés que par
   `tools/music-check.mjs` (boucles et tessiture), pas encore écoutés
+- ✅ Trois nouveaux thèmes de boss, plus rapides, écoutés et validés par l'auteur : `fil_rouge` (la Couseuse),
+  `cauchemar` (le Petit Homme), `reste` (Dodo, combat final) ; ⏳ avis des testeurs (les anciens thèmes restent
+  comparables : `?debug=battle&enemies=couseuse&music=couseuse`)
 - ⏳ Mise en forme Prettier : une centaine de fichiers ne suivent pas `npm run format:check` ; laissé tel quel pour la
   2.0.0 (un reformatage à part, sans autre changement)
 - 🚧 Relecture des dialogues par des joueurs (la v2 comprise)

@@ -870,7 +870,7 @@ export const CH4_ENEMIES: Record<string, EnemyDef> = {
     boss: true,
     noFlee: true,
     bg: 'feutre',
-    music: 'couseuse',
+    music: 'fil_rouge',
     hooks: COUSEUSE_HOOKS,
   },
 
@@ -918,7 +918,7 @@ export const CH4_ENEMIES: Record<string, EnemyDef> = {
     boss: true,
     noFlee: true,
     bg: 'stylo',
-    music: 'petit_homme',
+    music: 'cauchemar',
     hooks: HOMME_HOOKS,
   },
 };

@@ -10,6 +10,10 @@ Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog]
   « ??? », sans portrait, et leur sprite se brouille, dans le monde et en combat. Toute l'histoire reste jouable.
   Dodo a son mot à dire tant que son fichier est là. La corbeille restaure ; `noa.chr` est en cours d'utilisation.
 
+### Modifié
+- **Musique des boss** : trois nouveaux thèmes, plus rapides, tous construits sur la berceuse : « Fil rouge » (la
+  Couseuse), « Cauchemar » (le Petit Homme) et « Reste » (Dodo, au combat final). La Vitre garde sa valse lente.
+
 ## [2.1.0] — 2026-11
 
 Retours d'une partie entière (fin de l'aube, la veilleuse posée devant la tombe de Mina).
