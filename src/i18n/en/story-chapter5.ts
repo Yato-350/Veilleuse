@@ -678,4 +678,8 @@ export const STORY_CHAPTER5: Record<string, string> = {
   'Le Lac Blanc': 'The White Lake',
   'Une petite lumière, posée au bord du lac. La glace ne la reflète pas.': 'A little light, set at the edge of the lake. The ice doesn\'t reflect it.',
   'La Chambre de Verre': 'The Glass Room',
+  // Chaussette knows about her pair
+  'Tiens. Le monstre est en vacances, lui aussi.': 'Well. The monster\'s on holiday too.',
+  'Ici, il n\'y a pas d\'ombre. On voit très bien ce que tu as sur les mains.': 'There are no shadows here. Everyone can see what\'s on your hands.',
+  'Prends ce qu\'il te faut. Et va-t\'en.': 'Take what you need. Then leave.',
 };

@@ -36,7 +36,7 @@ export const CREDIT_LINES: CreditLine[] = [
   ['tu n\'es pas seul·e. Parles-en.', '#fffaf2'],
   ['France : 3114 (24h/24, gratuit)', '#a7c7f0'],
   ['Belgique : 0800 32 123 · Suisse : 143', '#a7c7f0'],
-  ['Canada : 988', '#a7c7f0'],
+  ['Canada et États-Unis : 988', '#a7c7f0'],
   [''],
   [''],
   ['Merci d\'avoir joué, {player}.', '#ffe991'],

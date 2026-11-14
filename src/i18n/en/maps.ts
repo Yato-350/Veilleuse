@@ -28,7 +28,7 @@ export const MAPS: Record<string, string> = {
   'Le couvercle est fermé avec du scotch. C\'est toi qui l\'as fermé.': 'The lid is taped shut. You taped it.',
   'Le plan de travail. Une pile d\'assiettes propres. Personne ne mange vraiment, ici.': 'The counter. A stack of clean plates. Nobody really eats here.',
   'L\'évier. Le robinet goutte.': 'The sink. The faucet drips.',
-  'Plic. Plic. Plic.': 'Plink. Plink. Plink.',
+  'Plic. Plac. Ploc.': 'Drip. Drip. Drop.',
   'La gazinière. Une casserole de pâtes froides.': 'The stove. A pot of cold pasta.',
   'Des factures. Un rendez-vous chez « Dr Lambert » entouré au feutre rouge. C\'était il y a longtemps.': 'Bills. An appointment with "Dr. Lambert" circled in red marker. That was a long time ago.',
   'Ta chaise.': 'Your chair.',

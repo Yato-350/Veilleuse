@@ -414,4 +414,9 @@ export const STORY_CHAPTER2: Record<string, string> = {
   'Certaines ont une bouche.': 'Some of them have a mouth.',
   'Elles font « o » ! Comme les nuages qui ressemblent à des trucs.': 'They\'re going "o"! Like clouds that look like stuff.',
   '…Non. Elles bâillent. C\'est l\'heure de dormir, pour les miettes.': '…No. They\'re yawning. It\'s bedtime, for crumbs.',
+  // Chaussette knows about her pair
+  'Ah. Toi.': 'Oh. You.',
+  'Je n\'ai pas oublié le chemin de la colline. Je n\'oublierai jamais.': 'I haven\'t forgotten the hill path. I never will.',
+  'Mais une marchande, ça vend. Même aux monstres.': 'But a shopkeeper sells. Even to monsters.',
+  'Achète. Et va-t\'en.': 'Buy something. Then leave.',
 };

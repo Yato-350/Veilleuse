@@ -539,4 +539,7 @@ export const STORY_CHAPTER6: Record<string, string> = {
   'Le Couloir des 41 portes': 'The Corridor of 41 Doors',
   'La Voix': 'The Voice',
   'Une petite lumière, au bord de la croûte. Elle tient bon.': 'A little light, at the edge of the crust. It\'s holding on.',
+  // Chaussette knows about her pair
+  'Toi. Même ici, tout au fond.': 'You. Even here, all the way down.',
+  'Il fait chaud, dans le ventre de Dodo. Pas assez pour oublier une paire.': 'It\'s warm in Dodo\'s belly. Not warm enough to forget my other half.',
 };

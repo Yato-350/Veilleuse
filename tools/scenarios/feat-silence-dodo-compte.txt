@@ -1,0 +1,11 @@
+# In the Silence ending, Dodo has counted every one Noa killed (« Vingt-trois. Je les ai tous comptés… »). Played in
+# English: the count is written in words, in the player's language.
+query: debug=script&name=fin_silence&kills=23&lang=en
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+zuntil: SAW('Twenty-three. I counted every one of them')
+shot:compte
+assert: V.i18nMissing().length === 0

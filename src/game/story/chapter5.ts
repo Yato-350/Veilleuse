@@ -866,6 +866,11 @@ export const kiosk: Script = async (d) => {
 
 export const chaussette: Script = async (d) => {
   const n = bump('c5_chaussette');
+  if (flag('c1_chaussette_monstre')) {
+    if (n === 1) await d.say(['Tiens. Le monstre est en vacances, lui aussi.', 'Ici, il n\'y a pas d\'ombre. On voit très bien ce que tu as sur les mains.'], 'chaussette:neutral');
+    await shop(['lait', 'biscuit', 'chocolat', 'pomme', 'mouchoir', 'bulles', 'pluie', 'gateau'], 'Prends ce qu\'il te faut. Et va-t\'en.');
+    return;
+  }
   if (n === 1) {
     await d.say(['Oh ! Mon chou ! Tu tombes bien : je suis en vacances.', 'Une chaussette en vacances, c\'est une chaussette qui ne sèche pas sur un fil.'], 'chaussette:happy');
     await d.say(['Mais une boutique, ça reste ouvert. Même ici.', 'Surtout ici.'], 'chaussette:neutral');

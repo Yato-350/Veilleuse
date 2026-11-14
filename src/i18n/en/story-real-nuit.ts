@@ -413,7 +413,7 @@ export const STORY_REAL_NUIT: Record<string, string> = {
   '« pâtes, lait, yaourts (ceux qu\'il aime) »': '"pasta, milk, yogurts (the ones he likes)"',
   '« Ceux qu\'il aime. »': '"The ones he likes."',
   'Tu ne savais pas qu\'elle savait.': 'You didn\'t know she knew.',
-  'L\'évier. Le robinet goutte. Plic. Plic.': 'The sink. The tap is dripping. Plink. Plink.',
+  'L\'évier. Le robinet goutte. Plic. Plac. Ploc.': 'The sink. The tap is dripping. Drip. Drip. Drop.',
   'Tu comptes sans le vouloir. Trente-neuf. Quarante. Quarante et un.': 'You count without meaning to. Thirty-nine. Forty. Forty-one.',
   'Tu t\'arrêtes avant quarante-deux.': 'You stop before forty-two.',
   'Tu fermes le robinet plus fort.': 'You turn the tap tighter.',

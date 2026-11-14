@@ -454,4 +454,14 @@ export const STORY_CHAPTER1: Record<string, string> = {
   'Si on trouve l\'étoile, tu feras quel vœu, toi ?|neutral': 'If we find the star, what will you wish for?|neutral',
   'Moi, mon vœu, c\'est un secret. … Bon, d\'accord : c\'est que tu restes.|happy': 'My wish is a secret. … Okay, fine: it\'s that you stay.|happy',
   'Les moutons qui sautent, ça me donne envie de dormir. C\'est bizarre, non ?|neutral': 'Jumping sheep make me sleepy. Weird, right?|neutral',
+  // Chaussette finds out what happened to her pair (chaussetteSeesThread)
+  'Attends, mon chou. Tu as un fil qui dépasse de ta manche.': 'Wait, sweetie. There\'s a thread sticking out of your sleeve.',
+  'Un fil bleu.{p:30} À pois.': 'A blue thread.{p:30} With polka dots.',
+  'C\'était ma paire.': 'That was my other half.',
+  'Elle cherchait juste le chemin de la maison. Elle ne faisait de mal à personne.': 'She was just looking for the way home. She never hurt anyone.',
+  '{shake}Monstre.{/shake}': '{shake}Monster.{/shake}',
+  'Chaussette ne te regarde plus.': 'Chaussette doesn\'t look at you anymore.',
+  'Elle range ses bocaux un par un, en te tournant le dos.': 'She tidies her jars one by one, her back to you.',
+  'Prends ce que tu veux. Et va-t\'en.': 'Take what you want. Then leave.',
+  'Je vends. Je ne parle pas aux monstres.': 'I sell. I don\'t talk to monsters.',
 };

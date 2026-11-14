@@ -12,6 +12,7 @@ import { world } from '../overworld/world';
 import { G } from '../state';
 import { tf, tr } from '../../i18n';
 import { shop, wakeUp } from './common';
+import { chaussetteSeesThread } from './chapter1';
 
 /**
  * Chapter 2 — « La Forêt de Crayons ».
@@ -220,16 +221,23 @@ export const chaussetteTalk: Script = async (d) => {
       await d.say(['Noa ! Mon petit chou ! Regarde qui est là !', 'On a monté un étal ambulant, ma paire et moi. À deux, on porte deux fois plus de choses !'], 'chaussette:happy');
       await d.say('Tiens, pour la route. Il fait frais, dans la forêt.', 'chaussette:happy');
       await d.give('chocolat');
+    } else if (flag('c1_chaussette_monstre')) {
+      await d.say(['Ah. Toi.', 'Je n\'ai pas oublié le chemin de la colline. Je n\'oublierai jamais.'], 'chaussette:neutral');
+      await d.say('Mais une marchande, ça vend. Même aux monstres.', 'chaussette:neutral');
     } else if (flag('c1_sock_done')) {
       await d.say(['Oh, bonjour, mon chou…', 'On m\'a dit qu\'il y avait une flaque d\'encre bleue, sur le chemin de la colline.', 'Une flaque… avec des pois.'], 'chaussette:neutral');
       await d.say('Ce n\'est sûrement rien. Sûrement.', 'chaussette:neutral');
       if (withMina()) await d.say('…', 'mina:sad');
+      await chaussetteSeesThread(d);
+      return;
     } else {
       await d.say(['Oh, bonjour, mon chou !', 'Toujours pas de nouvelles de ma paire. Alors j\'ai pris la route avec mon étal.', 'Peut-être qu\'elle se promène dans la forêt ?'], 'chaussette:neutral');
     }
     await d.say(['Fais attention, là-dedans. Gomme a effacé mon panneau, la semaine dernière.', 'Il ne restait que le clou.'], 'chaussette:neutral');
   } else if (paire) {
     await d.say('Deux chaussettes, deux fois plus de choix ! Et deux fois plus de câlins.', 'chaussette:happy');
+  } else if (flag('c1_chaussette_monstre')) {
+    await d.say('Je vends. Je ne parle pas aux monstres.', 'chaussette:neutral');
   } else {
     await d.say('Si tu vois une chaussette bleue à pois, dis-lui que je l\'attends. Je l\'attendrai toujours.', 'chaussette:neutral');
   }
@@ -241,7 +249,11 @@ export const chaussetteShop: Script = async () => {
   const paire = flag('c1_chaussette_paire');
   await shop(
     ['bonbon', 'lait', 'biscuit', 'chocolat', 'pomme', 'mouchoir', 'bulles', 'pluie', 'orage'],
-    paire ? 'L\'étal ambulant des Chaussettes ! Tout est cousu main. Enfin… pied. Enfin… pieds !' : 'Bienvenue à l\'étal de Chaussette. Il fait un peu froid, mais les prix sont chauds.',
+    paire
+      ? 'L\'étal ambulant des Chaussettes ! Tout est cousu main. Enfin… pied. Enfin… pieds !'
+      : flag('c1_chaussette_monstre')
+        ? 'Achète. Et va-t\'en.'
+        : 'Bienvenue à l\'étal de Chaussette. Il fait un peu froid, mais les prix sont chauds.',
     undefined,
     paire ? 0.5 : 0,
   );

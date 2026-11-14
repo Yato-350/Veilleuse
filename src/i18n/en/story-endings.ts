@@ -95,4 +95,6 @@ export const STORY_ENDINGS: Record<string, string> = {
 
   // The card on Mina's door in the Silence illustration (src/data/illustrations-fins.ts)
   'DÉBARRAS': 'STOREROOM',
+  // Silence: Dodo has counted them
+  '{0}. Je les ai tous comptés, un par un. Comme des moutons, pour t\'endormir.': '{0}. I counted every one of them. Like sheep, to send you to sleep.',
 };

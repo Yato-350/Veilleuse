@@ -1025,7 +1025,7 @@ export const counter = look(
 
 export const sink = look(
   'evier',
-  [['L\'évier. Le robinet goutte. Plic. Plic.', 'Tu comptes sans le vouloir. Trente-neuf. Quarante. Quarante et un.'], 'Tu t\'arrêtes avant quarante-deux.'],
+  [['L\'évier. Le robinet goutte. Plic. Plac. Ploc.', 'Tu comptes sans le vouloir. Trente-neuf. Quarante. Quarante et un.'], 'Tu t\'arrêtes avant quarante-deux.'],
   [['Tu fermes le robinet plus fort.', 'Plic.']],
 );
 

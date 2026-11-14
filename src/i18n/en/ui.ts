@@ -16,7 +16,7 @@ export const UI: Record<string, string> = {
   'tu n\'es pas seul·e. Parles-en.': 'you\'re not alone. Talk to someone.',
   'France : 3114 (24h/24, gratuit)': 'US & Canada: call or text 988',
   'Belgique : 0800 32 123 · Suisse : 143': 'UK & Ireland: Samaritans 116 123',
-  'Canada : 988': 'Australia: Lifeline 13 11 14',
+  'Canada et États-Unis : 988': 'Australia: Lifeline 13 11 14',
   'Merci d\'avoir joué, {player}.': 'Thank you for playing, {player}.',
   'Souvenir': 'Memory',
   'L\'appartement': 'The apartment',
