@@ -5,7 +5,7 @@ import { fx } from '../../engine/fx';
 import { game, type Scene } from '../../engine/game';
 import { hits, input } from '../../engine/input';
 import { clamp, lerp, rng, type Rect } from '../../engine/math';
-import { EMOTION_COLOR, emotionColorName, emotionLabel, soulLabel, type Emotion } from '../../engine/palette';
+import { EMOTION_COLOR, EMOTION_DARK, emotionColorName, emotionLabel, soulLabel, type Emotion } from '../../engine/palette';
 import { tf, tn, tr, translated } from '../../i18n';
 import { vibrate } from '../../engine/screen';
 import { drawSprite, silhouette } from '../../engine/sprite';
@@ -1919,14 +1919,17 @@ export class Battle implements Scene {
       const scale = 2;
       const tw = measure(word) * scale;
       const tx = x + w / 2 - tw / 2;
-      drawText(g, txt, tx, y + 52, { color: wd.emotion === 'neutre' ? '#2b2a5c' : EMOTION_COLOR[wd.emotion], scale, shadow: '#2b2a5c' });
+      // On the paper, in the dark shade of its emotion and without a shadow: a 2× word with an offset shadow doubled
+      // every stroke and smeared the light colours (yellow, blue) into a bold blur.
+      const ink = (e: Emotion): string => (e === 'neutre' ? '#2b2a5c' : EMOTION_DARK[e]);
+      drawText(g, txt, tx, y + 52, { color: ink(wd.emotion), scale });
       if (wd.emotion2) {
         // Bittersweet: the lower half of the letters (from the middle of the x-height) in the second color.
         g.save();
         g.beginPath();
         g.rect(tx - 2, y + 52 + Math.round(7.5 * scale), tw + 4, 20);
         g.clip();
-        drawText(g, txt, tx, y + 52, { color: EMOTION_COLOR[wd.emotion2], scale, shadow: '#2b2a5c' });
+        drawText(g, txt, tx, y + 52, { color: ink(wd.emotion2), scale });
         g.restore();
       }
       // Pencil
