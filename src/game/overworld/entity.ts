@@ -1,4 +1,5 @@
-import { drawSprite, type Sprite } from '../../engine/sprite';
+import { drawGlitched, drawSprite, type Sprite } from '../../engine/sprite';
+import { fx } from '../../engine/fx';
 import { type Dir, type Rect } from '../../engine/math';
 import { charSet, hasSpr, spr, walkFrame } from '../assets';
 import type { Script } from './types';
@@ -138,6 +139,9 @@ export class Entity {
     this.brain?.(this);
   }
 
+  /** Story hook: entities drawn as a glitch (a deleted character, src/game/files.ts). */
+  static glitched: ((e: Entity) => boolean) | null = null;
+
   draw(g: CanvasRenderingContext2D, camX: number, camY: number): void {
     if (!this.visible) return;
     const s = this.currentSprite();
@@ -153,6 +157,10 @@ export class Entity {
       g.ellipse(Math.round(this.x - camX), Math.round(this.y - camY), w / 2, 2, 0, 0, Math.PI * 2);
       g.fill();
       g.restore();
+    }
+    if (s && Entity.glitched?.(this)) {
+      drawGlitched(g, s, sx, sy, Math.floor(performance.now() / 110), { calm: fx.reduceFlashes });
+      return;
     }
     if (s) {
       if (this.scaleX !== 1 || this.scaleY !== 1 || this.alpha !== 1) {

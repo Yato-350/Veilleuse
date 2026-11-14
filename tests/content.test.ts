@@ -38,6 +38,7 @@ import * as fausseAube from '../src/game/story/fausse-aube';
 import { finale } from '../src/game/story/real';
 import * as chapter6 from '../src/game/story/chapter6';
 import { G, newMeta } from '../src/game/state';
+import { deletedSpeaker, deletedSprite, deleteFile, filesUnlocked, isDeleted, restoreFile, scrambled } from '../src/game/files';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -767,5 +768,45 @@ describe('meta and new game+ (lot 10)', () => {
   it('keeps the rule of the 41 seconds in the meta', () => {
     const src = readFileSync(join('src', 'game', 'meta.ts'), 'utf8');
     expect(src).not.toMatch(/vraie version|version vraie|true version|real version|true call|la vraie/i);
+  });
+});
+
+describe('character files (2.2)', () => {
+  it('turns a deleted character into static, and only that one', () => {
+    const before = G.meta;
+    try {
+      G.meta = newMeta();
+      expect(filesUnlocked()).toBe(false);
+      G.meta.endings = ['aube'];
+      expect(filesUnlocked()).toBe(true);
+      expect(deletedSpeaker('dodo') || deletedSprite('npc_dodo')).toBe(false);
+      deleteFile('dodo');
+      expect(isDeleted('dodo')).toBe(true);
+      // Every voice of Dodo, his sprites and his battle forms; nobody else.
+      for (const who of ['dodo', 'dododark', 'dodoreel', 'dodotorn']) expect(deletedSpeaker(who), who).toBe(true);
+      for (const who of ['mina', 'maman', 'noa', 'chaussette']) expect(deletedSpeaker(who), who).toBe(false);
+      expect(deletedSprite('npc_dodo')).toBe(true);
+      expect(deletedSprite(undefined, 'dodo')).toBe(true);
+      expect(deletedSprite('npc_mina', 'mina')).toBe(false);
+      deleteFile('mina');
+      expect(deletedSpeaker('mina366') && deletedSpeaker('bonnet') && deletedSprite('pose_mina_sit')).toBe(true);
+      restoreFile('dodo');
+      expect(G.meta.deleted).toEqual(['mina']);
+      // Every speaker of each file exists (a renamed speaker would silently escape its deletion).
+      for (const who of ['dodo', 'dododark', 'dodoreel', 'dodotorn', 'mina', 'minavoix', 'mina366', 'maman', 'mamantel', 'mamanvoix']) {
+        expect(SPEAKERS[who], who).toBeDefined();
+      }
+    } finally {
+      G.meta = before;
+    }
+  });
+
+  it('scrambles a line letter by letter, keeping its length and punctuation', () => {
+    const s = scrambled('{c:y}Bonne nuit{/c}, Noa.');
+    expect(s.startsWith('{static}') && s.endsWith('{/static}')).toBe(true);
+    const body = s.slice('{static}'.length, -'{/static}'.length);
+    expect(body).toHaveLength('Bonne nuit, Noa.'.length);
+    expect(body).toMatch(/^[▓█░]{5} [▓█░]{4}, [▓█░]{3}\.$/);
+    expect(plainText(s)).toBe(body);
   });
 });

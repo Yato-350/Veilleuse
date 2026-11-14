@@ -161,6 +161,8 @@ export interface Meta {
   lastEnding: string;
   /** Format version of this memory (see META_VERSION). */
   metaVersion: number;
+  /** Characters' files deleted from the title screen (« Fichiers », after a first ending): src/game/files.ts. */
+  deleted: string[];
 }
 
 /** The three answers to « Laquelle est vraie ? » (the player's choice: the game never says which one is right). */
@@ -179,6 +181,7 @@ export function newMeta(): Meta {
     launches: 0,
     newGames: 0,
     deaths: 0,
+    deleted: [],
     endings: [],
     firstPlay: Date.now(),
     lastPlay: Date.now(),

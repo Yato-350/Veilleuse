@@ -1,0 +1,19 @@
+# dodo.chr deleted (« Fichiers », after a first ending): the story still plays every scene, but each of Dodo's lines
+# is static (▓█░, as long as the line) under « ??? », with no portrait, and his plush on the bed is a glitch. Nobody
+# else is touched. With the files deleted, Dodo's new game+ line (« Tu sais, toi. ») is never shown in clear.
+query: debug=script&name=prologue_chambre&lang=fr&meta=endings:aube,deleted:dodo
+wait:1500
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: window.WHO = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) { SEEN.push(t); WHO.push([V.dialogue.speaker?.name ?? '', V.dialogue.portrait]); } }, 50), 1)
+assert: V.world.entities.some((e) => e.id === 'dodo_plush' && V.glitched(e)) && !V.world.entities.some((e) => e.id !== 'dodo_plush' && V.glitched(e))
+interact:bed
+zuntil: SEEN.some((t) => /[▓█░]{3}/.test(t))
+shot:parasites
+eval: (window.GONE = WHO[SEEN.findIndex((t) => /[▓█░]{3}/.test(t))], 1)
+assert: GONE[0] === '???' && GONE[1] === null
+auto
+assert: !SEEN.some((t) => t.includes('Tu sais, toi.')) && V.G.state.flags.p_dodo === true
+assert: V.i18nMissing().length === 0

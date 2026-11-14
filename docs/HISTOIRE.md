@@ -1071,7 +1071,7 @@ Les parois répètent en boucle, au ralenti, « …fais de beaux rêves ».
 | Mouton Numéroté | Joie | Joie | se multiplie si on ne les épargne pas par numéro décroissant | tamponné comme un dossier |
 | **Pile** (rencontre unique) | Neutre → Tristesse | Joie, puis « garder » | sa voix ralentit à chaque tour | épargnée : objet **Pile chargée** (`c6_pile`) ; vaincue : la voix de Dodo meurt plus tôt, et la fin secrète est perdue |
 
-**Combat final — Dodo** (arène `voix`, fond qui pourrit, musique `dodo_v2`). On ne frappe pas le sommeil (existant).
+**Combat final — Dodo** (arène `voix`, fond qui pourrit, musique `reste` ; la valse lente `dodo_v2` revient dans la fin). On ne frappe pas le sommeil (existant).
 
 - **Phase 1, « Les moutons »** (existant). Un mouton par mort du joueur (`G.meta.deaths`, plafond 41) : « Ce sont
   tes morts, {player}. Je les ai comptées. » Sans mort : 41 moutons, « Tu n'es jamais mort·e. Alors je compte ses
@@ -1398,6 +1398,7 @@ faits peuvent lever (l'infection) et laisse celle que Noa seul peut porter (les 
 | Heure réelle 3:14, pendant un interlude | Le téléphone vibre : « Mina 🐑 — appel entrant », puis « appel manqué ». On ne peut pas répondre. |
 | `meta.dodoSilent` | Prologue sans Dodo (§3.3) |
 | Toute fin v2 | Prologue : « Tu reviens. Tu sais, toi. Tu ne lui diras rien, hein ? » |
+| `meta.deleted` (« Fichiers », après une première fin) | `dodo.chr`, `mina.chr` ou `maman.chr` supprimé : chaque réplique du personnage devient de la friture (▓█░) sous « ??? », sans portrait, et son sprite clignote, dans le monde et en combat. Aucune scène n'est retirée. Dodo commente tant que son fichier existe (« Tu ne peux pas m'effacer. Je suis dans tous les autres. »). La corbeille restaure. `noa.chr` est « en cours d'utilisation ». |
 
 ---
 

@@ -195,6 +195,64 @@ const dropBars = (p: string, bars: number[]): string =>
     .join(' | ');
 
 // ---------------------------------------------------------------------------
+// Boss themes (2.2): fast fights, each built on the lullaby
+// ---------------------------------------------------------------------------
+
+/** « Fil rouge » (La Couseuse): the night shift's A minor, then a second half that climbs. */
+const FIL_CHORDS = [...GARDE_CHORDS, 'F', 'G', 'Em', 'Am', 'Dm', 'E', 'Am', 'E'];
+/** The lullaby's head (E D C · D E G · A G E · D), sped up and syncopated, an octave higher from bar 9. */
+const FIL_LEAD = join(
+  'E5 - - - D5 - C5 - . . C5 - D5 - E5 -',
+  'F5 - - - E5 - C5 - A4 - - - . . C5 -',
+  'G5 - - - E5 - G5 - A5 - G5 - E5 - D5 -',
+  'D5 - - - - - . . B4 - D5 - G5 - - -',
+  'E5 - - - D5 - C5 - . . C5 - D5 - E5 -',
+  'F5 - - - A5 - - - G5 - F5 - E5 - D5 -',
+  'F5 - E5 - D5 - F5 - A5 - - - G5 - F5 -',
+  'E5 - - - - - - - G#5 - - - B5 - - -',
+  'A5 - - - C6 - - - A5 - G5 - F5 - - -',
+  'G5 - - - B5 - - - D6 - - - B5 - - -',
+  'E6 - - - D6 - B5 - G5 - - - E5 - G5 -',
+  'A5 - - - - - G5 - E5 - - - C5 - E5 -',
+  'D5 - F5 - A5 - D6 - C6 - A5 - F5 - A5 -',
+  'G#5 - - - B5 - - - E6 - - - D6 - B5 -',
+  'C6 - B5 - A5 - E5 - C6 - B5 - A5 - E5 -',
+  'G#5 - - - - - - - E5 - G#5 - B5 - - -',
+);
+
+/** « Cauchemar » (Le Petit Homme): D minor, a toy tyrant's march. */
+const CAU_CHORDS = ['Dm', 'Dm', 'A#', 'A', 'Dm', 'Dm', 'Gm', 'A', 'Gm', 'C', 'F', 'A#', 'Gm', 'A', 'Dm', 'A7'];
+/** A lead that circles D with its leading tone (C#), then climbs by thirds. */
+const CAU_LEAD = join(
+  'D5 - A4 - D5 - F5 - E5 - D5 - C#5 - D5 -',
+  'F5 - - - E5 - D5 - A4 - - - . . A4 -',
+  'A#4 - D5 - F5 - A#5 - A5 - F5 - D5 - F5 -',
+  'E5 - - - C#5 - - - A4 - - - . . . .',
+  'D6 - A5 - D6 - F6 - E6 - D6 - C#6 - D6 -',
+  'F6 - - - E6 - D6 - A5 - - - . . A5 -',
+  'G5 - A#5 - D6 - G6 - F6 - D6 - A#5 - G5 -',
+  'A5 - - - G5 - F5 - E5 - - - C#5 - - -',
+  'D5 - - - A#4 - G4 - A#4 - D5 - G5 - - -',
+  'E5 - - - C5 - G4 - C5 - E5 - G5 - - -',
+  'A5 - - - F5 - C5 - F5 - A5 - C6 - - -',
+  'D6 - - - A#5 - F5 - A#5 - D6 - F6 - - -',
+  'G6 - F6 - D6 - A#5 - G5 - A#5 - D6 - - -',
+  'C#6 - - - E6 - - - A5 - - - G5 - - -',
+  'F5 - E5 - D5 - A4 - D5 - F5 - A5 - D6 -',
+  'C#6 - - - - - - - . . . . . . . .',
+);
+
+/** Eighth-note steps → sixteenth-note steps (the same melody at twice the step rate). */
+const stretch = (p: string): string =>
+  p
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((t) => (t === '|' ? t : `${t} ${t === '.' ? '.' : '-'}`))
+    .join(' ');
+/** « Reste » (Dodo, the final battle): the whole lullaby in harmonic C minor, the B part an octave up. */
+const RESTE_LEAD = join(stretch(toHarmonicMinor(LULLABY_44_A)), transpose(stretch(toHarmonicMinor(LULLABY_44_B)), 12));
+
+// ---------------------------------------------------------------------------
 // Tracks
 // ---------------------------------------------------------------------------
 
@@ -735,9 +793,10 @@ export const TRACKS: Record<string, Track> = {
   },
 
   /**
-   * La Couseuse — a sewing machine that never stops: needle ticks in sixteenths with a stutter, the pedal on the kick,
-   * and over it the lullaby in C minor on a detuned music box that skips like a stuck record (the same bar, again,
-   * again — one night after another). 8 bars 4/4.
+   * The first theme of La Couseuse (until 2.1; now `fil_rouge`, kept to compare) — a sewing machine that never
+   * stops: needle ticks in sixteenths with a stutter, the pedal on the kick, and over it the lullaby in C minor on a
+   * detuned music box that skips like a stuck record (the same bar, again, again — one night after another). 8 bars
+   * 4/4.
    */
   couseuse: {
     bpm: 132,
@@ -769,9 +828,10 @@ export const TRACKS: Record<string, Track> = {
   },
 
   /**
-   * Le Petit Homme de la Maison — a small man's march in 3/4: the lullaby in C minor, low on the piano; very faint and
-   * out of tune above it, the same lullaby in major on a music box (the nightlight he will not let go of); knocks on
-   * the kick, one, two, three, then nothing; a heartbeat. 16 bars 3/4.
+   * The first theme of Le Petit Homme (until 2.1; now `cauchemar`, kept to compare) — a small man's march in 3/4:
+   * the lullaby in C minor, low on the piano; very faint and out of tune above it, the same lullaby in major on a
+   * music box (the nightlight he will not let go of); knocks on the kick, one, two, three, then nothing; a heartbeat.
+   * 16 bars 3/4.
    */
   petit_homme: {
     bpm: 100,
@@ -999,6 +1059,96 @@ export const TRACKS: Record<string, Track> = {
       ch('pad', padLine(CH_LULLABY.map((c) => transposeChord(c, 4)), 3, 6), { vol: 0.24, reverb: 0.75 }),
       ch('triangle', figure(CH_LULLABY.map((c) => transposeChord(c, 4)), 2, 'R - - - - -'), { vol: 0.24 }),
       ch('bell', rep(join('G#6 - - - - -', rest(6)), 8), { vol: 0.05, reverb: 0.9 }),
+    ],
+  },
+  // -------------------------------------------------------------------------
+  // Boss themes (2.2): faster fights, each built on the lullaby. The earlier themes of La Couseuse and Le Petit Homme
+  // stay above, to compare with the testers (?debug=battle&enemies=couseuse&music=couseuse).
+  // -------------------------------------------------------------------------
+
+  /**
+   * « Fil rouge » — La Couseuse. A minor, 156 BPM, sixteenths. The needle ticks on the hi-hat; the lead is the
+   * lullaby's head, sped up and syncopated, then lifted an octave in the second half; the kick doubles from bar 9.
+   * 16 bars 4/4.
+   */
+  fil_rouge: {
+    bpm: 156,
+    stepsPerBeat: 4,
+    vol: 0.72,
+    channels: [
+      ch('square', FIL_LEAD, { vol: 0.17 }),
+      ch('pulse12', FIL_LEAD, { vol: 0.06, transpose: -12, detune: 8 }),
+      ch('pluck', figure(FIL_CHORDS, 4, 'R 3 5 8 5 3 R 3 5 8 5 3 R 3 5 3'), { vol: 0.08, reverb: 0.25 }),
+      ch('bass', figure(FIL_CHORDS, 2, 'R - 8 - R - 8 - R - 8 - R - 8 -'), { vol: 0.42 }),
+      ch('pad', padLine(FIL_CHORDS, 3, 16), { vol: 0.06, reverb: 0.3 }),
+      ch('kick', join(drums('x . . . x . . . x . . . x . . .', 8), drums('x . . x . . x . x . . x . . x .', 8)), {
+        vol: 0.42,
+      }),
+      ch(
+        'snare',
+        join(
+          drums('. . . . x . . . . . . . x . . .', 7),
+          '. . . . x . . . x . x . x x x x',
+          drums('. . . . x . . . . . . . x . . .', 7),
+          '. . . . x . . . x x . x x x x x',
+        ),
+        { vol: 0.3 },
+      ),
+      ch('hat', drums('x x x x x x x x x x x x x x x x', 16), { vol: 0.06 }),
+    ],
+  },
+
+  /**
+   * « Cauchemar » — Le Petit Homme de la Maison. D minor, 144 BPM. A dark little march (a toy tyrant): half-time
+   * drums, a lead circling D with its leading tone, an organ doubling it an octave down, a bell on the second half.
+   * 16 bars 4/4.
+   */
+  cauchemar: {
+    bpm: 144,
+    stepsPerBeat: 4,
+    vol: 0.72,
+    channels: [
+      ch('pulse25', CAU_LEAD, { vol: 0.15 }),
+      ch('organ', CAU_LEAD, { vol: 0.07, transpose: -12 }),
+      ch('bass', figure(CAU_CHORDS, 2, 'R - - R - - R - 8 - - R - - 5 -'), { vol: 0.45 }),
+      ch('pad', padLine(CAU_CHORDS, 3, 16), { vol: 0.07, reverb: 0.4 }),
+      ch('bell', join(rep(rest(16), 8), figure(CAU_CHORDS.slice(8), 5, 'R . . . . . . . 5 . . . . . . .')), {
+        vol: 0.06,
+        reverb: 0.5,
+      }),
+      ch('kick', drums('x . . . . . . . x . x . . . . .', 16), { vol: 0.46 }),
+      ch('snare', join(drums('. . . . . . . . x . . . . . . .', 15), '. . . . . . . . x . x . x x x x'), { vol: 0.32 }),
+      ch('hat', drums('x . x x x . x x x . x x x . x x', 16), { vol: 0.07 }),
+    ],
+  },
+
+  /**
+   * « Reste » — Dodo, the final battle (phases 1 and 2: the black of phase 3 is silent, phase 4 has the lullaby). C
+   * minor (harmonic), 172 BPM. The whole lullaby in minor in quarter-note pulses over a driving sixteenth bass, a
+   * bright arpeggio, drum fills every eight bars; the B part an octave up. 16 bars 4/4.
+   */
+  reste: {
+    bpm: 172,
+    stepsPerBeat: 4,
+    vol: 0.72,
+    channels: [
+      ch('saw', RESTE_LEAD, { vol: 0.17 }),
+      ch('square', RESTE_LEAD, { vol: 0.07, transpose: -12 }),
+      ch('pulse12', figure(VITRE_CHORDS, 4, 'R 3 5 8 R 3 5 8 R 3 5 8 R 3 5 8'), { vol: 0.07 }),
+      ch('bass', figure(VITRE_CHORDS, 2, 'R R 8 R R R 8 R R R 8 R R 8 R 8'), { vol: 0.4 }),
+      ch('pad', padLine(VITRE_CHORDS, 3, 16), { vol: 0.07, reverb: 0.35 }),
+      ch('kick', drums('x . . x . . x . x . . x . . x .', 16), { vol: 0.44 }),
+      ch(
+        'snare',
+        join(
+          drums('. . . . x . . . . . . . x . . .', 7),
+          '. . . . x . . . x . x . x x x x',
+          drums('. . . . x . . . . . . . x . . .', 7),
+          'x . x . x . x . x x x x x x x x',
+        ),
+        { vol: 0.31 },
+      ),
+      ch('hat', drums('x . x . x . x . x . x . x . x .', 16), { vol: 0.08 }),
     ],
   },
 };

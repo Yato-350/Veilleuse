@@ -7,6 +7,7 @@ import { hits, input } from '../../engine/input';
 import { drawSprite } from '../../engine/sprite';
 import { SPEAKERS, type Speaker } from '../../data/speakers';
 import { lang, tr, trAll } from '../../i18n';
+import { deletedSpeaker, GONE_SPEAKER, scrambled } from '../files';
 import { hasSpr, spr } from '../assets';
 import { G, TEXT_SPEEDS } from '../state';
 import { now as clockNow } from '../clock';
@@ -124,8 +125,9 @@ export class Dialogue {
   private sayOne(text: string, opts: SayOptions): Promise<void> {
     this.opts = opts;
     const [who, expr] = (opts.who ?? 'narrator').split(':') as [string, string | undefined];
-    this.speaker = SPEAKERS[who] ?? { name: who, voice: 'default' };
-    this.portrait = portraitOf(this.speaker, expr);
+    const gone = deletedSpeaker(who);
+    this.speaker = gone ? GONE_SPEAKER : (SPEAKERS[who] ?? { name: who, voice: 'default' });
+    this.portrait = gone ? null : portraitOf(this.speaker, expr);
     this.baseSpeaker = this.speaker;
     this.basePortrait = this.portrait;
     this.asKey = '';
@@ -134,7 +136,7 @@ export class Dialogue {
     // A box that switches speaker keeps room for a portrait from the start, so the text does not jump.
     const switchTo = /\{as:([a-z]+)/.exec(text)?.[1];
     if (!this.portrait && switchTo && SPEAKERS[switchTo]?.portrait && this.speaker.name) this.portrait = portraitOf(SPEAKERS[switchTo]!, undefined);
-    this.pages = this.buildPages(tr(text));
+    this.pages = this.buildPages(gone ? scrambled(tr(text)) : tr(text));
     this.pageIdx = 0;
     this.shown = 0;
     this.wait = 0;
@@ -289,8 +291,9 @@ export class Dialogue {
       this.portrait = this.basePortrait;
     } else {
       const [who, expr] = as.split(':') as [string, string | undefined];
-      this.speaker = SPEAKERS[who] ?? { name: who, voice: 'default' };
-      this.portrait = portraitOf(this.speaker, expr) ?? this.portrait;
+      const gone = deletedSpeaker(who);
+      this.speaker = gone ? GONE_SPEAKER : (SPEAKERS[who] ?? { name: who, voice: 'default' });
+      this.portrait = gone ? null : (portraitOf(this.speaker, expr) ?? this.portrait);
     }
     this.switchT = 0;
     audio.sfx('static', { vol: 0.35, pitch: 0.6 });

@@ -400,7 +400,7 @@ describe('chapter 6 battles and the final battle v2', () => {
     expect(ENEMIES.bourre!.needs[0]!.word).toBe('pardon');
     expect(ENEMIES.pile!.needs.map((n) => n.emotion ?? n.word)).toEqual(['joie', 'garder']);
     expect(ENEMIES.pile!.noFlee && ENEMIES.dodo_v2!.noFlee && ENEMIES.dodo_v2!.boss).toBe(true);
-    expect(ENEMIES.dodo_v2!.music).toBe('dodo_v2');
+    expect(ENEMIES.dodo_v2!.music).toBe('reste');
   });
   it('Le Bouton Pendu: « regarder » calms it at once; Tristesse ×2 too', () => {
     const a = new EnemyRuntime(ENEMIES.bouton_pendu!);
