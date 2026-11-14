@@ -1,0 +1,55 @@
+# The five save slots (src/game/state.ts, scenes/slots.ts) at a save point (Dodo, chapter 4): « Sauvegarder ? Oui »
+# opens the slots, the cursor on the first free one; the player keeps the run in slot 3. Saving again over this run's
+# own slot asks nothing; over another run's slot it asks « Remplacer cette sauvegarde ? » (Non by default).
+query: debug=script&name=chapter4_retour&lang=fr
+wait:1500
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.SL = () => V.game.top
+auto
+interact:mina_chaise
+auto
+interact:dodo
+auto
+choose:0
+wait:300
+assert: SL().constructor.name === 'SlotsScene' && SL().mode === 'save' && SL().idx === 0 && V.G.slot === null
+ArrowDown
+wait:120
+ArrowDown
+wait:120
+shot:liste
+KeyZ
+wait:300
+auto
+assert: V.G.slot === 3 && V.listSaves().map((s) => s?.map ?? null).join() === ',,maison_feutre,,' && SAW('Ta progression est gardée au chaud.')
+# Another run in slot 1 (a save of version 2.1: no date).
+eval: (localStorage.setItem('veilleuse.save.v1', JSON.stringify({ version: 2, playerName: 'Lou', chapter: 2, map: 'foret', x: 10, y: 8, dir: 'down', hp: 20, flags: {} })), window.SEEN.length = 0, 1)
+interact:dodo
+auto
+choose:0
+wait:300
+assert: SL().constructor.name === 'SlotsScene' && SL().idx === 2
+ArrowUp
+wait:120
+ArrowUp
+wait:120
+KeyZ
+wait:200
+assert: SL().confirm === 0 && SL().yes === false
+shot:remplacer
+KeyZ
+wait:200
+assert: SL().constructor.name === 'SlotsScene' && SL().confirm === null && V.readSave(1).playerName === 'Lou'
+KeyZ
+wait:200
+ArrowLeft
+wait:120
+KeyZ
+wait:300
+auto
+assert: V.G.slot === 1 && V.readSave(1).map === 'maison_feutre' && V.readSave(1).playerName !== 'Lou' && V.readSave(3).map === 'maison_feutre'
+assert: V.i18nMissing().length === 0

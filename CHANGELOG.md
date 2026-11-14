@@ -9,6 +9,10 @@ Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog]
   `dodo.chr`, `mina.chr` et `maman.chr` peuvent être supprimés ; leurs répliques deviennent de la friture sous
   « ??? », sans portrait, et leur sprite se brouille, dans le monde et en combat. Toute l'histoire reste jouable.
   Dodo a son mot à dire tant que son fichier est là. La corbeille restaure ; `noa.chr` est en cours d'utilisation.
+- **Cinq sauvegardes** : à une veilleuse, on choisit l'emplacement (remplacer une autre partie demande confirmation).
+  On charge depuis l'écran titre (« Continuer » ouvre la liste quand il y a plusieurs sauvegardes) ou depuis le menu
+  (onglet « Quitter », « Charger »). Une nouvelle partie n'efface plus rien quand un emplacement est libre. La
+  sauvegarde d'avant la mise à jour se retrouve dans l'emplacement 1.
 
 ### Modifié
 - **Musique des boss** : trois nouveaux thèmes, plus rapides, tous construits sur la berceuse : « Fil rouge » (la

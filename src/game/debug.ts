@@ -12,13 +12,14 @@ import { runScript } from './director';
 import { world } from './overworld/world';
 import type { MapDef } from './overworld/types';
 import { MAPS } from '../data/maps';
-import { G, maxHp, newState } from './state';
+import { deleteSave, G, maxHp, newState, SLOTS, writeSave } from './state';
 import { TitleScene, TITLE_VARIANTS, type TitleVariant } from './scenes/title';
 import { ImageScene } from './scenes/image';
 import { DEBUG_SCRIPTS } from './story';
 import { CreditsScene } from './scenes/credits';
 import { GalleryScene } from './scenes/gallery';
 import { FilesScene } from './scenes/files';
+import { SlotsScene, type SlotMode } from './scenes/slots';
 import { composePoem } from './scenes/poem';
 import { applyMetaSpec, enableRing } from './meta';
 import { setClock } from './clock';
@@ -38,6 +39,8 @@ import { setClock } from './clock';
  *   ?debug=credits&mode=aide   the credits followed by the help card
  *   ?debug=gallery&seen=some|all|none&poems=3&open=1   title screen + « Carnet de souvenirs » with sample memories
  *   ?debug=files&open=1                 title screen + « Fichiers » (after a first ending; &meta=deleted:dodo|mina)
+ *   ?debug=slots&fill=1,2,4&open=load   title screen with sample saves in those slots (written to storage), and the
+ *                                       slot list open (load | save | new; &open=0: closed)
  * With any mode:
  *   &meta=endings:aube,callVersion:douce   a simulated memory (docs/HISTOIRE.md § 5): any Meta field, lists with « | »
  *                                          (endings:aube|silence), booleans alone (dodoSilent), beauxRevesAt in days ago,
@@ -136,6 +139,27 @@ export function startDebug(p: URLSearchParams): void {
       });
       game.replace(new TitleScene());
       if (p.get('open') !== '0') game.push(new GalleryScene());
+      return;
+    }
+    case 'slots': {
+      // Sample runs, one per slot asked for (the later the slot, the more recent the save).
+      const samples: Array<[number, string, Record<string, number | boolean | string>]> = [
+        [1, 'prairie', {}],
+        [2, 'chambre', { interlude: 2 }],
+        [4, 'maison_feutre', {}],
+        [5, 'plage', {}],
+        [3, 'b_service', { bonus: 1 }],
+      ];
+      const fill = (p.get('fill') ?? '1,2,4').split(',').map(Number);
+      for (let n = 1; n <= SLOTS; n++) deleteSave(n);
+      fill.forEach((n, i) => {
+        const [chapter, map, flags] = samples[(n - 1) % samples.length]!;
+        const s = { ...newState(p.get('name') ?? 'Sacha'), chapter, map, flags, playtime: 1800 * (i + 1) + 420 };
+        writeSave(s, n, Date.now() - (fill.length - i) * 3_600_000);
+      });
+      game.replace(new TitleScene());
+      const mode = (p.get('open') ?? 'load') as SlotMode | '0';
+      if (mode !== '0') void SlotsScene.pick(mode, null, fill[fill.length - 1] ?? 1);
       return;
     }
     case 'files': {

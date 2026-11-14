@@ -1,4 +1,5 @@
 import { audio } from '../../engine/audio';
+import { fx } from '../../engine/fx';
 import { H, W } from '../../engine/constants';
 import { drawText, drawWrapped } from '../../engine/font';
 import { game, type Scene } from '../../engine/game';
@@ -9,15 +10,19 @@ import { SOUVENIRS } from '../../data/illustrations';
 import { charSet } from '../assets';
 import { flow } from '../flow';
 import { world } from '../overworld/world';
-import { ARMORS, attack, defense, formatPlaytime, G, level, maxHp, WEAPONS } from '../state';
+import { ARMORS, attack, defense, formatPlaytime, G, hasSave, level, maxHp, WEAPONS } from '../state';
 import { dialogue } from '../ui/dialogue';
 import { bar, box, heart } from '../ui/draw';
 import { OptionsPanel } from '../ui/options';
 import { silenced } from '../ui/share';
 import { ImageScene } from './image';
+import { SlotsScene } from './slots';
 import { tf, tr, translated } from '../../i18n';
 
 const TABS = ['Objets', 'Souvenirs', 'Statut', 'Options', 'Quitter'];
+/** The « Quitter » tab: load one of the five saves, back to the title, or stay (the default). */
+const QUIT = ['Charger', 'Titre', 'Rester'];
+const STAY = 2;
 
 type Focus = 'tabs' | 'items' | 'souvenirs' | 'options' | 'quit';
 
@@ -28,7 +33,9 @@ export class MenuScene implements Scene {
   private focus: Focus = 'tabs';
   private itemIdx = 0;
   private souvIdx = 0;
-  private quitIdx = 1;
+  private quitIdx = STAY;
+  /** A save is being loaded: the menu waits for the fade. */
+  private leaving = false;
   private options = new OptionsPanel();
   private t = 0;
   private anim = 0;
@@ -40,7 +47,7 @@ export class MenuScene implements Scene {
     this.t++;
     this.anim = Math.min(1, this.anim + 0.15);
     if (this.msg && ++this.msg.t > 120) this.msg = null;
-    if (dialogue.busy) return;
+    if (dialogue.busy || this.leaving) return;
     this.tapA = false;
     if (this.updatePointer()) return;
     switch (this.focus) {
@@ -94,7 +101,7 @@ export class MenuScene implements Scene {
         this.tab = i;
         this.focus = (['items', 'souvenirs', 'tabs', 'options', 'quit'] as Focus[])[i]!;
         if (this.focus === 'items') this.itemIdx = 0;
-        if (this.focus === 'quit') this.quitIdx = 1;
+        if (this.focus === 'quit') this.quitIdx = STAY;
         return true;
       case 'item':
         if (this.focus === 'items' && this.itemIdx === i) {
@@ -111,10 +118,10 @@ export class MenuScene implements Scene {
         this.tapA = true; // opens it
         return false;
       case 'quit':
-        if (i === 1 || (this.focus === 'quit' && this.quitIdx === 0)) {
+        if (i !== 1 || (this.focus === 'quit' && this.quitIdx === 1)) {
           this.focus = 'quit';
           this.quitIdx = i;
-          this.tapA = true; // « Non », or « Oui » tapped twice
+          this.tapA = true; // « Charger » or « Rester » at once; « Titre » tapped twice
           return false;
         }
         audio.sfx('move');
@@ -145,6 +152,7 @@ export class MenuScene implements Scene {
       audio.sfx('select');
       this.focus = (['items', 'souvenirs', 'tabs', 'options', 'quit'] as Focus[])[this.tab]!;
       if (this.focus === 'items') this.itemIdx = 0;
+      if (this.focus === 'quit') this.quitIdx = STAY;
     }
   }
 
@@ -216,8 +224,11 @@ export class MenuScene implements Scene {
   }
 
   private updateQuit(): void {
-    if (input.repeat('left') || input.repeat('right')) {
-      this.quitIdx = 1 - this.quitIdx;
+    if (input.repeat('left')) {
+      this.quitIdx = (this.quitIdx + QUIT.length - 1) % QUIT.length;
+      audio.sfx('move');
+    } else if (input.repeat('right')) {
+      this.quitIdx = (this.quitIdx + 1) % QUIT.length;
       audio.sfx('move');
     }
     if (input.pressed('b')) {
@@ -226,11 +237,25 @@ export class MenuScene implements Scene {
       return;
     }
     if (input.pressed('a') || this.tapA) {
+      if (this.quitIdx === 0) return void this.load();
       audio.sfx('select');
-      if (this.quitIdx === 0) {
-        void flow.toTitle();
-      } else this.focus = 'tabs';
+      if (this.quitIdx === 1) void flow.toTitle();
+      else this.focus = 'tabs';
     }
+  }
+
+  /** « Charger »: one of the five saves (what was not saved near a nightlight is lost: the tab says so). */
+  private async load(): Promise<void> {
+    if (!hasSave()) {
+      audio.sfx('cancel');
+      return;
+    }
+    audio.sfx('select');
+    const slot = await SlotsScene.pick('load', G.slot, G.slot);
+    if (slot === null) return;
+    this.leaving = true;
+    await fx.fadeOut(30);
+    await flow.continueGame(slot);
   }
 
   draw(g: CanvasRenderingContext2D): void {
@@ -278,18 +303,25 @@ export class MenuScene implements Scene {
         this.options.draw(g, px + 8, py + 24, pw - 18, 10);
         if (this.focus !== 'options') drawText(g, tr('A : modifier'), px + pw - 10, py + ph - 14, { color: '#8a7f96', align: 'right' });
         break;
-      case 4:
-        drawWrapped(g, tr('Retourner à l\'écran titre ? Ce qui n\'a pas été sauvegardé près d\'une veilleuse sera perdu.'), px + 10, py + 10, pw - 20, {
-          color: '#fffaf2',
-        });
-        ['Oui', 'Non'].forEach((l, i) => {
-          const x = px + 40 + i * 80;
+      case 4: {
+        drawWrapped(
+          g,
+          tr('Charger une sauvegarde, ou retourner à l\'écran titre ? Ce qui n\'a pas été sauvegardé près d\'une veilleuse sera perdu.'),
+          px + 10,
+          py + 10,
+          pw - 20,
+          { color: '#fffaf2' },
+        );
+        const canLoad = hasSave();
+        QUIT.forEach((l, i) => {
+          const x = px + 26 + i * 66;
           const sel = this.focus === 'quit' && this.quitIdx === i;
-          hits.add(this, `quit:${i}`, x - 16, py + 56, 48, 16);
-          if (sel) heart(g, x - 11, py + 63, '#ff4a5a');
-          drawText(g, tr(l), x, py + 60, { color: sel ? '#ffd84a' : '#fffaf2' });
+          hits.add(this, `quit:${i}`, x - 16, py + 62, 62, 16);
+          if (sel) heart(g, x - 11, py + 69, '#ff4a5a');
+          drawText(g, tr(l), x, py + 66, { color: i === 0 && !canLoad ? '#4e4359' : sel ? '#ffd84a' : '#fffaf2' });
         });
         break;
+      }
     }
     if (this.msg) {
       box(g, 20, H - 34, W - 40, 26, 'dream');

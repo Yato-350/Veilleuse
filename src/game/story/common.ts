@@ -135,7 +135,9 @@ export async function finishGame(d: Director, ending: EndingId): Promise<void> {
   if (ending === 'veilleuse') G.meta.dodoSilent = true;
   G.meta.runInProgress = false;
   writeMeta(G.meta);
-  deleteSave();
+  // The finished run's save goes (the other slots keep theirs: older moments of this run, or other runs).
+  deleteSave(G.slot);
+  G.slot = null;
   setPageTitle(null);
   fx.glitch = 0;
   fx.setBars(false);

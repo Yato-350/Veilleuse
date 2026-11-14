@@ -291,7 +291,6 @@ export const STORY_BONUS: Record<string, string> = {
   'Je reste là. Je reste toujours là, la nuit.': 'I\'ll stay here. I always stay here, at night.',
   'Une veilleuse de couloir, à hauteur d\'enfant.': 'A hallway nightlight, at a child\'s height.',
   'Tu t\'arrêtais toujours devant, en revenant du distributeur. Pour respirer.': 'You always stopped in front of it, on the way back from the vending machine. To breathe.',
-  '{c:g}(Une partie est déjà en cours : ce rêve-là ne peut pas être sauvegardé.){/c}': '{c:g}(A game is already in progress: this dream can\'t be saved.){/c}',
   'La chambre 304.': 'Room 304.',
   'Rien n\'a bougé. Le lit, les dessins de Mina, la fenêtre aux rideaux verts.': 'Nothing has moved. The bed, Mina\'s drawings, the window with the green curtains.',
   'Et le fauteuil des parents. Il se déplie en lit, à peu près.': 'And the parents\' armchair. It unfolds into a bed, more or less.',

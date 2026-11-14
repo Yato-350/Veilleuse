@@ -1,0 +1,29 @@
+# All five slots taken: « Nouvelle partie » asks which save the new run replaces (and asks again before replacing it);
+# the replaced slot is emptied when the run starts. Backing out leaves every save as it was.
+query: debug=slots&fill=1,2,3,4,5&open=0&lang=en
+wait:1500
+eval: window.V = window.__veilleuse
+eval: window.SL = () => V.game.top
+eval: (V.game.top.idx = V.game.top.items.findIndex((i) => i.label === 'Nouvelle partie'), 1)
+KeyZ
+wait:300
+assert: SL().constructor.name === 'SlotsScene' && SL().mode === 'new'
+KeyX
+wait:300
+assert: V.scene() === 'TitleScene' && V.listSaves().filter(Boolean).length === 5
+KeyZ
+wait:300
+eval: (SL().idx = 1, 1)
+KeyZ
+wait:200
+assert: SL().confirm === 1
+ArrowLeft
+wait:120
+shot:remplacer
+KeyZ
+wait:1200
+assert: V.scene() === 'NameEntryScene' && V.G.pendingSlot === 2
+eval: (V.flow.newGame('Lou'), 1)
+wait:1200
+assert: V.G.slot === 2 && V.readSave(2) === null && V.listSaves().filter(Boolean).length === 4
+assert: V.i18nMissing().length === 0

@@ -257,18 +257,62 @@ export const TEXT_SPEED_LABELS = ['Lente', 'Normale', 'Rapide', 'Instantanée'];
 // Persistence
 // ---------------------------------------------------------------------------
 
-const SAVE_KEY = 'save.v1';
 const META_KEY = 'meta.v1';
 const SETTINGS_KEY = 'settings.v1';
 
-export function hasSave(): boolean {
-  return storage.get(SAVE_KEY) !== null;
+/**
+ * Save slots: five at most (the author's rule: one can keep several runs and load them from the menus, but saving
+ * stays at the nightlights). Slot 1 keeps the key of the single save of versions up to 2.1, so a save made before
+ * lands in it. The running game writes to G.slot (chosen at a nightlight, or the slot it was loaded from, or a free
+ * slot given to a new game); the autosaves follow it.
+ */
+export const SLOTS = 5;
+const slotKey = (n: number): string => (n === 1 ? 'save.v1' : `save.v1.${n}`);
+const slotNumbers = (): number[] => Array.from({ length: SLOTS }, (_, i) => i + 1);
+
+/** Whether slot `slot` holds a save; with no slot, whether any does. */
+export function hasSave(slot?: number | null): boolean {
+  if (slot === undefined) return slotNumbers().some((n) => storage.get(slotKey(n)) !== null);
+  return slot !== null && storage.get(slotKey(slot)) !== null;
 }
 
-export function readSave(): GameState | null {
-  const s = loadJSON<GameState | null>(SAVE_KEY, null);
+/** The save of slot `slot` (by default the latest one), brought up to date (migrateSave). */
+export function readSave(slot: number | null = latestSlot()): GameState | null {
+  if (slot === null) return null;
+  const s = loadJSON<GameState | null>(slotKey(slot), null);
   if (!s || typeof s !== 'object') return null;
   return migrateSave(s);
+}
+
+/** The five slots in order (null = empty). */
+export function listSaves(): Array<GameState | null> {
+  return slotNumbers().map((n) => readSave(n));
+}
+
+/** The slot saved last (by savedAt; a save of version 2.1 or older has none and counts as the oldest), or null. */
+export function latestSlot(): number | null {
+  let best: number | null = null;
+  let at = -1;
+  for (const n of slotNumbers()) {
+    const raw = storage.get(slotKey(n));
+    if (raw === null) continue;
+    let t: number;
+    try {
+      t = Number((JSON.parse(raw) as Partial<GameState>).savedAt) || 0;
+    } catch {
+      continue;
+    }
+    if (t > at) {
+      at = t;
+      best = n;
+    }
+  }
+  return best;
+}
+
+/** The first empty slot, or null when all five are taken. */
+export function freeSlot(): number | null {
+  return slotNumbers().find((n) => !hasSave(n)) ?? null;
 }
 
 /**
@@ -292,13 +336,17 @@ export function migrateSave(raw: Partial<GameState>): GameState {
   return s;
 }
 
-export function writeSave(s: GameState): void {
-  s.savedAt = Date.now();
-  saveJSON(SAVE_KEY, s);
+/** Writes the game into slot `slot` (by default the running game's slot). Returns false when there is none. */
+export function writeSave(s: GameState, slot: number | null = G.slot, at = Date.now()): boolean {
+  if (slot === null) return false;
+  s.savedAt = at;
+  saveJSON(slotKey(slot), s);
+  return true;
 }
 
-export function deleteSave(): void {
-  storage.remove(SAVE_KEY);
+/** Empties slot `slot` (by default the running game's slot). */
+export function deleteSave(slot: number | null = G.slot): void {
+  if (slot !== null) storage.remove(slotKey(slot));
 }
 
 export function readMeta(): Meta {
@@ -343,6 +391,10 @@ export const G = {
   settings: defaultSettings(),
   /** Soul emotion carried between turns of a battle (reset each battle). */
   emotion: 'neutre' as Emotion,
+  /** The save slot of the running game (1..SLOTS), null before it has one. */
+  slot: null as number | null,
+  /** The slot chosen on the title screen for the next new game (all five were taken: the player picked one). */
+  pendingSlot: null as number | null,
 };
 
 export function flag(name: string): number | boolean | string | undefined {

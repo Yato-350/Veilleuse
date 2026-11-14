@@ -37,7 +37,9 @@ import * as chapter5 from '../src/game/story/chapter5';
 import * as fausseAube from '../src/game/story/fausse-aube';
 import { finale } from '../src/game/story/real';
 import * as chapter6 from '../src/game/story/chapter6';
-import { G, newMeta } from '../src/game/state';
+import { deleteSave, freeSlot, G, hasSave, latestSlot, listSaves, newMeta, newState, readSave, SLOTS, writeSave } from '../src/game/state';
+import { storage } from '../src/engine/storage';
+import { slotDetails, slotPlace } from '../src/game/scenes/slots';
 import { deletedSpeaker, deletedSprite, deleteFile, filesUnlocked, isDeleted, restoreFile, scrambled } from '../src/game/files';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -808,5 +810,59 @@ describe('character files (2.2)', () => {
     expect(body).toHaveLength('Bonne nuit, Noa.'.length);
     expect(body).toMatch(/^[▓█░]{5} [▓█░]{4}, [▓█░]{3}\.$/);
     expect(plainText(s)).toBe(body);
+  });
+});
+
+describe('save slots (2.2)', () => {
+  const clear = (): void => {
+    for (let n = 1; n <= SLOTS; n++) deleteSave(n);
+  };
+
+  it('keeps five slots: slot 1 on the old key, the latest save first, none written without a slot', () => {
+    const before = G.slot;
+    try {
+      clear();
+      expect(hasSave()).toBe(false);
+      expect([freeSlot(), latestSlot()]).toEqual([1, null]);
+      // A save of version 2.1 (the single key, no date) lands in slot 1.
+      storage.set('save.v1', JSON.stringify({ ...newState('Sacha'), map: 'prairie', savedAt: 0 }));
+      expect(hasSave(1) && readSave(1)?.playerName === 'Sacha').toBe(true);
+      expect([freeSlot(), latestSlot()]).toEqual([2, 1]);
+      expect(writeSave({ ...newState('Noa'), map: 'plage', chapter: 5 }, 3)).toBe(true);
+      expect(latestSlot()).toBe(3);
+      expect(readSave()?.map).toBe('plage');
+      expect(listSaves().map((s) => s?.map ?? null)).toEqual(['prairie', null, 'plage', null, null]);
+      G.slot = null;
+      expect(writeSave(newState('Noa'))).toBe(false);
+      G.slot = 2;
+      expect(writeSave(newState('Noa')) && hasSave(2)).toBe(true);
+      deleteSave();
+      expect(hasSave(2)).toBe(false);
+      for (const n of [2, 4, 5]) writeSave(newState('Noa'), n);
+      expect(freeSlot()).toBe(null);
+    } finally {
+      clear();
+      G.slot = before;
+    }
+  });
+
+  it('labels a save by where it stands, who, how long and when', () => {
+    const at = new Date(2026, 10, 14, 2, 13).getTime();
+    const s = { ...newState('Sacha'), chapter: 4, map: 'maison_feutre', playtime: 3720, savedAt: at };
+    expect(slotPlace(s)).toBe(`Chapitre 4 · ${MAPS.maison_feutre!.name}`);
+    expect(slotDetails(s)).toBe('Sacha · 1:02 · 14 nov., 02:13');
+    expect(slotDetails({ ...s, savedAt: 0 })).toBe('Sacha · 1:02');
+    expect(slotPlace({ ...s, flags: { interlude: 2 } })).toMatch(/^Interlude II · /);
+    expect(slotPlace({ ...s, flags: { interlude: 9 } })).toMatch(/^Final · /);
+    expect(slotPlace({ ...s, chapter: 0 })).toMatch(/^Prologue · /);
+    expect(slotPlace({ ...s, flags: { bonus: 1 } })).toMatch(/^Les rêves des autres · /);
+    expect(slotPlace(s, 40)).toBe('Chapitre 4');
+    bindLanguage(() => 'en');
+    try {
+      expect(slotPlace(s)).toMatch(/^Chapter 4 · /);
+      expect(slotDetails(s)).toBe('Sacha · 1:02 · Nov 14, 02:13');
+    } finally {
+      bindLanguage(() => 'fr');
+    }
   });
 });

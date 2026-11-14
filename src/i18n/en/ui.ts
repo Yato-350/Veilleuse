@@ -138,7 +138,8 @@ export const UI: Record<string, string> = {
   'Tes PV sont déjà au maximum.': 'Your HP is already full.',
   '{0} : {1}': '{0}: {1}',
   'A : modifier': 'A: change',
-  'Retourner à l\'écran titre ? Ce qui n\'a pas été sauvegardé près d\'une veilleuse sera perdu.': 'Return to the title screen? Anything not saved at a nightlight will be lost.',
+  'Charger une sauvegarde, ou retourner à l\'écran titre ? Ce qui n\'a pas été sauvegardé près d\'une veilleuse sera perdu.':
+    'Load a save, or return to the title screen? Anything not saved at a nightlight will be lost.',
   'Oui': 'Yes',
   'Non': 'No',
   'Maman': 'Mom',
@@ -275,7 +276,6 @@ export const UI: Record<string, string> = {
   'Nouvelle partie': 'New Game',
   'Installer le jeu': 'Install the game',
   'Crédits': 'Credits',
-  'Effacer la sauvegarde et recommencer ?': 'Erase your save and start over?',
   'Il est {0}h. Tu devrais dormir, toi aussi.': 'It\'s {0} a.m. You should be asleep too.',
   'Tu es tombé·e {0} fois.': 'You\'ve fallen {0} times.',
   'AVERTISSEMENT': 'WARNING',
@@ -378,4 +378,16 @@ export const UI: Record<string, string> = {
   'B : annuler': 'B: cancel',
   'A : restaurer · B : retour': 'A: restore · B: back',
   'A : choisir · B : retour': 'A: select · B: back',
+
+  // The five save slots (src/game/scenes/slots.ts).
+  'Où garder ta progression ?': 'Where should your progress go?',
+  'Charger une sauvegarde': 'Load a save',
+  'Remplacer quelle sauvegarde ?': 'Replace which save?',
+  'Remplacer cette sauvegarde ?': 'Replace this save?',
+  '— vide —': '— empty —',
+  'en cours': 'current',
+  'Prologue': 'Prologue',
+  'Chapitre {0}': 'Chapter {0}',
+  'Interlude {0}': 'Interlude {0}',
+  'Final': 'Finale',
 };
