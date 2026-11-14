@@ -9,6 +9,7 @@ import { G, deleteSave, inkRoute, maxHp, writeMeta } from '../state';
 import type { Entity } from '../overworld/entity';
 import { CreditsScene } from '../scenes/credits';
 import { ShopScene } from '../scenes/shop';
+import type { PhoneScene } from '../scenes/phone';
 import { setPageTitle } from '../meta';
 
 /**
@@ -212,4 +213,47 @@ export function inkFear(e: Entity): Script | null {
     await d.wait(16);
     await d.say(INK_FEAR[n % INK_FEAR.length]!);
   };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// The phone: deleting a conversation (an easter egg)
+// ---------------------------------------------------------------------------------------------------------------------
+
+/** What Dodo says the first time, by conversation; then « Encore ? », then silence. Dodo speaks to the player. */
+const DODO_DELETE: Record<string, string[]> = {
+  mina: ['Tu l\'as effacée.', 'Moi, je garde tout, {player}. Les numéros, les nuits, les moutons.', 'Je l\'ai remise. Elle était bien, là.'],
+  maman: ['Elle t\'écrit tous les soirs, tu sais.', 'Si tu l\'effaces, elle écrira dans le vide. Elle ne s\'en rendra même pas compte.', 'Je l\'ai remise. Ne fais pas ça, {player}.'],
+};
+const DODO_DELETE_OTHER = ['On n\'efface pas les gens comme ça, {player}.', 'Je l\'ai remis. Ici, les gens reviennent toujours.'];
+
+/**
+ * Noa deletes a conversation (the bin of an open thread, or the menu button: PhoneEvent 'delete'). It vanishes from
+ * the list; then Dodo, from the bed, speaks to the player by name and puts it back (the story still needs every
+ * thread). In the finale Dodo is silent: the conversation is simply still there. Counted in flags.tel_supprime.
+ */
+export async function phoneDelete(d: Director, ph: PhoneScene, id: string): Promise<void> {
+  const r = await d.ask('Supprimer la conversation ?', ['Supprimer', 'Annuler'], undefined, { cancelIndex: 1 });
+  if (r !== 0) return;
+  const removed = ph.removeContact(id);
+  if (!removed) return;
+  audio.sfx('cancel', { pitch: 0.5 });
+  const n = Number(G.state.flags.tel_supprime ?? 0) + 1;
+  G.state.flags.tel_supprime = n;
+  await d.wait(60);
+  if (isFinale()) {
+    await d.say('Tu effaces la conversation. L\'écran s\'éteint.');
+    ph.restoreContact(removed);
+    await d.say(['Tu le rallumes. Elle est toujours là.', 'Certaines choses ne s\'effacent pas.']);
+    return;
+  }
+  if (n === 1) await d.say('Sur le lit, Dodo n\'a pas bougé. Pourtant, quelqu\'un parle.');
+  fx.glitch = 0.2;
+  audio.sfx('glitch', { vol: 0.4 });
+  await d.wait(10);
+  fx.glitch = 0;
+  if (n === 1) await d.say(DODO_DELETE[id] ?? DODO_DELETE_OTHER, 'dodo:creepy');
+  else if (n === 2) await d.say(['Encore ?', 'Je la remettrai autant de fois qu\'il le faudra, {player}.'], 'dodo:creepy');
+  else await d.say('…', 'dodo:creepy');
+  ph.restoreContact(removed);
+  audio.sfx('pop', { pitch: 0.8 });
 }

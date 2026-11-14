@@ -1,0 +1,37 @@
+# The phone easter egg: Noa deletes a conversation (the bin of an open thread, or the menu button), confirms, and it
+# vanishes; Dodo, from the bed, speaks to the player by name and puts it back. The second time: « Encore ? ».
+# Played in English.
+query: debug=script&name=phone_home&lang=en
+wait:1500
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.PH = () => V.game.top
+eval: (window.IDS = () => PH().contacts.map((c) => c.id).join(','), window.BEFORE = IDS(), 1)
+ArrowDown
+wait:100
+KeyZ
+wait:300
+assert: PH().view === 'thread' && PH().current && PH().current.id === 'maman'
+KeyC
+wait:300
+choose:0
+wait:200
+eval: (window.MID = IDS(), 1)
+auto
+assert: !MID.includes('maman') && IDS() === BEFORE && V.G.state.flags.tel_supprime === 1
+assert: SAW('She writes to you every night, you know.') && SAW('I put her back.')
+shot:remise
+ArrowDown
+wait:100
+KeyZ
+wait:300
+KeyC
+wait:300
+choose:0
+auto
+assert: SAW('Again?') && V.G.state.flags.tel_supprime === 2 && IDS() === BEFORE
+# The debug sample threads (story/socle.ts) carry two untranslated lines of their own; nothing else may be missing.
+assert: V.i18nMissing().every((s) => s === 'enfin on essaie' || s === 'bon.')

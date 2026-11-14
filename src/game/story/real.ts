@@ -8,7 +8,7 @@ import { isLateNight, setPageTitle } from '../meta';
 import { composePoem } from '../scenes/poem';
 import { dateLabel, PhoneScene, type PhoneContact, type PhoneMessage, type PhoneReply } from '../scenes/phone';
 import { translated } from '../../i18n';
-import { enterDream, isFinale, REAL, realPhase } from './common';
+import { enterDream, isFinale, phoneDelete, REAL, realPhase } from './common';
 import { afterFinalBattle, dawnEnding, endingAube, endingAubeBlanche, endingVeilleuse } from './endings';
 import { EPILOGUE_DEBUG } from './epilogue';
 import { calls as callLog, minaThread, STRANGER_DAY } from './real-nuit';
@@ -329,7 +329,8 @@ async function homePhone(d: Director, n: 0 | 1 | 2): Promise<void> {
   for (;;) {
     const ev = await ph.browse();
     if (ev.kind === 'close') break;
-    if (ev.kind === 'locked') await d.say(LOCKED[n]!);
+    if (ev.kind === 'delete') await phoneDelete(d, ph, ev.id);
+    else if (ev.kind === 'locked') await d.say(LOCKED[n]!);
     else if (ev.kind === 'open' && ev.id === 'leo') d.set('leo_lu');
     else if (ev.kind === 'open' && ev.id === 'maman') {
       if (n < 2 && !answered(n)) {
@@ -1263,7 +1264,8 @@ async function finalePhone(d: Director): Promise<void> {
   for (;;) {
     const ev = await ph.browse();
     if (ev.kind === 'close') break;
-    if (ev.kind === 'locked' && ev.id === 'mina') {
+    if (ev.kind === 'delete') await phoneDelete(d, ph, ev.id);
+    else if (ev.kind === 'locked' && ev.id === 'mina') {
       await d.say(['« Mina 🐑 ». Le petit cadenas.', 'Tu l\'enlèves. Ce matin, tu peux.']);
       ph.setLocked('mina', false);
       ph.showThread('mina');
