@@ -83,7 +83,7 @@ export async function start(d: Director): Promise<void> {
     stump.z = 22;
     stump.shadow = false;
   }
-  d.music('forest');
+  d.music('lisiere');
   await d.fadeIn(90);
   await d.wait(40);
   await d.say(['Une odeur de bois taillé. De gomme. De cahier neuf.', 'Le lit t\'attendait, de l\'autre côté.']);
@@ -648,6 +648,8 @@ export const clairiereEnter: Script = (d) => {
   if (flag('c2_lanterns_ok')) {
     for (const c of LANTERN_ORDER) setLantern(d, c, true);
     world.extraDarkness = -0.25;
+    // The fireflies are out: their music (the dark clearing keeps the forest's own).
+    d.music('clairiere');
   } else {
     lanternSeq = [];
   }
@@ -710,7 +712,7 @@ async function lanternsSolved(d: Director): Promise<void> {
     });
     await d.wait(8);
   }
-  d.music('forest');
+  d.music('clairiere');
   await d.say(['Les quatre lanternes brillent ensemble.', 'Une à une, les lucioles sortent des herbes. Elles chantent tout bas, sans paroles.']);
   if (withMina()) {
     await d.say(['Les lucioles ! Elles sont revenues !', 'Je le savais. Je savais qu\'elles chantaient.'], 'mina:happy');

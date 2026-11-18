@@ -238,6 +238,12 @@ const FOREST_TUNE = join(
   'C5 - - D5 E5 - - -',
   'D5 - - - - - . .',
 );
+/** The paper hospital (chapter 3): the lullaby's chords in C minor, two bars each. */
+const HOSPITAL_CHORDS = ['Cm', 'Cm', 'Ab', 'Ab', 'Fm', 'Fm', 'G', 'G', 'Cm', 'Cm', 'Ab', 'Ab', 'Fm', 'Fm', 'G', 'G'].map(fixFlat);
+/** The garden (epilogue): the lullaby's chords, in G major. */
+const GARDEN_CHORDS = CH_LULLABY.map((c) => transposeChord(c, -5));
+/** Le Petit Bazar (epilogue). */
+const BAZAR_CHORDS = ['C', 'Am', 'F', 'G', 'C', 'Am', 'Dm7', 'G7', 'F', 'G', 'Em', 'Am', 'Dm7', 'G7', 'C', 'C'];
 /** The owl's library (chapter 2): the forest's D dorian, slower, with ninths. */
 const LIBRARY_CHORDS = ['Dm9', 'Gm7', 'Cmaj7', 'Fmaj7', 'Dm9', 'Bbmaj7', 'Em7', 'A7', 'Dm9', 'Gm7', 'Cmaj7', 'Fmaj7', 'Bbmaj7', 'Gm7', 'A7', 'Dm9'].map(fixFlat);
 
@@ -414,43 +420,6 @@ export const TRACKS: Record<string, Track> = {
     ],
   },
 
-  /** Village — cosy F major, pizzicato chords and a bell melody in 4/4. 16 bars. */
-  village: {
-    bpm: 92,
-    stepsPerBeat: 2,
-    vol: 0.75,
-    channels: [
-      ch(
-        'bell',
-        join(
-          'A5 - G5 - F5 - C5 -',
-          'D5 - - - C5 - - -',
-          'A5 - G5 - F5 - A5 -',
-          'G5 - - - - - . .',
-          'Bb5 - A5 - G5 - F5 -',
-          'G5 - - - E5 - C5 -',
-          'F5 - G5 - A5 - C6 -',
-          'A5 - - - - - . .',
-          'A5 - G5 - F5 - C5 -',
-          'D5 - - - C5 - - -',
-          'D5 - E5 - F5 - A5 -',
-          'G5 - - - - - . .',
-          'Bb5 - A5 - G5 - F5 -',
-          'E5 - - - G5 - C5 -',
-          'E5 - - - G5 - E5 -',
-          'F5 - - - - - . .',
-        ),
-        { vol: 0.28, reverb: 0.4 },
-      ),
-      ch('pluck', figure(['F', 'Bb', 'F', 'C', 'Gm7', 'C7', 'F', 'F', 'F', 'Bb', 'Dm', 'C', 'Gm7', 'C7', 'C7', 'F'].map(fixFlat), 4, 'R 5 3 5 R 5 3 5'), {
-        vol: 0.22,
-      }),
-      ch('bass', figure(['F', 'Bb', 'F', 'C', 'Gm7', 'C7', 'F', 'F', 'F', 'Bb', 'Dm', 'C', 'Gm7', 'C7', 'C7', 'F'].map(fixFlat), 2, 'R - . . 5 - . .'), {
-        vol: 0.4,
-      }),
-      ch('hat', drums('. . x . . . x .', 16), { vol: 0.12 }),
-    ],
-  },
 
   /** Chaussette's shop — bouncy G major with a cheeky square lead, 16th steps. 8 bars. */
   shop: {
@@ -575,11 +544,11 @@ export const TRACKS: Record<string, Track> = {
   },
 
   /**
-   * Village, deeper (2.2, preview): the same bell tune over the pizzicato, with a warm pad underneath, a bass that
+   * Village (deeper since 2.2) — cosy F major: the bell tune over the pizzicato, a warm pad underneath, a bass that
    * walks, a soft kick on 1 and 3 (a cosy step), a second voice holding the harmony in the second half, and the
    * lullaby passing by on a music box in the last four bars (in F). 16 bars 4/4.
    */
-  village_v2: {
+  village: {
     bpm: 92,
     stepsPerBeat: 2,
     vol: 0.75,
@@ -596,7 +565,7 @@ export const TRACKS: Record<string, Track> = {
   },
 
   /**
-   * Bibliothèque du Hibou (2.2, preview): the forest's D dorian, but hushed. A low piano on open fifths, the forest's
+   * Bibliothèque du Hibou (2.2): the forest's D dorian, but hushed. A low piano on open fifths, the forest's
    * tune quoted on a music box an octave down with long silences between, a pad, a pendulum clock (tick on 1, tock on
    * 3) and a page turning every eight bars. 16 bars 4/4.
    */
@@ -637,7 +606,7 @@ export const TRACKS: Record<string, Track> = {
   },
 
   /**
-   * Clairière des Lucioles (2.2, preview): the forest's tune, at night, made of light. The melody on bells doubled an
+   * Clairière des Lucioles (2.2; the dark clearing keeps the forest's own theme until the lanterns are lit): the forest's tune, at night, made of light. The melody on bells doubled an
    * octave up on a music box, the arpeggio higher and sparser, a warm pad, a soft bass, and fireflies: high bell notes
    * scattered over the bars. 16 bars 4/4.
    */
@@ -673,6 +642,209 @@ export const TRACKS: Record<string, Track> = {
         ),
         { vol: 0.05, reverb: 0.9, pan: 0.5 },
       ),
+    ],
+  },
+
+  /**
+   * Chez Mémé Laine (2.2): the village tune slowed into a lullaby by the fire — music box over a gentle piano, a bass,
+   * a warm pad, knitting needles clicking (a soft hat on every beat) and the fire's breath underneath. 16 bars 4/4.
+   */
+  meme_laine: {
+    bpm: 72,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch('musicbox', VILLAGE_TUNE, { vol: 0.2, reverb: 0.5, pan: 0.1 }),
+      ch('piano', figure(VILLAGE_CHORDS, 3, 'R . 5 . 3 . 5 .'), { vol: 0.14, reverb: 0.35, pan: -0.15 }),
+      ch('bass', figure(VILLAGE_CHORDS, 2, 'R - - - 5 - - -'), { vol: 0.22 }),
+      ch('pad', padLine(VILLAGE_CHORDS, 3, 8), { vol: 0.07, reverb: 0.5 }),
+      ch('hat', drums('x . x . x . x .', 16), { vol: 0.022, pan: 0.4 }),
+      ch('breath', rep('C3 - - - - - - -', 16), { vol: 0.02 }),
+    ],
+  },
+
+  /**
+   * La Lisière (2.2): the forest at waking, still half asleep — the pad and a sparse pluck, the wind, birds far
+   * apart, and only the second half of the flute's tune. 16 bars 4/4.
+   */
+  lisiere: {
+    bpm: 80,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch('pad', padLine(FOREST_CHORDS, 3, 8), { vol: 0.12, reverb: 0.7 }),
+      ch('pluck', figure(FOREST_CHORDS, 3, 'R . . . 7 . . .'), { vol: 0.14, reverb: 0.5, pan: -0.3 }),
+      ch('sine', join(rep(rest(8), 8), FOREST_TUNE.split(' | ').slice(8).join(' | ')), { vol: 0.24, reverb: 0.6 }),
+      ch('bass', figure(FOREST_CHORDS, 2, 'R - - - - - - -'), { vol: 0.16 }),
+      ch(
+        'bell',
+        join(
+          '. . . . . . G6 A6',
+          rest(8),
+          rest(8),
+          '. . E6 G6 . . . .',
+          rest(8),
+          '. . . . . A6 G6 .',
+          rest(8),
+          rest(8),
+          '. . . . . . G6 A6',
+          rest(8),
+          '. . . D7 C7 . . .',
+          rest(8),
+          rest(8),
+          '. . E6 G6 . . . .',
+          rest(8),
+          rest(8),
+        ),
+        { vol: 0.03, reverb: 0.8, pan: 0.6 },
+      ),
+      ch('air', rep(join('D4 - - - - - - -', rest(8), rest(8), rest(8)), 4), { vol: 0.04 }),
+    ],
+  },
+
+  /**
+   * Le Sentier gommé (2.2): the forest's tune with whole bars rubbed out, the arpeggio missing others, a pad drifting
+   * out of tune, the scratch of an eraser now and then, a low bass. 16 bars 4/4.
+   */
+  sentier_gomme: {
+    bpm: 72,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch('sine', dropBars(FOREST_TUNE, [3, 6, 9, 11, 14]), { vol: 0.22, reverb: 0.7, detune: -20 }),
+      ch('pluck', dropBars(figure(FOREST_CHORDS, 3, 'R 5 7 10 8 7 5 3'), [2, 5, 7, 10, 13, 15]), { vol: 0.14, reverb: 0.5, detune: 15 }),
+      ch('pad', padLine(FOREST_CHORDS, 3, 8), { vol: 0.1, reverb: 0.8, detune: 25 }),
+      ch('breath', dropBars(rep('C6 . C6 . . . . .', 16), [0, 1, 3, 4, 6, 8, 9, 11, 12, 14]), { vol: 0.04, pan: 0.4 }),
+      ch('bass', figure(FOREST_CHORDS, 1, 'R - - - - - - -'), { vol: 0.2 }),
+    ],
+  },
+
+  /**
+   * Pédiatrie, troisième étage (2.2, the bonus chapter: Maman's night shift): the lullaby on a piano, played very
+   * softly, as one hums at work — a left hand, a pad, a monitor beeping steadily, the hum of the strip lights. 16 bars
+   * 3/4.
+   */
+  pediatrie: {
+    bpm: 60,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch('piano', LULLABY, { vol: 0.2, reverb: 0.4 }),
+      ch('piano', figure(CH_LULLABY, 2, 'R - - 5 - -'), { vol: 0.12, reverb: 0.4, pan: -0.2 }),
+      ch('pad', padLine(CH_LULLABY, 3, 6), { vol: 0.08, reverb: 0.6, detune: 4 }),
+      ch('sine', rep('B5 . . . . .', 16), { vol: 0.05, pan: 0.4 }),
+      ch('air', rep('C3 - - - - -', 16), { vol: 0.02 }),
+    ],
+  },
+
+  /**
+   * Mina's room at dawn (2.2, the finale): the lullaby on a music box, warm and slow, a pad, a little triangle on the
+   * bass notes, and a bell like the first light, twice a loop. 16 bars 3/4.
+   */
+  chambre_mina: {
+    bpm: 54,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch('musicbox', LULLABY, { vol: 0.28, reverb: 0.6 }),
+      ch('pad', padLine(CH_LULLABY, 3, 6), { vol: 0.12, reverb: 0.7 }),
+      ch('triangle', figure(CH_LULLABY, 2, 'R - - - - -'), { vol: 0.12 }),
+      ch('bell', join(rep(rest(6), 7), 'G6 - - - - -', rep(rest(6), 7), 'E6 - - - - -'), { vol: 0.04, reverb: 0.9, pan: 0.3 }),
+    ],
+  },
+
+  /**
+   * The hallway at dawn (2.2, the finale): a piano arpeggio slowed down, the pad, a low bass, and in the second half,
+   * only the lullaby's second part — the one that hopes. 16 bars 3/4.
+   */
+  aube: {
+    bpm: 56,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch('piano', figure(CH_LULLABY, 3, 'R - 5 - 8 -'), { vol: 0.14, reverb: 0.5, pan: -0.15 }),
+      ch('piano', join(rep(rest(6), 8), LULLABY_B), { vol: 0.18, reverb: 0.5, pan: 0.15 }),
+      ch('pad', padLine(CH_LULLABY, 3, 6), { vol: 0.1, reverb: 0.7 }),
+      ch('bass', figure(CH_LULLABY, 2, 'R - - - - -'), { vol: 0.16 }),
+      ch('bell', join(rep(rest(6), 3), '. . . . C7 .', rep(rest(6), 7), '. . G6 . . .', rep(rest(6), 4)), { vol: 0.035, reverb: 0.9, pan: 0.4 }),
+    ],
+  },
+
+  /**
+   * The garden (2.2, the epilogue): the lullaby in G major on a flute, an octave of bells above it, plucked
+   * arpeggios, a soft shaker, birds. Spring. 16 bars 4/4.
+   */
+  jardin: {
+    bpm: 80,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch('sine', transpose(join(LULLABY_44_A, LULLABY_44_B), -5), { vol: 0.24, reverb: 0.5 }),
+      ch('bell', transpose(join(LULLABY_44_A, LULLABY_44_B), 7), { vol: 0.05, reverb: 0.7, pan: 0.3 }),
+      ch('pluck', figure(GARDEN_CHORDS, 4, 'R 3 5 8 5 3 R 5'), { vol: 0.14, pan: -0.25 }),
+      ch('bass', figure(GARDEN_CHORDS, 2, 'R - - - 5 - - -'), { vol: 0.24 }),
+      ch('pad', padLine(GARDEN_CHORDS, 3, 8), { vol: 0.07, reverb: 0.5 }),
+      ch('hat', drums('. . x . . . x .', 16), { vol: 0.04 }),
+      ch(
+        'bell',
+        join(
+          '. . . . . . B6 D7',
+          rest(8),
+          '. . G6 A6 . . . .',
+          rest(8),
+          rest(8),
+          '. . . . . . B6 D7',
+          rest(8),
+          '. . . E7 D7 . . .',
+          rest(8),
+          rest(8),
+          '. . G6 A6 . . . .',
+          rest(8),
+          '. . . . . . B6 D7',
+          rest(8),
+          rest(8),
+          rest(8),
+        ),
+        { vol: 0.03, reverb: 0.8, pan: 0.6 },
+      ),
+    ],
+  },
+
+  /**
+   * Le Petit Bazar (2.2, the epilogue): a little shop tune on a music box, pizzicato, a bass, a soft kick and hat.
+   * 16 bars 4/4.
+   */
+  bazar: {
+    bpm: 96,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch(
+        'musicbox',
+        join(
+          'E5 - G5 - C6 - B5 -',
+          'A5 - - - E5 - . .',
+          'F5 - A5 - C6 - A5 -',
+          'G5 - - - - - . .',
+          'E5 - G5 - C6 - B5 -',
+          'A5 - C6 - E6 - . .',
+          'D6 - C6 - A5 - F5 -',
+          'G5 - - - - - . .',
+          'A5 - - - C6 - - -',
+          'B5 - - - D6 - - -',
+          'G5 - - - B5 - - -',
+          'C6 - - - A5 - . .',
+          'F5 - A5 - D6 - C6 -',
+          'B5 - - - G5 - F5 -',
+          'E5 - G5 - C6 - - -',
+          'C6 - - - - - . .',
+        ),
+        { vol: 0.24, reverb: 0.4 },
+      ),
+      ch('pluck', figure(BAZAR_CHORDS, 3, 'R . 5 . 8 . 5 .'), { vol: 0.14, pan: -0.2 }),
+      ch('bass', figure(BAZAR_CHORDS, 2, 'R . . . 5 . . .'), { vol: 0.26 }),
+      ch('kick', drums('x . . . . . . .', 16), { vol: 0.06 }),
+      ch('hat', drums('. . x . . . x .', 16), { vol: 0.05 }),
     ],
   },
 
@@ -718,24 +890,28 @@ export const TRACKS: Record<string, Track> = {
     ],
   },
 
-  /** Paper hospital — cold and very slow: heart-monitor beeps, detuned pad, the lullaby in C minor. 16 bars 3/4. */
+  /**
+   * Paper hospital (deeper since 2.2) — cold and very slow: heart-monitor beeps (and, now and then, another one, two
+   * rooms away), a ventilator breathing in and out, a detuned pad and a low organ, the lullaby in C minor on a music
+   * box, and once a loop a lift that dings somewhere. 16 bars 3/4.
+   */
   hospital: {
     bpm: 56,
     stepsPerBeat: 2,
     vol: 0.75,
     channels: [
       ch('sine', rep('B5 . . . . .', 16), { vol: 0.1 }),
-      ch('pad', padLine(['Cm', 'Cm', 'Ab', 'Ab', 'Fm', 'Fm', 'G', 'G', 'Cm', 'Cm', 'Ab', 'Ab', 'Fm', 'Fm', 'G', 'G'].map(fixFlat), 3, 6), {
-        vol: 0.18,
-        reverb: 0.7,
-        detune: 14,
-      }),
+      ch('sine', join(rep(rest(6), 4), '. . . G6 . .', rep(rest(6), 4), '. . . G6 . .', rep(rest(6), 5), '. G6 . . . .'), { vol: 0.04, pan: 0.5 }),
+      ch('pad', padLine(HOSPITAL_CHORDS, 3, 6), { vol: 0.18, reverb: 0.7, detune: 14 }),
+      ch('organ', figure(HOSPITAL_CHORDS, 2, 'R - - - - -'), { vol: 0.05, detune: -10 }),
       ch('musicbox', join(rep(rest(6), 4), toHarmonicMinor(LULLABY_A).split(' | ').slice(0, 4).join(' | '), rep(rest(6), 4), toHarmonicMinor(LULLABY_A).split(' | ').slice(4).join(' | ')), {
         vol: 0.32,
         reverb: 0.8,
         detune: -18,
       }),
-      ch('bass', figure(['Cm', 'Cm', 'Ab', 'Ab', 'Fm', 'Fm', 'G', 'G', 'Cm', 'Cm', 'Ab', 'Ab', 'Fm', 'Fm', 'G', 'G'].map(fixFlat), 1, 'R - - - - -'), { vol: 0.25 }),
+      ch('bass', figure(HOSPITAL_CHORDS, 1, 'R - - - - -'), { vol: 0.25 }),
+      ch('breath', rep(join('C4 - - - - -', rest(6)), 8), { vol: 0.045, pan: -0.3 }),
+      ch('bell', join(rep(rest(6), 11), '. . . . E6 .', rep(rest(6), 4)), { vol: 0.035, reverb: 0.9, pan: 0.4 }),
     ],
   },
 

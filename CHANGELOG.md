@@ -29,6 +29,10 @@ Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog]
 ### Modifié
 - **Musique des boss** : trois nouveaux thèmes, plus rapides, tous construits sur la berceuse : « Fil rouge » (la
   Couseuse), « Cauchemar » (le Petit Homme) et « Reste » (Dodo, au combat final). La Vitre garde sa valse lente.
+- **Musiques d'ambiance** : le village plus profond (basse, cloches lointaines, contre-chant) ; nouveaux thèmes
+  pour la bibliothèque, la clairière (une fois les lanternes allumées), la maison de Mémé Laine, la lisière, le
+  sentier gommé, l'aile de pédiatrie, la chambre de Mina, l'appartement à l'aube, le jardin et le bazar. L'hôpital
+  respire (souffle, orgue, un second bip, une cloche).
 
 ## [2.1.0] — 2026-11
 

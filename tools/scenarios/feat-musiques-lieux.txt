@@ -1,0 +1,23 @@
+# The places' own music (2.2: the ambiance made deeper and more varied): each map plays its track as soon as Noa
+# arrives — the village and its library, Mémé Laine's house, the edge of the forest, the erased path, the paediatric
+# wing of the bonus, the bazaar and the garden of the epilogue, Mina's room and the apartment at dawn. The clearing
+# keeps the forest until its lanterns are lit.
+query: debug=map&map=prairie&chapter=1&flags=c1_tutorial
+god
+wait:800
+eval: window.V = window.__veilleuse
+eval: (async () => { window.AU = (await import('/src/engine/audio.ts')).audio; return 1; })()
+eval: window.AT = (m, sp) => { V.world.load(m, sp); return new Promise((r) => setTimeout(() => r(AU.currentMusic), 400)); }
+assert: AT('village', 'default').then((t) => t === 'village')
+assert: AT('bibliotheque', 'default').then((t) => t === 'bibliotheque')
+assert: AT('maison_mouton', 'default').then((t) => t === 'meme_laine')
+assert: AT('lisiere', 'default').then((t) => t === 'lisiere')
+assert: AT('sentier_gomme', 'default').then((t) => t === 'sentier_gomme')
+assert: AT('clairiere', 'default').then((t) => t !== 'clairiere')
+eval: (V.G.state.flags.c2_lanterns_ok = true, 1)
+assert: AT('clairiere', 'default').then((t) => t === 'clairiere')
+assert: AT('b_hopital', 'default').then((t) => t === 'pediatrie')
+assert: AT('bazar', 'default').then((t) => t === 'bazar')
+assert: AT('jardin', 'default').then((t) => t === 'jardin')
+assert: AT('chambre_mina', 'default').then((t) => t === 'chambre_mina')
+assert: AT('appartement_aube', 'default').then((t) => t === 'aube')

@@ -336,7 +336,7 @@ const APPARTEMENT_AUBE: MapDef = {
   ...APPARTEMENT,
   id: 'appartement_aube',
   name: 'Appartement — aube',
-  music: 'room_quiet',
+  music: 'aube',
   ambience: 'none',
   darkness: 0.3,
   props: [
@@ -354,7 +354,7 @@ const CHAMBRE_MINA: MapDef = {
   id: 'chambre_mina',
   name: 'Chambre de Mina',
   world: 'real',
-  music: 'room_quiet',
+  music: 'chambre_mina',
   ambience: 'none',
   darkness: 0.35,
   playerLight: 50,
