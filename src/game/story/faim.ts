@@ -85,6 +85,15 @@ export async function plateOnTheTable(d: Director): Promise<boolean> {
   const p = phase();
   if (p === 9 || faim() < 1 || G.state.flags[`faim_assiette_${p}`]) return false;
   d.set(`faim_assiette_${p}`);
+  if (faim() >= 2) {
+    // Two meals turned down: the plate is not pasta any more (gore on food, never on the children: § 6.1).
+    await d.say(['Sur la table, une assiette de pâtes. Elles bougent.', 'Ce ne sont pas des pâtes. Ça se tortille, blanc, dans une sauce trop rouge.']);
+    fx.pulseGlitch(8);
+    audio.sfx('splat', { vol: 0.35, pitch: 1.4 });
+    await d.wait(30);
+    await d.say(['Tu clignes des yeux.', 'L\'assiette est vide. Elle a toujours été vide.']);
+    return true;
+  }
   await d.say(['Sur la table, une assiette de pâtes t\'attend. Elles fument encore.', 'L\'assiette de Mina est déjà vide. Elle t\'a attendu pour le dessert.']);
   fx.pulseGlitch(6);
   audio.sfx('glitch', { vol: 0.3 });
@@ -118,6 +127,7 @@ function dodoInTheHallway(d: Director): void {
         await dd.wait(30);
         await dd.fadeIn(40);
         await dd.say(['…', 'Le couloir est vide.']);
+        await dd.say(['Sur le parquet, une traînée de coton mouillé. Rouge.', 'Elle va jusqu\'à ta chambre.']);
         await dd.say(['Dodo est sur ton lit. Il a toujours été sur ton lit.', 'Ta tête tourne. Depuis quand tu n\'as pas mangé ?']);
       });
     }

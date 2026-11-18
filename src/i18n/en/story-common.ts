@@ -34,4 +34,17 @@ export const STORY_COMMON: Record<string, string> = {
   'Sur le lit, Dodo n\'a pas bougé. Pourtant, quelqu\'un parle.': 'On the bed, Dodo hasn\'t moved. And yet someone is talking.',
   'Encore ?': 'Again?',
   'Je la remettrai autant de fois qu\'il le faudra, {player}.': 'I\'ll put it back as many times as it takes, {player}.',
+  // The ink puddles up close (2.2, the road of the ink).
+  'Une flaque d\'encre. Elle est encore tiède.': 'A puddle of ink. It\'s still warm.',
+  'Elle ne sèche pas. Elle ne sèchera pas.': 'It isn\'t drying. It never will.',
+  'De l\'encre, et dedans des touffes de laine collées.': 'Ink, with clumps of wool stuck in it.',
+  'Et quelque chose de mou, qui ne devrait pas être là.': 'And something soft that shouldn\'t be there.',
+  'La flaque a la forme de celui qui était là.': 'The puddle has the shape of whoever was here.',
+  'On voit encore où étaient les bras.': 'You can still see where the arms were.',
+  'Des éclats de coton rouge, figés dans l\'encre.': 'Bits of red cotton, set in the ink.',
+  'Ça sent le fer.': 'It smells of iron.',
+  'Au fond de la flaque, deux yeux-boutons.': 'At the bottom of the puddle, two button eyes.',
+  'Ils te regardent encore.': 'They\'re still looking at you.',
+  'Tu marches dedans. Ça colle.': 'You step in it. It sticks.',
+  'Ça te suit sur trois pas.': 'It follows you for three steps.',
 };

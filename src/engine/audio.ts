@@ -172,7 +172,9 @@ export type Sfx =
   | 'bird'
   // 2.2, the bathroom: a drop from the tap into the basin; the scream behind the mirror.
   | 'drip'
-  | 'scream';
+  | 'scream'
+  // 2.2, the ink route: a creature bursting.
+  | 'splat';
 
 export type Ambience = 'rain' | 'static' | 'wind' | 'hum' | 'none';
 
@@ -938,6 +940,12 @@ export class AudioEngine {
         this.tone('sawtooth', 170 * p, 90 * p, 0.11, 0.05 * v);
         this.noiseBurst(0.18, 0.32 * v, 'bandpass', 560 * p, t + 0.2);
         this.tone('sawtooth', 150 * p, 80 * p, 0.14, 0.045 * v, t + 0.2);
+        break;
+      case 'splat':
+        // Something wet bursting: a low thump, a dark spray, a short hiss of drops.
+        this.tone('sine', 140 * p, 40 * p, 0.25, 0.22 * v);
+        this.noiseBurst(0.35, 0.3 * v, 'lowpass', 900 * p, t + 0.02);
+        this.noiseBurst(0.12, 0.14 * v, 'bandpass', 2400 * p, t + 0.06);
         break;
       case 'drip':
         // A drop into a basin: a short sine that falls, and its little ring.

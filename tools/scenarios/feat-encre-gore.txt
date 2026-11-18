@@ -1,0 +1,42 @@
+# The road of the ink, gorier (2.2; the author opened the gore beyond toys, never on Noa or Mina): already on it (six
+# killed), Noa kills the cloud of the meadow — it bursts: two halves sliding apart, drops thrown out, a stain that
+# stays (battle.ts drawGoreDeath); after its own last words, one line of what is left of it (GORE_AFTER). Its puddle, up
+# close: what is left of it (world.inkPuddleLook). Played in English.
+query: debug=map&map=prairie&chapter=1&flags=c1_tutorial&lang=en
+god
+wait:800
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.BTXT = () => { const b = V.game.top; return b && b.text ? b.text.chars.map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: (V.G.state.kills = { gribouille: 6 }, V.G.state.encre = 9, 1)
+eval: (() => { const e = V.world.get('c1_nuage_1'); e.brain = null; const p = V.world.player; p.x = e.x; p.y = e.y + 12; p.dir = 'up'; return 1; })()
+ArrowUp:300
+waitfor: V.scene() !== 'WorldScene'
+assert: V.game.top.gore === true
+eval: (V.game.top.enemies[0].hp = 1, 1)
+auto
+hit
+waitfor: V.game.top.mode === 'bar'
+wait:500
+KeyZ
+waitfor: V.game.top.enemies && V.game.top.enemies[0].dead
+wait:350
+shot:eclate
+waitfor: BTXT().includes('Sad Cloud tears')
+eval: (window.GORE = ['splatters all the way', 'sticks to your fingers', 'wet sound', 'on your sweater', 'keeps oozing', 'Inside, it was red'], 1)
+zuntil: GORE.some((g) => BTXT().includes(g))
+wait:1500
+shot:eclate-texte
+auto
+waitfor: V.scene() === 'WorldScene' && V.world.busy === 0
+eval: window.PUD = () => V.world.entities.find((e) => e.id.startsWith('flaque_'))
+assert: PUD() && typeof PUD().interact === 'function'
+eval: (() => { const f = PUD(); const p = V.world.player; p.x = f.x; p.y = f.y + 10; p.dir = 'up'; return 1; })()
+wait:200
+KeyZ
+auto
+assert: ['still warm', 'clumps of wool', 'whoever was here', 'red cotton', 'button eyes', 'It sticks'].some((s) => SAW(s))
+assert: V.i18nMissing().length === 0

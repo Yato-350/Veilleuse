@@ -1423,8 +1423,11 @@ Manger fait reculer les visions. Rien au final : Noa se réveille.
     drap plat et vide.
   - Sa maladie passe par des objets : bonnet, masque, bracelet, vitre, thermomètre.
   - Son vrai visage, dessiné une seule fois, est fatigué et souriant.
-- **L'horreur corporelle ne touche que des jouets et du papier** : poupées, peluches, mannequins de feutre, coton,
-  encre, épingles, pile.
+- **L'horreur corporelle (le gore) ne touche jamais le corps de Noa ni celui de Mina.** Depuis la 2.2, l'auteur
+  l'ouvre au-delà des jouets et du papier (poupées, peluches, mannequins de feutre, coton, encre, épingles, pile) :
+  les créatures du rêve (sur la route de l'encre, elles éclatent au combat, une ligne suit leurs derniers mots — « C'est
+  tiède. Ça colle à tes doigts. » — sauf pour les boss, et elles laissent des flaques où l'on voit encore ce qu'elles
+  étaient), la nourriture (l'assiette de la faim), la maison (la traînée de coton mouillé du couloir).
   - Les figures de Mina (princesse au crayon, Mina de feutre, mannequins) ne sont jamais déchirées ni mutilées. Elles
     se défont en fil, se figent, ont des boutons. La Poupée Brouillon n'est jamais identifiée comme Mina.
   - Noa n'est jamais blessé. Sa toux laisse une tache d'encre sur sa manche, rien de plus. Le coton sous ses ongles

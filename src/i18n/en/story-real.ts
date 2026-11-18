@@ -662,4 +662,10 @@ export const STORY_REAL: Record<string, string> = {
   'Le couloir est vide.': 'The hallway is empty.',
   'Dodo est sur ton lit. Il a toujours été sur ton lit.': 'Dodo is on your bed. He has always been on your bed.',
   'Ta tête tourne. Depuis quand tu n\'as pas mangé ?': 'Your head is spinning. When did you last eat?',
+  // Hunger with two meals turned down (2.2).
+  'Sur la table, une assiette de pâtes. Elles bougent.': 'On the table, a plate of pasta. It\'s moving.',
+  'Ce ne sont pas des pâtes. Ça se tortille, blanc, dans une sauce trop rouge.': 'It isn\'t pasta. Something white is wriggling, in a sauce that\'s too red.',
+  'L\'assiette est vide. Elle a toujours été vide.': 'The plate is empty. It has always been empty.',
+  'Sur le parquet, une traînée de coton mouillé. Rouge.': 'On the floorboards, a trail of wet cotton. Red.',
+  'Elle va jusqu\'à ta chambre.': 'It goes all the way to your room.',
 };

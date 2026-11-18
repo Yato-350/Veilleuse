@@ -25,6 +25,12 @@ Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog]
   fume sur la table, puis plus rien. Après deux repas refusés, la nuit, dans le couloir : Dodo grandeur nature,
   déchiré, le coton qui sort — puis à la figure de Noa (un jumpscare, une seule fois ; en fondu avec « Réduire les
   flashs »).
+- **Route de l'encre, plus sanglante** : en combat, une créature tuée éclate (deux moitiés qui glissent, des
+  gouttes rouges et noires, une tache qui reste au sol jusqu'à la fin du combat), et une ligne suit ses derniers mots
+  (« C'est tiède. Ça colle à tes doigts. », « Dedans, c'était rouge. Tu ne savais pas. »…). Les flaques laissées
+  dans le monde se regardent : laine collée, coton rouge, deux yeux-boutons au fond. Avec deux repas refusés,
+  l'assiette n'est plus des pâtes, et le couloir garde une traînée de coton mouillé. Jamais sur le corps de Noa ni
+  sur celui de Mina.
 
 ### Modifié
 - **Musique des boss** : trois nouveaux thèmes, plus rapides, tous construits sur la berceuse : « Fil rouge » (la

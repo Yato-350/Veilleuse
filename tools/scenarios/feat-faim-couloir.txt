@@ -1,7 +1,9 @@
 # Hunger (2.2, story/faim.ts), at night: two meals turned down (&flags=faim=2), Interlude III. In the hallway, Dodo,
 # life-size, torn open, the cotton hanging out, at the far end; a few seconds later, at Noa's face: a jumpscare
-# (scenes/jump.ts), once. Then the hallway is empty, and Dodo is on the bed, where he always was.
-query: debug=script&name=interlude3_sac&flags=faim=2&lang=fr
+# (scenes/jump.ts), once. Then the hallway is empty but for a trail of wet red cotton, and Dodo is on the bed, where he
+# always was. The kitchen table, two meals turned down: the plate is not pasta any more (gore on food, never on the
+# children), then empty. Played in English.
+query: debug=script&name=interlude3_sac&flags=faim=2&lang=en
 wait:1500
 eval: window.V = window.__veilleuse
 eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
@@ -15,5 +17,10 @@ shot:visage
 waitfor: V.game.top.constructor.name === 'WorldScene'
 auto
 assert: V.G.state.flags.faim_couloir === true && !V.world.entities.some((e) => e.id === 'faim_dodo')
-assert: SAW('Le couloir est vide.') && SAW('Dodo est sur ton lit.') && SAW('Depuis quand tu n\'as pas mangé ?')
+assert: SAW('The hallway is empty.') && SAW('a trail of wet cotton. Red.') && SAW('He has always been on your bed.') && SAW('When did you last eat?')
+go:28/7
+ArrowUp:80
+KeyZ
+auto
+assert: V.G.state.flags.faim_assiette_3 === true && SAW('Something white is wriggling') && SAW('It has always been empty.')
 assert: V.i18nMissing().length === 0
