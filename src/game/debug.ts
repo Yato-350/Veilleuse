@@ -15,6 +15,7 @@ import { MAPS } from '../data/maps';
 import { deleteSave, G, maxHp, newState, SLOTS, writeSave } from './state';
 import { TitleScene, TITLE_VARIANTS, type TitleVariant } from './scenes/title';
 import { ImageScene } from './scenes/image';
+import { MirrorScene } from './scenes/mirror';
 import { DEBUG_SCRIPTS } from './story';
 import { CreditsScene } from './scenes/credits';
 import { GalleryScene } from './scenes/gallery';
@@ -32,6 +33,7 @@ import { setClock } from './clock';
  *   ?debug=battle&enemies=nuage,pissenlit&chapter=1&emotion=joie   (&music=couseuse: force a track)
  *   ?debug=pattern&id=rain&emotion=tristesse
  *   ?debug=image&key=souvenir_fenetre
+ *   ?debug=mirror&ink=1                 the bathroom mirror scene alone (scenes/mirror.ts; &ink=1: the ink route)
  *   ?debug=script&name=chapter1_intro&map=prairie
  *   ?debug=title | ?debug=credits
  *   ?debug=title&variant=point_de_croix|continuer_seul|soleil_blanc|silence_v2|veilleuse|night|dawn|dream (&days=23)
@@ -100,6 +102,11 @@ export function startDebug(p: URLSearchParams): void {
         while (true) await b.runPattern(id, Number(p.get('power') ?? 0));
       };
       void loop();
+      return;
+    }
+    case 'mirror': {
+      game.replace(new BlackScene());
+      void MirrorScene.play(p.get('ink') === '1');
       return;
     }
     case 'image': {

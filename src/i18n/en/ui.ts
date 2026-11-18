@@ -390,4 +390,6 @@ export const UI: Record<string, string> = {
   'Chapitre {0}': 'Chapter {0}',
   'Interlude {0}': 'Interlude {0}',
   'Final': 'Finale',
+  // The bathroom mirror (scenes/mirror.ts), ink route.
+  'MONSTRE': 'MONSTER',
 };

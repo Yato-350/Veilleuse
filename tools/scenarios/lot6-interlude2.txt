@@ -13,15 +13,20 @@ eval: window.BY = (s) => WHO[SEEN.findIndex((t) => t.includes(s))] ?? []
 eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
 auto
 assert: V.G.state.map === 'appartement_nuit' && SAW('Trois coups. Dans le mur de Mina.') && SAW('Puis rien.') && V.G.state.flags.i2_coups === true
-# The bathroom
+# The bathroom (a room since 2.2): the running water, « Entrer ? », and inside, the reflection with its eyes closed.
 go:14/3
 ArrowUp:80
 KeyZ
 auto
 choose:0
 auto
-assert: SAW('Dans le miroir, ton reflet a les yeux fermés.') && V.G.state.flags.i2_reflet === true
+assert: SAW('Dans le miroir, ton reflet a les yeux fermés.') && V.G.state.flags.i2_reflet === true && V.G.state.map === 'salle_de_bain_nuit'
 shot:reflet
+# Back to the hallway, in front of the bathroom door.
+go:4/6
+ArrowDown:400
+wait:900
+assert: V.G.state.map === 'appartement_nuit' && Math.floor(V.world.player.x / 16) === 14
 # The TV
 go:16/5
 ArrowRight:600

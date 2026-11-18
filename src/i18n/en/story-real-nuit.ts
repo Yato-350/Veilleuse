@@ -608,4 +608,7 @@ export const STORY_REAL_NUIT: Record<string, string> = {
   'Tu marches comme elle. Tu ne l\'avais jamais remarqué.': 'You walk like her. You\'d never noticed.',
   'Les volets sont fermés. Entre les lattes, la lumière orange du lampadaire de la rue.': 'The shutters are closed. Between the slats, the orange light of the streetlamp.',
   'Elle dort le jour. Toi, tu ne dors plus.': 'She sleeps in the daytime. You don\'t sleep anymore.',
+  // The bathroom door at night (2.2).
+  'La salle de bain. Derrière la porte, le robinet goutte.': 'The bathroom. Behind the door, the tap is dripping.',
+  'Entrer quand même ?': 'Go in anyway?',
 };

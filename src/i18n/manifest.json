@@ -18,6 +18,7 @@
     "src/game/scenes/title.ts",
     "src/game/scenes/files.ts",
     "src/game/scenes/slots.ts",
+    "src/game/scenes/mirror.ts",
     "src/game/files.ts",
     "src/game/scenes/warning.ts",
     "src/game/ui/dialogue.ts",

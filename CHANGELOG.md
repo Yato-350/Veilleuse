@@ -13,6 +13,12 @@ Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog]
   On charge depuis l'écran titre (« Continuer » ouvre la liste quand il y a plusieurs sauvegardes) ou depuis le menu
   (onglet « Quitter », « Charger »). Une nouvelle partie n'efface plus rien quand un emplacement est libre. La
   sauvegarde d'avant la mise à jour se retrouve dans l'emplacement 1.
+- **La salle de bain** de l'appartement est une vraie pièce (de jour, à 3 h 33, et dans les interludes de nuit) :
+  lavabo, miroir, baignoire, serviettes. Le premier vrai regard dans le miroir (interludes III et IV, dès
+  l'Interlude I sur la route de l'encre) : le reflet de Noa et une silhouette d'encre alternent de plus en plus vite,
+  puis un cri et le noir. Sur la route de l'encre, c'est plus long et le mot « MONSTRE » reste sur le miroir. Jamais
+  plus de trois changements par seconde ; avec « Réduire les flashs », un lent fondu à la place. Le reflet aux yeux
+  fermés de l'Interlude II se voit maintenant dans la pièce.
 
 ### Modifié
 - **Musique des boss** : trois nouveaux thèmes, plus rapides, tous construits sur la berceuse : « Fil rouge » (la

@@ -49,7 +49,7 @@ Dodo s'examine depuis le côté du lit (depuis le bas, c'est le lit), le mur con
 | Twist | Indice | Où | Entité / code | Preuve |
 |---|---|---|---|---|
 | — | En entrant dans le couloir : trois coups dans le mur de Mina, puis rien | Couloir (arrivée) | `appartNuitEnter`, `real.ts:1033`, drapeau `i2_coups` | `lot6-interlude2` |
-| T8 | Salle de bain : « Dans le miroir, ton reflet a les yeux fermés. » | Porte de la salle de bain, [Entrer] | `a_sdb`, `real.ts:975`, drapeau `i2_reflet` | `lot6-interlude2` |
+| T8 | Salle de bain : « Dans le miroir, ton reflet a les yeux fermés. » | Porte de la salle de bain, [Entrer] : on entre dans la pièce (2.2), le reflet se voit en arrivant | `a_sdb` → `bathroomDoor`, carte `salle_de_bain_nuit`, `bathroomEnter` (`story/real.ts`), drapeau `i2_reflet` | `lot6-interlude2` |
 | T9 | Une image de la vidéo saute : une petite fille en bonnet à oreilles de mouton, de dos ; puis la neige | Télé (`tvWakes`) | illustration `tv_mina` (`paintTvBonnet`, `src/data/illustrations.ts:1839`, cinq images toutes les dix secondes) ; réplique `real.ts:1054` | `lot6-interlude2` |
 | T7 | Dodo dans le couloir : « Ses pattes sont propres. Le couloir est plein de poussière. » | Couloir | `dodo_corridor`, `real.ts:1076` | `lot6-interlude2` |
 | T7 | Dodo parle dans le réel : son bip, sans portrait ; la peluche ne bouge pas, seul Noa est animé | Lit | `interlude2Dodo`, locuteur `dodoreel`, `real.ts:1106`–`:1111` | `lot6-interlude2` |

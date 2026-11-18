@@ -926,11 +926,12 @@ export const minaDoor = look(
   [['La porte de Mina. Fermée à clé.', 'La clé est dans ton tiroir. Tu l\'as toujours su.']],
 );
 
-export const bathroomDoor = look(
-  'sdb',
-  [['La salle de bain. Tu n\'allumes pas.', 'Tu n\'as pas envie de croiser ton reflet.']],
-  [['La salle de bain. Le robinet goutte.', 'Tu le fermes. Il goutte.']],
-);
+/** The bathroom door at night (III, IV): you can go in now (maps/real.ts salle_de_bain_nuit, its mirror: real.ts). */
+export const bathroomDoor: Script = async (d) => {
+  await d.say(iv() ? 'La salle de bain. Derrière la porte, le robinet goutte.' : ['La salle de bain. Tu n\'allumes pas.', 'Tu n\'as pas envie de croiser ton reflet.']);
+  const r = await d.ask(iv() ? 'Entrer ?' : 'Entrer quand même ?', ['Entrer', 'Laisser'], undefined, { cancelIndex: 1 });
+  if (r === 0) await d.warp('salle_de_bain_nuit', 'door', { sfx: 'door' });
+};
 
 export const mamanDoor: Script = async (d) => {
   if (!iv()) {

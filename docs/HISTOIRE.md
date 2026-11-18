@@ -1418,6 +1418,8 @@ faits peuvent lever (l'infection) et laisse celle que Noa seul peut porter (les 
     se défont en fil, se figent, ont des boutons. La Poupée Brouillon n'est jamais identifiée comme Mina.
   - Noa n'est jamais blessé. Sa toux laisse une tache d'encre sur sa manche, rien de plus. Le coton sous ses ongles
     vient de la peluche.
+  - Le miroir de la salle de bain (2.2) : les gribouillis sur les yeux du reflet sont du stylo bille sur le verre,
+    comme on barre un dessin raté ; la silhouette est de l'encre. Le reflet n'est jamais blessé.
 - **Pas de glorification ni de méthode de suicide ou d'automutilation.**
   - « Dormir » et « rester » restent des métaphores du repli. *Beaux rêves* montre explicitement un garçon vivant
     dont les années passent.

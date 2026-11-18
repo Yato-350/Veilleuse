@@ -1,0 +1,27 @@
+# The bathroom on the ink route (2.2): already in Interlude I (by day), the mirror scene comes, longer, and leaves
+# « MONSTRE » on the glass; the sleeve that rubs it stays clean. Later, the reflection is a beat behind. Played in English.
+# Without the ink route, Interlude I only has the tired reflection (no scene).
+query: debug=script&name=salle_de_bain&flags=interlude=1&lang=en
+wait:1500
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+assert: V.G.state.map === 'salle_de_bain'
+interact:sdb_lavabo
+auto
+assert: SAW('looks very tired') && !V.G.state.flags.sdb_reflet
+eval: (V.G.state.kills = { gribouille: 6 }, 1)
+interact:sdb_lavabo
+zuntil: V.game.top.constructor.name === 'MirrorScene'
+assert: V.game.top.inkRoute === true && V.game.top.shots.filter((s) => s.kind === 'ink').length === 15
+wait:10000
+shot:monstre
+waitfor: V.game.top.constructor.name === 'WorldScene'
+auto
+assert: SAW('MONSTER') && SAW('Your sleeve is clean.') && V.G.state.flags.sdb_monstre === true
+interact:sdb_lavabo
+auto
+assert: SAW('Your reflection is a beat behind.') && SAW('the word is still there')
+assert: V.i18nMissing().length === 0
