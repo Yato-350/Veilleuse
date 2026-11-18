@@ -945,6 +945,52 @@ const STAIN = (() => {
   return p.toString();
 })();
 
+/** Gore colours (2.2): stuffing soaked red inside the plush. */
+const GORE = { b: '#7b1d28', B: '#43101a', r: '#b03244', R: '#e2697a' };
+
+/**
+ * 2.2, the cotton breathes (story/chapter6.ts ouateBreathes): a lump of soaked stuffing fallen from the low ceiling —
+ * grey cotton gone dark with wet, and red in the middle, glistening (14×10). `seed` moves the tufts and the drip.
+ */
+function wetLump(seed: number): string {
+  const p = new Pix(14, 10);
+  p.ellipse(7, 6, 6.5, 3.6, '%');
+  p.ellipse(4 + seed, 5, 3, 2, '9').ellipse(10 - seed, 6, 2.5, 1.8, '9').ellipse(8, 4, 2, 1.2, '8');
+  p.ellipse(7, 6.2, 3.2, 1.9, 'b');
+  p.ellipse(7, 6.5, 1.7, 1, 'B');
+  p.set(5, 5, 'r').set(9, 6, 'r').set(6, 6, 'R');
+  p.set(3 + seed, 4, '6').set(11 - seed, 5, '6');
+  p.set(2 + seed * 2, 9, 'b').set(12 - seed, 9, '%');
+  p.contour('&');
+  return p.toString();
+}
+
+/**
+ * The last lump (16×12): bigger; `open`, split down the middle on a button eye as big as a fist — Dodo's, black, its
+ * four holes turned up — in a nest of red.
+ */
+function eyeLump(open: boolean): string {
+  const p = new Pix(16, 12);
+  p.ellipse(8, 7, 7.5, 4.6, '%');
+  p.ellipse(4, 6, 3.4, 2.4, '9').ellipse(12, 6, 3, 2.2, '9').ellipse(8, 4, 3, 1.6, '8');
+  if (!open) {
+    p.ellipse(8, 7.5, 3.5, 2, 'b').set(7, 7, 'r').set(9, 8, 'R');
+    p.set(3, 4, '6').set(13, 5, '6');
+  } else {
+    // Split open: the halves pushed apart, red inside, the button in the middle.
+    p.ellipse(8, 7.5, 5.5, 3.6, 'b');
+    p.ellipse(8, 8, 4.5, 2.8, 'B');
+    p.ellipse(8, 7, 3.2, 3, '@');
+    p.ellipse(8, 7, 2.3, 2.2, '&');
+    p.set(7, 6, '8').set(9, 6, '8').set(7, 8, '8').set(9, 8, '8');
+    p.set(6, 5, '7');
+    p.set(3, 9, 'r').set(12, 9, 'r').set(4, 10, 'b').set(13, 8, 'R').set(2, 7, 'R');
+  }
+  p.set(1, 11, 'b').set(14, 11, '%');
+  p.contour('&');
+  return p.toString();
+}
+
 /** The light that comes through the seam, spilling on the cotton (24×12). */
 const SPILL = (() => {
   const p = new Pix(24, 12);
@@ -1068,6 +1114,10 @@ export const ART: Record<string, SpriteDef> = keep({
   prop_c6_fil_pendu_1: sprite(hangingThread(0)),
   prop_c6_fil_pendu_2: sprite(hangingThread(2)),
   prop_c6_tache: sprite(STAIN),
+  prop_c6_bourre_mouillee_1: sprite(wetLump(0), GORE),
+  prop_c6_bourre_mouillee_2: sprite(wetLump(1), GORE),
+  prop_c6_bourre_oeil: sprite(eyeLump(false), GORE),
+  prop_c6_bourre_oeil_ouvert: sprite(eyeLump(true), GORE),
   prop_c6_lumiere: sprite(SPILL),
   prop_c6_touffe_1: sprite(creep(0)),
   prop_c6_touffe_2: sprite(creep(1)),

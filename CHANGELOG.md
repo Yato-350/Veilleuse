@@ -36,6 +36,8 @@ Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog]
   figure. Jamais plus de deux changements de lumière par seconde ; en fondu avec « Réduire les flashs ».
 - **Le sentier gommé** (chapitre 2) : quelque chose suit Noa et Mina, un pas en retard. Il n'avance que quand on
   lui tourne le dos. On peut le laisser venir, ou aller jusqu'à lui.
+- **La Ouate** (chapitre 6) : dans la grotte basse, le coton respire, puis du rembourrage gorgé, gris et rouge,
+  tombe du plafond devant Noa. Le dernier paquet s'ouvre sur un œil-bouton.
 
 ### Modifié
 - **Musique des boss** : trois nouveaux thèmes, plus rapides, tous construits sur la berceuse : « Fil rouge » (la

@@ -1063,6 +1063,13 @@ Les parois répètent en boucle, au ralenti, « …fais de beaux rêves ».
    Énigme de mémoire : trouver le bocal sans étiquette, caché derrière « Nuit 1 : il ne se souvient pas de la nuit
    0 ». Dedans, une vibration de téléphone. Elle ouvre le chemin. Si `c4_coton` > 0, des **Bourres** : « C'est toi
    qui nous as vidés. »
+
+   **Le coton respire (2.2).** La première fois qu'on traverse la grotte basse : les parois se gonflent et retombent
+   comme une poitrine, un battement à chaque souffle ; des gouttes tombent du plafond ; puis trois paquets de
+   rembourrage gorgé tombent devant Noa (leur ombre d'abord), gris et rouges au milieu, tièdes, qui battent encore un
+   peu. Le dernier s'ouvre tout seul sur un œil-bouton gros comme un poing. Dodo, depuis le coton : « Tu voulais
+   savoir ce qu'il y a dedans. » Les paquets restent où ils sont tombés. C'est du gore sur le jouet (Dodo lui-même),
+   jamais sur les enfants.
 4. **La boîte à musique : le cœur de Dodo.**
    - Un cylindre de boîte à musique dont les dents de métal sont des **dents de lait**, celles de Noa. Légende de
      famille : « La petite souris les a confiées au mouton. »
@@ -1291,6 +1298,7 @@ restent rares, une fois chacun, et suivent les limites du § 6.1.
 - Les marionnettes de Mina vides, pendues à leurs fils.
 - L'œil-bouton qui balance.
 - Les coutures de Dodo qui s'ouvrent sur du rembourrage gris.
+- Le coton qui respire, et le rembourrage rouge qui tombe du plafond, l'œil-bouton dedans (2.2).
 - Les coups dans le noir, et les faux coups.
 - Les couleurs qui mentent.
 - *Contrepoint* : la berceuse entière ; le visage dessiné ; « On a le droit. »
