@@ -38,6 +38,8 @@ Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog]
   lui tourne le dos. On peut le laisser venir, ou aller jusqu'à lui.
 - **La Ouate** (chapitre 6) : dans la grotte basse, le coton respire, puis du rembourrage gorgé, gris et rouge,
   tombe du plafond devant Noa. Le dernier paquet s'ouvre sur un œil-bouton.
+- **La plage d'avant** (chapitre 5) : sur la plage où rien n'a d'ombre, celle de Noa revient, trop longue, pas sa
+  forme. Elle se lève, beaucoup trop grande, sans visage, et marche dans la mer.
 
 ### Modifié
 - **Musique des boss** : trois nouveaux thèmes, plus rapides, tous construits sur la berceuse : « Fil rouge » (la

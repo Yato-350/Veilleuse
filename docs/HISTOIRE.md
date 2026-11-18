@@ -969,6 +969,11 @@ Cartes : `chambre`, `appartement_nuit`, **`chambre_maman`** (nouvelle).
      une infirmière, Mina qui rit devant la télé, « Il viendra samedi », Mina qui compte les respirations de Maman.
    - Au loin, **Mina d'avant**, au crayon, en maillot et couronne, construit un château. Elle ne dit que des phrases
      de vacances : « Regarde, Noa ! J'en ai quarante-deux ! »
+   - **L'ombre (2.2).** Une fois une douzaine de coquillages ramassés, loin de Mina d'avant : l'ombre de Noa revient,
+     la seule de la plage, beaucoup trop longue, pas sa forme. Il fait un pas de côté, elle ne bouge pas. Elle se
+     lève : une silhouette pleine, au stylo noir, beaucoup trop grande, sans visage — celle qu'il ajoutera aux dessins
+     du lac blanc, vue ici une première fois. Elle marche vers la mer, et la lumière la mange. Dodo : « Même ton ombre
+     ne veut pas rester avec toi. » Ni flash ni secousse.
 3. **La serviette.**
    - Mina d'avant s'endort. **On ne peut pas la réveiller pendant 30 secondes réelles.** À chaque appui sur A :
      « Elle dort. » (Le mode Histoire et l'option « réduire les attentes » ramènent l'attente à 5 s.)
@@ -1286,6 +1291,7 @@ restent rares, une fois chacun, et suivent les limites du § 6.1.
 - Le thermomètre qui hurle à 40.
 - La toux qui éclabousse le dessin d'encre.
 - La silhouette ajoutée au stylo, trop grande, sans visage, sur les dessins corrigés.
+- L'ombre de Noa, la seule de la plage, qui se lève et part dans la mer (2.2).
 - *Contrepoint* : les coquillages où Maman fredonne ; les mains qui se rejoignent.
 
 ### Ch. 6 — Le Ventre de Dodo
