@@ -198,6 +198,49 @@ const dropBars = (p: string, bars: number[]): string =>
 // Boss themes (2.2): fast fights, each built on the lullaby
 // ---------------------------------------------------------------------------
 
+/** The village (chapter 1): its chords and its bell tune (village, village_v2). */
+const VILLAGE_CHORDS = ['F', 'Bb', 'F', 'C', 'Gm7', 'C7', 'F', 'F', 'F', 'Bb', 'Dm', 'C', 'Gm7', 'C7', 'C7', 'F'].map(fixFlat);
+const VILLAGE_TUNE = join(
+  'A5 - G5 - F5 - C5 -',
+  'D5 - - - C5 - - -',
+  'A5 - G5 - F5 - A5 -',
+  'G5 - - - - - . .',
+  'Bb5 - A5 - G5 - F5 -',
+  'G5 - - - E5 - C5 -',
+  'F5 - G5 - A5 - C6 -',
+  'A5 - - - - - . .',
+  'A5 - G5 - F5 - C5 -',
+  'D5 - - - C5 - - -',
+  'D5 - E5 - F5 - A5 -',
+  'G5 - - - - - . .',
+  'Bb5 - A5 - G5 - F5 -',
+  'E5 - - - G5 - C5 -',
+  'E5 - - - G5 - E5 -',
+  'F5 - - - - - . .',
+);
+/** The pencil forest (chapter 2): D dorian chords and the flute tune (forest, clairiere). */
+const FOREST_CHORDS = ['Dm7', 'Em7', 'Fmaj7', 'Em7', 'Dm7', 'Em7', 'Cmaj7', 'Dm7', 'Gm7', 'Am7', 'Fmaj7', 'Em7', 'Dm7', 'Em7', 'Cmaj7', 'Dm7'];
+const FOREST_TUNE = join(
+  rest(8),
+  rest(8),
+  'A5 - - G5 F5 - - -',
+  'E5 - - F5 G5 - - -',
+  'A5 - G5 - E5 - - -',
+  'D5 - - - - - . .',
+  'F5 - - E5 D5 - - -',
+  'E5 - - - - - . .',
+  'D6 - - C6 A5 - - -',
+  'C6 - - A5 G5 - - -',
+  'A5 - G5 - F5 - - -',
+  'E5 - - - - - . .',
+  'F5 - - E5 D5 - - -',
+  'E5 - F5 - G5 - E5 -',
+  'C5 - - D5 E5 - - -',
+  'D5 - - - - - . .',
+);
+/** The owl's library (chapter 2): the forest's D dorian, slower, with ninths. */
+const LIBRARY_CHORDS = ['Dm9', 'Gm7', 'Cmaj7', 'Fmaj7', 'Dm9', 'Bbmaj7', 'Em7', 'A7', 'Dm9', 'Gm7', 'Cmaj7', 'Fmaj7', 'Bbmaj7', 'Gm7', 'A7', 'Dm9'].map(fixFlat);
+
 /** « Fil rouge » (La Couseuse): the night shift's A minor, then a second half that climbs. */
 const FIL_CHORDS = [...GARDE_CHORDS, 'F', 'G', 'Em', 'Am', 'Dm', 'E', 'Am', 'E'];
 /** The lullaby's head (E D C · D E G · A G E · D), sped up and syncopated, an octave higher from bar 9. */
@@ -528,6 +571,108 @@ export const TRACKS: Record<string, Track> = {
       ch('kick', drums('x . . x . . x . x . . x . . x .', 16), { vol: 0.42 }),
       ch('snare', drums('. . . . x . . . . . . . x . x .', 16), { vol: 0.3 }),
       ch('hat', drums('x x x . x x x . x x x . x x x .', 16), { vol: 0.1 }),
+    ],
+  },
+
+  /**
+   * Village, deeper (2.2, preview): the same bell tune over the pizzicato, with a warm pad underneath, a bass that
+   * walks, a soft kick on 1 and 3 (a cosy step), a second voice holding the harmony in the second half, and the
+   * lullaby passing by on a music box in the last four bars (in F). 16 bars 4/4.
+   */
+  village_v2: {
+    bpm: 92,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch('bell', VILLAGE_TUNE, { vol: 0.27, reverb: 0.45, pan: 0.1 }),
+      ch('pluck', figure(VILLAGE_CHORDS, 4, 'R 5 3 5 R 5 3 5'), { vol: 0.2, pan: -0.25 }),
+      ch('bass', figure(VILLAGE_CHORDS, 2, 'R - . 5 8 - 5 .'), { vol: 0.38 }),
+      ch('pad', padLine(VILLAGE_CHORDS, 3, 8), { vol: 0.08, reverb: 0.55, detune: 6 }),
+      ch('triangle', join(rep(rest(8), 8), figure(VILLAGE_CHORDS.slice(8), 4, '3 - - - 5 - - -')), { vol: 0.09, reverb: 0.5, pan: 0.3 }),
+      ch('musicbox', join(rep(rest(8), 12), transpose(LULLABY_44_A.split(' | ').slice(0, 4).join(' | '), 5)), { vol: 0.1, reverb: 0.7, pan: -0.2 }),
+      ch('kick', drums('x . . . x . . .', 16), { vol: 0.1 }),
+      ch('hat', drums('. . x . . . x .', 16), { vol: 0.1 }),
+    ],
+  },
+
+  /**
+   * Bibliothèque du Hibou (2.2, preview): the forest's D dorian, but hushed. A low piano on open fifths, the forest's
+   * tune quoted on a music box an octave down with long silences between, a pad, a pendulum clock (tick on 1, tock on
+   * 3) and a page turning every eight bars. 16 bars 4/4.
+   */
+  bibliotheque: {
+    bpm: 66,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch('piano', figure(LIBRARY_CHORDS, 2, 'R - - - 5 - - -'), { vol: 0.2, reverb: 0.5, pan: -0.15 }),
+      ch(
+        'musicbox',
+        join(
+          rest(8),
+          rest(8),
+          'A5 - - - G5 - F5 -',
+          'E5 - - - - - . .',
+          'F5 - - - E5 - D5 -',
+          'C5 - - - - - . .',
+          'B4 - - - E5 - - -',
+          'C#5 - - - - - . .',
+          'D5 - - - F5 - A5 -',
+          'D6 - - - - - C6 -',
+          'B5 - - - G5 - E5 -',
+          'A5 - - - - - . .',
+          'A5 - - - F5 - D5 -',
+          'D5 - - - Bb4 - - -',
+          'C#5 - - - E5 - G5 -',
+          'D5 - - - - - . .',
+        ),
+        { vol: 0.24, reverb: 0.75, pan: 0.2 },
+      ),
+      ch('pad', padLine(LIBRARY_CHORDS, 3, 8), { vol: 0.1, reverb: 0.8, detune: 5 }),
+      ch('bass', figure(LIBRARY_CHORDS, 1, 'R - - - - - - -'), { vol: 0.2 }),
+      ch('hat', drums('x . . . . . . .', 16), { vol: 0.035 }),
+      ch('kick', drums('. . . . x . . .', 16), { vol: 0.05 }),
+      ch('breath', join(rep(rest(8), 7), 'C5 - - . . . . .', rep(rest(8), 7), 'C5 - - . . . . .'), { vol: 0.05, pan: 0.4 }),
+    ],
+  },
+
+  /**
+   * Clairière des Lucioles (2.2, preview): the forest's tune, at night, made of light. The melody on bells doubled an
+   * octave up on a music box, the arpeggio higher and sparser, a warm pad, a soft bass, and fireflies: high bell notes
+   * scattered over the bars. 16 bars 4/4.
+   */
+  clairiere: {
+    bpm: 76,
+    stepsPerBeat: 2,
+    vol: 0.75,
+    channels: [
+      ch('bell', FOREST_TUNE, { vol: 0.2, reverb: 0.7, pan: 0.1 }),
+      ch('musicbox', FOREST_TUNE, { vol: 0.08, reverb: 0.8, transpose: 12, pan: -0.1 }),
+      ch('pluck', figure(FOREST_CHORDS, 4, 'R . 5 . 7 . 10 .'), { vol: 0.12, reverb: 0.6, pan: -0.35 }),
+      ch('pad', padLine(FOREST_CHORDS, 3, 8), { vol: 0.14, reverb: 0.8, detune: 6 }),
+      ch('bass', figure(FOREST_CHORDS, 2, 'R - - - - - - -'), { vol: 0.18 }),
+      ch(
+        'bell',
+        join(
+          '. . . . . . A6 .',
+          '. . . D7 . . . .',
+          rest(8),
+          '. F6 . . . . . .',
+          '. . . . . C7 . .',
+          rest(8),
+          '. . E6 . . . . A6',
+          rest(8),
+          '. . . . G6 . . .',
+          '. D7 . . . . . .',
+          rest(8),
+          '. . . . . . F6 .',
+          '. . A6 . . . . .',
+          rest(8),
+          '. . . . . E7 . .',
+          '. . . D6 . . . .',
+        ),
+        { vol: 0.05, reverb: 0.9, pan: 0.5 },
+      ),
     ],
   },
 
