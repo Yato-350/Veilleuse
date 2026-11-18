@@ -1385,6 +1385,17 @@ faits peuvent lever (l'infection) et laisse celle que Noa seul peut porter (les 
 - Le mot de Nadia sur les piles.
 - Une étiquette de bocal : « Nuit 333 : il n'a pas voulu dire qu'il était malade. »
 
+### La faim (2.2)
+
+Le temps d'une partie, `flags.faim` compte les repas que Noa refuse, moins ceux qu'il mange (`story/faim.ts`) :
+les pâtes froides de l'Interlude I, le frigo de 4 h 06 (Interlude III, « Mange quelque chose s'il te plaît ») et le
+dîner qui recommence au chapitre 4. Sans manger, il voit des choses dans l'appartement :
+- dès 1 : Mina, comme avant, assise à sa place dans la cuisine ; quand on s'approche, elle n'y est plus. Sur la table,
+  une assiette qui fume, celle de Mina déjà vide ; puis il n'y a rien sur la table ;
+- dès 2, la nuit : Dodo grandeur nature au bout du couloir, déchiré, le coton qui sort (horreur sur un jouet
+  seulement), puis à la figure de Noa ; une seule fois. « Dodo est sur ton lit. Il a toujours été sur ton lit. »
+Manger fait reculer les visions. Rien au final : Noa se réveille.
+
 ### Méta et nouvelle partie+
 
 | Ce que la mémoire retient | Où ça se voit |

@@ -1,0 +1,43 @@
+# Hunger (2.2, story/faim.ts), Interlude I: Noa leaves the cold pasta (« Laisser »): one meal turned down. Walking away
+# from the stove and looking back, Mina is at her place at the kitchen table, as she was; coming near, she is not.
+# The table: a plate that steams, Mina's already empty — then nothing. Eating the pasta after all takes the meal back.
+query: debug=script&name=interlude1_fridge&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+auto
+go:30/4
+ArrowUp:80
+KeyZ
+zuntil: V.dialogue.choices
+choose:1
+auto
+eval: window.MINA = () => V.world.entities.find((e) => e.id === 'faim_mina')
+assert: V.G.state.flags.faim === 1 && V.G.state.flags.i1_laisse === true && MINA() && MINA().alpha === 0
+# Away from the stove, looking back: she is there.
+go:24/5
+wait:600
+assert: MINA() && MINA().alpha > 0.5
+shot:mina
+# Coming near: she is not.
+go:28/5
+wait:900
+assert: !MINA() && V.G.state.flags.faim_mina_1 === true
+# The table.
+go:28/7
+ArrowUp:80
+KeyZ
+auto
+assert: SAW('une assiette de pâtes t\'attend') && SAW('Il n\'y a rien sur la table.') && V.G.state.flags.faim_assiette_1 === true
+# The pasta, after all.
+go:30/4
+ArrowUp:80
+KeyZ
+zuntil: V.dialogue.choices
+choose:0
+auto
+assert: V.G.state.flags.faim === 0 && V.G.state.flags.i1_ate === true
+assert: V.i18nMissing().length === 0

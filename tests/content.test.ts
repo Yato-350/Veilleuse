@@ -40,6 +40,8 @@ import * as chapter6 from '../src/game/story/chapter6';
 import { deleteSave, freeSlot, G, hasSave, latestSlot, listSaves, newMeta, newState, readSave, SLOTS, writeSave } from '../src/game/state';
 import { storage } from '../src/engine/storage';
 import { slotDetails, slotPlace } from '../src/game/scenes/slots';
+import { eatMeal, faim, refuseMeal } from '../src/game/story/faim';
+import { director } from '../src/game/director';
 import { deletedSpeaker, deletedSprite, deleteFile, filesUnlocked, isDeleted, restoreFile, scrambled } from '../src/game/files';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -863,6 +865,28 @@ describe('save slots (2.2)', () => {
       expect(slotDetails(s)).toBe('Sacha · 1:02 · Nov 14, 02:13');
     } finally {
       bindLanguage(() => 'fr');
+    }
+  });
+});
+
+describe('hunger (2.2)', () => {
+  it('counts each meal turned down once, and each meal eaten takes one back', () => {
+    const before = G.state;
+    try {
+      G.state = newState('Noa');
+      expect(faim()).toBe(0);
+      refuseMeal(director, 'i1_laisse');
+      refuseMeal(director, 'i1_laisse');
+      expect(faim()).toBe(1);
+      refuseMeal(director, 'i3_laisse');
+      refuseMeal(director, 'c4_refus');
+      expect(faim()).toBe(3);
+      eatMeal(director);
+      expect(faim()).toBe(2);
+      for (let i = 0; i < 4; i++) eatMeal(director);
+      expect(faim()).toBe(0);
+    } finally {
+      G.state = before;
     }
   });
 });

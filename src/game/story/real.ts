@@ -5,6 +5,7 @@ import type { Script } from '../overworld/types';
 import { world } from '../overworld/world';
 import { G, inkRoute, maxHp, writeMeta } from '../state';
 import { MirrorScene } from '../scenes/mirror';
+import { eatMeal, hungerSights, plateOnTheTable, refuseMeal } from './faim';
 import { isLateNight, setPageTitle } from '../meta';
 import { composePoem } from '../scenes/poem';
 import { dateLabel, PhoneScene, type PhoneContact, type PhoneMessage, type PhoneReply } from '../scenes/phone';
@@ -822,6 +823,7 @@ export async function interlude1(d: Director): Promise<void> {
 }
 
 export const appartEnter: Script = async (d) => {
+  hungerSights(d);
   const p = phase();
   if (p === REAL.finale) {
     world.extraDarkness = -0.25;
@@ -923,16 +925,22 @@ export const stove: Script = async (d) => {
   }
   const r = await d.ask('Une casserole de pâtes froides. Manger ?', ['Manger', 'Laisser'], undefined, { cancelIndex: 1 });
   if (r !== 0) {
+    // Hunger (story/faim.ts): a meal turned down; from now on, Noa may see things in the apartment.
+    refuseMeal(d, 'i1_laisse');
     await d.say('Tu n\'as pas faim. Tu crois.');
+    // Turning round: Mina is already at her place.
+    hungerSights(d);
     return;
   }
   await d.say(['Tu manges debout, dans la cuisine silencieuse.', 'C\'est froid. C\'est trop salé.', 'C\'est bon, en fait.']);
   d.heal();
   d.set('i1_ate');
+  eatMeal(d);
   await d.say('{c:l}Tu te sens un peu plus solide.{/c}');
 };
 
 export const kitchenTable: Script = async (d) => {
+  if (await plateOnTheTable(d)) return;
   if (isFinale()) {
     await d.say(['La table de la cuisine.', 'Tout à l\'heure, il y aura du chocolat chaud. Tu le sais, sans savoir comment.']);
     return;
@@ -1082,6 +1090,7 @@ export async function interlude2(d: Director): Promise<void> {
 }
 
 export const appartNuitEnter: Script = async (d) => {
+  hungerSights(d);
   world.extraDarkness = 0;
   d.music(null);
   d.ambience('hum');

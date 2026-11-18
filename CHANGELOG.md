@@ -19,6 +19,12 @@ Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog]
   puis un cri et le noir. Sur la route de l'encre, c'est plus long et le mot « MONSTRE » reste sur le miroir. Jamais
   plus de trois changements par seconde ; avec « Réduire les flashs », un lent fondu à la place. Le reflet aux yeux
   fermés de l'Interlude II se voit maintenant dans la pièce.
+- **La faim** : chaque repas refusé compte (les pâtes froides de l'Interlude I, le frigo de 4 h 06, nouveau, et le
+  dîner qui recommence au chapitre 4) ; chaque repas mangé en retire un. Sans manger, Noa voit des choses dans
+  l'appartement : Mina assise à sa place dans la cuisine (elle n'y est plus quand on s'approche), une assiette qui
+  fume sur la table, puis plus rien. Après deux repas refusés, la nuit, dans le couloir : Dodo grandeur nature,
+  déchiré, le coton qui sort — puis à la figure de Noa (un jumpscare, une seule fois ; en fondu avec « Réduire les
+  flashs »).
 
 ### Modifié
 - **Musique des boss** : trois nouveaux thèmes, plus rapides, tous construits sur la berceuse : « Fil rouge » (la

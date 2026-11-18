@@ -653,4 +653,13 @@ export const STORY_REAL: Record<string, string> = {
   'Il a perdu sa couleur. Il a gardé son sourire.': 'It has lost its colour. It has kept its smile.',
   'Le panier à linge déborde.': 'The laundry basket is overflowing.',
   'Tout en haut, ton sweat. Il sent encore l\'hôpital.': 'On top, your hoodie. It still smells of the hospital.',
+  // Hunger (2.2, story/faim.ts): what Noa sees when he has not eaten.
+  'Il n\'y a personne.': 'There\'s nobody there.',
+  'La chaise de Mina. Le coussin est froid.': 'Mina\'s chair. The cushion is cold.',
+  'Sur la table, une assiette de pâtes t\'attend. Elles fument encore.': 'On the table, a plate of pasta is waiting for you. It\'s still steaming.',
+  'L\'assiette de Mina est déjà vide. Elle t\'a attendu pour le dessert.': 'Mina\'s plate is already empty. She waited for you for dessert.',
+  'Il n\'y a rien sur la table. Il n\'y a rien eu depuis longtemps.': 'There\'s nothing on the table. There hasn\'t been anything for a long time.',
+  'Le couloir est vide.': 'The hallway is empty.',
+  'Dodo est sur ton lit. Il a toujours été sur ton lit.': 'Dodo is on your bed. He has always been on your bed.',
+  'Ta tête tourne. Depuis quand tu n\'as pas mangé ?': 'Your head is spinning. When did you last eat?',
 };

@@ -611,4 +611,10 @@ export const STORY_REAL_NUIT: Record<string, string> = {
   // The bathroom door at night (2.2).
   'La salle de bain. Derrière la porte, le robinet goutte.': 'The bathroom. Behind the door, the tap is dripping.',
   'Entrer quand même ?': 'Go in anyway?',
+  // The meal of 4:06 (2.2, hunger: story/faim.ts).
+  'Manger quelque chose ?': 'Eat something?',
+  'Tu ouvres le frigo. Un yaourt, debout, dans la lumière froide.': 'You open the fridge. A yogurt, standing up, in the cold light.',
+  'Tu le manges jusqu\'au bout. Pour elle. Un peu pour toi.': 'You eat it all. For her. A little for you.',
+  'Tu refermes le frigo.': 'You close the fridge.',
+  'Tu n\'as pas faim. Ça fait longtemps que tu n\'as plus faim.': 'You\'re not hungry. You haven\'t been hungry in a long time.',
 };
