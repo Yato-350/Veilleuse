@@ -364,6 +364,8 @@ const HOPITAL: MapDef = {
     { x: 25, y: 3, w: 1, h: 4, once: 'c3_heard_0', cond: atStage(0), script: C3.heardNurse },
     { x: 24, y: 3, w: 1, h: 4, once: 'c3_heard_1', cond: atStage(1), script: C3.heardMaman },
     { x: 30, y: 3, w: 1, h: 4, once: 'c3_heard_2', cond: atStage(2), script: C3.heardNight },
+    // 2.2: two steps further, the neons go out (story/chapter3.ts corridorNeons).
+    { x: 32, y: 3, w: 1, h: 4, once: 'c3_neons', cond: atStage(2), script: C3.corridorNeons },
     { x: 36, y: 3, w: 1, h: 4, once: 'c3_heard_3', cond: () => stage() >= 3, script: C3.heardMonitor },
     // T9: someone in a knitted hat at the far end of the looping corridor, turning the corner.
     { x: 47, y: 3, w: 1, h: 4, cond: () => stage() < 3, script: C3.corridorBonnet },

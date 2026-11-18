@@ -174,7 +174,9 @@ export type Sfx =
   | 'drip'
   | 'scream'
   // 2.2, the ink route: a creature bursting.
-  | 'splat';
+  | 'splat'
+  // 2.2, the hospital: a neon tube going out (or coming back on, higher).
+  | 'neon';
 
 export type Ambience = 'rain' | 'static' | 'wind' | 'hum' | 'none';
 
@@ -946,6 +948,12 @@ export class AudioEngine {
         this.tone('sine', 140 * p, 40 * p, 0.25, 0.22 * v);
         this.noiseBurst(0.35, 0.3 * v, 'lowpass', 900 * p, t + 0.02);
         this.noiseBurst(0.12, 0.14 * v, 'bandpass', 2400 * p, t + 0.06);
+        break;
+      case 'neon':
+        // The starter of a fluorescent tube: a dry click, a thump in the ceiling, the last of the buzz.
+        this.noiseBurst(0.02, 0.22 * v, 'highpass', 3000 * p);
+        this.tone('sine', 95 * p, 45 * p, 0.09, 0.3 * v, t + 0.005);
+        this.tone('sawtooth', 100 * p, 98 * p, 0.12, 0.025 * v, t + 0.02);
         break;
       case 'drip':
         // A drop into a basin: a short sine that falls, and its little ring.

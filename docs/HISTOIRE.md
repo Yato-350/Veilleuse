@@ -687,6 +687,13 @@ chambre 304, le souvenir « La veilleuse ».
 - Les dessins de Mina scotchés montrent, d'un dessin à l'autre, un bonhomme qui s'approche d'une porte vitrée.
 - Voix entendues : l'infirmière (« le grand frère qui toussait ») et Maman (« Il croit que c'est lui ») (T6).
 - La silhouette au bonnet dans la vitre de la dernière aile, devant la 304, pendant que Mina est à côté (T9).
+- **Les néons (2.2).** Au troisième passage du couloir, deux pas après la voix de la nuit (« Ferme les yeux ») : les
+  néons clignotent et s'éteignent un à un depuis le fond. Quand ils se rallument, des infirmières de papier sont
+  debout dans le couloir, tournées vers Noa ; noir, papier froissé, lumière : plus près ; noir complet, lumière : une
+  à sa figure (jumpscare, sa bouche de papier déchirée). Puis tout est comme avant. Mina : « La nuit, Nadia passait
+  avec sa lampe. Elle se penchait sur le lit, tout près, pour voir si on dormait. Il fallait fermer les yeux très
+  fort. Et faire semblant. » Jamais plus de deux changements de lumière par seconde ; avec « Réduire les flashs »,
+  des fondus.
 - **Nouvel ennemi : Bracelet.**
 
 | Ennemi | Émotion | Besoin | Attaques | Détail |
@@ -1180,8 +1187,9 @@ L'existant reste. Ajouts :
 
 ## 4. Catalogue des détails dérangeants
 
-Règle : chaque détail est **suggéré** (un plan, une phrase, un son). Pas de scène gore. Les cases « contrepoint »
-rappellent ce qui garde la tendresse.
+Règle : chaque détail est **suggéré** (un plan, une phrase, un son). Les cases « contrepoint » rappellent ce qui
+garde la tendresse. Depuis la 2.2, l'auteur veut aussi des scènes qui font peur, du gore et des jumpscares : ils
+restent rares, une fois chacun, et suivent les limites du § 6.1.
 
 ### Monde réel (prologue, interludes, final)
 
@@ -1226,6 +1234,7 @@ rappellent ce qui garde la tendresse.
 - Le bracelet-ver qui affiche « NOA — ??? ».
 - La silhouette au bonnet derrière la vitre pendant que Mina est à côté.
 - Le faux message d'erreur (existant).
+- Les néons qui s'éteignent, les infirmières plus proches à chaque fois que la lumière revient (2.2).
 - *Contrepoint* : les amis épargnés qui reviennent aider.
 
 ### Fausse aube

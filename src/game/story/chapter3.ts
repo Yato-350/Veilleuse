@@ -10,6 +10,7 @@ import type { BattleHooks, WordDef } from '../battle/types';
 import { director, type Director } from '../director';
 import { isLateNight, setPageTitle } from '../meta';
 import type { Script } from '../overworld/types';
+import { JumpScene } from '../scenes/jump';
 import { world } from '../overworld/world';
 import { G, maxHp } from '../state';
 import { tf, tr } from '../../i18n';
@@ -812,6 +813,127 @@ export const heardMonitor: Script = async (d) => {
   await overhear(d, [['narrator', '{spd:0.5}Bip.{p:40} Bip.{p:60} Bip.{p:90}{/spd}']]);
   await d.wait(60);
   await mina(d, '…J\'ai froid, Noa.', 'sad');
+};
+
+// --- The neons (2.2) ------------------------------------------------------------
+
+const NEON_COLOR = '#dff7ec';
+const NEON_NURSES = ['neon_1', 'neon_2', 'neon_3'];
+
+/**
+ * The neons go out (2.2, the author: more scenes that scare). Once, on the third pass of the corridor (stage 2), two
+ * steps after the voice of the night (« Ferme les yeux »): the tubes flicker and go out one by one from the far end. When
+ * they come back on, paper nurses stand in the corridor, turned towards Noa (the one by the door is gone from her
+ * place); out, rustling paper, on: nearer; out, total black, on — one at his face (scenes/jump.ts, `jump_nadia`). Then
+ * the corridor is as it was. Mina remembers the night rounds: Nadia leaned over the bed to see if you were asleep, and
+ * you had to pretend. The light never changes more than about twice a second; with « Réduire les flashs », it fades
+ * instead of snapping, and the face fades in.
+ */
+export const corridorNeons: Script = async (d) => {
+  const calm = fx.reduceFlashes;
+  const tubes = world.entities.filter((e) => e.light?.color === NEON_COLOR).sort((a, b) => b.x - a.x);
+  const lights = tubes.map((e) => e.light!);
+  const baseDark = world.extraDarkness;
+  const baseLight = world.playerLight;
+  const p = d.player;
+  const px = tile(p.x);
+  const py = Math.min(6, Math.max(3, tile(p.y)));
+  const s = p.dir === 'left' ? -1 : 1;
+  const row = (dy: number): number => (py + dy < 3 || py + dy > 6 ? py - dy : py + dy);
+  let level = 1;
+  const apply = (k: number): void => {
+    level = k;
+    tubes.forEach((e, i) => (e.light = k > 0 ? { ...lights[i]!, r: lights[i]!.r * k } : undefined));
+    world.extraDarkness = baseDark + (1 - k) * 0.55;
+  };
+  const switchTo = async (k: number): Promise<void> => {
+    d.sfx('neon', { pitch: k > level ? 1.25 : 1, vol: 0.8 });
+    d.ambience(k > 0 ? 'hum' : 'none');
+    if (!calm) return apply(k);
+    const from = level;
+    for (let f = 1; f <= 20; f++) {
+      apply(from + ((k - from) * f) / 20);
+      await d.wait(1);
+    }
+  };
+  const place = (id: string, dx: number, y: number): void => {
+    const x = px + s * dx;
+    const e =
+      d.find(id) ??
+      d.spawn({ id, sprite: 'npc_infirmiere_papier', frames: ['npc_infirmiere_papier', 'npc_infirmiere_papier_2'], frameSpeed: 70, x, y, solid: false, shadow: false });
+    e.x = x * TILE + 8;
+    e.y = y * TILE + 14;
+  };
+  const still = d.find('nadia_1_2');
+
+  d.music(null, 0.4);
+  // The tubes flicker (dimmed, never black)…
+  if (!calm) {
+    for (let i = 0; i < 2; i++) {
+      apply(0.4);
+      d.sfx('neon', { vol: 0.3, pitch: 1.4 });
+      await d.wait(12);
+      apply(1);
+      await d.wait(16);
+    }
+  }
+  // …and go out one by one, from the far end towards Noa.
+  d.ambience('none');
+  for (let i = 0; i < tubes.length; i++) {
+    tubes[i]!.light = undefined;
+    world.extraDarkness = baseDark + ((i + 1) / tubes.length) * 0.55;
+    d.sfx('neon', { vol: 0.3 + (0.5 * i) / tubes.length });
+    await d.wait(calm ? 10 : 7);
+  }
+  level = 0;
+  world.playerLight = Math.round(baseLight * 0.45);
+  if (still) still.visible = false;
+  await d.wait(40);
+  await mina(d, 'Noa… J\'aime pas le noir.', 'sad');
+  // On: three of them, turned towards him.
+  place('neon_1', 5, py);
+  place('neon_2', 8, row(1));
+  place('neon_3', 11, row(-2));
+  await d.wait(30);
+  await switchTo(1);
+  world.playerLight = baseLight;
+  await d.wait(calm ? 90 : 80);
+  // Out: paper rustling, nearer.
+  await switchTo(0);
+  world.playerLight = Math.round(baseLight * 0.45);
+  for (let i = 0; i < 3; i++) {
+    d.sfx('scratch', { pitch: 0.55 + i * 0.12, vol: 0.45 + i * 0.15 });
+    await d.wait(16);
+  }
+  place('neon_1', 3, py);
+  place('neon_2', 4, row(1));
+  place('neon_3', 6, row(-1));
+  await switchTo(1);
+  world.playerLight = baseLight;
+  await d.wait(calm ? 60 : 45);
+  // Out: total black, nothing at all. On: one, at his face.
+  await switchTo(0);
+  world.playerLight = 0;
+  await d.wait(70);
+  place('neon_1', 1, py);
+  d.remove('neon_2');
+  d.remove('neon_3');
+  await switchTo(1);
+  await JumpScene.play('jump_nadia');
+  // Behind the black: everything as it was.
+  for (const id of NEON_NURSES) d.remove(id);
+  tubes.forEach((e, i) => (e.light = lights[i]));
+  world.extraDarkness = baseDark;
+  world.playerLight = baseLight;
+  if (still) still.visible = true;
+  d.ambience('hum');
+  await d.wait(40);
+  await d.fadeIn(40);
+  d.music('hospital', 2);
+  await d.say(['Les néons grésillent.', 'Le couloir est vide. Il n\'y a que ta respiration, beaucoup trop fort.']);
+  if (still) await d.say(['L\'infirmière en papier est à sa place, près de la porte.', 'Tu ne sais plus si elle te regardait déjà.']);
+  await mina(d, ['Tu les as vues, toi aussi ?', 'La nuit, Nadia passait avec sa lampe. Elle se penchait sur le lit, tout près, pour voir si on dormait.'], 'sad');
+  await mina(d, ['Il fallait fermer les yeux très fort.', 'Et faire semblant.'], 'neutral');
 };
 
 // --- Door 304 -----------------------------------------------------------------

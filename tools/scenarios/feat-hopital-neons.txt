@@ -1,0 +1,38 @@
+# The neons (2.2, story/chapter3.ts corridorNeons): third pass of the corridor of the Hôpital de Papier, with Mina. Two
+# steps past the voice of the night, the tubes flicker and go out one by one; when they come back on, three paper
+# nurses stand in the corridor, turned towards Noa (the one by the door is gone from her place); out, on: nearer; out,
+# black, on: one at his face (JumpScene, `jump_nadia`). Then everything is as it was: the tubes, the darkness of the
+# corridor, the nurse at her place. Mina remembers the night rounds. Played in English.
+query: debug=map&map=hopital&spawn=start&chapter=3&party=mina&flags=c3_loop=2,c3_heard_2,c3_hosp_in,c3_corridor&lang=en
+god
+wait:1000
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.NEONS = () => V.world.entities.filter((e) => e.light && e.light.color === '#dff7ec').length
+eval: window.NURSE = (id) => V.world.entities.find((e) => e.id === id)
+assert: NEONS() === 10 && NURSE('nadia_1_2') && NURSE('nadia_1_2').visible
+eval: (window.DARK0 = V.world.extraDarkness, 1)
+eval: (V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => V.world.removeEntity(e)), 1)
+go:29/4
+ArrowRight:700
+zuntil: NURSE('neon_1')
+assert: SAW('I don\'t like the dark.') && NEONS() === 0 && !NURSE('nadia_1_2').visible
+waitfor: NEONS() === 10 && NURSE('neon_1') && NURSE('neon_2') && NURSE('neon_3')
+wait:300
+shot:revele
+waitfor: NURSE('neon_1') && Math.abs(NURSE('neon_1').x - V.world.player.x) <= 3 * 16 && NEONS() === 10
+wait:200
+shot:plus-pres
+waitfor: V.game.top.constructor.name === 'JumpScene'
+wait:250
+shot:visage
+waitfor: V.game.top.constructor.name === 'WorldScene' && V.dialogue.busy
+auto
+assert: V.G.state.flags.c3_neons === true && !NURSE('neon_1') && !NURSE('neon_2') && !NURSE('neon_3')
+assert: NEONS() === 10 && V.world.extraDarkness === DARK0 && NURSE('nadia_1_2').visible
+assert: SAW('The corridor is empty.') && SAW('in her place, by the door') && SAW('to see if you were asleep') && SAW('And pretend.')
+shot:apres
+assert: V.i18nMissing().length === 0

@@ -280,6 +280,16 @@ export const STORY_CHAPTER3: Record<string, string> = {
   'Demain.': 'Tomorrow.',
   '{spd:0.5}Bip.{p:40} Bip.{p:60} Bip.{p:90}{/spd}': '{spd:0.5}Beep.{p:40} Beep.{p:60} Beep.{p:90}{/spd}',
   '…J\'ai froid, Noa.': '…I\'m cold, Noa.',
+  // The neons (2.2): the lights of the corridor go out, and the paper nurses come closer.
+  'Noa… J\'aime pas le noir.': 'Noa… I don\'t like the dark.',
+  'Les néons grésillent.': 'The neon lights buzz.',
+  'Le couloir est vide. Il n\'y a que ta respiration, beaucoup trop fort.': 'The corridor is empty. There\'s only your breathing, much too loud.',
+  'L\'infirmière en papier est à sa place, près de la porte.': 'The paper nurse is in her place, by the door.',
+  'Tu ne sais plus si elle te regardait déjà.': 'You can\'t remember if she was already looking at you.',
+  'Tu les as vues, toi aussi ?': 'You saw them too?',
+  'La nuit, Nadia passait avec sa lampe. Elle se penchait sur le lit, tout près, pour voir si on dormait.': 'At night, Nadia came round with her flashlight. She leaned over the bed, really close, to see if you were asleep.',
+  'Il fallait fermer les yeux très fort.': 'You had to shut your eyes really tight.',
+  'Et faire semblant.': 'And pretend.',
 
   // Door 304 — Mina remembers, Dodo erases her
   'Je me souviens, maintenant.': 'I remember now.',

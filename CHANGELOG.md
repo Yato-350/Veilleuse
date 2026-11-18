@@ -31,6 +31,9 @@ Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog]
   dans le monde se regardent : laine collée, coton rouge, deux yeux-boutons au fond. Avec deux repas refusés,
   l'assiette n'est plus des pâtes, et le couloir garde une traînée de coton mouillé. Jamais sur le corps de Noa ni
   sur celui de Mina.
+- **Les néons de l'hôpital** (chapitre 3) : au troisième passage du couloir, les néons s'éteignent un à un. Quand
+  ils se rallument, des infirmières de papier sont là, tournées vers Noa, chaque fois plus près, puis une à sa
+  figure. Jamais plus de deux changements de lumière par seconde ; en fondu avec « Réduire les flashs ».
 
 ### Modifié
 - **Musique des boss** : trois nouveaux thèmes, plus rapides, tous construits sur la berceuse : « Fil rouge » (la
