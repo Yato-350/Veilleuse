@@ -822,6 +822,116 @@ export const crumbs: Script = async (d) => {
   await d.say('Des miettes de gomme, roses. Il y en a de plus en plus.');
 };
 
+// --- What follows (2.2) -------------------------------------------------------
+
+/** How far behind Noa it ends (points of his trail: about two tiles, just behind Mina). */
+const FOLLOW_GAP = 34;
+/** How much of the path Noa walks before it shows up behind (points of trail). */
+const FOLLOW_START = 120;
+
+/**
+ * What follows Noa on the erased path (2.2, the author: more scenes that scare). The first time he walks up the path,
+ * something comes up behind along his own steps: Noa, drawn in pencil and half rubbed out (`noa_gomme`). Its
+ * footsteps come a beat after his; when he stops, they take a few more. It only moves while Noa has his back to it —
+ * when he turns round, it stands still, a little clearer — and every time it moves, it is a little closer. Mina hears
+ * it first. Up close behind them, a breath on his neck, and it is gone; or Noa walks right up to it, and it rubs out
+ * under his fingers. Either way, two sets of footprints on the white path. It waits while the world is not Noa's to
+ * move in (a scene, a battle); leaving the path before the end lets it start over next time. No flash, no jumpscare:
+ * a slow scene, between the two that snap.
+ */
+export const followedOnThePath: Script = async (d) => {
+  // Until it has ended once; walking back out of the path before that lets it start over next time.
+  if (flag('c2_suivi_fin') || d.find('suivi_trace')) return;
+  const p = world.player;
+  const trail: Array<{ x: number; y: number; dir: Entity['dir'] }> = [{ x: p.x, y: p.y, dir: p.dir }];
+  let it: Entity | null = null;
+  let at = 0;
+  let stepped = 0;
+  let warned = false;
+  let done = false;
+  const end = (how: 'proche' | 'touche'): void => {
+    done = true;
+    d.set('c2_suivi_fin', how);
+    void world.hooks.run(async (dd) => {
+      const e = it;
+      if (how === 'proche') {
+        dd.sfx('heartbeat', { vol: 0.5 });
+        await dd.say(['Un souffle, dans ta nuque.', 'Ça sent la gomme.']);
+      } else {
+        await dd.say(['Tu t\'approches. C\'est un dessin. Un dessin de toi, au crayon, à moitié gommé.', 'Tu tends la main.']);
+      }
+      dd.sfx('erase', { vol: 0.8, pitch: 0.8 });
+      fx.pulseGlitch(6);
+      for (let i = 0; e && i < 24; i++) {
+        e.alpha = Math.max(0, e.alpha - 0.04);
+        await dd.wait(1);
+      }
+      if (e) world.removeEntity(e);
+      if (how === 'proche') await dd.say('Tu te retournes. Il n\'y a personne.');
+      else await dd.say('Il s\'efface sous tes doigts. Il ne reste que des miettes roses.');
+      await dd.say(['Sur le chemin blanc, il y a tes pas, et ceux de Mina.', 'Et d\'autres, entre les tiens. À moitié gommés.']);
+      if (withMina()) {
+        await dd.say(how === 'proche' ? ['Il nous suivait depuis la clairière.', 'Il te ressemblait, Noa.'] : 'Pourquoi quelqu\'un t\'a dessiné… et puis gommé ?', 'mina:sad');
+      }
+    });
+  };
+  const brain = (e: Entity): void => {
+    if (done) return;
+    if (world.map?.id !== 'sentier_gomme') {
+      done = true;
+      world.removeEntity(e);
+      return;
+    }
+    if (!world.controllable) {
+      e.moving = false;
+      return;
+    }
+    // Looking at it: Noa faces it, and it is on the screen.
+    const dx = e.x - p.x;
+    const dy = e.y - p.y;
+    const toward: Entity['dir'] = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up';
+    const dist = Math.hypot(dx, dy);
+    const looked = p.dir === toward && dist < 150;
+    if (looked && dist < 18) return end('touche');
+    const goal = trail.length - 1 - FOLLOW_GAP;
+    const before = at;
+    if (!looked && at < goal) at = Math.min(goal, at + (p.moving ? 1.2 : 0.25));
+    const h = trail[Math.floor(at)]!;
+    e.moving = at > before;
+    if (e.moving) e.dir = h.dir;
+    stepped += Math.hypot(h.x - e.x, h.y - e.y);
+    e.x = h.x;
+    e.y = h.y;
+    // Its footsteps, a beat after Noa's: lower, a little softer.
+    if (stepped > 19) {
+      stepped = 0;
+      d.sfx('step', { pitch: 0.62 + rng.next() * 0.1, vol: 0.55 });
+    }
+    const clear = looked ? 0.8 : 0.42;
+    e.alpha += Math.sign(clear - e.alpha) * Math.min(0.02, Math.abs(clear - e.alpha));
+    if (!warned && goal - at < 46) {
+      warned = true;
+      if (withMina()) void world.hooks.run((dd) => dd.say(['Noa…', 'T\'entends ? Y a quelqu\'un qui marche, derrière nous.'], 'mina:surprised'));
+    }
+    if (at >= goal && !looked && goal > FOLLOW_START) end('proche');
+  };
+  // A watcher on the player's trail (the brain of an invisible prop until the thing shows up).
+  const watcher = d.spawn({ id: 'suivi_trace', x: 0, y: 0, solid: false, shadow: false });
+  watcher.visible = false;
+  watcher.brain = (w) => {
+    const last = trail[trail.length - 1]!;
+    if (Math.hypot(last.x - p.x, last.y - p.y) >= 1) trail.push({ x: p.x, y: p.y, dir: p.dir });
+    if (!it && !done && trail.length > FOLLOW_START && world.controllable) {
+      it = d.spawn({ id: 'suivi', char: 'noa_gomme', x: 0, y: 0, dir: 'up', solid: false, shadow: false });
+      it.x = trail[0]!.x;
+      it.y = trail[0]!.y;
+      it.alpha = 0;
+      it.brain = brain;
+    }
+    if (done || world.map?.id !== 'sentier_gomme') world.removeEntity(w);
+  };
+};
+
 export const sentierDrawing: Script = async (d) => {
   await d.say(['Un dessin gommé. Il reste un bout de couronne en papier. Et un bout de cape rouge.']);
   if (withMina()) await d.say('…C\'est moi, ça ?', 'mina:surprised');

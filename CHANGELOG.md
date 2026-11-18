@@ -34,6 +34,8 @@ Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog]
 - **Les néons de l'hôpital** (chapitre 3) : au troisième passage du couloir, les néons s'éteignent un à un. Quand
   ils se rallument, des infirmières de papier sont là, tournées vers Noa, chaque fois plus près, puis une à sa
   figure. Jamais plus de deux changements de lumière par seconde ; en fondu avec « Réduire les flashs ».
+- **Le sentier gommé** (chapitre 2) : quelque chose suit Noa et Mina, un pas en retard. Il n'avance que quand on
+  lui tourne le dos. On peut le laisser venir, ou aller jusqu'à lui.
 
 ### Modifié
 - **Musique des boss** : trois nouveaux thèmes, plus rapides, tous construits sur la berceuse : « Fil rouge » (la

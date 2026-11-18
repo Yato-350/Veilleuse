@@ -1,0 +1,30 @@
+# What follows (2.2, story/chapter2.ts followedOnThePath): on the erased path, with Mina, Noa walks up; behind them,
+# along their own steps, Noa drawn in pencil and half rubbed out (`noa_gomme`), its footsteps a beat after his. Mina
+# hears it. Looked at, it stands still and grows clearer; back turned, Noa standing still, it creeps up — a breath on
+# his neck, it is gone, and there are two sets of footprints on the path. Played in English.
+query: debug=map&map=sentier_gomme&spawn=south&chapter=2&party=mina&flags=c2_lanterns_ok&lang=en
+god
+wait:1000
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: (V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => V.world.removeEntity(e)), 1)
+eval: window.IT = () => V.world.entities.find((e) => e.id === 'suivi')
+ArrowUp:1300
+ArrowLeft:1000
+assert: !IT()
+ArrowUp:1600
+waitfor: IT() && IT().alpha > 0.3
+zuntil: V.world.controllable && SAW('somebody walking behind us')
+eval: (window.AT0 = IT().y, 1)
+ArrowDown:60
+wait:900
+assert: IT().alpha > 0.7 && Math.abs(IT().y - AT0) < 1
+shot:regarde
+ArrowUp:60
+waitfor: V.G.state.flags.c2_suivi_fin === 'proche'
+auto
+assert: !IT() && SAW('A breath, on the back of your neck.') && SAW('Half rubbed out.') && SAW('He looked like you, Noa.')
+assert: V.i18nMissing().length === 0

@@ -627,7 +627,11 @@ const SENTIER: MapDef = {
     SOFT('prop_drawing_erased', 4, 17, 'Un dessin gommé. Il reste deux pieds, et un bout de chemin.', { cond: ERASED_ONLY }),
   ],
   enemies: [{ id: 'c2_taille_3', enemies: ['taille_crayon'], x: 5, y: 15, wander: 1 }],
-  triggers: [{ x: 9, y: 11, w: 4, h: 1, once: 'c2_oubli', script: C2.minaOubli }],
+  triggers: [
+    { x: 9, y: 11, w: 4, h: 1, once: 'c2_oubli', script: C2.minaOubli },
+    // 2.2: something follows, a beat behind (story/chapter2.ts followedOnThePath).
+    { x: 5, y: 25, w: 5, h: 1, cond: () => !G.state.flags.c2_suivi_fin, script: C2.followedOnThePath },
+  ],
   warps: [
     { x: 7, y: 29, w: 3, to: 'clairiere', spawn: 'north' },
     { x: 6, y: 0, w: 3, to: 'atelier', spawn: 'south' },

@@ -657,6 +657,12 @@ trucs… tu me les raconteras ? » — « Promis. »
 - Gomme épargnée, nouvelle réplique : « On efface pour ne plus avoir mal. Ou pour ne plus être coupable. Ce n'est
   pas pareil. »
 - Souvenir 2 : le nuage gris près de la bouche (T6). Le « Chut. » de Dodo porte de la friture.
+- **Ce qui suit (2.2).** La première fois qu'on monte le sentier gommé, quelque chose vient derrière, sur les pas
+  mêmes de Noa : Noa, dessiné au crayon et à moitié gommé. Ses pas sonnent juste après les siens ; quand Noa s'arrête,
+  ils font encore quelques pas. Il n'avance que quand Noa lui tourne le dos ; regardé, il s'arrête, un peu plus net.
+  Mina l'entend la première. Tout près : un souffle dans la nuque, il n'est plus là. Ou Noa marche jusqu'à lui, et il
+  s'efface sous ses doigts (« Pourquoi quelqu'un t'a dessiné… et puis gommé ? »). Sur le chemin blanc, d'autres pas
+  entre les siens, à moitié gommés. Ni flash ni jumpscare : une scène lente.
 
 ---
 
@@ -1224,6 +1230,7 @@ restent rares, une fois chacun, et suivent les limites du § 6.1.
 - Les miettes de gomme qui ont une bouche.
 - Les yeux-boutons de Mina pendant une frame.
 - Les fils au-dessus de ses poignets.
+- Le Noa au crayon, à moitié gommé, qui suit sur le sentier, un pas en retard (2.2).
 - *Contrepoint* : Gomme épargnée qui rend les dessins.
 
 ### Ch. 3 — L'Hôpital de Papier
