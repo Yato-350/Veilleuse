@@ -4,15 +4,16 @@ import { drawChar, drawOutlined, drawText, LINE_HEIGHT, measure } from '../../en
 import { fx } from '../../engine/fx';
 import { game, type Scene } from '../../engine/game';
 import { hits, input } from '../../engine/input';
-import { clamp, lerp, rng, type Rect } from '../../engine/math';
+import { clamp, hash2, lerp, rng, type Rect } from '../../engine/math';
+import { deletedSprite, isDeleted, scrambled } from '../files';
 import { EMOTION_COLOR, EMOTION_DARK, emotionColorName, emotionLabel, soulLabel, type Emotion } from '../../engine/palette';
 import { tf, tn, tr, translated } from '../../i18n';
 import { vibrate } from '../../engine/screen';
-import { drawSprite, silhouette } from '../../engine/sprite';
+import { drawGlitched, drawSprite, silhouette, type Sprite } from '../../engine/sprite';
 import { ITEMS } from '../../data/items';
 import { WORD_POOLS } from '../../data/words';
 import { hasSpr, spr } from '../assets';
-import { attack, defense, G, level, MAX_ITEMS, maxHp } from '../state';
+import { attack, defense, G, inkRoute, level, MAX_ITEMS, maxHp, totalKills } from '../state';
 import { bar, heart, nextArrow } from '../ui/draw';
 import { layoutRich, parseRich, type RichChar } from '../ui/richtext';
 import { BulletWorld, type Bullet } from './bullets';
@@ -154,6 +155,19 @@ export function tougherBoss(def: EnemyDef): EnemyDef {
   return { ...def, hp: Math.round(def.hp * BOSS_HP_FACTOR) };
 }
 
+/**
+ * The road of the ink (2.2): what a creature leaves when Noa kills it, after its own last words (dream creatures only;
+ * never Noa, never Mina: docs/HISTOIRE.md § 6.1).
+ */
+const GORE_AFTER = [
+  '* Ça gicle jusqu\'à tes chaussures.',
+  '* C\'est tiède. Ça colle à tes doigts.',
+  '* Ça tombe par terre avec un bruit mouillé.',
+  '* Il y en a sur ton pull. Ça ne partira pas.',
+  '* Ça coule encore un moment. Puis ça ne bouge plus.',
+  '* Dedans, c\'était rouge. Tu ne savais pas.',
+];
+
 /** A battle. `await new Battle(...).run()` resolves with the outcome. */
 export class Battle implements Scene {
   enemies: EnemyRuntime[];
@@ -243,6 +257,9 @@ export class Battle implements Scene {
   private sewn = false;
   /** Chapter 6 (« les couleurs mentent »): the HUD cannot tell the heart's color, it shows « ? ». */
   lie = false;
+
+  /** The ink route (2.2): the creatures Noa kills burst instead of dissolving (drawGoreDeath). */
+  private readonly gore = inkRoute(G.state);
 
   constructor(defs: EnemyDef[], opts: BattleOptions = {}) {
     this.enemies = defs.map((d) => new EnemyRuntime(tougherBoss(d)));
@@ -718,9 +735,59 @@ export class Battle implements Scene {
     e.dead = true;
     e.deathT = 1;
     audio.sfx('die');
+    if (this.gore) audio.sfx('splat');
     this.result.killed.push(e.def.id);
     await game.wait(70);
-    await this.say(e.def.killText ?? tf("* {0} se dissout en une flaque d'encre.", e.name));
+    const fallback = this.gore ? tf('* {0} éclate. Ça gicle jusqu\'à tes chaussures.', e.name) : tf("* {0} se dissout en une flaque d'encre.", e.name);
+    await this.say(e.def.killText ?? fallback);
+    // The ink route: after its own last words, what is left of it (a boss's death keeps only its own words).
+    if (this.gore && e.def.killText && !e.def.boss) await this.say(GORE_AFTER[(totalKills(G.state) + this.result.killed.length) % GORE_AFTER.length]!);
+  }
+
+  /**
+   * The ink route (2.2): a creature killed bursts — its two halves slide apart and sink, ink and something red spatter
+   * out and land, and the stain stays on the floor for the rest of the fight (dream creatures only: never Noa, never
+   * Mina).
+   */
+  private drawGoreDeath(g: CanvasRenderingContext2D, e: EnemyRuntime, s: Sprite, sx: number, sy: number, scale: number): void {
+    const t = e.deathT;
+    const k = Math.min(1, t / 80);
+    const h = s.h * scale;
+    const left = Math.round(sx - s.ax * scale);
+    const top = Math.round(sy - s.ay * scale);
+    const floor = top + h + 1;
+    const seed = Math.round(e.x);
+    // The stain, growing, then staying.
+    const grow = Math.min(1, t / 60);
+    g.fillStyle = '#2a0610';
+    g.beginPath();
+    g.ellipse(sx, floor, 6 + 20 * grow, 2 + 4 * grow, 0, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = '#0b0710';
+    g.beginPath();
+    g.ellipse(sx - 4, floor, 3 + 10 * grow, 1 + 2 * grow, 0, 0, Math.PI * 2);
+    g.fill();
+    // The two halves of the body, sliding apart and sinking.
+    if (k < 1) {
+      const half = Math.floor(s.w / 2);
+      g.save();
+      g.globalAlpha = 1 - k * 0.8;
+      const drop = Math.round(k * k * 22);
+      const apart = Math.round(k * 14);
+      g.drawImage(s.img, 0, 0, half, s.h, left - apart, top + drop, Math.round(half * scale), Math.round(h));
+      g.drawImage(s.img, half, 0, s.w - half, s.h, left + Math.round(half * scale) + apart, top + drop + 2, Math.round((s.w - half) * scale), Math.round(h));
+      g.restore();
+    }
+    // Drops thrown out from the middle: they fly, fall, and lie where they land.
+    const fly = Math.min(t, 48);
+    for (let i = 0; i < 24; i++) {
+      const vx = (hash2(i, seed, 1) - 0.5) * 3.2;
+      const vy = -0.8 - hash2(i, seed, 2) * 2.6;
+      const x = Math.round(sx + vx * fly);
+      const y = Math.min(floor + Math.round(hash2(i, seed, 3) * 6), Math.round(top + h / 2 + vy * fly + 0.09 * fly * fly));
+      g.fillStyle = i % 3 === 0 ? '#0b0710' : '#5a0d1c';
+      g.fillRect(x, y, i % 4 === 0 ? 3 : 2, 2);
+    }
   }
 
   private async writeWord(e: EnemyRuntime, w: WordDef): Promise<void> {
@@ -949,7 +1016,8 @@ export class Battle implements Scene {
   /** Shows speech bubbles next to enemies; resolves when the player confirms. */
   bubble(lines: Array<{ e: EnemyRuntime; text: string }>): Promise<void> {
     this.bubbles = lines.map(({ e, text }) => {
-      const chars = layoutRich(parseRich(tr(text), { player: G.state.playerName }), 92);
+      const said = deletedSprite(e.def.id, e.def.sprite) ? scrambled(tr(text)) : tr(text);
+      const chars = layoutRich(parseRich(said, { player: G.state.playerName }), 92);
       return { e, chars, shown: 0, total: chars.reduce((a, l) => a + l.length, 0) };
     });
     return new Promise((resolve) => {
@@ -1570,7 +1638,7 @@ export class Battle implements Scene {
   private drawEnemy(g: CanvasRenderingContext2D, e: EnemyRuntime): void {
     if (e.hidden) return;
     if (e.spared && e.spareT > 50) return;
-    if (e.dead && e.deathT > 80) return;
+    if (e.dead && e.deathT > 80 && !this.gore) return;
     const base = e.def.sprite;
     const frame = hasSpr(`${base}_2`) && Math.floor(this.t / 24) % 2 === 1 ? `${base}_2` : base;
     const s = spr(frame);
@@ -1578,6 +1646,7 @@ export class Battle implements Scene {
     const sx = e.x + off.dx;
     const sy = e.y + off.dy;
     const scale = e.def.scale ?? 1;
+    if (e.dead && this.gore) return this.drawGoreDeath(g, e, s, sx, sy, scale);
     if (e.dead) {
       // Ink dissolve: sink and fade, with drips.
       const k = e.deathT / 80;
@@ -1594,6 +1663,11 @@ export class Battle implements Scene {
         const a = (i / 8) * Math.PI * 2 + k * 2;
         g.fillRect(Math.round(sx + Math.cos(a) * k * 30), Math.round(sy - 20 + Math.sin(a) * k * 20), 2, 2);
       }
+      return;
+    }
+    if (deletedSprite(e.def.id, e.def.sprite)) {
+      // A deleted file (« Fichiers »): the enemy is a corrupted sprite.
+      drawGlitched(g, s, sx, sy, Math.floor(this.t / 6), { calm: fx.reduceFlashes, scaleX: scale, scaleY: scale });
       return;
     }
     drawSprite(g, e.flash > 0 ? silhouette(s, '#fffaf2') : s, sx, sy, scale !== 1 || e.alpha !== 1 ? { scaleX: scale, scaleY: scale, alpha: e.alpha } : undefined);
@@ -1707,6 +1781,20 @@ export class Battle implements Scene {
   /** Mina's portrait in the top-left corner, with three pips filling up to her next action (or her empty slot). */
   private drawAlly(g: CanvasRenderingContext2D): void {
     if (this.ally === 'none') return;
+    if (isDeleted('mina')) {
+      // Mina's file was deleted: her corner is faded and stutters sideways (steady with « Réduire les flashs »).
+      const k = fx.reduceFlashes ? 1 : hash2(Math.floor(this.t / 6), 3, 17);
+      g.save();
+      g.globalAlpha = 0.55;
+      g.translate(k < 0.2 ? Math.round((k / 0.2 - 0.5) * 6) : 0, 0);
+      this.drawAllyInner(g);
+      g.restore();
+      return;
+    }
+    this.drawAllyInner(g);
+  }
+
+  private drawAllyInner(g: CanvasRenderingContext2D): void {
     const { x, y, w, h } = ALLY_SLOT;
     if (this.ally === 'absent') {
       const flicker = (this.allyT > 0 || this.allyTalking) && Math.floor(this.t / 8) % 2 === 0;

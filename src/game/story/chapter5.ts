@@ -376,7 +376,92 @@ export const beachEnter: Script = (d) => {
       // And the lullaby slows down, as if it were falling asleep too.
       if (world.controllable) mood(1 - k * 0.3, k * 0.3);
     }
+    // 2.2: once Noa has gathered a few shells, far from Mina of before, his shadow comes back.
+    if (shadowDue()) void world.hooks.run(beachShadow);
   };
+};
+
+// --- The shadow (2.2) ---------------------------------------------------------------------------------------------
+
+/** Free sand under Noa, for three tiles towards the sea (the shadow lies there). */
+function sandBelow(tx: number, ty: number): boolean {
+  const tm = world.tilemap;
+  for (let y = ty + 1; y <= ty + 3; y++) {
+    const id = tm.ids[y]?.[tx];
+    if (id !== 'c5_sable' && id !== 'c5_sable_mouille') return false;
+  }
+  return !world.entities.some((e) => e !== world.player && e.solid && Math.abs(e.x - world.player.x) < 12 && e.y > world.player.y && e.y - world.player.y < 3.5 * TILE);
+}
+
+function shadowDue(): boolean {
+  if (flag('c5_ombre') || !flag('c5_intro') || flag('c5_sieste') || flag('c5_maree') || num('c5_coquillages') < 12) return false;
+  if (!world.controllable) return false;
+  const p = world.player;
+  const mina = world.entities.find((e) => e.id === 'mina_avant');
+  if (mina && Math.hypot(mina.x - p.x, mina.y - p.y) < 7 * TILE) return false;
+  return sandBelow(tileOf(p.x), tileOf(p.y));
+}
+
+/**
+ * The shadow (2.2, the author: more scenes that scare). On the beach where nothing has a shadow, not even Noa: once he
+ * has gathered a few shells and is far from Mina of before, his shadow comes back. Far too long, from his feet towards
+ * the sea, and not his shape. He steps aside; it stays where it is. It stands up: a figure scribbled in black
+ * ballpoint, much too tall, with no face — the one he will add to the drawings by the white lake (§ 3.13, 6), seen
+ * here first. It walks towards the sea, and the light eats it. Dodo: « Même ton ombre ne veut pas rester avec toi. »
+ * No flash, no shaking; the music stops, and comes back.
+ */
+export const beachShadow: Script = async (d) => {
+  d.set('c5_ombre');
+  const p = d.player;
+  d.music(null, 0.6);
+  await d.wait(40);
+  p.dir = 'down';
+  const flat = d.spawn({ id: 'ombre_sol', sprite: 'fx_c5_ombre_sol', x: tileOf(p.x), y: tileOf(p.y), solid: false, shadow: false });
+  flat.layer = -1;
+  flat.x = p.x;
+  flat.y = p.y - 2;
+  flat.alpha = 0.5;
+  flat.scaleY = 0.04;
+  d.sfx('whoosh', { vol: 0.25, pitch: 0.5 });
+  for (let f = 1; f <= 90; f++) {
+    flat.scaleY = 0.04 + 0.96 * (f / 90);
+    await d.wait(1);
+  }
+  await d.say(['Sur le sable, une ombre. La tienne.', 'La seule de toute la plage.']);
+  await d.say('Elle est beaucoup trop longue. Elle n\'a pas ta forme.');
+  // Noa steps aside: it does not follow.
+  const side = world.blocked(p, p.x + TILE, p.y) ? -1 : 1;
+  await d.walk('player', side, 0, 0.6);
+  p.dir = side > 0 ? 'left' : 'right';
+  await d.wait(30);
+  await d.say('Tu fais un pas de côté. L\'ombre ne bouge pas.');
+  // It stands up where it lay.
+  const up = d.spawn({ id: 'ombre_debout', sprite: 'npc_c5_ombre_debout', x: tileOf(flat.x), y: tileOf(flat.y), solid: false, shadow: false });
+  up.x = flat.x;
+  up.y = flat.y + 2;
+  up.scaleY = 0;
+  up.alpha = 0.92;
+  d.sfx('scratch', { vol: 0.7, pitch: 0.5 });
+  for (let f = 1; f <= 70; f++) {
+    up.scaleY = f / 70;
+    flat.scaleY = 1 - f / 70;
+    await d.wait(1);
+  }
+  d.remove('ombre_sol');
+  await d.wait(40);
+  await d.say(['Elle se lève. Une silhouette griffonnée au stylo noir.', 'Beaucoup trop grande. Pas de visage.']);
+  // It walks to the sea, and the light eats it.
+  for (let f = 0; f < 160; f++) {
+    up.y += 0.55;
+    if (f % 26 === 0) d.sfx('scratch', { vol: 0.35, pitch: 0.45 });
+    if (f > 70) up.alpha = Math.max(0, up.alpha - 0.0105);
+    await d.wait(1);
+  }
+  d.remove('ombre_debout');
+  await d.say('Elle marche vers la mer. La lumière la mange.');
+  if (flag('c5_intro')) await d.say('Même ton ombre ne veut pas rester avec toi.', 'dodo');
+  d.music('plage', 1.5);
+  mood(1, 0);
 };
 
 /** The tiles of the beach after the white tide: the sea is ice, patches of correction fluid, the red thread. */

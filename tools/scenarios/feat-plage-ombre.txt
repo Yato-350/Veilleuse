@@ -1,0 +1,27 @@
+# The shadow (2.2, story/chapter5.ts beachShadow): on the beach where nothing has a shadow, once Noa has gathered a
+# few shells (12) and is far from Mina of before, his shadow comes back — far too long, not his shape. He steps aside;
+# it stays. It stands up: a figure scribbled in black pen, much too tall, faceless; it walks towards the sea and the
+# light eats it. Dodo: « Even your shadow doesn't want to stay with you. » Then the beach music again. Played in English.
+query: debug=map&map=plage&spawn=default&chapter=5&flags=c5_intro,c5_coquillages=12,c5_mina_parle=2&lang=en
+god
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: window.ENT = (id) => V.world.entities.find((e) => e.id === id)
+eval: (async () => { window.AU = (await import('/src/engine/audio.ts')).audio; return 1; })()
+assert: !ENT('ombre_sol') && !V.G.state.flags.c5_ombre
+go:16/7
+waitfor: ENT('ombre_sol')
+wait:1400
+shot:ombre
+zuntil: ENT('ombre_debout') && ENT('ombre_debout').scaleY === 1
+wait:400
+shot:debout
+zuntil: !ENT('ombre_debout') && SAW('The light eats it.')
+auto
+assert: V.G.state.flags.c5_ombre === true && !ENT('ombre_sol') && !ENT('ombre_debout') && AU.currentMusic === 'plage'
+assert: SAW('On the sand, a shadow. Yours.') && SAW('It isn\'t your shape.') && SAW('The shadow doesn\'t move.') && SAW('Much too tall. No face.') && SAW('Even your shadow doesn\'t want to stay with you.')
+assert: V.i18nMissing().length === 0

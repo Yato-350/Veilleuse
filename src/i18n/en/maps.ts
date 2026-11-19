@@ -336,4 +336,5 @@ export const MAPS: Record<string, string> = {
   'Il grince quand on se retourne. Tu t\'y retournais beaucoup.': 'It creaks when you toss and turn. You tossed and turned a lot.',
   'La porte. Derrière, le couloir, Nadia, la nuit.': 'The door. Behind it, the hallway, Nadia, the night.',
   'Tu ne repars pas. Pas maintenant.': 'You\'re not leaving. Not now.',
+  'Salle de bain': 'Bathroom',
 };

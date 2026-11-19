@@ -1,4 +1,5 @@
 import type { CharDef, SpriteDef } from '../../game/assets';
+import { hexToRgb, rgbToHex, type PixelMaterial } from '../../engine/palette';
 
 // Walking characters (16x24) and portraits (32x32). See docs/CONTENT_CONTRACT.md.
 
@@ -1764,8 +1765,30 @@ const POSE_HUG = `
 
 const MOUTON = { down: MOUTON_DOWN, up: MOUTON_UP, left: MOUTON_LEFT };
 
+/**
+ * What follows Noa on the erased path (2.2, story/chapter2.ts followedOnThePath): Noa drawn in pencil, half rubbed out.
+ * Every color becomes the grey of a pencil line by its lightness; eraser strokes have taken whole diagonal bands of it
+ * (the white of the paper shows through), more and more towards the feet.
+ */
+const graphite = (hex: string): string => {
+  const [r, g, b] = hexToRgb(hex);
+  const v = 92 + 0.52 * (0.3 * r + 0.59 * g + 0.11 * b);
+  return rgbToHex(v, v, v + 8);
+};
+const PAPER = '#f2efe8';
+const rubbedOut: PixelMaterial = (x, y, hex, edge) => {
+  let h = (x * 374761393 + y * 668265263 + 1013904223) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  const n = ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  if (edge) return n > 0.88 ? PAPER : '#4b4855';
+  if ((x * 2 + y) % 11 < 2 && n > 0.4) return PAPER;
+  if (y > 18 && n > 0.75 - (y - 18) * 0.06) return PAPER;
+  return hex;
+};
+
 export const CHARS: Record<string, CharDef> = {
   noa: { down: NOA_DOWN, up: NOA_UP, left: NOA_LEFT, variants: ['real', 'ink'] },
+  noa_gomme: { down: NOA_DOWN, up: NOA_UP, left: NOA_LEFT, opts: { transform: graphite, material: rubbedOut } },
   mina: { down: MINA_DOWN, up: MINA_UP, left: MINA_LEFT, variants: ['ink'] },
   maman: { down: MAMAN_DOWN, up: MAMAN_UP, left: MAMAN_LEFT },
   mouton: { ...MOUTON, opts: { colors: WOOL_WHITE }, variants: ['ink'] },

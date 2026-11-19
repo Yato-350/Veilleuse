@@ -1,0 +1,61 @@
+# Loading one of the five saves. On the title screen, « Continuer » with several saves opens the list on the latest
+# one (an empty slot cannot be loaded); in a game, the pause menu's « Quitter » tab has « Charger ». « Nouvelle partie »
+# takes a free slot without asking anything.
+query: debug=slots&fill=1,2,4&open=0&lang=fr
+wait:1500
+eval: window.V = window.__veilleuse
+eval: window.SL = () => V.game.top
+assert: V.scene() === 'TitleScene' && V.game.top.items[0].label === 'Continuer' && /Sacha · 1:37$/.test(V.game.top.slot)
+eval: (V.game.top.idx = 0, 1)
+KeyZ
+wait:300
+assert: SL().constructor.name === 'SlotsScene' && SL().mode === 'load' && SL().idx === 3
+ArrowUp
+wait:120
+KeyZ
+wait:200
+assert: SL().constructor.name === 'SlotsScene'
+ArrowUp
+wait:120
+KeyZ
+wait:1500
+assert: V.scene() === 'WorldScene' && V.G.slot === 2 && V.G.state.map === 'chambre' && V.G.state.flags.interlude === 2
+waitfor: V.world.controllable && !V.dialogue.busy
+# The pause menu: Quitter → Charger → slot 1.
+KeyC
+wait:300
+ArrowDown
+wait:100
+ArrowDown
+wait:100
+ArrowDown
+wait:100
+ArrowDown
+wait:100
+KeyZ
+wait:200
+assert: SL().constructor.name === 'MenuScene' && SL().quitIdx === 2
+ArrowLeft
+wait:100
+ArrowLeft
+wait:100
+shot:menu
+KeyZ
+wait:300
+assert: SL().constructor.name === 'SlotsScene' && SL().mode === 'load' && SL().current === 2 && SL().idx === 1
+ArrowUp
+wait:120
+KeyZ
+wait:1500
+assert: V.scene() === 'WorldScene' && V.G.slot === 1 && V.G.state.map === 'prairie'
+# Back to the title: « Nouvelle partie » asks nothing (slot 3 is free) and the new run takes it.
+eval: (V.flow.toTitle(), 1)
+wait:1500
+eval: (V.game.top.idx = V.game.top.items.findIndex((i) => i.label === 'Nouvelle partie'), 1)
+KeyZ
+wait:1200
+assert: V.scene() === 'NameEntryScene' && V.G.pendingSlot === null
+eval: (V.flow.newGame('Lou'), 1)
+wait:1200
+assert: V.G.slot === 3 && V.listSaves().filter(Boolean).length === 3
+assert: V.i18nMissing().length === 0

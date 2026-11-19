@@ -1,0 +1,34 @@
+# The cotton breathes (2.2, story/chapter6.ts ouateBreathes): crossing the low cave of the wadding, the walls swell and
+# fall like a chest (a heartbeat on each breath), drops fall from the ceiling, then three lumps of soaked stuffing
+# drop in front of Noa, grey and red in the middle; the last one splits on a button eye. Dodo, from the cotton: « You
+# wanted to know what was inside. » The lumps stay; the eye, looked at, never takes its eye off you. Played in English.
+query: debug=map&map=ouate&spawn=default&chapter=6&flags=c6_ouate_vu&lang=en
+god
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+eval: (V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => V.world.removeEntity(e)), 1)
+eval: window.ENT = (id) => V.world.entities.find((e) => e.id === id)
+eval: (window.DARK0 = V.world.extraDarkness, window.MAX = 0, setInterval(() => { window.MAX = Math.max(window.MAX, V.world.extraDarkness - DARK0); }, 50), 1)
+go:29/16
+ArrowLeft:450
+waitfor: V.dialogue.busy && SAW('It\'s breathing.')
+assert: MAX > 0.15
+zuntil: ENT('chute_3') && ENT('chute_3').z === 0
+shot:chute
+zuntil: ENT('chute_3').sprite === 'prop_c6_bourre_oeil_ouvert'
+wait:500
+shot:oeil
+auto
+assert: V.G.state.flags.c6_respire === true && Math.abs(V.world.extraDarkness - DARK0) < 1e-9
+assert: SAW('Grey, and red in the middle.') && SAW('still beating, a little') && SAW('Its four holes are turned towards you.') && SAW('You wanted to know what was inside.')
+assert: ['chute_1', 'chute_2', 'chute_3'].every((id) => ENT(id) && typeof ENT(id).interact === 'function')
+eval: (() => { const e = ENT('chute_3'), p = V.world.player; p.x = e.x + 14; p.y = e.y + 3; p.dir = 'left'; return 1; })()
+wait:200
+KeyZ
+auto
+assert: SAW('It never takes its eye off you.')
+assert: V.i18nMissing().length === 0

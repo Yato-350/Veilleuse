@@ -1,0 +1,14 @@
+# The mirror scene with « Réduire les flashs » (2.2): no swapping at all, the reflection slowly dissolves into the ink
+# silhouette, and the end fades instead of cutting (scenes/mirror.ts).
+query: debug=script&name=salle_de_bain&flags=interlude=4&lang=fr
+wait:1500
+eval: window.V = window.__veilleuse
+eval: (V.fx.reduceFlashes = true, 1)
+interact:sdb_lavabo
+zuntil: V.game.top.constructor.name === 'MirrorScene'
+assert: V.game.top.calm === true && V.game.top.length === 320 + 80 + 70
+wait:4500
+shot:fondu
+waitfor: V.game.top.constructor.name === 'WorldScene'
+auto
+assert: V.G.state.flags.sdb_reflet === true

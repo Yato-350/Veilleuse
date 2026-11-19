@@ -169,7 +169,14 @@ export type Sfx =
   // v2 chapter 5: a cough held back behind a mask.
   | 'cough'
   // v2 false dawn: a little bird outside the window (two quick rising chirps).
-  | 'bird';
+  | 'bird'
+  // 2.2, the bathroom: a drop from the tap into the basin; the scream behind the mirror.
+  | 'drip'
+  | 'scream'
+  // 2.2, the ink route: a creature bursting.
+  | 'splat'
+  // 2.2, the hospital: a neon tube going out (or coming back on, higher).
+  | 'neon';
 
 export type Ambience = 'rain' | 'static' | 'wind' | 'hum' | 'none';
 
@@ -935,6 +942,32 @@ export class AudioEngine {
         this.tone('sawtooth', 170 * p, 90 * p, 0.11, 0.05 * v);
         this.noiseBurst(0.18, 0.32 * v, 'bandpass', 560 * p, t + 0.2);
         this.tone('sawtooth', 150 * p, 80 * p, 0.14, 0.045 * v, t + 0.2);
+        break;
+      case 'splat':
+        // Something wet bursting: a low thump, a dark spray, a short hiss of drops.
+        this.tone('sine', 140 * p, 40 * p, 0.25, 0.22 * v);
+        this.noiseBurst(0.35, 0.3 * v, 'lowpass', 900 * p, t + 0.02);
+        this.noiseBurst(0.12, 0.14 * v, 'bandpass', 2400 * p, t + 0.06);
+        break;
+      case 'neon':
+        // The starter of a fluorescent tube: a dry click, a thump in the ceiling, the last of the buzz.
+        this.noiseBurst(0.02, 0.22 * v, 'highpass', 3000 * p);
+        this.tone('sine', 95 * p, 45 * p, 0.09, 0.3 * v, t + 0.005);
+        this.tone('sawtooth', 100 * p, 98 * p, 0.12, 0.025 * v, t + 0.02);
+        break;
+      case 'drip':
+        // A drop into a basin: a short sine that falls, and its little ring.
+        this.tone('sine', 1500 * p, 520 * p, 0.07, 0.09 * v);
+        this.tone('sine', 900 * p, 860 * p, 0.12, 0.025 * v, t + 0.06);
+        break;
+      case 'scream':
+        // A scream behind glass: three detuned saws that climb then fall apart, a hiss through it, a crack at the end.
+        this.tone('sawtooth', 380 * p, 1050 * p, 0.85, 0.08 * v);
+        this.tone('sawtooth', 391 * p, 1090 * p, 0.85, 0.07 * v, t + 0.012);
+        this.tone('sawtooth', 190 * p, 520 * p, 0.85, 0.06 * v, t + 0.024);
+        this.noiseBurst(1.0, 0.26 * v, 'bandpass', 2600 * p, t + 0.05);
+        this.tone('square', 1100 * p, 70 * p, 0.5, 0.06 * v, t + 0.8);
+        this.noiseBurst(0.25, 0.22 * v, 'highpass', 3000, t + 0.82);
         break;
       case 'bird':
         // Two quick rising chirps, the second one a little higher, and a falling tail.

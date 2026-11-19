@@ -275,7 +275,7 @@ const HOPITAL: MapDef = {
   id: 'b_hopital',
   name: 'Pédiatrie, troisième étage',
   world: 'dream',
-  music: 'hospital',
+  music: 'pediatrie',
   ambience: 'hum',
   particles: 'dust',
   darkness: 0.36,

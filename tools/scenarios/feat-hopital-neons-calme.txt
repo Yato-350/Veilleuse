@@ -1,0 +1,22 @@
+# The neons with « Réduire les flashs » (2.2, story/chapter3.ts corridorNeons): no flicker; the light fades out and
+# back in (never a snap), and the face at the end fades in, without a shake (scenes/jump.ts).
+query: debug=map&map=hopital&spawn=start&chapter=3&party=mina&flags=c3_loop=2,c3_heard_2,c3_hosp_in,c3_corridor&lang=fr
+god
+wait:1000
+eval: window.V = window.__veilleuse
+eval: (V.fx.reduceFlashes = true, 1)
+eval: window.NEONS = () => V.world.entities.filter((e) => e.light && e.light.color === '#dff7ec')
+eval: window.NURSE = (id) => V.world.entities.find((e) => e.id === id)
+eval: (V.world.entities.filter((e) => e.kind === 'enemy').forEach((e) => V.world.removeEntity(e)), 1)
+go:29/4
+ArrowRight:700
+zuntil: NURSE('neon_1')
+waitfor: NEONS().length === 10 && NEONS().some((e) => e.light.r > 2 && e.light.r < 40)
+shot:fondu
+waitfor: V.game.top.constructor.name === 'JumpScene'
+assert: V.game.top.calm === true
+wait:120
+shot:visage
+waitfor: V.game.top.constructor.name === 'WorldScene' && V.dialogue.busy
+auto
+assert: V.G.state.flags.c3_neons === true && NEONS().length === 10 && NEONS().every((e) => e.light.r === 48)

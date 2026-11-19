@@ -657,6 +657,12 @@ trucs… tu me les raconteras ? » — « Promis. »
 - Gomme épargnée, nouvelle réplique : « On efface pour ne plus avoir mal. Ou pour ne plus être coupable. Ce n'est
   pas pareil. »
 - Souvenir 2 : le nuage gris près de la bouche (T6). Le « Chut. » de Dodo porte de la friture.
+- **Ce qui suit (2.2).** La première fois qu'on monte le sentier gommé, quelque chose vient derrière, sur les pas
+  mêmes de Noa : Noa, dessiné au crayon et à moitié gommé. Ses pas sonnent juste après les siens ; quand Noa s'arrête,
+  ils font encore quelques pas. Il n'avance que quand Noa lui tourne le dos ; regardé, il s'arrête, un peu plus net.
+  Mina l'entend la première. Tout près : un souffle dans la nuque, il n'est plus là. Ou Noa marche jusqu'à lui, et il
+  s'efface sous ses doigts (« Pourquoi quelqu'un t'a dessiné… et puis gommé ? »). Sur le chemin blanc, d'autres pas
+  entre les siens, à moitié gommés. Ni flash ni jumpscare : une scène lente.
 
 ---
 
@@ -687,6 +693,13 @@ chambre 304, le souvenir « La veilleuse ».
 - Les dessins de Mina scotchés montrent, d'un dessin à l'autre, un bonhomme qui s'approche d'une porte vitrée.
 - Voix entendues : l'infirmière (« le grand frère qui toussait ») et Maman (« Il croit que c'est lui ») (T6).
 - La silhouette au bonnet dans la vitre de la dernière aile, devant la 304, pendant que Mina est à côté (T9).
+- **Les néons (2.2).** Au troisième passage du couloir, deux pas après la voix de la nuit (« Ferme les yeux ») : les
+  néons clignotent et s'éteignent un à un depuis le fond. Quand ils se rallument, des infirmières de papier sont
+  debout dans le couloir, tournées vers Noa ; noir, papier froissé, lumière : plus près ; noir complet, lumière : une
+  à sa figure (jumpscare, sa bouche de papier déchirée). Puis tout est comme avant. Mina : « La nuit, Nadia passait
+  avec sa lampe. Elle se penchait sur le lit, tout près, pour voir si on dormait. Il fallait fermer les yeux très
+  fort. Et faire semblant. » Jamais plus de deux changements de lumière par seconde ; avec « Réduire les flashs »,
+  des fondus.
 - **Nouvel ennemi : Bracelet.**
 
 | Ennemi | Émotion | Besoin | Attaques | Détail |
@@ -956,6 +969,11 @@ Cartes : `chambre`, `appartement_nuit`, **`chambre_maman`** (nouvelle).
      une infirmière, Mina qui rit devant la télé, « Il viendra samedi », Mina qui compte les respirations de Maman.
    - Au loin, **Mina d'avant**, au crayon, en maillot et couronne, construit un château. Elle ne dit que des phrases
      de vacances : « Regarde, Noa ! J'en ai quarante-deux ! »
+   - **L'ombre (2.2).** Une fois une douzaine de coquillages ramassés, loin de Mina d'avant : l'ombre de Noa revient,
+     la seule de la plage, beaucoup trop longue, pas sa forme. Il fait un pas de côté, elle ne bouge pas. Elle se
+     lève : une silhouette pleine, au stylo noir, beaucoup trop grande, sans visage — celle qu'il ajoutera aux dessins
+     du lac blanc, vue ici une première fois. Elle marche vers la mer, et la lumière la mange. Dodo : « Même ton ombre
+     ne veut pas rester avec toi. » Ni flash ni secousse.
 3. **La serviette.**
    - Mina d'avant s'endort. **On ne peut pas la réveiller pendant 30 secondes réelles.** À chaque appui sur A :
      « Elle dort. » (Le mode Histoire et l'option « réduire les attentes » ramènent l'attente à 5 s.)
@@ -1050,6 +1068,13 @@ Les parois répètent en boucle, au ralenti, « …fais de beaux rêves ».
    Énigme de mémoire : trouver le bocal sans étiquette, caché derrière « Nuit 1 : il ne se souvient pas de la nuit
    0 ». Dedans, une vibration de téléphone. Elle ouvre le chemin. Si `c4_coton` > 0, des **Bourres** : « C'est toi
    qui nous as vidés. »
+
+   **Le coton respire (2.2).** La première fois qu'on traverse la grotte basse : les parois se gonflent et retombent
+   comme une poitrine, un battement à chaque souffle ; des gouttes tombent du plafond ; puis trois paquets de
+   rembourrage gorgé tombent devant Noa (leur ombre d'abord), gris et rouges au milieu, tièdes, qui battent encore un
+   peu. Le dernier s'ouvre tout seul sur un œil-bouton gros comme un poing. Dodo, depuis le coton : « Tu voulais
+   savoir ce qu'il y a dedans. » Les paquets restent où ils sont tombés. C'est du gore sur le jouet (Dodo lui-même),
+   jamais sur les enfants.
 4. **La boîte à musique : le cœur de Dodo.**
    - Un cylindre de boîte à musique dont les dents de métal sont des **dents de lait**, celles de Noa. Légende de
      famille : « La petite souris les a confiées au mouton. »
@@ -1071,7 +1096,7 @@ Les parois répètent en boucle, au ralenti, « …fais de beaux rêves ».
 | Mouton Numéroté | Joie | Joie | se multiplie si on ne les épargne pas par numéro décroissant | tamponné comme un dossier |
 | **Pile** (rencontre unique) | Neutre → Tristesse | Joie, puis « garder » | sa voix ralentit à chaque tour | épargnée : objet **Pile chargée** (`c6_pile`) ; vaincue : la voix de Dodo meurt plus tôt, et la fin secrète est perdue |
 
-**Combat final — Dodo** (arène `voix`, fond qui pourrit, musique `dodo_v2`). On ne frappe pas le sommeil (existant).
+**Combat final — Dodo** (arène `voix`, fond qui pourrit, musique `reste` ; la valse lente `dodo_v2` revient dans la fin). On ne frappe pas le sommeil (existant).
 
 - **Phase 1, « Les moutons »** (existant). Un mouton par mort du joueur (`G.meta.deaths`, plafond 41) : « Ce sont
   tes morts, {player}. Je les ai comptées. » Sans mort : 41 moutons, « Tu n'es jamais mort·e. Alors je compte ses
@@ -1180,8 +1205,9 @@ L'existant reste. Ajouts :
 
 ## 4. Catalogue des détails dérangeants
 
-Règle : chaque détail est **suggéré** (un plan, une phrase, un son). Pas de scène gore. Les cases « contrepoint »
-rappellent ce qui garde la tendresse.
+Règle : chaque détail est **suggéré** (un plan, une phrase, un son). Les cases « contrepoint » rappellent ce qui
+garde la tendresse. Depuis la 2.2, l'auteur veut aussi des scènes qui font peur, du gore et des jumpscares : ils
+restent rares, une fois chacun, et suivent les limites du § 6.1.
 
 ### Monde réel (prologue, interludes, final)
 
@@ -1216,6 +1242,7 @@ rappellent ce qui garde la tendresse.
 - Les miettes de gomme qui ont une bouche.
 - Les yeux-boutons de Mina pendant une frame.
 - Les fils au-dessus de ses poignets.
+- Le Noa au crayon, à moitié gommé, qui suit sur le sentier, un pas en retard (2.2).
 - *Contrepoint* : Gomme épargnée qui rend les dessins.
 
 ### Ch. 3 — L'Hôpital de Papier
@@ -1226,6 +1253,7 @@ rappellent ce qui garde la tendresse.
 - Le bracelet-ver qui affiche « NOA — ??? ».
 - La silhouette au bonnet derrière la vitre pendant que Mina est à côté.
 - Le faux message d'erreur (existant).
+- Les néons qui s'éteignent, les infirmières plus proches à chaque fois que la lumière revient (2.2).
 - *Contrepoint* : les amis épargnés qui reviennent aider.
 
 ### Fausse aube
@@ -1263,6 +1291,7 @@ rappellent ce qui garde la tendresse.
 - Le thermomètre qui hurle à 40.
 - La toux qui éclabousse le dessin d'encre.
 - La silhouette ajoutée au stylo, trop grande, sans visage, sur les dessins corrigés.
+- L'ombre de Noa, la seule de la plage, qui se lève et part dans la mer (2.2).
 - *Contrepoint* : les coquillages où Maman fredonne ; les mains qui se rejoignent.
 
 ### Ch. 6 — Le Ventre de Dodo
@@ -1275,6 +1304,7 @@ rappellent ce qui garde la tendresse.
 - Les marionnettes de Mina vides, pendues à leurs fils.
 - L'œil-bouton qui balance.
 - Les coutures de Dodo qui s'ouvrent sur du rembourrage gris.
+- Le coton qui respire, et le rembourrage rouge qui tombe du plafond, l'œil-bouton dedans (2.2).
 - Les coups dans le noir, et les faux coups.
 - Les couleurs qui mentent.
 - *Contrepoint* : la berceuse entière ; le visage dessiné ; « On a le droit. »
@@ -1385,6 +1415,17 @@ faits peuvent lever (l'infection) et laisse celle que Noa seul peut porter (les 
 - Le mot de Nadia sur les piles.
 - Une étiquette de bocal : « Nuit 333 : il n'a pas voulu dire qu'il était malade. »
 
+### La faim (2.2)
+
+Le temps d'une partie, `flags.faim` compte les repas que Noa refuse, moins ceux qu'il mange (`story/faim.ts`) :
+les pâtes froides de l'Interlude I, le frigo de 4 h 06 (Interlude III, « Mange quelque chose s'il te plaît ») et le
+dîner qui recommence au chapitre 4. Sans manger, il voit des choses dans l'appartement :
+- dès 1 : Mina, comme avant, assise à sa place dans la cuisine ; quand on s'approche, elle n'y est plus. Sur la table,
+  une assiette qui fume, celle de Mina déjà vide ; puis il n'y a rien sur la table ;
+- dès 2, la nuit : Dodo grandeur nature au bout du couloir, déchiré, le coton qui sort (horreur sur un jouet
+  seulement), puis à la figure de Noa ; une seule fois. « Dodo est sur ton lit. Il a toujours été sur ton lit. »
+Manger fait reculer les visions. Rien au final : Noa se réveille.
+
 ### Méta et nouvelle partie+
 
 | Ce que la mémoire retient | Où ça se voit |
@@ -1398,6 +1439,7 @@ faits peuvent lever (l'infection) et laisse celle que Noa seul peut porter (les 
 | Heure réelle 3:14, pendant un interlude | Le téléphone vibre : « Mina 🐑 — appel entrant », puis « appel manqué ». On ne peut pas répondre. |
 | `meta.dodoSilent` | Prologue sans Dodo (§3.3) |
 | Toute fin v2 | Prologue : « Tu reviens. Tu sais, toi. Tu ne lui diras rien, hein ? » |
+| `meta.deleted` (« Fichiers », après une première fin) | `dodo.chr`, `mina.chr` ou `maman.chr` supprimé : chaque réplique du personnage devient de la friture (▓█░) sous « ??? », sans portrait, et son sprite clignote, dans le monde et en combat. Aucune scène n'est retirée. Dodo commente tant que son fichier existe (« Tu ne peux pas m'effacer. Je suis dans tous les autres. »). La corbeille restaure. `noa.chr` est « en cours d'utilisation ». |
 
 ---
 
@@ -1411,12 +1453,17 @@ faits peuvent lever (l'infection) et laisse celle que Noa seul peut porter (les 
     drap plat et vide.
   - Sa maladie passe par des objets : bonnet, masque, bracelet, vitre, thermomètre.
   - Son vrai visage, dessiné une seule fois, est fatigué et souriant.
-- **L'horreur corporelle ne touche que des jouets et du papier** : poupées, peluches, mannequins de feutre, coton,
-  encre, épingles, pile.
+- **L'horreur corporelle (le gore) ne touche jamais le corps de Noa ni celui de Mina.** Depuis la 2.2, l'auteur
+  l'ouvre au-delà des jouets et du papier (poupées, peluches, mannequins de feutre, coton, encre, épingles, pile) :
+  les créatures du rêve (sur la route de l'encre, elles éclatent au combat, une ligne suit leurs derniers mots — « C'est
+  tiède. Ça colle à tes doigts. » — sauf pour les boss, et elles laissent des flaques où l'on voit encore ce qu'elles
+  étaient), la nourriture (l'assiette de la faim), la maison (la traînée de coton mouillé du couloir).
   - Les figures de Mina (princesse au crayon, Mina de feutre, mannequins) ne sont jamais déchirées ni mutilées. Elles
     se défont en fil, se figent, ont des boutons. La Poupée Brouillon n'est jamais identifiée comme Mina.
   - Noa n'est jamais blessé. Sa toux laisse une tache d'encre sur sa manche, rien de plus. Le coton sous ses ongles
     vient de la peluche.
+  - Le miroir de la salle de bain (2.2) : les gribouillis sur les yeux du reflet sont du stylo bille sur le verre,
+    comme on barre un dessin raté ; la silhouette est de l'encre. Le reflet n'est jamais blessé.
 - **Pas de glorification ni de méthode de suicide ou d'automutilation.**
   - « Dormir » et « rester » restent des métaphores du repli. *Beaux rêves* montre explicitement un garçon vivant
     dont les années passent.

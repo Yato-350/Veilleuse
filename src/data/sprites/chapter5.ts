@@ -1488,6 +1488,60 @@ const DRIP = `
 `;
 
 /** After the tide: a flat round of correction fluid where the castle stood; a smear where the writing was. */
+/**
+ * 2.2, the shadow (story/chapter5.ts beachShadow): on the beach where nothing has a shadow, Noa's comes back — far too
+ * long and not his shape, lying from his feet towards the sea (16×52, anchored at the top: it grows from his feet).
+ * Legs, a thin body, arms too long, a round head with no face.
+ */
+const SHADOW_FLAT = (() => {
+  const p = new Pix(16, 52);
+  p.rect(6, 0, 4, 3, 'k');
+  p.poly(
+    [
+      [5, 2],
+      [11, 2],
+      [12, 18],
+      [10, 30],
+      [6, 30],
+      [4, 18],
+    ],
+    'k',
+  );
+  p.line(4, 19, 1, 36, 'k').line(5, 19, 2, 36, 'k');
+  p.line(12, 19, 15, 36, 'k').line(11, 19, 14, 36, 'k');
+  p.ellipse(8, 40, 5, 7.5, 'k');
+  return p.toString();
+})();
+
+/**
+ * Then it stands up (16×42): a silhouette filled in with black ballpoint, much too tall, with no face — the one Noa will
+ * add to the drawings by the white lake. Solid pen, a few grey strokes where the scribbling went over itself.
+ */
+const SHADOW_STANDING = (() => {
+  const p = new Pix(16, 42);
+  // The head, filled; a scribble across where a face would be.
+  p.ellipse(8, 6, 4.5, 5.5, 'k');
+  p.line(5, 4, 11, 8, 'G').line(5, 8, 10, 4, 'G');
+  // Neck, shoulders, the body filled in, the pen going back and forth.
+  p.rect(7, 11, 3, 3, 'k');
+  p.poly(
+    [
+      [3, 14],
+      [13, 14],
+      [12, 29],
+      [4, 29],
+    ],
+    'k',
+  );
+  p.line(4, 16, 12, 21, 'G').line(12, 23, 5, 27, 'G');
+  // Arms far too long, down past the knees.
+  p.line(3, 15, 1, 32, 'k').line(2, 15, 0, 31, 'k');
+  p.line(13, 15, 15, 32, 'k').line(14, 15, 15, 30, 'k');
+  // Legs.
+  p.rect(5, 29, 2, 13, 'k').rect(9, 29, 2, 13, 'k');
+  return p.toString();
+})();
+
 const WHITE_ROUND = (() => {
   const p = new Pix(36, 12);
   p.ellipse(18, 6, 17, 5.5, '=').ellipse(18, 5.5, 15.5, 4.5, 'f');
@@ -1817,6 +1871,8 @@ export const ART: Record<string, SpriteDef> = keep({
   npc_c5_dodo: DODO,
   npc_c5_dodo_2: DODO_2,
   npc_c5_silhouette: sprite(silhouette(0), WHITE),
+  fx_c5_ombre_sol: sprite(SHADOW_FLAT, ALL, { ay: 0 }),
+  npc_c5_ombre_debout: sprite(SHADOW_STANDING),
   npc_c5_silhouette_2: sprite(silhouette(1), WHITE),
   c5_dodo_geant: giantDodo(0),
   c5_dodo_geant_1: giantDodo(1),

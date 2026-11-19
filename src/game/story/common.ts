@@ -135,7 +135,9 @@ export async function finishGame(d: Director, ending: EndingId): Promise<void> {
   if (ending === 'veilleuse') G.meta.dodoSilent = true;
   G.meta.runInProgress = false;
   writeMeta(G.meta);
-  deleteSave();
+  // The finished run's save goes (the other slots keep theirs: older moments of this run, or other runs).
+  deleteSave(G.slot);
+  G.slot = null;
   setPageTitle(null);
   fx.glitch = 0;
   fx.setBars(false);
@@ -191,6 +193,25 @@ export const INK_FEAR: string[][] = [
   ['« On t\'a vu, sur le chemin. Tout le monde t\'a vu. »'],
   ['« Tu sens l\'encre. Ça ne part pas au lavage, tu sais. »'],
 ];
+
+/**
+ * The ink puddles up close (2.2: world.inkPuddleLook). What is left where a creature of the dream was killed — the gore
+ * stays on the creatures, never on Noa or Mina (docs/HISTOIRE.md § 6.1). One set of words per puddle (by its place).
+ */
+export const INK_PUDDLE: string[][] = [
+  ['Une flaque d\'encre. Elle est encore tiède.', 'Elle ne sèche pas. Elle ne sèchera pas.'],
+  ['De l\'encre, et dedans des touffes de laine collées.', 'Et quelque chose de mou, qui ne devrait pas être là.'],
+  ['La flaque a la forme de celui qui était là.', 'On voit encore où étaient les bras.'],
+  ['Des éclats de coton rouge, figés dans l\'encre.', 'Ça sent le fer.'],
+  ['Au fond de la flaque, deux yeux-boutons.', 'Ils te regardent encore.'],
+  ['Tu marches dedans. Ça colle.', 'Ça te suit sur trois pas.'],
+];
+
+export function inkPuddleLook(tx: number, ty: number): Script {
+  return async (d) => {
+    await d.say(INK_PUDDLE[Math.abs(tx * 7 + ty * 13) % INK_PUDDLE.length]!);
+  };
+}
 
 /** Who never backs away: Noa's own (Dodo, Mina, Maman, the little girl in the hat), and Chaussette, who has her own words. */
 const NO_FEAR = /^(dodo|mina|maman|petite|bonnet|chaussette|noa)/;

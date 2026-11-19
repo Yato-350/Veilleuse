@@ -5,7 +5,8 @@
 export const flow = {
   toTitle: async (): Promise<void> => {},
   newGame: async (_name: string): Promise<void> => {},
-  continueGame: async (): Promise<void> => {},
+  /** Loads slot `slot` (1..5), by default the running game's slot, else the latest save. */
+  continueGame: async (_slot?: number): Promise<void> => {},
   /** Bonus chapter « Les rêves des autres » (title screen, after the dawn ending). */
   startBonus: async (): Promise<void> => {},
   /** After Beaux rêves, the title's single « Continuer »: a new run straight into chapter 1 (docs/HISTOIRE.md § 5). */

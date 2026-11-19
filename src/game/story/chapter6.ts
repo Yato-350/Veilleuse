@@ -11,6 +11,7 @@ import { tf, tr } from '../../i18n';
 import { blot } from '../battle/final-common';
 import { runFinalBattleV2 } from '../battle/final-v2';
 import type { Director } from '../director';
+import type { Entity } from '../overworld/entity';
 import type { Script } from '../overworld/types';
 import { world } from '../overworld/world';
 import { CountingScene } from '../scenes/sheepcount';
@@ -732,6 +733,80 @@ export const brokenBridge: Script = looks('pont_coupe', [
 ]);
 
 /** When Noa comes near the nest with the Bourres still crawling: their reproach floats out of them. */
+// --- The cotton breathes (2.2) -----------------------------------------------------------------------------------------
+
+/**
+ * The cotton breathes (2.2, the author: more scenes that scare, and gore beyond toys — here, a toy's own insides).
+ * Once, crossing the low cave: the walls swell and fall like a chest, a heartbeat in the cotton; drops from the low
+ * ceiling; then lumps of soaked stuffing drop in front of Noa (their shadows come first), grey and red in the middle,
+ * warm, still beating a little. The last one splits on its own on a button eye as big as a fist, its four holes turned
+ * up at him. Dodo, from the cotton: « Tu voulais savoir ce qu'il y a dedans. » (the seam's own words). Then the cotton
+ * is still; the lumps stay where they fell until Noa leaves the wadding. The breathing is slow (no flash); with
+ * « Réduire les flashs », the landings do not shake.
+ */
+export const ouateBreathes: Script = async (d) => {
+  const calm = fx.reduceFlashes;
+  const p = d.player;
+  const s = p.dir === 'right' ? 1 : -1;
+  const px = tileOf(p.x);
+  const py = tileOf(p.y);
+  const base = world.extraDarkness;
+  const light = world.playerLight;
+  d.music(null, 1.5);
+  await d.wait(20);
+  // Three breaths: the dark swells and falls back, a heartbeat on each.
+  for (let i = 0; i < 3; i++) {
+    d.sfx('heartbeat', { vol: 0.45 + i * 0.2, pitch: 0.8 });
+    for (let f = 0; f < 90; f++) {
+      const k = Math.sin((Math.PI * f) / 90);
+      world.extraDarkness = base + 0.2 * k;
+      world.playerLight = light * (1 - 0.15 * k);
+      await d.wait(1);
+    }
+  }
+  world.extraDarkness = base;
+  world.playerLight = light;
+  await tell(d, ['Ça respire.', 'Tout le coton, autour de toi, se gonfle et retombe. Comme une poitrine.']);
+  for (let i = 0; i < 3; i++) {
+    d.sfx('drip', { vol: 0.6, pitch: 0.7 });
+    await d.wait(22);
+  }
+  // The lumps: the shadow first, then the fall, then the wet sound.
+  const fall = async (id: string, sprite: string, dx: number, dy: number): Promise<Entity> => {
+    const e = d.spawn({ id, sprite, x: px + s * dx, y: py + dy, solid: false });
+    e.z = 96;
+    let v = 0;
+    while (e.z > 0) {
+      v += 0.32;
+      e.z = Math.max(0, e.z - v);
+      await d.wait(1);
+    }
+    d.sfx('splat', { vol: 0.7, pitch: 0.9 });
+    if (!calm) d.shake(2, 10);
+    return e;
+  };
+  await fall('chute_1', 'prop_c6_bourre_mouillee_1', 2, -1);
+  await d.wait(30);
+  await fall('chute_2', 'prop_c6_bourre_mouillee_2', 1, 1);
+  await d.wait(40);
+  const eye = await fall('chute_3', 'prop_c6_bourre_oeil', 3, 0);
+  await d.wait(20);
+  await tell(d, ['Du rembourrage, gorgé. Gris, et rouge au milieu.', 'Il est tiède. Ça bat encore, un peu.']);
+  d.sfx('splat', { vol: 0.5, pitch: 0.6 });
+  eye.sprite = 'prop_c6_bourre_oeil_ouvert';
+  await d.wait(40);
+  await tell(d, ['Le dernier s\'ouvre en deux, tout seul.', 'Dedans, un œil-bouton gros comme ton poing. Ses quatre trous sont tournés vers toi.']);
+  await voice(d, 'Tu voulais savoir ce qu\'il y a dedans.');
+  await tell(d, 'Puis le coton ne bouge plus.');
+  d.music('ventre', 2);
+  // They stay where they fell.
+  for (const id of ['chute_1', 'chute_2']) {
+    const e = d.find(id);
+    if (e) e.interact = look(['Du rembourrage mouillé, tombé du plafond.', 'Tu n\'y touches pas.']);
+  }
+  eye.interact = look(['L\'œil-bouton, dans son nid rouge.', 'Il ne te quitte pas.']);
+};
+
 export const bourresMurmur: Script = async () => {
   for (const e of world.entities) {
     if (e.kind === 'enemy' && String((e.data.enemies as string[] | undefined)?.[0]) === 'bourre') murmur('C\'est toi qui nous as vidés.', e.x, e.y - 24, 200, '#d9cba6');

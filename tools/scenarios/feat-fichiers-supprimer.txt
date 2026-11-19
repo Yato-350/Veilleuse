@@ -1,0 +1,47 @@
+# « Fichiers » (title screen, after a first ending): the player deletes dodo.chr from the file explorer. Dodo talks
+# while his file is there (« Qu'est-ce que tu cherches là-dedans ? », « Tu ne peux pas m'effacer. »); noa.chr is in
+# use. The deletion is written to the memory; restoring the file from the bin brings him back (« …Merci. »). Back on
+# the title screen, the menu holds « Fichiers ». What a deletion changes in the game: feat-fichiers-dodo-efface.
+query: debug=files&lang=fr
+wait:1200
+eval: window.V = window.__veilleuse
+eval: window.FS = () => V.game.top
+assert: typeof FS().rows === 'function' && FS().rows().length === 5 && /cherches/.test(FS().status)
+# noa.chr: in use.
+KeyZ
+wait:200
+assert: /en cours d'utilisation/.test(FS().status) && V.G.meta.deleted.length === 0
+ArrowDown
+wait:120
+KeyZ
+wait:200
+assert: FS().confirm === 'dodo' && /Je suis dans tous les autres/.test(FS().status)
+shot:confirmer
+KeyZ
+wait:300
+assert: V.G.meta.deleted.join() === 'dodo' && V.readMeta().deleted.join() === 'dodo' && FS().rows().length === 4
+assert: FS().rows()[3].name === 'Corbeille (1)'
+# Mina, with Dodo gone: no comment from him any more.
+KeyZ
+wait:200
+KeyZ
+wait:300
+assert: V.G.meta.deleted.join() === 'dodo,mina' && FS().status === 'mina.chr supprimé.' && !FS().statusDodo
+shot:supprimes
+# The bin (the last row, under maman.chr): restore Dodo, then Mina.
+ArrowDown
+wait:120
+KeyZ
+wait:200
+assert: FS().inBin && FS().rows().length === 2
+KeyZ
+wait:300
+assert: V.G.meta.deleted.join() === 'mina' && /Merci/.test(FS().status) && FS().statusDodo
+KeyZ
+wait:300
+assert: V.G.meta.deleted.length === 0 && !FS().inBin && V.readMeta().deleted.length === 0
+KeyX
+wait:400
+assert: V.game.top.constructor.name === 'TitleScene' && V.game.top.items.some((it) => it.label === 'Fichiers')
+shot:titre
+assert: V.i18nMissing().length === 0

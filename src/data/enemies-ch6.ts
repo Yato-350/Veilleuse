@@ -372,7 +372,7 @@ export const CH6_ENEMIES: Record<string, EnemyDef> = {
     boss: true,
     noFlee: true,
     voice: 'noa',
-    music: 'dodo_v2',
+    music: 'reste',
     bg: 'voix',
     hooks: FINAL_V2_HOOKS,
   },

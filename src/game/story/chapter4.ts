@@ -14,6 +14,7 @@ import { world } from '../overworld/world';
 import { CountingScene, type SheepKind, type SheepRound } from '../scenes/sheepcount';
 import { G, maxHp } from '../state';
 import { wakeUp } from './common';
+import { refuseMeal } from './faim';
 import { NumberWords, runsBefore } from '../meta';
 
 /**
@@ -310,6 +311,7 @@ async function dinner(d: Director): Promise<void> {
       d.set('c4_diner', num('c4_diner') + 1);
       await d.say(['Tu manges.', loop < 3 ? 'C\'est de la laine. Ça a le goût du froid. Du frigo. De l\'attente.' : 'Ça crisse sous les dents. Ça a le goût du papier mouillé.']);
     } else {
+      refuseMeal(d, 'c4_refus');
       await d.say(['Tu poses ta fourchette.', 'La Poupée-Maman s\'arrête au milieu d\'un geste. Les points de sa bouche grincent.']);
       await mina(d, '…Elle recommence.', 'sad');
     }

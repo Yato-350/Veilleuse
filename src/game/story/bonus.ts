@@ -14,7 +14,7 @@ import type { Script } from '../overworld/types';
 import { world } from '../overworld/world';
 import { CreditsScene } from '../scenes/credits';
 import { dateLabel, PhoneScene, type PhoneMessage, type PhoneReply } from '../scenes/phone';
-import { deleteSave, G, hasSave, maxHp, readSave, writeMeta } from '../state';
+import { deleteSave, G, maxHp, readSave, writeMeta } from '../state';
 import { tf, tr } from '../../i18n';
 
 /**
@@ -694,20 +694,15 @@ export const nadiaTalk: Script = async (d) => {
   await d.say('Je reste là. Je reste toujours là, la nuit.', 'nadia');
 };
 
-/** The bonus save point: it never overwrites a main run in progress. */
+/**
+ * The bonus save point: the bonus run has its own slot (a free one, given when it starts: main.ts startBonus), so it
+ * never overwrites a main run in progress unless the player picks that slot and says so (the slot list asks first).
+ */
 export const savePointHosp: Script = async (d) => {
   d.heal();
   await d.say(['Une veilleuse de couloir, à hauteur d\'enfant.', 'Tu t\'arrêtais toujours devant, en revenant du distributeur. Pour respirer.']);
-  const main = hasSave() && !readSave()?.flags.bonus;
-  if (main) {
-    await d.say('{c:g}(Une partie est déjà en cours : ce rêve-là ne peut pas être sauvegardé.){/c}');
-    return;
-  }
   const r = await d.ask('Sauvegarder ?', ['Oui', 'Non'], undefined, { cancelIndex: 1 });
-  if (r !== 0) return;
-  d.save();
-  d.sfx('save');
-  await d.say('{c:y}Ta progression est gardée au chaud.{/c}');
+  if (r === 0 && (await d.saveToSlot())) await d.say('{c:y}Ta progression est gardée au chaud.{/c}');
 };
 
 // ---------------------------------------------------------------------------
@@ -1265,7 +1260,9 @@ async function dawn(d: Director): Promise<void> {
 async function finishBonus(d: Director): Promise<void> {
   G.meta.bonusDone = true;
   writeMeta(G.meta);
-  if (hasSave() && readSave()?.flags.bonus) deleteSave();
+  // Its own save goes (a main run's save, in another slot, stays).
+  if (G.slot !== null && readSave(G.slot)?.flags.bonus) deleteSave(G.slot);
+  G.slot = null;
   setPageTitle(null);
   fx.glitch = 0;
   fx.setBars(false);

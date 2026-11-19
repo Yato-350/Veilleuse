@@ -186,6 +186,12 @@ En v2, les réveils de l'acte II se font en pleine nuit (4 h 06, 4 h 44) ; du ch
 - Interaction avec objets / PNJ, portes, téléporteurs, déclencheurs de scènes.
 - Mina suit Noa (file de personnages) ; au chapitre 4, c'est Mina n°366 ; aux chapitres 5 et 6, Mina n'est plus là.
 - **Veilleuses** = points de sauvegarde : elles soignent et enregistrent. (« La petite lumière te remplit de courage. »)
+  - **Cinq emplacements** (2.2) : à la veilleuse, on choisit où garder sa progression ; remplacer la sauvegarde d'une
+    autre partie demande confirmation. On ne sauvegarde toujours qu'aux veilleuses (et en début de chapitre, ou quand
+    l'application passe en arrière-plan, dans l'emplacement de la partie en cours).
+  - **Charger** : « Continuer » sur l'écran titre (la liste s'ouvre s'il y a plusieurs sauvegardes), ou « Charger »
+    dans l'onglet « Quitter » du menu. Une nouvelle partie prend un emplacement libre ; s'ils sont tous pris, on
+    choisit celui qu'elle remplace. Une fin n'efface que la sauvegarde de la partie terminée.
   Au chapitre 4, dans la maison de feutre, c'est Dodo qui en sert.
 - Énigmes légères : allumer des lanternes dans l'ordre, retrouver des objets, labyrinthes de couvertures.
 - **Nouveautés de la 2.0** : le dîner qui recommence et les deux couches de la maison cousue (l'horloge à coucou), le
@@ -278,7 +284,7 @@ sa pluie bleue ne te touche plus. L'empathie protège, littéralement.
   à coudre (bouclier), elle brode (le blanc colorié). Si La Couseuse est vaincue, elle se fige dans son cadre jusqu'à la
   fin du chapitre. Aux chapitres 5 et 6, le cadre vide reste.
 - **L'aide après trois défaites**, à partir du chapitre 5, vient de la fillette au bonnet, et non plus de Mina.
-- **Le combat final** (chapitre 6, arène `voix`, musique `dodo_v2`) — on ne frappe pas le sommeil :
+- **Le combat final** (chapitre 6, arène `voix`, musique `reste`) — on ne frappe pas le sommeil :
   1. **Les moutons** : un par défaite du joueur (`meta.deaths`, au plus 41 ; sans défaite, 41, « ses nuits ») ;
   2. **DORMIR** : le menu se change en DORMIR, les mots du carnet sont ceux de Dodo, sous-titrés comme des répliques de
      l'appel ; un tour, annoncé, **les couleurs mentent** (des crayons jaunes qui blessent un cœur jaune, HUD « ? ») ;

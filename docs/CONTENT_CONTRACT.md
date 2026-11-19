@@ -465,7 +465,7 @@ vocal REC/PLAY, sa croûte de pile qui pourrit, `CH6_BG.rot` 0–1), `src/game/b
 | `bourre` (fém.) | tristesse | « pardon » | `bourre_colle`, `bourre_moisi` | le coton des moutons vidés (seulement si `c4_coton` > 0 : au scénario de décider) ; se colle au cœur et le ralentit (`BulletWorld.slow`) |
 | `mouton_numerote` | joie | joie | `mouton_tampon`, `mouton_saute` | par groupes ; chacun porte un numéro de nuit (« Mouton n°212 ») ; épargné dans le désordre (un numéro plus grand pas encore calme), il se dédouble (4 à l'écran au plus) |
 | `pile` (fém.) | neutre → tristesse | joie, puis « garder » | `pile_fuite`, `pile_gresille` | rencontre unique, pas de fuite ; la piste 1 ralentit à chaque tour (voix `pile`…`pile4`, musique qui se désaccorde) ; épargnée : objet clé `pile_chargee`, `c6_pile = true` ; vaincue : `c6_pile = false`, `c6_pile_morte` |
-| `dodo_v2` (boss final) | neutre | — | voir `src/game/battle/final-v2.ts` | 4 phases (moutons des morts, DORMIR et les couleurs qui mentent, les coups dans le noir, les mots de Mina) ; issue dans `fin_route` ; musique `dodo_v2` |
+| `dodo_v2` (boss final) | neutre | — | voir `src/game/battle/final-v2.ts` | 4 phases (moutons des morts, DORMIR et les couleurs qui mentent, les coups dans le noir, les mots de Mina) ; issue dans `fin_route` ; musique `reste` |
 
 Le combat final v2 se lance par `runFinalBattleV2(d, from = 1)` (`src/game/battle/final-v2.ts`), qui rend la route
 (`'aube'` | `'beaux_reves'` | `'silence'`, aussi dans `flags.fin_route`) ; la suite est

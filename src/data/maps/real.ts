@@ -287,6 +287,7 @@ const APPARTEMENT: MapDef = {
     default: { x: 6, y: 3, dir: 'down' },
     noa: { x: 6, y: 3, dir: 'down' },
     mina: { x: 10, y: 3, dir: 'down' },
+    sdb: { x: 14, y: 3, dir: 'down' },
   },
   onEnter: R.appartEnter,
   props: [
@@ -318,6 +319,7 @@ const APPARTEMENT_NUIT: MapDef = {
     default: { x: 6, y: 3, dir: 'down' },
     noa: { x: 6, y: 3, dir: 'down' },
     loop: { x: 9, y: 4, dir: 'left' },
+    sdb: { x: 14, y: 3, dir: 'down' },
   },
   onEnter: R.appartNuitEnter,
   props: [...appartProps(true), DOOR(2, R.frontDoor), DOOR_AT('a_sdb', 14, R.bathroomDoor), DOOR_AT('a_porte_maman', 18, R.mamanDoor)],
@@ -334,7 +336,7 @@ const APPARTEMENT_AUBE: MapDef = {
   ...APPARTEMENT,
   id: 'appartement_aube',
   name: 'Appartement — aube',
-  music: 'room_quiet',
+  music: 'aube',
   ambience: 'none',
   darkness: 0.3,
   props: [
@@ -352,7 +354,7 @@ const CHAMBRE_MINA: MapDef = {
   id: 'chambre_mina',
   name: 'Chambre de Mina',
   world: 'real',
-  music: 'room_quiet',
+  music: 'chambre_mina',
   ambience: 'none',
   darkness: 0.35,
   playerLight: 50,
@@ -425,6 +427,7 @@ const APPARTEMENT_TARD: MapDef = {
     noa: { x: 6, y: 3, dir: 'down' },
     maman: { x: 18, y: 3, dir: 'down' },
     placard: { x: 4, y: 5, dir: 'up' },
+    sdb: { x: 14, y: 3, dir: 'down' },
   },
   onEnter: N.appartEnter,
   props: [
@@ -528,7 +531,69 @@ const CHAMBRE_MAMAN: MapDef = {
   warps: [{ x: 6, y: 8, to: 'appartement_tard', spawn: 'maman' }],
 };
 
+// ---------------------------------------------------------------------------
+// The bathroom (2.2): a room behind the hallway's door, its mirror over the basin (story/real.ts bathroomMirror)
+// ---------------------------------------------------------------------------
+
+const SALLE_DE_BAIN: MapDef = {
+  id: 'salle_de_bain',
+  name: 'Salle de bain',
+  world: 'real',
+  music: null,
+  ambience: 'none',
+  darkness: 0.45,
+  playerLight: 46,
+  particles: 'dust',
+  banner: true,
+  tiles: `
+    TTTTTTTTTT
+    TWWWWWWwWT
+    TBBBBBBBBT
+    TKKKKKKKKT
+    TKKKKKKKKT
+    TKKKKKKKKT
+    TTTTKTTTTT
+    TTTTKTTTTT
+  `,
+  legend: REAL_LEGEND,
+  spawns: {
+    default: { x: 4, y: 5, dir: 'up' },
+    door: { x: 4, y: 5, dir: 'up' },
+    lavabo: { x: 2, y: 4, dir: 'up' },
+  },
+  onEnter: R.bathroomEnter,
+  props: [
+    WALL('prop_mirror', 2, 2, -2, { id: 'sdb_miroir', script: R.bathroomMirror }),
+    P('prop_c5_lavabo', 2, 3, { id: 'sdb_lavabo', script: R.bathroomMirror }),
+    WALL('prop_c5_serviette', 4, 2, -4, { id: 'sdb_serviettes', script: R.bathroomTowels }),
+    P('prop_toilet', 5, 3, { id: 'sdb_wc', script: R.bathroomToilet }),
+    P('prop_bathtub', 7, 3, { id: 'sdb_baignoire', w: 2, script: R.bathroomTub }),
+    P('prop_panier', 8, 5, { id: 'sdb_panier', script: R.bathroomLaundry }),
+  ],
+  warps: [
+    { x: 4, y: 7, to: 'appartement_aube', spawn: 'sdb', cond: () => R.isFinale() },
+    { x: 4, y: 7, to: 'appartement', spawn: 'sdb', cond: () => !R.isFinale() },
+  ],
+};
+
+/** The same bathroom at night (3:33, 4:06, 4:44): dark, the tap dripping. */
+const SALLE_DE_BAIN_NUIT: MapDef = {
+  ...SALLE_DE_BAIN,
+  id: 'salle_de_bain_nuit',
+  ambience: 'hum',
+  darkness: 0.86,
+  playerLight: 34,
+  grain: 0.5,
+  vignette: 0.75,
+  warps: [
+    { x: 4, y: 7, to: 'appartement_nuit', spawn: 'sdb', cond: () => phase() === 2 },
+    { x: 4, y: 7, to: 'appartement_tard', spawn: 'sdb', cond: () => phase() !== 2 },
+  ],
+};
+
 export const REAL_MAPS: Record<string, MapDef> = {
+  salle_de_bain: SALLE_DE_BAIN,
+  salle_de_bain_nuit: SALLE_DE_BAIN_NUIT,
   chambre: CHAMBRE,
   appartement: APPARTEMENT,
   appartement_nuit: APPARTEMENT_NUIT,

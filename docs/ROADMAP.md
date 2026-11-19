@@ -77,6 +77,20 @@ production au § 7). Durée : 3 h 30 à 4 h 30.
 - ⏳ Écoute de la musique : les onze morceaux v2 (maison, maison_nuit, couseuse, petit_homme, plage, sas, vitre,
   ventre, appel, dodo_v2, faux_generique) et les effets de musique tenue ou inversée n'ont été vérifiés que par
   `tools/music-check.mjs` (boucles et tessiture), pas encore écoutés
+- ✅ Trois nouveaux thèmes de boss, plus rapides, écoutés et validés par l'auteur : `fil_rouge` (la Couseuse),
+  `cauchemar` (le Petit Homme), `reste` (Dodo, combat final) ; ⏳ avis des testeurs (les anciens thèmes restent
+  comparables : `?debug=battle&enemies=couseuse&music=couseuse`)
+- ✅ Musiques d'ambiance plus profondes : village, bibliothèque et clairière écoutés et validés par l'auteur ; ⏳
+  à écouter : `meme_laine`, `lisiere`, `sentier_gomme`, `hospital` (repris), `pediatrie`, `chambre_mina`, `aube`,
+  `jardin`, `bazar`
+- ✅ Scènes qui font peur (2.2) : le miroir de la salle de bain, la faim (dont un jumpscare), les néons de l'hôpital
+  (jumpscare), le sentier gommé, l'ombre sur la plage, le coton qui respire ; le gore élargi au-delà des jouets,
+  jamais sur Noa ni Mina (`HISTOIRE.md` § 6.1). ⏳ Avis de l'auteur et des testeurs ; le chapitre 1 reste tendre, le
+  chapitre 4 garde ses scènes
+- ✅ Version 2.2.0 (navigateur et Android)
+- ⏳ Cinématiques (la scène où Noa et Mina s'assoient, plus détaillée, comme dans OMORI) : la 3D est écartée pour
+  le moment ; une autre solution reste à trouver avec l'auteur
+- ⏳ Noa d'après le pixel art final de l'auteur (en cours de son côté)
 - ⏳ Mise en forme Prettier : une centaine de fichiers ne suivent pas `npm run format:check` ; laissé tel quel pour la
   2.0.0 (un reformatage à part, sans autre changement)
 - 🚧 Relecture des dialogues par des joueurs (la v2 comprise)

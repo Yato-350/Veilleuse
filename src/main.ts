@@ -12,8 +12,9 @@ import { buildAll } from './game/assets';
 import { director, runScript } from './game/director';
 import { flow } from './game/flow';
 import { world } from './game/overworld/world';
+import { Entity } from './game/overworld/entity';
 import { setupPwa } from './game/pwa';
-import { G, hasSave, newState, readMeta, readSave, readSettings, writeMeta, deleteSave, maxHp } from './game/state';
+import { G, freeSlot, latestSlot, listSaves, newState, readMeta, readSave, readSettings, writeMeta, deleteSave, maxHp } from './game/state';
 import { dialogue } from './game/ui/dialogue';
 import { applySettings } from './game/ui/options';
 import { TitleScene } from './game/scenes/title';
@@ -57,6 +58,8 @@ function boot(): void {
   };
 
   flow.toTitle = async () => {
+    // No game is running on the title screen: the next one takes its slot when it starts or is loaded.
+    G.slot = null;
     audio.stopMusic(0.5);
     world.busy = 0;
     fx.setFade(1);
@@ -71,7 +74,10 @@ function boot(): void {
     G.meta.runInProgress = true;
     if (name && !G.meta.names.includes(name)) G.meta.names.push(name);
     writeMeta(G.meta);
-    deleteSave();
+    // A free slot, or the one the player chose to replace on the title screen (all five were taken).
+    G.slot = G.pendingSlot ?? freeSlot();
+    G.pendingSlot = null;
+    deleteSave(G.slot);
     G.state = newState(name);
     G.state.hp = maxHp(G.state);
     game.replace(world);
@@ -80,7 +86,9 @@ function boot(): void {
     });
   };
   flow.startBonus = async () => {
-    // A separate short run: it never touches the main save's story flags (flags.bonus marks it).
+    // A separate short run: it never touches the main save's story flags (flags.bonus marks it). It saves in a free
+    // slot (with all five taken, its save point asks which one to replace).
+    G.slot = freeSlot();
     G.state = newState(G.meta.names[G.meta.names.length - 1] ?? '');
     G.state.flags.bonus = 1;
     G.state.hp = maxHp(G.state);
@@ -96,7 +104,9 @@ function boot(): void {
     G.meta.newGames++;
     G.meta.runInProgress = true;
     writeMeta(G.meta);
-    deleteSave();
+    // Only offered with no save left (the title's single « Continuer »): it takes the first slot.
+    G.slot = freeSlot() ?? 1;
+    deleteSave(G.slot);
     G.state = newState(name);
     G.state.flags.br_retour = true;
     G.state.hp = maxHp(G.state);
@@ -105,10 +115,18 @@ function boot(): void {
       await dreamAgain(d);
     });
   };
-  flow.continueGame = async () => {
-    const s = readSave();
+  flow.continueGame = async (slot?: number) => {
+    // The slot asked for, else this run's own (the game over's « Charger »), else the latest save.
+    const n = slot ?? G.slot ?? latestSlot();
+    const s = readSave(n);
     if (!s) return flow.toTitle();
+    G.slot = n;
     G.state = s;
+    // A run is in progress again (after an ending, an older save of it can be played on).
+    if (!s.flags.bonus && !G.meta.runInProgress) {
+      G.meta.runInProgress = true;
+      writeMeta(G.meta);
+    }
     G.state.hp = Math.max(1, Math.min(G.state.hp, maxHp(G.state)));
     world.busy = 0;
     game.replace(world);
@@ -127,7 +145,6 @@ function boot(): void {
   // never overwrites a main run's save (the same rule as its save point, story/bonus.ts savePointHosp).
   const suspendSave = (): void => {
     if (params.has('debug') || !G.meta.runInProgress || game.top !== world || !world.map || !world.controllable) return;
-    if (G.state.flags.bonus && hasSave() && !readSave()?.flags.bonus) return;
     director.save();
   };
   document.addEventListener('visibilitychange', () => {
@@ -166,10 +183,13 @@ function boot(): void {
     // Navigation and save/meta readers, for bot scenarios (e.g. loading a v1.1 save: tools/scenarios/).
     flow,
     readSave,
+    listSaves,
     readMeta,
     // The real clock as the game reads it (set: 'h:mm', shift: ms), and the return to the tab (from, to: ms).
     clock: { set: setClock, shift: shiftClock, reset: resetClock, now: nowMs },
     cameBack,
+    // Whether an entity is drawn as a deleted character's glitch (« Fichiers », src/game/files.ts).
+    glitched: (e: Entity) => !!Entity.glitched?.(e),
   };
 }
 

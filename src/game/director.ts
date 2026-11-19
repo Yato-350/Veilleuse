@@ -11,7 +11,8 @@ import type { BattleOptions, BattleResult } from './battle/types';
 import { Entity } from './overworld/entity';
 import type { NpcDef, Script } from './overworld/types';
 import { world } from './overworld/world';
-import { G, MAX_ITEMS, maxHp, setFlag, writeMeta, writeSave } from './state';
+import { freeSlot, G, MAX_ITEMS, maxHp, setFlag, writeMeta, writeSave } from './state';
+import { SlotsScene } from './scenes/slots';
 import { dialogue, type SayOptions } from './ui/dialogue';
 import { GameOverScene } from './scenes/gameover';
 import { ChapterCard } from './scenes/chapter';
@@ -248,14 +249,32 @@ export class Director {
     if (!G.state.souvenirs.includes(id)) G.state.souvenirs.push(id);
   }
 
+  /**
+   * Saves the game in the running game's slot (G.slot); a game without one yet takes a free slot. With all five slots
+   * taken by other runs, an autosave does nothing (a nightlight asks where to save: savePoint).
+   */
   save(): void {
     G.state.x = Math.floor(world.player.x / TILE);
     G.state.y = Math.floor((world.player.y - 2) / TILE);
     G.state.dir = world.player.dir;
     G.state.map = world.map.id;
+    G.slot ??= freeSlot();
     writeSave(G.state);
     G.meta.lastPlay = Date.now();
     writeMeta(G.meta);
+  }
+
+  /**
+   * Asks where to save (the five slots), then saves there: true if saved. The cursor starts on the running game's
+   * slot, or on the first free one.
+   */
+  async saveToSlot(): Promise<boolean> {
+    const slot = await SlotsScene.pick('save', G.slot, G.slot ?? freeSlot() ?? 1);
+    if (slot === null) return false;
+    G.slot = slot;
+    this.save();
+    audio.sfx('save');
+    return true;
   }
 
   /** Save point (nightlight): heals and offers to save. */
@@ -263,11 +282,7 @@ export class Director {
     this.heal();
     await this.say(text);
     const r = await this.ask('Sauvegarder ?', ['Oui', 'Non'], undefined, { cancelIndex: 1 });
-    if (r === 0) {
-      this.save();
-      audio.sfx('save');
-      await this.say('{c:y}Ta progression est gardée au chaud.{/c}');
-    }
+    if (r === 0 && (await this.saveToSlot())) await this.say('{c:y}Ta progression est gardée au chaud.{/c}');
   }
 
   // ---------------------------------------------------------------------------

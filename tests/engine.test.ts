@@ -400,7 +400,7 @@ describe('chapter 6 battles and the final battle v2', () => {
     expect(ENEMIES.bourre!.needs[0]!.word).toBe('pardon');
     expect(ENEMIES.pile!.needs.map((n) => n.emotion ?? n.word)).toEqual(['joie', 'garder']);
     expect(ENEMIES.pile!.noFlee && ENEMIES.dodo_v2!.noFlee && ENEMIES.dodo_v2!.boss).toBe(true);
-    expect(ENEMIES.dodo_v2!.music).toBe('dodo_v2');
+    expect(ENEMIES.dodo_v2!.music).toBe('reste');
   });
   it('Le Bouton Pendu: « regarder » calms it at once; Tristesse ×2 too', () => {
     const a = new EnemyRuntime(ENEMIES.bouton_pendu!);
@@ -474,12 +474,15 @@ describe('state & saves', () => {
     expect(hasSave()).toBe(false);
     const s = newState('Sacha');
     s.flags.test = 3;
-    writeSave(s);
-    expect(hasSave()).toBe(true);
+    // Five slots (2.2): a save is always written into one; without a slot, nothing is written.
+    expect(writeSave(s, null)).toBe(false);
+    expect(hasSave()).toBe(false);
+    writeSave(s, 2);
+    expect(hasSave() && hasSave(2) && !hasSave(1)).toBe(true);
     const r = readSave()!;
     expect(r.playerName).toBe('Sacha');
     expect(r.flags.test).toBe(3);
-    deleteSave();
+    deleteSave(2);
     expect(hasSave()).toBe(false);
     expect(readMeta().endings).toEqual([]);
   });

@@ -104,4 +104,12 @@ export const BATTLE: Record<string, string> = {
   // A lowercase magnet letter is drawn backwards: the English line after the fight says « The E is on backwards. »
   'JETAIME': 'ILOVeYOU',
   'MINE': 'MINE',
+  // The ink route (2.2): a creature killed bursts.
+  '* {0} éclate. Ça gicle jusqu\'à tes chaussures.': '* {0} bursts. It splatters all the way to your shoes.',
+  '* Ça gicle jusqu\'à tes chaussures.': '* It splatters all the way to your shoes.',
+  '* C\'est tiède. Ça colle à tes doigts.': '* It\'s warm. It sticks to your fingers.',
+  '* Ça tombe par terre avec un bruit mouillé.': '* It hits the floor with a wet sound.',
+  '* Il y en a sur ton pull. Ça ne partira pas.': '* Some of it is on your sweater. It won\'t come out.',
+  '* Ça coule encore un moment. Puis ça ne bouge plus.': '* It keeps oozing for a while. Then it stops moving.',
+  '* Dedans, c\'était rouge. Tu ne savais pas.': '* Inside, it was red. You didn\'t know.',
 };

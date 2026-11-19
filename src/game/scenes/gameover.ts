@@ -52,7 +52,8 @@ export class GameOverScene implements Scene {
 
   constructor() {
     this.choices = [['Réessayer', 'retry']];
-    if (hasSave()) this.choices.push(['Charger', 'load']);
+    // « Charger »: back to this run's last save (the other slots are on the title screen).
+    if (hasSave(G.slot)) this.choices.push(['Charger', 'load']);
     this.choices.push(['Titre', 'title']);
     this.offer = minaOffersHelp() ? 'ask' : null;
   }

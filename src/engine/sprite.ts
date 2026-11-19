@@ -1,4 +1,5 @@
 import { PAL, type PixelMaterial } from './palette';
+import { hash2 } from './math';
 
 export interface Sprite {
   img: HTMLCanvasElement;
@@ -165,6 +166,45 @@ export function drawSprite(
   const dh = Math.round(s.h * sy);
   g.drawImage(s.img, Math.round(x - s.ax * sx), Math.round(y - s.ay * sy), dw, dh);
   g.globalAlpha = prev;
+}
+
+/**
+ * Draws a sprite as a corrupted file (a deleted character, src/game/files.ts): a red and a cyan ghost on either side,
+ * and the sprite itself in horizontal bands, some torn sideways, one now and then missing. `seed` picks the tearing
+ * (a frame counter divided by a few frames: it stutters instead of shimmering). `calm` (« Réduire les flashs »)
+ * keeps the steady colour fringe only: no tearing, nothing that blinks.
+ */
+export function drawGlitched(
+  g: CanvasRenderingContext2D,
+  s: Sprite,
+  x: number,
+  y: number,
+  seed: number,
+  opts: { calm?: boolean; scaleX?: number; scaleY?: number } = {},
+): void {
+  const kx = opts.scaleX ?? 1;
+  const ky = opts.scaleY ?? 1;
+  const left = Math.round(x - s.ax * kx);
+  const top = Math.round(y - s.ay * ky);
+  const dw = Math.round(s.w * kx);
+  const dh = Math.round(s.h * ky);
+  const prev = g.globalAlpha;
+  g.globalAlpha = prev * 0.45;
+  g.drawImage(silhouette(s, '#ff4a5a').img, left - 1, top, dw, dh);
+  g.drawImage(silhouette(s, '#7fe3ff').img, left + 1, top, dw, dh);
+  g.globalAlpha = prev;
+  if (opts.calm) {
+    g.drawImage(s.img, left, top, dw, dh);
+    return;
+  }
+  const band = 3;
+  for (let by = 0; by < s.h; by += band) {
+    const h = Math.min(band, s.h - by);
+    const r = hash2(seed, by, 91);
+    if (r > 0.94) continue;
+    const dx = r < 0.22 ? Math.round((r / 0.22 - 0.5) * 8) : 0;
+    g.drawImage(s.img, 0, by, s.w, h, left + Math.round(dx * kx), top + Math.round(by * ky), dw, Math.round(h * ky));
+  }
 }
 
 /** Returns a solid-color silhouette of a sprite (for hit flashes, shadows, ink effects). */

@@ -244,7 +244,11 @@ const OUATE: MapDef = {
     { id: 'c6_bourre_1', enemies: ['bourre'], x: 18, y: 22, wander: 1, cond: coton },
     { id: 'c6_bourre_2', enemies: ['bourre', 'bourre'], x: 24, y: 18, wander: 1, cond: () => Number(G.state.flags.c4_coton ?? 0) > 2 },
   ],
-  triggers: [{ x: 16, y: 18, w: 10, h: 6, script: C6.bourresMurmur, cond: coton }],
+  triggers: [
+    { x: 16, y: 18, w: 10, h: 6, script: C6.bourresMurmur, cond: coton },
+    // 2.2: crossing the low cave, the cotton breathes (story/chapter6.ts ouateBreathes).
+    { x: 27, y: 14, w: 1, h: 11, once: 'c6_respire', script: C6.ouateBreathes },
+  ],
   warps: [
     { x: 5, y: 0, w: 2, h: 1, to: 'couture', spawn: 'sortie' },
     { x: 39, y: 12, w: 1, h: 1, to: 'boite_a_musique', spawn: 'ouate', cond: f('c6_couture') },

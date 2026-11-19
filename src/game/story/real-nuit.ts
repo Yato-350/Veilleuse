@@ -11,6 +11,7 @@ import { setPageTitle } from '../meta';
 import { CountingScene, type SheepRound } from '../scenes/sheepcount';
 import { dateLabel, PhoneScene, type PhoneCall, type PhoneContact, type PhoneMessage, type PhoneReply } from '../scenes/phone';
 import { enterDream, phoneDelete, REAL, realPhase } from './common';
+import { eatMeal, hungerSights, plateOnTheTable, refuseMeal } from './faim';
 import { inBed, leoThread, mamanThread, PHONE_CLOCK, shortDate } from './real';
 
 /**
@@ -737,6 +738,7 @@ export const wall: Script = async (d) => {
 // ---------------------------------------------------------------------------------------------------------------------
 
 export const appartEnter: Script = async (d) => {
+  hungerSights(d);
   world.extraDarkness = 0;
   d.music(null);
   d.ambience('hum');
@@ -926,11 +928,12 @@ export const minaDoor = look(
   [['La porte de Mina. Fermée à clé.', 'La clé est dans ton tiroir. Tu l\'as toujours su.']],
 );
 
-export const bathroomDoor = look(
-  'sdb',
-  [['La salle de bain. Tu n\'allumes pas.', 'Tu n\'as pas envie de croiser ton reflet.']],
-  [['La salle de bain. Le robinet goutte.', 'Tu le fermes. Il goutte.']],
-);
+/** The bathroom door at night (III, IV): you can go in now (maps/real.ts salle_de_bain_nuit, its mirror: real.ts). */
+export const bathroomDoor: Script = async (d) => {
+  await d.say(iv() ? 'La salle de bain. Derrière la porte, le robinet goutte.' : ['La salle de bain. Tu n\'allumes pas.', 'Tu n\'as pas envie de croiser ton reflet.']);
+  const r = await d.ask(iv() ? 'Entrer ?' : 'Entrer quand même ?', ['Entrer', 'Laisser'], undefined, { cancelIndex: 1 });
+  if (r === 0) await d.warp('salle_de_bain_nuit', 'door', { sfx: 'door' });
+};
 
 export const mamanDoor: Script = async (d) => {
   if (!iv()) {
@@ -971,6 +974,18 @@ export const toybox = look(
 export const fridge: Script = async (d) => {
   if (!iv()) {
     await d.say(['Le frigo bourdonne. Le mot de Maman est toujours là, sous l\'aimant fraise.', '« Mange quelque chose s\'il te plaît. Je t\'aime. »']);
+    if (flag('i3_repas')) return;
+    // Hunger (story/faim.ts): the meal of 4:06.
+    const r = await d.ask('Manger quelque chose ?', ['Manger', 'Laisser'], undefined, { cancelIndex: 1 });
+    d.set('i3_repas');
+    if (r === 0) {
+      eatMeal(d);
+      await d.say(['Tu ouvres le frigo. Un yaourt, debout, dans la lumière froide.', 'Tu le manges jusqu\'au bout. Pour elle. Un peu pour toi.']);
+    } else {
+      refuseMeal(d, 'i3_laisse');
+      await d.say(['Tu refermes le frigo.', 'Tu n\'as pas faim. Ça fait longtemps que tu n\'as plus faim.']);
+      hungerSights(d);
+    }
     return;
   }
   if (flag('i4_mot')) {
@@ -1036,7 +1051,10 @@ export const bills = look(
   [['Les factures. Tout en bas de la pile, une enveloppe de l\'hôpital.', 'Jamais ouverte. Elle aussi, elle laisse des choses fermées.']],
 );
 
-export const kitchenTable = look('table', [['La table. Trois chaises. Deux bols, ce matin.', 'Il est quatre heures et tu comptes encore les bols.']]);
+const tableLook = look('table', [['La table. Trois chaises. Deux bols, ce matin.', 'Il est quatre heures et tu comptes encore les bols.']]);
+export const kitchenTable: Script = async (d) => {
+  if (!(await plateOnTheTable(d))) await tableLook(d);
+};
 
 export const kitchenChair = look('chaise_noa', [['Ta chaise.', 'Tu t\'assois rarement. Tu manges debout.']]);
 

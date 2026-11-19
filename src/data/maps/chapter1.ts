@@ -294,7 +294,7 @@ const MAISON: MapDef = {
   id: 'maison_mouton',
   name: 'Chez Mémé Laine',
   world: 'dream',
-  music: 'village',
+  music: 'meme_laine',
   tiles: `
     TTTTTTTTTTTT
     TWWWWWWWWWWT

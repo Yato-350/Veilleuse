@@ -3,7 +3,9 @@ import { fx } from '../../engine/fx';
 import type { Director } from '../director';
 import type { Script } from '../overworld/types';
 import { world } from '../overworld/world';
-import { G, maxHp, writeMeta } from '../state';
+import { G, inkRoute, maxHp, writeMeta } from '../state';
+import { MirrorScene } from '../scenes/mirror';
+import { eatMeal, hungerSights, plateOnTheTable, refuseMeal } from './faim';
 import { isLateNight, setPageTitle } from '../meta';
 import { composePoem } from '../scenes/poem';
 import { dateLabel, PhoneScene, type PhoneContact, type PhoneMessage, type PhoneReply } from '../scenes/phone';
@@ -821,6 +823,7 @@ export async function interlude1(d: Director): Promise<void> {
 }
 
 export const appartEnter: Script = async (d) => {
+  hungerSights(d);
   const p = phase();
   if (p === REAL.finale) {
     world.extraDarkness = -0.25;
@@ -922,16 +925,22 @@ export const stove: Script = async (d) => {
   }
   const r = await d.ask('Une casserole de pâtes froides. Manger ?', ['Manger', 'Laisser'], undefined, { cancelIndex: 1 });
   if (r !== 0) {
+    // Hunger (story/faim.ts): a meal turned down; from now on, Noa may see things in the apartment.
+    refuseMeal(d, 'i1_laisse');
     await d.say('Tu n\'as pas faim. Tu crois.');
+    // Turning round: Mina is already at her place.
+    hungerSights(d);
     return;
   }
   await d.say(['Tu manges debout, dans la cuisine silencieuse.', 'C\'est froid. C\'est trop salé.', 'C\'est bon, en fait.']);
   d.heal();
   d.set('i1_ate');
+  eatMeal(d);
   await d.say('{c:l}Tu te sens un peu plus solide.{/c}');
 };
 
 export const kitchenTable: Script = async (d) => {
+  if (await plateOnTheTable(d)) return;
   if (isFinale()) {
     await d.say(['La table de la cuisine.', 'Tout à l\'heure, il y aura du chocolat chaud. Tu le sais, sans savoir comment.']);
     return;
@@ -960,30 +969,94 @@ export const minaDoor: Script = async (d) => {
   await d.say(['Tu poses la main sur la poignée.', '{p:30}Tu ne peux pas.'], 'noa:sad');
 };
 
+// ---------------------------------------------------------------------------------------------------------------------
+// The bathroom (2.2): a room now (maps/real.ts salle_de_bain, salle_de_bain_nuit), and its mirror
+// ---------------------------------------------------------------------------------------------------------------------
+
+/** The bathroom door (day, 3:33, dawn). Interlude II keeps its running water and its question (T8 § 2.9). */
 export const bathroomDoor: Script = async (d) => {
   const p = phase();
-  if (p === 2) {
-    if (flag('i2_reflet')) {
-      await d.say(['Le robinet est fermé.', 'Tu ne retournes pas devant le miroir.']);
-      return;
-    }
+  if (p === 2 && !flag('i2_reflet')) {
     await d.say(['Derrière la porte de la salle de bain, l\'eau coule.', 'Personne n\'a ouvert le robinet.']);
     const r = await d.ask('Entrer ?', ['Entrer', 'Laisser'], undefined, { cancelIndex: 1 });
     if (r !== 0) return;
-    // T8 § 2.9: the reflection with closed eyes (a blink, tiredness — or someone pretending to sleep).
-    d.set('i2_reflet');
-    d.sfx('door', { pitch: 0.9, vol: 0.4 });
-    await d.say(['Tu entres sans allumer. Tu fermes le robinet.', 'Dans le miroir, ton reflet a les yeux fermés.']);
-    fx.pulseGlitch(4);
-    await d.wait(40);
-    await d.say(['Tu clignes des yeux.', 'Il les a ouverts. Il les a toujours eus ouverts.']);
+    await d.warp('salle_de_bain_nuit', 'lavabo', { sfx: 'door' });
     return;
   }
+  await d.warp(p === 2 ? 'salle_de_bain_nuit' : 'salle_de_bain', 'door', { sfx: 'door' });
+};
+
+/** Entering the bathroom. At 3:33 (T8 § 2.9): the reflection with closed eyes (a blink — or someone pretending). */
+export const bathroomEnter: Script = async (d) => {
+  world.extraDarkness = isFinale() ? -0.25 : 0;
+  if (phase() !== 2 || flag('i2_reflet')) return;
+  d.set('i2_reflet');
+  await d.wait(20);
+  await d.say(['Tu entres sans allumer. Tu fermes le robinet.', 'Dans le miroir, ton reflet a les yeux fermés.']);
+  fx.pulseGlitch(4);
+  await d.wait(40);
+  await d.say(['Tu clignes des yeux.', 'Il les a ouverts. Il les a toujours eus ouverts.']);
+};
+
+/**
+ * The mirror over the basin. The first real look (the night interludes III and IV; on the ink route already from
+ * Interlude I): the reflection that is not one (scenes/mirror.ts). The ink route makes it longer and leaves a word.
+ */
+export const bathroomMirror: Script = async (d) => {
+  const p = phase();
+  const ink = inkRoute(G.state);
   if (p === REAL.finale) {
     await d.say(['Tu te passes de l\'eau froide sur le visage.', 'Dans le miroir, tu as les yeux rouges. Ouverts.', 'Ce sont tes yeux.']);
     return;
   }
-  await d.say(['La salle de bain.', 'Dans le miroir, quelqu\'un te regarde. Il a l\'air très fatigué.', 'Tu évites ton reflet.']);
+  if (p === 2) {
+    await d.say(['Le robinet est fermé.', 'Tu ne retournes pas devant le miroir.']);
+    return;
+  }
+  const scene = !flag('sdb_reflet') && (p >= 3 || ink);
+  if (!scene) {
+    if (!flag('sdb_reflet')) {
+      await d.say(['La salle de bain.', 'Dans le miroir, quelqu\'un te regarde. Il a l\'air très fatigué.', 'Tu évites ton reflet.']);
+    } else if (ink) {
+      await d.say(['Ton reflet a un temps de retard.', 'Quand tu lèves la main, il la lève. Un peu après.']);
+      if (flag('sdb_monstre')) await d.say('Dans le coin du miroir, le mot est toujours là. Tu ne le vois que si tu le cherches.');
+    } else {
+      await d.say(['Ton reflet. Juste ton reflet.', 'Tu as l\'air d\'avoir dormi cent ans. Ou pas du tout.']);
+    }
+    return;
+  }
+  d.set('sdb_reflet');
+  await d.say(['Le lavabo. Deux brosses à dents dans le verre : la tienne, et une petite, avec un mouton.', 'Au-dessus, le miroir. Tu lèves les yeux.']);
+  await MirrorScene.play(ink);
+  await d.wait(40);
+  await d.fadeIn(50);
+  if (ink) {
+    d.set('sdb_monstre');
+    await d.say(['Le robinet goutte. Noir.', 'Sur le miroir, en lettres d\'encre : MONSTRE.']);
+    await d.say(['Tu frottes avec ta manche. Ça ne part pas.', '{p:30}Ta manche est propre.']);
+  } else {
+    await d.say(['…', 'Le robinet goutte.', 'Dans le miroir, il n\'y a que toi. Tes mains tremblent un peu.']);
+  }
+};
+
+export const bathroomTowels: Script = async (d) => {
+  await d.say(['Deux serviettes. Une grande, une petite avec des moutons.', 'Personne n\'utilise plus la petite. Personne ne la range non plus.']);
+};
+
+export const bathroomToilet: Script = async (d) => {
+  await d.say(['Les toilettes.', 'Rien à signaler. C\'est déjà ça.']);
+};
+
+export const bathroomTub: Script = async (d) => {
+  if (phase() >= 2 && !isFinale()) {
+    await d.say(['La baignoire, dans le noir.', 'Tu ne regardes pas dedans. On ne sait jamais.']);
+    return;
+  }
+  await d.say(['La baignoire. Sur le rebord, un canard en plastique.', 'Il a perdu sa couleur. Il a gardé son sourire.']);
+};
+
+export const bathroomLaundry: Script = async (d) => {
+  await d.say(['Le panier à linge déborde.', 'Tout en haut, ton sweat. Il sent encore l\'hôpital.']);
 };
 
 export const mamanDoor: Script = async (d) => {
@@ -1017,6 +1090,7 @@ export async function interlude2(d: Director): Promise<void> {
 }
 
 export const appartNuitEnter: Script = async (d) => {
+  hungerSights(d);
   world.extraDarkness = 0;
   d.music(null);
   d.ambience('hum');
@@ -1699,6 +1773,16 @@ export const DEBUG: Record<string, Script> = {
   interlude2_corridor: async (d) => {
     G.state.flags.interlude = 2;
     d.load('appartement_nuit', 'noa');
+    await d.fadeIn(10);
+  },
+  /**
+   * The bathroom, in front of the basin (2.2). The moment comes from &flags=interlude=1|2|3|4 (default 3; 9: the
+   * finale); the ink route from &kills=… (or the whole history in &flags).
+   */
+  salle_de_bain: async (d) => {
+    if (G.state.flags.interlude === undefined) G.state.flags.interlude = 3;
+    const p = phase();
+    d.load(p >= 2 && p <= 4 ? 'salle_de_bain_nuit' : 'salle_de_bain', 'lavabo');
     await d.fadeIn(10);
   },
   /** Mina's room at dawn, door just opened, nightlight in hand (not plugged yet), Dodo set on the windowsill. */

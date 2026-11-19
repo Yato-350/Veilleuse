@@ -1,0 +1,30 @@
+# The bathroom (2.2), at night (Interlude III): the first look in the mirror plays the reflection that is not one
+# (scenes/mirror.ts): Noa's reflection and an ink silhouette, faster and faster (never more than three swaps a second),
+# then a scream and black. Afterwards the mirror only shows Noa. Then out, back to the hallway of 4:06.
+query: debug=script&name=salle_de_bain&flags=interlude=3&lang=fr
+wait:1500
+eval: window.V = window.__veilleuse
+eval: window.TXT = () => { const D = V.dialogue; return D.busy ? (D.pages[D.pageIdx]?.lines || []).map((l) => l.map((c) => c.ch).join('')).join(' ') : ''; }
+eval: window.SEEN = []
+eval: (setInterval(() => { const t = TXT(); if (t && SEEN[SEEN.length - 1] !== t) SEEN.push(t); }, 50), 1)
+eval: window.SAW = (s) => SEEN.some((t) => t.includes(s))
+assert: V.G.state.map === 'salle_de_bain_nuit'
+interact:sdb_lavabo
+zuntil: V.game.top.constructor.name === 'MirrorScene'
+assert: SAW('Au-dessus, le miroir. Tu lèves les yeux.') && V.game.top.inkRoute === false && V.game.top.calm === false
+eval: (window.SHOTS = V.game.top.shots, 1)
+assert: SHOTS.every((s) => s.frames >= 10) && SHOTS.filter((s) => s.kind === 'ink').length === 10
+wait:6500
+shot:miroir
+waitfor: V.game.top.constructor.name === 'WorldScene'
+auto
+assert: SAW('Dans le miroir, il n\'y a que toi. Tes mains tremblent un peu.') && V.G.state.flags.sdb_reflet === true && !V.G.state.flags.sdb_monstre
+interact:sdb_lavabo
+auto
+assert: SAW('Ton reflet. Juste ton reflet.')
+# Out, to the hallway at 4:06.
+go:4/6
+ArrowDown:400
+wait:900
+assert: V.G.state.map === 'appartement_tard' && Math.floor(V.world.player.x / 16) === 14
+assert: V.i18nMissing().length === 0

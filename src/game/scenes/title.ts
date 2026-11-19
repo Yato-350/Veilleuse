@@ -8,13 +8,16 @@ import { hash2 } from '../../engine/math';
 import { drawSprite } from '../../engine/sprite';
 import { hasSpr, spr } from '../assets';
 import { flow } from '../flow';
-import { G, hasSave, readSave, formatPlaytime } from '../state';
+import { G, freeSlot, latestSlot, listSaves, readSave, formatPlaytime } from '../state';
+import { SlotsScene } from './slots';
 import { box, heart } from '../ui/draw';
 import { OptionsPanel } from '../ui/options';
 import { CreditsScene } from './credits';
 import { install } from '../pwa';
 import { NameEntryScene } from './nameentry';
 import { GalleryScene } from './gallery';
+import { FilesScene } from './files';
+import { filesUnlocked } from '../files';
 import { lang, tf, tn, tr } from '../../i18n';
 import { now as clockNow } from '../clock';
 
@@ -82,7 +85,6 @@ export class TitleScene implements Scene {
   private idx = 0;
   private items: Item[] = [];
   private options: OptionsPanel | null = null;
-  private confirmNew = false;
   private leaving = false;
   private mood: 'night' | 'dawn' | 'dream' = 'night';
   /** The save slot's label (« Nuit 366 · name · time », '' without a save) and the Beaux rêves line, as last drawn. */
@@ -127,7 +129,10 @@ export class TitleScene implements Scene {
   }
 
   private buildItems(): void {
-    const save = hasSave() ? readSave() : null;
+    // « Continuer » is the latest save (of the five slots: src/game/state.ts).
+    const latest = latestSlot();
+    const save = readSave(latest);
+    const saves = listSaves().filter(Boolean).length;
     // The save slot is named after the night it is (« Nuit 366 »: meta.nuits, one more per ending, § 5 « Méta »).
     this.slotX = W / 2 - 40 + measure(tr('Continuer')) + 7;
     this.slot = save && !this.opts.single ? saveSlotLabel(G.meta.nuits, save.playerName, formatPlaytime(save.playtime), W - 4 - this.slotX) : '';
@@ -142,15 +147,13 @@ export class TitleScene implements Scene {
     if (save) {
       this.items.push({
         label: 'Continuer',
-        action: () => this.leave(() => flow.continueGame()),
+        // Several saves: the list opens, on the latest one; a single one loads at once.
+        action: () => (saves > 1 ? void this.pickSave(latest) : this.leave(() => flow.continueGame(latest ?? undefined))),
       });
     }
     this.items.push({
       label: this.mood === 'dream' ? 'Réveiller Noa' : 'Nouvelle partie',
-      action: () => {
-        if (save) this.confirmNew = true;
-        else this.startNew();
-      },
+      action: () => void this.newRun(),
     });
     // After a first ending: the gallery of souvenirs and poems, and (after a dawn) the bonus chapter.
     if (G.meta.endings.length > 0 && (G.meta.seen.length > 0 || G.meta.poems.length > 0)) {
@@ -159,10 +162,32 @@ export class TitleScene implements Scene {
     if (bonusUnlocked()) {
       this.items.push({ label: 'Les rêves des autres', action: () => this.leave(() => flow.startBonus()), color: '#f8b6cf' });
     }
+    // After a first ending, too: the characters' files (src/game/files.ts).
+    if (filesUnlocked()) this.items.push({ label: 'Fichiers', action: () => game.push(new FilesScene()), color: '#aab0d8' });
     this.items.push({ label: 'Options', action: () => (this.options = new OptionsPanel()) });
     if (canInstall()) this.items.push({ label: 'Installer le jeu', action: () => void install(), color: '#a7c7f0' });
     this.items.push({ label: 'Crédits', action: () => game.push(new CreditsScene(false)) });
     this.idx = 0;
+  }
+
+  /** « Continuer » with several saves: which one. */
+  private async pickSave(latest: number | null): Promise<void> {
+    const slot = await SlotsScene.pick('load', null, latest);
+    if (slot !== null) this.leave(() => flow.continueGame(slot));
+  }
+
+  /**
+   * « Nouvelle partie »: the new run takes a free slot, nothing is erased. With all five slots taken, the player picks
+   * the save it replaces (the list asks before).
+   */
+  private async newRun(): Promise<void> {
+    G.pendingSlot = null;
+    if (freeSlot() === null) {
+      const slot = await SlotsScene.pick('new', null, latestSlot());
+      if (slot === null) return;
+      G.pendingSlot = slot;
+    }
+    this.startNew();
   }
 
   private startNew(): void {
@@ -201,23 +226,6 @@ export class TitleScene implements Scene {
       this.idx = hit.id;
       audio.sfx('move');
     }
-    if (this.confirmNew) {
-      if (input.repeat('left') || input.repeat('right')) {
-        this.idx = this.idx === 0 ? 1 : 0;
-        audio.sfx('move');
-      }
-      if (input.pressed('b')) {
-        this.confirmNew = false;
-        this.idx = 0;
-        audio.sfx('cancel');
-      } else if (input.pressed('a') || tapped) {
-        audio.sfx('select');
-        if (this.idx === 0) this.startNew();
-        this.confirmNew = false;
-        this.idx = 0;
-      }
-      return;
-    }
     const n = this.items.length;
     if (input.repeat('up')) {
       this.idx = (this.idx + n - 1) % n;
@@ -248,20 +256,10 @@ export class TitleScene implements Scene {
       this.options.draw(g, 52, 46, W - 104, 8);
       return;
     }
-    if (this.confirmNew) {
-      box(g, 50, 108, W - 100, 50, 'dream');
-      drawText(g, tr('Effacer la sauvegarde et recommencer ?'), W / 2, 116, { align: 'center' });
-      ['Oui', 'Non'].forEach((l, i) => {
-        const x = W / 2 - 40 + i * 80;
-        hits.add(this, i, x - 30, 130, 60, 18);
-        if (this.idx === i) heart(g, x - 18, 139, '#ff4a5a');
-        drawText(g, tr(l), x, 136, { align: 'center', color: this.idx === i ? '#ffd84a' : '#fffaf2' });
-      });
-      return;
-    }
-    // 1.1 added entries (souvenirs, bonus): a long menu starts higher and tightens so it never leaves the screen.
+    // 1.1 added entries (souvenirs, bonus), 2.2 the files: a long menu starts higher and tightens so it never leaves
+    // the screen, nor climbs over « Fais de beaux rêves. ».
     const n = this.items.length;
-    const gap = n >= 7 ? 12 : 13;
+    const gap = n >= 8 ? 11 : n >= 7 ? 12 : 13;
     const startY = Math.min(108, 156 - (n - 1) * gap);
     this.items.forEach((it, i) => {
       const y = startY + i * gap;

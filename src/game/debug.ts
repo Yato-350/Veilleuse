@@ -12,12 +12,15 @@ import { runScript } from './director';
 import { world } from './overworld/world';
 import type { MapDef } from './overworld/types';
 import { MAPS } from '../data/maps';
-import { G, maxHp, newState } from './state';
+import { deleteSave, G, maxHp, newState, SLOTS, writeSave } from './state';
 import { TitleScene, TITLE_VARIANTS, type TitleVariant } from './scenes/title';
 import { ImageScene } from './scenes/image';
+import { MirrorScene } from './scenes/mirror';
 import { DEBUG_SCRIPTS } from './story';
 import { CreditsScene } from './scenes/credits';
 import { GalleryScene } from './scenes/gallery';
+import { FilesScene } from './scenes/files';
+import { SlotsScene, type SlotMode } from './scenes/slots';
 import { composePoem } from './scenes/poem';
 import { applyMetaSpec, enableRing } from './meta';
 import { setClock } from './clock';
@@ -27,15 +30,19 @@ import { setClock } from './clock';
  *   ?debug=sheet&filter=b_&scale=3      sprite sheet (all sprites whose key starts with `filter`; several prefixes: a,b; &base: no @variants)
  *   ?debug=map&map=prairie&spawn=default&chapter=1&party=mina&flags=a,b=2
  *   ?debug=map&map=chambre&world=feutre   any map seen in another world material (feutre, stylo, blanc, ouate, faux…)
- *   ?debug=battle&enemies=nuage,pissenlit&chapter=1&emotion=joie
+ *   ?debug=battle&enemies=nuage,pissenlit&chapter=1&emotion=joie   (&music=couseuse: force a track)
  *   ?debug=pattern&id=rain&emotion=tristesse
  *   ?debug=image&key=souvenir_fenetre
+ *   ?debug=mirror&ink=1                 the bathroom mirror scene alone (scenes/mirror.ts; &ink=1: the ink route)
  *   ?debug=script&name=chapter1_intro&map=prairie
  *   ?debug=title | ?debug=credits
  *   ?debug=title&variant=point_de_croix|continuer_seul|soleil_blanc|silence_v2|veilleuse|night|dawn|dream (&days=23)
  *   ?debug=credits&mode=faux   the fake credits of the false dawn (stop, choice, rewind / let roll, cross-stitch)
  *   ?debug=credits&mode=aide   the credits followed by the help card
  *   ?debug=gallery&seen=some|all|none&poems=3&open=1   title screen + « Carnet de souvenirs » with sample memories
+ *   ?debug=files&open=1                 title screen + « Fichiers » (after a first ending; &meta=deleted:dodo|mina)
+ *   ?debug=slots&fill=1,2,4&open=load   title screen with sample saves in those slots (written to storage), and the
+ *                                       slot list open (load | save | new; &open=0: closed)
  * With any mode:
  *   &meta=endings:aube,callVersion:douce   a simulated memory (docs/HISTOIRE.md § 5): any Meta field, lists with « | »
  *                                          (endings:aube|silence), booleans alone (dodoSilent), beauxRevesAt in days ago,
@@ -79,7 +86,7 @@ export function startDebug(p: URLSearchParams): void {
       if (!ids.length) return showError(`Unknown enemies: ${p.get('enemies')}`);
       const b = new Battle(
         ids.map((id) => ENEMIES[id]!),
-        { emotion: (p.get('emotion') as never) ?? undefined, tutorial: true },
+        { emotion: (p.get('emotion') as never) ?? undefined, tutorial: true, music: p.get('music') ?? undefined },
       );
       game.replace(b);
       void b.run();
@@ -95,6 +102,11 @@ export function startDebug(p: URLSearchParams): void {
         while (true) await b.runPattern(id, Number(p.get('power') ?? 0));
       };
       void loop();
+      return;
+    }
+    case 'mirror': {
+      game.replace(new BlackScene());
+      void MirrorScene.play(p.get('ink') === '1');
       return;
     }
     case 'image': {
@@ -134,6 +146,34 @@ export function startDebug(p: URLSearchParams): void {
       });
       game.replace(new TitleScene());
       if (p.get('open') !== '0') game.push(new GalleryScene());
+      return;
+    }
+    case 'slots': {
+      // Sample runs, one per slot asked for (the later the slot, the more recent the save).
+      const samples: Array<[number, string, Record<string, number | boolean | string>]> = [
+        [1, 'prairie', {}],
+        [2, 'chambre', { interlude: 2 }],
+        [4, 'maison_feutre', {}],
+        [5, 'plage', {}],
+        [3, 'b_service', { bonus: 1 }],
+      ];
+      const fill = (p.get('fill') ?? '1,2,4').split(',').map(Number);
+      for (let n = 1; n <= SLOTS; n++) deleteSave(n);
+      fill.forEach((n, i) => {
+        const [chapter, map, flags] = samples[(n - 1) % samples.length]!;
+        const s = { ...newState(p.get('name') ?? 'Sacha'), chapter, map, flags, playtime: 1800 * (i + 1) + 420 };
+        writeSave(s, n, Date.now() - (fill.length - i) * 3_600_000);
+      });
+      game.replace(new TitleScene());
+      const mode = (p.get('open') ?? 'load') as SlotMode | '0';
+      if (mode !== '0') void SlotsScene.pick(mode, null, fill[fill.length - 1] ?? 1);
+      return;
+    }
+    case 'files': {
+      // The files are offered after a first ending (in memory only, like every &meta).
+      if (!G.meta.endings.length) G.meta.endings = ['aube'];
+      game.replace(new TitleScene());
+      if (p.get('open') !== '0') game.push(new FilesScene());
       return;
     }
     case 'credits': {

@@ -239,6 +239,110 @@ const REFLET = (() => {
 })();
 
 // ---------------------------------------------------------------------------------------------------------------------
+// A paper nurse, far too close (2.2: the neons of the corridor, story/chapter3.ts corridorNeons)
+// ---------------------------------------------------------------------------------------------------------------------
+
+/**
+ * `jump_nadia` (56×60): the face of a paper nurse, filling the screen (scenes/jump.ts). Grey paper hair, the ponytail;
+ * the cream paper face that has no face — two smudges where eyes were rubbed out, the crease down the middle — and
+ * across the bottom of it, the paper has torn open like a mouth: jagged white edges like teeth, dark inside, something
+ * red running down the chin. The collar of the paper scrubs and the badge.
+ */
+const NADIA_CLOSE = (() => {
+  const p = new Pix(56, 60);
+  // Hair, folded in flat planes of grey paper; the ponytail on the right.
+  p.ellipse(28, 24, 23, 22, 'g');
+  p.poly(
+    [
+      [43, 18],
+      [54, 27],
+      [53, 47],
+      [45, 40],
+    ],
+    'g',
+  );
+  p.line(47, 24, 52, 42, 'G').line(46, 30, 49, 44, 'G');
+  p.line(12, 14, 19, 6, 'G').line(37, 6, 44, 14, 'G');
+  // The face: cream paper lit from the left, its right half in the shade of the fold.
+  p.ellipse(28, 32, 17, 21, 'q');
+  for (let y = 10; y < 54; y++) for (let x = 29; x < 46; x++) if (p.get(x, y) === 'q') p.set(x, y, 'Q');
+  // The fringe: three folded locks over the forehead.
+  p.poly(
+    [
+      [11, 20],
+      [20, 9],
+      [27, 10],
+      [17, 21],
+    ],
+    'g',
+  );
+  p.poly(
+    [
+      [27, 10],
+      [36, 9],
+      [44, 19],
+      [36, 17],
+    ],
+    'g',
+  );
+  p.line(17, 21, 27, 11, 'G').line(36, 17, 43, 19, 'G');
+  // Where the eyes were: rubbed out.
+  p.rect(18, 27, 6, 2, 'Q').rect(33, 27, 6, 2, 'W');
+  // The crease down the middle, from the forehead to the tear.
+  p.line(28, 12, 28, 35, 'G');
+  p.line(27, 13, 27, 24, 'f');
+  // The tear, across the bottom of the face: dark inside, wider in the middle.
+  for (let x = 16; x <= 40; x++) {
+    const k = Math.sin((Math.PI * (x - 15)) / 26);
+    const top = Math.round(40 - 3 * k);
+    const bottom = Math.round(41 + 4 * k);
+    for (let y = top; y <= bottom; y++) p.set(x, y, 'i');
+  }
+  // Its edges, torn paper like teeth: down from the top lip, up from the bottom one.
+  for (let x = 18; x <= 38; x += 3) {
+    const k = Math.sin((Math.PI * (x - 15)) / 26);
+    const top = Math.round(40 - 3 * k);
+    const bottom = Math.round(41 + 4 * k);
+    p.set(x, top, 'f').set(x, top + 1, 'f').set(x + 1, top, 'W');
+    p.set(x + 1, bottom, 'f').set(x + 1, bottom - 1, 'W');
+  }
+  // Something red at the back of it, and running down the chin.
+  p.set(27, 41, 'R').set(28, 42, 'R').set(29, 41, 'r').set(26, 42, 'R');
+  for (const [x, n] of [
+    [22, 5],
+    [30, 7],
+    [35, 3],
+  ] as const) {
+    const k = Math.sin((Math.PI * (x - 15)) / 26);
+    const bottom = Math.round(41 + 4 * k);
+    for (let i = 1; i <= n; i++) p.set(x, bottom + i, i === n ? 'r' : 'R');
+  }
+  // The neck, the collar of the paper scrubs, the badge.
+  p.rect(23, 51, 10, 3, 'Q');
+  p.poly(
+    [
+      [6, 60],
+      [13, 53],
+      [43, 53],
+      [50, 60],
+    ],
+    '6',
+  );
+  p.poly(
+    [
+      [22, 53],
+      [34, 53],
+      [28, 59],
+    ],
+    'Q',
+  );
+  p.line(13, 53, 20, 60, '7').line(43, 53, 37, 60, '7');
+  p.rect(37, 55, 7, 4, 'f').line(38, 57, 42, 57, 'n');
+  p.contour();
+  return p.toString();
+})();
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -255,4 +359,5 @@ export const ART: Record<string, SpriteDef> = {
   prop_h_dessin_2: { art: dessin(2) },
   prop_h_dessin_3: { art: dessin(3) },
   fx_reflet_vitre: { art: REFLET },
+  jump_nadia: { art: NADIA_CLOSE, colors: C },
 };

@@ -2,6 +2,56 @@
 
 Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
+## [2.2.0] — 2026-11
+
+La suite des retours de l'auteur : des fichiers à supprimer, cinq sauvegardes, la salle de bain, la faim, de la
+musique pour chaque lieu et des scènes qui font peur.
+
+### Ajouté
+- **Fichiers** (écran titre, après une première fin) : les fichiers des personnages, dans un vieil explorateur.
+  `dodo.chr`, `mina.chr` et `maman.chr` peuvent être supprimés ; leurs répliques deviennent de la friture sous
+  « ??? », sans portrait, et leur sprite se brouille, dans le monde et en combat. Toute l'histoire reste jouable.
+  Dodo a son mot à dire tant que son fichier est là. La corbeille restaure ; `noa.chr` est en cours d'utilisation.
+- **Cinq sauvegardes** : à une veilleuse, on choisit l'emplacement (remplacer une autre partie demande confirmation).
+  On charge depuis l'écran titre (« Continuer » ouvre la liste quand il y a plusieurs sauvegardes) ou depuis le menu
+  (onglet « Quitter », « Charger »). Une nouvelle partie n'efface plus rien quand un emplacement est libre. La
+  sauvegarde d'avant la mise à jour se retrouve dans l'emplacement 1.
+- **La salle de bain** de l'appartement est une vraie pièce (de jour, à 3 h 33, et dans les interludes de nuit) :
+  lavabo, miroir, baignoire, serviettes. Le premier vrai regard dans le miroir (interludes III et IV, dès
+  l'Interlude I sur la route de l'encre) : le reflet de Noa et une silhouette d'encre alternent de plus en plus vite,
+  puis un cri et le noir. Sur la route de l'encre, c'est plus long et le mot « MONSTRE » reste sur le miroir. Jamais
+  plus de trois changements par seconde ; avec « Réduire les flashs », un lent fondu à la place. Le reflet aux yeux
+  fermés de l'Interlude II se voit maintenant dans la pièce.
+- **La faim** : chaque repas refusé compte (les pâtes froides de l'Interlude I, le frigo de 4 h 06, nouveau, et le
+  dîner qui recommence au chapitre 4) ; chaque repas mangé en retire un. Sans manger, Noa voit des choses dans
+  l'appartement : Mina assise à sa place dans la cuisine (elle n'y est plus quand on s'approche), une assiette qui
+  fume sur la table, puis plus rien. Après deux repas refusés, la nuit, dans le couloir : Dodo grandeur nature,
+  déchiré, le coton qui sort — puis à la figure de Noa (un jumpscare, une seule fois ; en fondu avec « Réduire les
+  flashs »).
+- **Route de l'encre, plus sanglante** : en combat, une créature tuée éclate (deux moitiés qui glissent, des
+  gouttes rouges et noires, une tache qui reste au sol jusqu'à la fin du combat), et une ligne suit ses derniers mots
+  (« C'est tiède. Ça colle à tes doigts. », « Dedans, c'était rouge. Tu ne savais pas. »…). Les flaques laissées
+  dans le monde se regardent : laine collée, coton rouge, deux yeux-boutons au fond. Avec deux repas refusés,
+  l'assiette n'est plus des pâtes, et le couloir garde une traînée de coton mouillé. Jamais sur le corps de Noa ni
+  sur celui de Mina.
+- **Les néons de l'hôpital** (chapitre 3) : au troisième passage du couloir, les néons s'éteignent un à un. Quand
+  ils se rallument, des infirmières de papier sont là, tournées vers Noa, chaque fois plus près, puis une à sa
+  figure. Jamais plus de deux changements de lumière par seconde ; en fondu avec « Réduire les flashs ».
+- **Le sentier gommé** (chapitre 2) : quelque chose suit Noa et Mina, un pas en retard. Il n'avance que quand on
+  lui tourne le dos. On peut le laisser venir, ou aller jusqu'à lui.
+- **La Ouate** (chapitre 6) : dans la grotte basse, le coton respire, puis du rembourrage gorgé, gris et rouge,
+  tombe du plafond devant Noa. Le dernier paquet s'ouvre sur un œil-bouton.
+- **La plage d'avant** (chapitre 5) : sur la plage où rien n'a d'ombre, celle de Noa revient, trop longue, pas sa
+  forme. Elle se lève, beaucoup trop grande, sans visage, et marche dans la mer.
+
+### Modifié
+- **Musique des boss** : trois nouveaux thèmes, plus rapides, tous construits sur la berceuse : « Fil rouge » (la
+  Couseuse), « Cauchemar » (le Petit Homme) et « Reste » (Dodo, au combat final). La Vitre garde sa valse lente.
+- **Musiques d'ambiance** : le village plus profond (basse, cloches lointaines, contre-chant) ; nouveaux thèmes
+  pour la bibliothèque, la clairière (une fois les lanternes allumées), la maison de Mémé Laine, la lisière, le
+  sentier gommé, l'aile de pédiatrie, la chambre de Mina, l'appartement à l'aube, le jardin et le bazar. L'hôpital
+  respire (souffle, orgue, un second bip, une cloche).
+
 ## [2.1.0] — 2026-11
 
 Retours d'une partie entière (fin de l'aube, la veilleuse posée devant la tombe de Mina).

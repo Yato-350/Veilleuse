@@ -66,6 +66,8 @@ export class WorldScene implements Scene {
   followerTalk: Script | undefined;
   /** Story hook: a script to play before talking to an NPC, or null (the inhabitants afraid of the road of the ink). */
   beforeTalk: ((e: Entity) => Script | null) | undefined;
+  /** Story hook: what an ink puddle (where a creature was killed, the road of the ink) shows up close, or nothing. */
+  inkPuddleLook: ((tx: number, ty: number) => Script) | undefined;
   frame = 0;
 
   get world(): string {
@@ -531,6 +533,7 @@ export class WorldScene implements Scene {
     e.shadow = false;
     e.layer = -1;
     e.variant = this.variant;
+    e.interact = this.inkPuddleLook?.(tx, ty);
     this.entities.push(e);
   }
 
