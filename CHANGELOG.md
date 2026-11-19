@@ -2,7 +2,10 @@
 
 Toutes les évolutions notables du projet. Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
-## [Non publié]
+## [2.2.0] — 2026-11
+
+La suite des retours de l'auteur : des fichiers à supprimer, cinq sauvegardes, la salle de bain, la faim, de la
+musique pour chaque lieu et des scènes qui font peur.
 
 ### Ajouté
 - **Fichiers** (écran titre, après une première fin) : les fichiers des personnages, dans un vieil explorateur.
